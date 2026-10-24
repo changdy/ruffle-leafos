@@ -372,6 +372,7 @@ impl Frontend {
                 println!("leaf-session profile_applied={} scope=session use_cfg={}", profiles::profile(index).map(|p| p.id).unwrap_or("legacy"), self.state.use_cfg);
             }
             MenuResult::OpenControls => { let actual = self.snapshot(); self.state.controls.begin(actual); }
+            MenuResult::SlotChanged(slot) => self.switch_slot(slot),
             MenuResult::OpenCursor => { self.state.controls.begin_cursor(self.state.cursor_settings); }
             MenuResult::SaveProgress => {self.flush_progress(true);},
             MenuResult::OpenSaves => {self.flush_progress(false);self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);},
@@ -482,8 +483,8 @@ impl Frontend {
             match button {
                 Button::DPadUp => self.state.menu_move(-1),
                 Button::DPadDown => self.state.menu_move(1),
-                Button::DPadLeft => self.state.preview(-1),
-                Button::DPadRight => self.state.preview(1),
+                Button::DPadLeft => {let result=self.state.preview(-1);self.menu_result(result);},
+                Button::DPadRight => {let result=self.state.preview(1);self.menu_result(result);},
                 Button::X => self.state.toggle_cfg_preview(),
                 Button::Y if self.state.selected == 2 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Button::A | Button::Start => { let result = self.state.accept(); self.menu_result(result); }
@@ -523,7 +524,8 @@ impl Frontend {
             }
             match key {
                 Keycode::Up => self.state.menu_move(-1), Keycode::Down => self.state.menu_move(1),
-                Keycode::Left => self.state.preview(-1), Keycode::Right => self.state.preview(1),
+                Keycode::Left => {let result=self.state.preview(-1);self.menu_result(result);},
+                Keycode::Right => {let result=self.state.preview(1);self.menu_result(result);},
                 Keycode::X => self.state.toggle_cfg_preview(),
                 Keycode::Y if self.state.selected == 2 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Keycode::Return | Keycode::Space => { let result = self.state.accept(); self.menu_result(result); }

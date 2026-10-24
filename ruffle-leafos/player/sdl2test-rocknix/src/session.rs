@@ -157,6 +157,7 @@ pub enum MenuResult {
     MouseSpeedChanged(MouseSpeed),
     ProfileChanged(usize),
     OpenControls,
+    SlotChanged(usize),
     OpenCursor,
     OpenSaves,
     OpenSettings,
@@ -295,11 +296,13 @@ impl Session {
         self.selected = (self.selected as i32 + direction).rem_euclid(MENU_ROWS as i32) as usize;
     }
 
-    pub fn preview(&mut self, direction: i32) {
+    pub fn preview(&mut self, direction: i32) -> MenuResult {
         match self.selected {
+            1 => return MenuResult::SlotChanged((self.controls.game_slot as i32+direction).rem_euclid(controls::GAME_SLOTS as i32) as usize),
             2 => self.preview_mouse_speed = self.preview_mouse_speed.next(direction),
             _ => {}
         }
+        MenuResult::None
     }
 
     pub fn toggle_cfg_preview(&mut self) {
@@ -398,9 +401,12 @@ mod tests {
     }
 
     #[test]
-    fn merged_controls_entry_does_not_switch_schemes_on_left_or_right() {
+    fn controls_row_switches_schemes_left_right_and_A_still_opens_editor() {
         let mut s=Session::new(InputMode::Hybrid);
-        s.open_menu();s.menu_move(1);s.preview(-1);s.preview(1);
+        s.open_menu();s.menu_move(1);
+        assert_eq!(s.preview(-1),MenuResult::SlotChanged(9));
+        assert_eq!(s.preview(1),MenuResult::SlotChanged(1));
+        s.controls.game_slot=9;assert_eq!(s.preview(1),MenuResult::SlotChanged(0));s.controls.game_slot=0;
         assert_eq!(s.controls.game_slot,0);assert_eq!(s.accept(),MenuResult::OpenControls);
     }
 

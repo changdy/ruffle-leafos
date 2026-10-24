@@ -208,7 +208,7 @@ impl PauseMenu {
         self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏",FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
         let rows=["继续","按键设置","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面设置","保存并退出"];
-        let details=[String::new(),format!("方案 {}",slot+1),
+        let details=[String::new(),format!("◀ 方案 {} ▶",slot+1),
             format!("{} · Y 光标",match state.preview_mouse_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
             String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
