@@ -41,6 +41,24 @@ impl Size {
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Settings { pub style: Style, pub color: Color, pub size: Size }
 
+impl Settings {
+    pub fn encode(self) -> String { format!("version=1\nstyle={}\ncolor={}\nsize={}\n",self.style.id(),self.color.id(),self.size.pixels()) }
+    pub fn decode(text: &str) -> Result<Self,String> {
+        if text.len()>512 {return Err("光标配置过大".into());}
+        let mut fields=std::collections::BTreeMap::new();
+        for line in text.lines() {
+            let (key,value)=line.split_once('=').ok_or("光标配置格式错误")?;
+            if fields.insert(key,value).is_some() {return Err("光标字段重复".into());}
+        }
+        if fields.len()!=4 || fields.get("version")!=Some(&"1") {return Err("光标版本或字段无效".into());}
+        Ok(Self {
+            style:fields.get("style").and_then(|s|Style::parse(s)).ok_or("光标样式无效")?,
+            color:fields.get("color").and_then(|s|Color::parse(s)).ok_or("光标颜色无效")?,
+            size:fields.get("size").and_then(|s|Size::parse(s)).ok_or("光标大小无效")?,
+        })
+    }
+}
+
 #[derive(Default)]
 pub struct Idle { last_moved: Duration, position: Option<(f32,f32)> }
 impl Idle {
@@ -106,6 +124,12 @@ pub fn meshes(settings: Settings, position: (f32,f32)) -> [Mesh;2] {
 mod tests {
     use super::*;
     fn at(ms:u64)->Duration { Duration::from_millis(ms) }
+    #[test]
+    fn global_settings_are_strict_and_accept_the_legacy_arrow_alias() {
+        let text=Settings::default().encode(); assert_eq!(Settings::decode(&text).unwrap(),Settings::default());
+        assert_eq!(Settings::decode(&text.replace("ring-dot","arrow")).unwrap(),Settings::default());
+        for bad in [text.replace("version=1","version=9"),text.clone()+"style=dot\n",text.clone()+"command=exec\n",text.replace("size=24","size=999"),text.replace("color=white","color=unknown")] {assert!(Settings::decode(&bad).is_err());}
+    }
     #[test]
     fn idle_hides_at_3500ms_and_same_position_does_not_keep_it_awake() {
         let mut idle=Idle::default(); idle.moved((10.,20.),at(0));

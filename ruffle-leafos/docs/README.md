@@ -10,7 +10,7 @@
 | [实现结果](implementation-report.md) | 已实现效果、代码入口、截图、验证范围及限制 |
 | [TODO](todo.md) | 已完成清单、剩余实现及人工/兼容验收 |
 | [当前需求](requirements.md) | 合并 v2.7—v2.10 的有效约定；保留未完成范围 |
-| [按键格式 v3](controls-format-v3.md) | 映射、模板、身份、旧格式和光标兼容 |
+| [按键格式 v4](controls-format-v4.md) | 每游戏方案、独立全局光标及旧格式兼容 |
 | [项目构建](../README.md) | 环境、命令与目录结构 |
 | [版本摘要](progress.md) | 各版最终结果和对应交付 |
 | [工作区索引](workspace-index.md) | 源码、交付与工具路径 |

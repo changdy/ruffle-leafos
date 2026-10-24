@@ -212,7 +212,7 @@ impl Frontend {
                         1=>targets.push(root.join("games").join(game.ok_or("未选择游戏")?.id)),
                         2=>{let game=game.ok_or("未选择游戏")?;targets.push(controls.join("slots").join(&game.control_id));targets.push(controls.join("games").join(format!("{}.rmap",game.control_id)));targets.push(controls.join("games").join(format!("{}.rmap.bak",game.control_id)));},
                         3=>targets.push(root.join("games")),
-                        4=>targets.push(controls.clone()),
+                        4=>{for name in ["slots","games","global.rmap","global.rmap.bak"] {targets.push(controls.join(name));}},
                         _=>return Err("未知清理操作".into())
                     }
                     let mut changed=false;for path in targets{changed|=experience::archive(&path,&trash)?;}
@@ -228,17 +228,17 @@ impl Frontend {
         self.redraw=true;
     }
     fn snapshot(&self) -> Mapping {
-        if let Some(active) = &self.state.controls.active { let mut m = active.clone(); m.speed = self.state.mouse_speed; m.cursor = self.state.cursor_settings; return m; }
+        if let Some(active) = &self.state.controls.active { let mut m = active.clone(); m.speed = self.state.mouse_speed; return m; }
         let mut buttons = [Binding::None; 14];
         for (i, button) in PROFILE_BUTTONS.iter().chain(DPAD.iter()).enumerate() { buttons[i] = self.binding(*button); }
-        let mut mapping = Mapping::group(0); mapping.cursor=self.state.cursor_settings; mapping.buttons=buttons; mapping.speed=self.state.mouse_speed; mapping
+        let mut mapping = Mapping::group(0); mapping.buttons=buttons; mapping.speed=self.state.mouse_speed; mapping
     }
 
     fn stick_kind(&self) -> Stick { self.state.controls.active.as_ref().map(|m| if m.has_pointer() {Stick::Mouse} else {m.stick}).unwrap_or(Stick::Mouse) }
 
     fn toast(&mut self, message: String) { println!("leaf-toast {message}"); self.state.toast=Some((message,Instant::now())); self.redraw=true; }
     fn apply_mapping(&mut self, mapping: Mapping) {
-        self.state.cursor_settings = mapping.cursor; self.cursor_idle.reveal(self.started.elapsed());
+        self.cursor_idle.reveal(self.started.elapsed());
         let released = self.state.ledger.release_all(); self.emit(released,false);
         for i in 0..4 {self.state.release(Source::Stick(i));}
         self.state.drag_locked=false; self.state.require_neutral();
@@ -277,6 +277,10 @@ impl Frontend {
                 self.apply_mapping(mapping);
                 if self.state.controls.page == controls::Page::Edit && self.state.controls.status.starts_with("已切换") {self.toast(self.state.controls.status.clone());}
             }
+            ResultAction::Cursor(settings) => {
+                self.state.cursor_settings=settings; self.cursor_idle.reveal(self.started.elapsed());
+                println!("leaf-cursor global_saved settings={settings:?}");
+            },
             ResultAction::Close => println!("leaf-controls editor_closed"),
             ResultAction::None => {}
         }
@@ -347,7 +351,7 @@ impl Frontend {
                 println!("leaf-session profile_applied={} scope=session use_cfg={}", profiles::profile(index).map(|p| p.id).unwrap_or("legacy"), self.state.use_cfg);
             }
             MenuResult::OpenControls => { let actual = self.snapshot(); self.state.controls.begin(actual); }
-            MenuResult::OpenCursor => { let actual=self.snapshot(); self.state.controls.begin_cursor(actual); }
+            MenuResult::OpenCursor => { self.state.controls.begin_cursor(self.state.cursor_settings); }
             MenuResult::SlotChanged(slot) => self.switch_slot(slot),
             MenuResult::SaveProgress => {self.flush_progress(true);},
             MenuResult::OpenSaves => {self.flush_progress(false);self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);},
@@ -444,7 +448,7 @@ impl Frontend {
                 Button::DPadLeft => self.state.preview(-1),
                 Button::DPadRight => self.state.preview(1),
                 Button::X => self.state.toggle_cfg_preview(),
-                Button::Y if self.state.selected == 3 => { let actual=self.snapshot(); self.state.controls.begin_cursor(actual); }
+                Button::Y if self.state.selected == 3 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Button::A | Button::Start => { let result = self.state.accept(); self.menu_result(result); }
                 Button::B | Button::Back => { let result = self.state.resume(); self.menu_result(result); }
                 _ => {}
@@ -484,7 +488,7 @@ impl Frontend {
                 Keycode::Up => self.state.menu_move(-1), Keycode::Down => self.state.menu_move(1),
                 Keycode::Left => self.state.preview(-1), Keycode::Right => self.state.preview(1),
                 Keycode::X => self.state.toggle_cfg_preview(),
-                Keycode::Y if self.state.selected == 3 => { let actual=self.snapshot(); self.state.controls.begin_cursor(actual); }
+                Keycode::Y if self.state.selected == 3 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Keycode::Return | Keycode::Space => { let result = self.state.accept(); self.menu_result(result); }
                 _ => {}
             }
@@ -682,6 +686,7 @@ pub async fn run() -> Result<(), String> {
     let mut controller: Option<sdl2::controller::GameController> = None;
     let mut pump = sdl.event_pump()?;
     front.state.controls = controls::Controls::new(control_store);
+    front.state.cursor_settings=front.state.controls.cursor_settings;
     front.state.experience.title=front.progress.lock().unwrap().title.clone();
     front.state.experience.settings=av;front.state.experience.app=opt.app_settings;
     front.state.experience.started=!opt.app_settings&&!pick_slot;
@@ -720,7 +725,7 @@ pub async fn run() -> Result<(), String> {
     for _ in 0..5 {script.push(vec![Button::RightShoulder]);}
     script.extend([vec![d,d,d,d,d,r,a],vec![d,d,d,d],vec![a],vec![b], // save slot 2
         vec![b],vec![Button::Guide],vec![d,d,d,d,a],
-        vec![r,d,r,r,d,r],vec![d,d,d,a],vec![b,b]]);
+        vec![r,d,r,r,d,r],vec![d,d,a],vec![b,b]]);
     let ui_phases=script.len();
     let mut idle_start=None;
     let mut axis_start=(0.,0.);
@@ -1002,7 +1007,7 @@ pub async fn run() -> Result<(), String> {
         let store=&front.state.controls.store;
         let saved=store.load(&store.game_slot(1))?.0;
         let expected=cursor::Settings{style:cursor::Style::Crosshair,color:cursor::Color::Red,size:cursor::Size::Large};
-        if saved.mapping.cursor!=expected || front.state.controls.game_slot!=1 {
+        if store.load_cursor()?.0!=expected || front.state.controls.game_slot!=1 {
             return Err(format!("Mapping persistence assertion failed: saved={saved:?}"));
         }
         println!("leaf-slots self_test=passed slot_switch=true tabs=9 grid=true editor=true save=true cursor=true idle=true");

@@ -12,7 +12,6 @@ const LIMIT: usize = 16384;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Mapping {
-    pub cursor: cursor::Settings,
     pub base: usize,
     pub mode: InputMode,
     pub speed: MouseSpeed,
@@ -65,7 +64,7 @@ impl Mapping {
         let mut buttons = [Binding::None; 14];
         buttons[..10].copy_from_slice(&p.buttons);
         if let Some(keys) = p.dpad { for (i, key) in keys.into_iter().enumerate() { buttons[10+i] = Binding::Key(key); } }
-        let mut mapping = Self { cursor: cursor::Settings::default(), base: base.clamp(1, 12), mode: match p.stick {
+        let mut mapping = Self { base: base.clamp(1, 12), mode: match p.stick {
             Stick::Mouse if p.dpad.is_none() => InputMode::Mouse, Stick::Mouse => InputMode::Hybrid, _ => InputMode::Keyboard,
         }, speed: MouseSpeed::Normal, buttons, axes: [Binding::None;5], stick: p.stick, fine: p.dpad.is_none() };
         mapping.reset_axes(); mapping
@@ -135,13 +134,12 @@ pub struct Record { pub name: String, pub identity: String, pub mapping: Mapping
 impl Record {
     pub fn encode(&self) -> String {
         let m = &self.mapping;
-        let mut text = format!("version=3\nname={}\nidentity={}\nbase={}\nmode={}\nspeed={}\nstick={}\nfine={}\n", self.name, self.identity, m.base,
+        let mut text = format!("version=4\nname={}\nidentity={}\nbase={}\nmode={}\nspeed={}\nstick={}\nfine={}\n", self.name, self.identity, m.base,
             match m.mode { InputMode::Hybrid => "hybrid", InputMode::Keyboard => "keyboard", InputMode::Mouse => "mouse" },
             match m.speed { MouseSpeed::Slow => "slow", MouseSpeed::Normal => "normal", MouseSpeed::Fast => "fast" },
             match m.stick { Stick::Directions => "directions", Stick::Steering => "steering", Stick::Mouse => "mouse", Stick::None => "none", Stick::Custom => "custom" }, m.fine);
         for (i, binding) in m.buttons.iter().enumerate() { text.push_str(&format!("bind.{i}={}\n", encode_binding(*binding))); }
         for (i, binding) in m.axes.iter().enumerate() { text.push_str(&format!("axis.{i}={}\n", encode_binding(*binding))); }
-        text.push_str(&format!("cursor-style={}\ncursor-color={}\ncursor-size={}\n",m.cursor.style.id(),m.cursor.color.id(),m.cursor.size.pixels()));
         text
     }
 
@@ -154,27 +152,28 @@ impl Record {
         }
         let get = |key: &str| fields.get(key).copied().ok_or_else(|| format!("配置缺少 {key}"));
         let version = get("version")?;
-        let count = match version { "1"=>22,"2"=>25,"3"=>30,_=>return Err("不支持的配置版本".into()) };
+        let count = match version { "1"=>22,"2"=>25,"3"=>30,"4"=>27,_=>return Err("不支持的配置版本".into()) };
         if fields.len() != count { return Err("配置字段缺失或未知".into()); }
-        let cursor = if version == "1" { cursor::Settings::default() } else { cursor::Settings {
-            style: cursor::Style::parse(get("cursor-style")?).ok_or("光标样式无效")?,
-            color: cursor::Color::parse(get("cursor-color")?).ok_or("光标颜色无效")?,
-            size: cursor::Size::parse(get("cursor-size")?).ok_or("光标大小无效")?,
-        } };
+        // Old appearance fields are validated for compatibility, never applied.
+        if matches!(version,"2"|"3") {
+            cursor::Style::parse(get("cursor-style")?).ok_or("光标样式无效")?;
+            cursor::Color::parse(get("cursor-color")?).ok_or("光标颜色无效")?;
+            cursor::Size::parse(get("cursor-size")?).ok_or("光标大小无效")?;
+        }
         let name = get("name")?.to_string();
         if name.trim().is_empty() || name.chars().count() > 32 || name.chars().any(|c| c.is_control() || c == '=') { return Err("配置名称无效".into()); }
         let identity = get("identity")?.to_string();
         if identity.len() > 4096 || identity.bytes().any(|b| !b.is_ascii_hexdigit()) { return Err("游戏标识无效".into()); }
         let base = get("base")?.parse::<usize>().map_err(|_| "配置基底无效")?;
-        if base > if version == "3" {14} else {12} { return Err("配置基底无效".into()); }
+        if base > if matches!(version,"3"|"4") {14} else {12} { return Err("配置基底无效".into()); }
         let mode = match get("mode")? { "hybrid" => InputMode::Hybrid, "keyboard" => InputMode::Keyboard, "mouse" => InputMode::Mouse, _ => return Err("控制方式无效".into()) };
         let speed = match get("speed")? { "slow" => MouseSpeed::Slow, "normal" => MouseSpeed::Normal, "fast" => MouseSpeed::Fast, _ => return Err("鼠标速度无效".into()) };
-        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if version == "3" => Stick::Custom, _ => return Err("摇杆方式无效".into()) };
+        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if matches!(version,"3"|"4") => Stick::Custom, _ => return Err("摇杆方式无效".into()) };
         let fine = match get("fine")? { "true" => true, "false" => false, _ => return Err("十字精调无效".into()) };
         let mut buttons = [Binding::None; 14];
         for (i, binding) in buttons.iter_mut().enumerate() { *binding = decode_binding(get(&format!("bind.{i}"))?)?; }
-        let mut mapping = Mapping { cursor, base, mode, speed, buttons, axes: [Binding::None;5], stick, fine };
-        if version == "3" { for (i,binding) in mapping.axes.iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
+        let mut mapping = Mapping { base, mode, speed, buttons, axes: [Binding::None;5], stick, fine };
+        if matches!(version,"3"|"4") { for (i,binding) in mapping.axes.iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
         else { mapping.reset_axes(); }
         if mapping.buttons.iter().chain(mapping.axes.iter()).all(|b| *b == Binding::None) { return Err("全空配置已拒绝，请恢复默认".into()); }
         Ok(Self { name, identity, mapping })
@@ -194,6 +193,12 @@ fn read_record(path: &Path) -> Result<Record, String> {
     let mut text = String::new();
     File::open(path).map_err(|e| e.to_string())?.take((LIMIT+1) as u64).read_to_string(&mut text).map_err(|e| e.to_string())?;
     Record::decode(&text)
+}
+
+fn read_cursor(path: &Path) -> Result<cursor::Settings,String> {
+    regular(path)?; let mut text=String::new();
+    File::open(path).map_err(|e|e.to_string())?.take(513).read_to_string(&mut text).map_err(|e|e.to_string())?;
+    cursor::Settings::decode(&text)
 }
 
 #[cfg(not(windows))]
@@ -239,6 +244,21 @@ impl Store {
     }
     fn game_dir(&self) -> PathBuf { self.root.join("slots").join(self.game.file_stem().unwrap_or_default()) }
     pub fn game_slot(&self, slot: usize) -> PathBuf { self.game_dir().join(format!("slot-{:02}.rmap",slot+1)) }
+    pub fn cursor_path(&self) -> PathBuf { self.root.join("cursor.conf") }
+    pub fn load_cursor(&self) -> Result<(cursor::Settings,bool),String> {
+        let path=self.cursor_path();
+        read_cursor(&path).map(|s|(s,false)).or_else(|error|read_cursor(&path.with_extension("conf.bak")).map(|s|(s,true)).map_err(|_|error))
+    }
+    pub fn save_cursor(&self, settings: cursor::Settings) -> Result<(),String> {
+        let path=self.cursor_path(); regular(&path)?;
+        if path.exists() {
+            let mut old=Vec::new(); File::open(&path).map_err(|e|e.to_string())?.take(513).read_to_end(&mut old).map_err(|e|e.to_string())?;
+            if old.len()>512 {return Err("原光标配置过大，未覆盖".into());}
+            let backup=if cursor::Settings::decode(std::str::from_utf8(&old).unwrap_or("")).is_ok() {path.with_extension("conf.bak")} else {path.with_extension(format!("invalid-{}",unique()))};
+            atomic_bytes(&backup,&old)?;
+        }
+        atomic_bytes(&path,settings.encode().as_bytes())
+    }
     fn selected_path(&self) -> PathBuf { self.game_dir().join("selected.rmap") }
     pub fn select_slot(&self, slot: usize, mapping: &Mapping) -> Result<(),String> {
         if slot >= GAME_SLOTS { return Err("槽位超出范围".into()); }
@@ -311,7 +331,7 @@ fn grid_columns(row: usize, count: usize, nav: Nav, columns: usize) -> usize {
     }
 }
 #[derive(Clone, Debug)]
-pub enum ResultAction { None, Close, Apply(Mapping) }
+pub enum ResultAction { None, Close, Apply(Mapping), Cursor(cursor::Settings) }
 
 pub struct Controls {
     pub game_slot: usize,
@@ -324,6 +344,8 @@ pub struct Controls {
     pub status: String,
     pub source: String,
     pub draft: Mapping,
+    pub cursor_settings: cursor::Settings,
+    pub cursor_draft: cursor::Settings,
     original: Mapping,
     pub store: Store,
     editing: usize,
@@ -335,9 +357,13 @@ impl Default for Controls {
 
 impl Controls {
     pub fn new(store: Store) -> Self {
-        let (mappings,game_slot,status) = store.load_slots();
+        let (mappings,game_slot,mut status) = store.load_slots();
+        let cursor_settings=match store.load_cursor() {
+            Ok((settings,recovered))=>{if recovered {status.push_str("；光标配置回退备份");} settings},
+            Err(_) => {if store.cursor_path().exists() || store.cursor_path().with_extension("conf.bak").exists() {status.push_str("；光标配置损坏，使用默认；原文件保留");} cursor::Settings::default()},
+        };
         let mapping = mappings[game_slot].clone();
-        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键映射槽位{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, store,
+        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键映射槽位{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
             editing: 0, category: 0 }
     }
     pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.status.clear(); }
@@ -350,7 +376,7 @@ impl Controls {
         let action = self.apply(&format!("按键映射槽位{}",slot+1));
         self.status = format!("已切换至按键映射槽位{}{}",slot+1,if remembered {""} else {"（选择仅本次，写入失败）"}); action
     }
-    pub fn begin_cursor(&mut self, actual: Mapping) { self.begin(actual); self.go(Page::Cursor); }
+    pub fn begin_cursor(&mut self, actual: cursor::Settings) { self.visible=true; self.cursor_draft=actual; self.status.clear(); self.go(Page::Cursor); }
     fn close(&mut self) -> ResultAction { self.visible = false; ResultAction::Close }
     fn save_scope(&mut self) -> ResultAction {
         let result = self.store.save(&self.store.game_slot(self.game_slot), &self.record(format!("按键映射槽位{}",self.game_slot+1),true));
@@ -394,14 +420,14 @@ impl Controls {
             format!("十字鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
             format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }),
             "应用：仅本次".into(), "保存：当前槽位".into(), "恢复整套默认".into(), "返回".into()]).collect(),
-        Page::Cursor => vec![format!("光标样式：{}",self.draft.cursor.style.name()),format!("光标颜色：{}",self.draft.cursor.color.name()),
-            format!("光标大小：{}（{}）",self.draft.cursor.size.name(),self.draft.cursor.size.pixels()),"恢复光标默认".into(),"应用到当前槽位（本次）".into(),"保存当前槽位并应用".into(),"返回".into()],
+        Page::Cursor => vec![format!("光标样式：{}",self.cursor_draft.style.name()),format!("光标颜色：{}",self.cursor_draft.color.name()),
+            format!("光标大小：{}（{}）",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),"恢复光标默认".into(),"保存并应用（全局）".into(),"返回".into()],
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
         Page::Confirm => vec!["恢复当前槽位默认，替换编辑内容？".into(), "A 确认操作".into(), "B 取消操作".into()],
     } }
     pub fn detail(&self) -> String {
         if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {LABELS[self.editing]} else {AXIS_LABELS[self.editing-15]}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
-        if self.page == Page::Cursor { return "静止 3.5 秒自动隐藏；再次移动立即显示".into(); }
+        if self.page == Page::Cursor { return "所有游戏共用一份外观；静止 3.5 秒隐藏，移动显示".into(); }
         format!("当前生效来源：{}；编辑内容{}", self.source, if self.active.as_ref().unwrap_or(&self.original) == &self.draft { "已应用" } else { "尚未应用" })
     }
     pub fn nav(&mut self, nav: Nav) -> ResultAction {
@@ -439,17 +465,19 @@ impl Controls {
         if self.page == Page::Cursor {
             if matches!(nav,X) {
                 let defaults=cursor::Settings::default();
-                match self.row { 0=>self.draft.cursor.style=defaults.style,1=>self.draft.cursor.color=defaults.color,2=>self.draft.cursor.size=defaults.size,_=>{} }
+                match self.row { 0=>self.cursor_draft.style=defaults.style,1=>self.cursor_draft.color=defaults.color,2=>self.cursor_draft.size=defaults.size,_=>{} }
                 self.status="此项已恢复默认，尚未应用".into();
             }
             if matches!(nav,Left|Right|A) { match self.row {
-                0=>self.draft.cursor.style=self.draft.cursor.style.next(adjust),
-                1=>self.draft.cursor.color=self.draft.cursor.color.next(adjust),
-                2=>self.draft.cursor.size=self.draft.cursor.size.next(adjust),
-                3 if matches!(nav,A)=>{ self.draft.cursor=cursor::Settings::default(); self.status="光标已恢复默认，请应用或保存".into(); },
-                4 if matches!(nav,A)=>return self.apply("仅本次"),
-                5 if matches!(nav,A)=>return self.save_scope(),
-                6 if matches!(nav,A)=>return self.close(),_=>{}
+                0=>self.cursor_draft.style=self.cursor_draft.style.next(adjust),
+                1=>self.cursor_draft.color=self.cursor_draft.color.next(adjust),
+                2=>self.cursor_draft.size=self.cursor_draft.size.next(adjust),
+                3 if matches!(nav,A)=>{ self.cursor_draft=cursor::Settings::default(); self.status="光标已恢复默认，请应用或保存".into(); },
+                4 if matches!(nav,A)=>{
+                    let result=self.store.save_cursor(self.cursor_draft);
+                    if self.failure(result,"全局光标已保存并应用") {self.cursor_settings=self.cursor_draft;return ResultAction::Cursor(self.cursor_settings);}
+                },
+                5 if matches!(nav,A)=>return self.close(),_=>{}
             } }
             return ResultAction::None;
         }
@@ -499,7 +527,7 @@ mod tests {
     #[test]
     fn reject_unknown_versions_fields_duplicates_and_shell_commands() {
         let f = Fixture::new(); let text = f.record(1,false).encode();
-        for broken in [text.replace("version=3","version=99"),text.clone()+"command=touch /tmp/pwned\n",text.clone()+"version=1\n",text.replace("bind.0=32","bind.0=$(reboot)"),text.replace("base=1","base=99"),text.replace("bind.0=32","bind.0=1073741925"),text.replace("bind.0=32","bind.0=32,32")] { assert!(Record::decode(&broken).is_err(),"{broken}"); }
+        for broken in [text.replace("version=4","version=99"),text.clone()+"command=touch /tmp/pwned\n",text.clone()+"version=1\n",text.replace("bind.0=32","bind.0=$(reboot)"),text.replace("base=1","base=99"),text.replace("bind.0=32","bind.0=1073741925"),text.replace("bind.0=32","bind.0=32,32")] { assert!(Record::decode(&broken).is_err(),"{broken}"); }
         assert!(Record::decode(&"x".repeat(LIMIT+1)).is_err());
     }
     #[test]
@@ -558,40 +586,51 @@ mod tests {
         assert_eq!(restored.base,0); assert_eq!(restored.buttons[0],Binding::LeftClick); assert_eq!(restored.buttons[1],Binding::RightClick); assert!(restored.fine);
     }
 
-    #[test]
-    fn version_one_loads_without_rewriting_and_new_cursor_values_roundtrip() {
-        let f=Fixture::new(); let r=f.record(6,true);
-        let legacy=r.encode().lines().filter(|s|!s.starts_with("cursor-") && !s.starts_with("axis.")).collect::<Vec<_>>().join("\n").replace("version=3","version=1")+"\n";
-        fs::create_dir_all(f.0.game.parent().unwrap()).unwrap(); fs::write(&f.0.game,&legacy).unwrap();
-        let loaded=f.0.load(&f.0.game).unwrap().0; assert_eq!(loaded.mapping.cursor,cursor::Settings::default()); assert_eq!(fs::read_to_string(&f.0.game).unwrap(),legacy);
-        let mut updated=loaded; updated.mapping.cursor=cursor::Settings{style:cursor::Style::Crosshair,color:cursor::Color::Cyan,size:cursor::Size::ExtraLarge};
-        f.0.save(&f.0.game,&updated).unwrap(); assert_eq!(f.0.load(&f.0.game).unwrap().0,updated);
-        assert_eq!(fs::read_to_string(f.0.game.with_extension("rmap.bak")).unwrap(),legacy);
+    fn legacy_record(r: &Record, version: u8) -> String {
+        let mut text=r.encode().replace("version=4",&format!("version={version}"));
+        if version<3 {text=text.lines().filter(|s|!s.starts_with("axis.")).collect::<Vec<_>>().join("\n")+"\n";}
+        if version>1 {text.push_str("cursor-style=arrow\ncursor-color=red\ncursor-size=48\n");}
+        text
     }
     #[test]
-    fn cursor_format_rejects_unknown_colors_sizes_and_incomplete_versions() {
-        let f=Fixture::new(); let text=f.record(1,false).encode();
-        for invalid in [text.replace("cursor-color=white","cursor-color=exec"),text.replace("cursor-size=24","cursor-size=99999"),text.replace("cursor-style=ring-dot","cursor-style=unknown"),text.replace("version=3","version=1"),text.replace("cursor-size=24\n","")] { assert!(Record::decode(&invalid).is_err()); }
+    fn old_mapping_versions_ignore_appearance_and_upgrade_only_on_save() {
+        let f=Fixture::new(); let record=f.record(6,true);
+        for version in 1..=3 {
+            let legacy=legacy_record(&record,version);
+            fs::create_dir_all(f.0.game.parent().unwrap()).unwrap();fs::write(&f.0.game,&legacy).unwrap();
+            let loaded=f.0.load(&f.0.game).unwrap().0; assert_eq!(loaded,record);
+            assert_eq!(fs::read_to_string(&f.0.game).unwrap(),legacy);
+            assert!(!f.0.cursor_path().exists());
+            f.0.save(&f.0.game,&loaded).unwrap();
+            assert_eq!(fs::read_to_string(f.0.game.with_extension("rmap.bak")).unwrap(),legacy);
+            let saved=fs::read_to_string(&f.0.game).unwrap(); assert!(saved.starts_with("version=4\n")); assert!(!saved.contains("cursor-"));
+        }
+        let text=legacy_record(&record,3);
+        for bad in [text.replace("cursor-color=red","cursor-color=exec"),text.replace("cursor-size=48","cursor-size=999"),text.replace("cursor-style=arrow","cursor-style=unknown")] {assert!(Record::decode(&bad).is_err());}
     }
     #[test]
-    fn saved_arrow_maps_to_ring_without_rewriting_and_preserves_other_fields() {
-        let f=Fixture::new();let expected=f.record(6,true);
-        let legacy=expected.encode().replace("cursor-style=ring-dot","cursor-style=arrow");
-        fs::create_dir_all(f.0.game.parent().unwrap()).unwrap();fs::write(&f.0.game,&legacy).unwrap();
-        let loaded=f.0.load(&f.0.game).unwrap().0;
-        assert_eq!(loaded,expected);assert_eq!(fs::read_to_string(&f.0.game).unwrap(),legacy);
-        assert!(loaded.encode().contains("cursor-style=ring-dot\n"));
-        f.0.save(&f.0.game,&loaded).unwrap();
-        assert_eq!(f.0.load(&f.0.game).unwrap().0,expected);
-        assert_eq!(fs::read_to_string(f.0.game.with_extension("rmap.bak")).unwrap(),legacy);
+    fn global_cursor_save_restart_and_cancel_are_independent_of_all_mappings() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());let original=cursor::Settings::default();
+        c.begin_cursor(original);c.nav(Nav::Right);assert_ne!(c.cursor_draft,original);c.nav(Nav::X);assert_eq!(c.cursor_draft,original);
+        c.nav(Nav::Right);assert!(matches!(c.nav(Nav::B),ResultAction::Close));assert!(!f.0.cursor_path().exists());
+        c.begin_cursor(original);c.nav(Nav::Right);let expected=c.cursor_draft;c.row=4;
+        assert!(matches!(c.nav(Nav::A),ResultAction::Cursor(s) if s==expected));assert!(c.active.is_none());
+        for i in 0..GAME_SLOTS {c.switch_slot(i);assert_eq!(c.cursor_settings,expected);assert!(!c.store.game_slot(i).exists());}
+        let other=Controls::new(Store::new(f.0.root.clone(),Path::new("another.swf")));
+        assert_eq!(other.cursor_settings,expected);assert_eq!(other.mappings,std::array::from_fn(Mapping::group));
     }
     #[test]
-    fn cursor_preview_cancel_and_single_reset_never_apply_or_save() {
-        let mut c=Controls::default(); let original=Mapping::builtin(6); c.begin_cursor(original.clone());
-        c.nav(Nav::Right); assert_ne!(c.draft.cursor,original.cursor); assert!(c.active.is_none());
-        c.nav(Nav::X); assert_eq!(c.draft.cursor,original.cursor);
-        c.nav(Nav::Down); c.nav(Nav::Right); assert!(matches!(c.nav(Nav::B),ResultAction::Close)); assert!(c.active.is_none());
+    fn global_cursor_recovers_backup_and_write_failure_does_not_apply() {
+        let f=Fixture::new();let default=cursor::Settings::default();let mut changed=default;changed.color=cursor::Color::Cyan;
+        f.0.save_cursor(default).unwrap();f.0.save_cursor(changed).unwrap();
+        fs::write(f.0.cursor_path(),"bad").unwrap();assert_eq!(f.0.load_cursor().unwrap(),(default,true));
+        f.0.save_cursor(changed).unwrap();assert_eq!(f.0.load_cursor().unwrap(),(changed,false));
+        assert_eq!(fs::read_to_string(f.0.cursor_path().with_extension("conf.bak")).unwrap(),default.encode());
+        fs::remove_file(f.0.cursor_path()).unwrap();fs::create_dir(f.0.cursor_path()).unwrap();
+        let mut c=Controls::new(f.0.clone());c.begin_cursor(default);c.cursor_draft=changed;c.row=4;
+        assert!(matches!(c.nav(Nav::A),ResultAction::None));assert_eq!(c.cursor_settings,default);assert!(c.status.contains("失败"));
     }
+
     #[test]
     fn requested_groups_have_exact_keys_and_independent_stick_click() {
         let a=Mapping::group(0);let b=Mapping::group(1);

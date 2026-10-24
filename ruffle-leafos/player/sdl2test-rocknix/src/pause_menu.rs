@@ -388,7 +388,7 @@ impl PauseMenu {
         self.live_label(0, controls.title(),36.,65.,40.,self.palette[1]);
         if controls.page == crate::session::controls::Page::Cursor {
             self.live_label(12,"预览",21.,735.,51.,self.palette[4]);
-            self.draw_cursor(controls.draft.cursor,(850.,61.));
+            self.draw_cursor(controls.cursor_draft,(850.,61.));
         }
         let lines = controls.lines();
         use crate::session::controls::{Page,CATEGORIES,GRID_COLS};
