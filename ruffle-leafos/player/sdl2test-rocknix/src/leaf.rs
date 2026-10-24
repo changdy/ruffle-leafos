@@ -4,6 +4,7 @@ use crate::session::{Action, InputMode, MenuResult, Session, Source, Transition}
 use crate::session::profiles::{self, Binding, Stick};
 use crate::session::controls::{self, Mapping, Nav, ResultAction};
 use crate::session::cursor;
+use crate::session::turbo::{Rate,Repeater};
 use crate::session::experience::{self, Page as ExperiencePage, Command as ExperienceCommand};
 use glow::HasContext;
 use sdl2::keyboard::Keycode;
@@ -127,6 +128,7 @@ struct Frontend {
     menu_device: session::shortcuts::Device,
     chords: session::shortcuts::Chords,
     menu_held: bool,
+    repeater: Repeater,
     blocked: std::collections::BTreeSet<u8>,
     state: Session,
     active: ActivePlayer,
@@ -238,6 +240,7 @@ impl Frontend {
 
     fn toast(&mut self, message: String) { println!("leaf-toast {message}"); self.state.toast=Some((message,Instant::now())); self.redraw=true; }
     fn apply_mapping(&mut self, mapping: Mapping) {
+        self.cancel_repeats();
         self.cursor_idle.reveal(self.started.elapsed());
         let released = self.state.ledger.release_all(); self.emit(released,false);
         for i in 0..4 {self.state.release(Source::Stick(i));}
@@ -267,6 +270,7 @@ impl Frontend {
                 Command::Previous => self.switch_slot((self.state.controls.game_slot+9)%10),
                 Command::Next => self.switch_slot((self.state.controls.game_slot+1)%10),
                 Command::SwapDirections => {
+                    self.cancel_repeats();
                     let released=self.state.toggle_directions();self.emit(released,false);
                     self.toast(if self.state.directions_swapped {"十字键 ↔ 摇杆：已互换（本次）"} else {"十字键 ↔ 摇杆：已恢复"}.into());
                 },
@@ -323,6 +327,7 @@ impl Frontend {
     }
 
     fn open_menu(&mut self) {
+        self.cancel_repeats();
         if self.state.experience.app || !self.state.experience.started {return;}
         let released = self.state.open_menu();
         self.emit(released, false);
@@ -387,7 +392,17 @@ impl Frontend {
         binding_for(&self.keymap, self.state.profile, self.state.mode, button, self.state.use_cfg)
     }
 
-    fn apply_binding(&mut self, source: Source, binding: Binding, text: bool) {
+    fn repeat_rate(&self, button: Button) -> Rate {
+        let Some(mapping)=&self.state.controls.active else {return Rate::Off;};
+        if button==Button::LeftStick {return mapping.axis_turbo[4];}
+        PROFILE_BUTTONS.iter().chain(DPAD.iter()).position(|b|*b==button).map(|i|if self.state.directions_swapped&&i>=10 {mapping.axis_turbo[i-10]}else{mapping.turbo[i]}).unwrap_or(Rate::Off)
+    }
+    fn cancel_repeats(&mut self) {let released=self.repeater.clear(&mut self.state.ledger);self.emit(released,false);}
+    fn update_repeats(&mut self) {
+        if !self.can_game_input() || self.menu_held {self.cancel_repeats();return;}
+        let transitions=self.repeater.update(self.started.elapsed(),&mut self.state.ledger);self.emit(transitions,false);
+    }
+    fn apply_binding(&mut self, source: Source, binding: Binding, rate: Rate, text: bool) {
         if !self.can_game_input() { return; }
         if self.diagnostic || matches!(binding, Binding::Chord(_) | Binding::Combo(..) | Binding::DragLock | Binding::Center) {
             println!("leaf-binding source={source:?} binding={binding:?}");
@@ -400,7 +415,7 @@ impl Frontend {
                     delta: ruffle_core::events::MouseWheelDelta::Lines(lines as f64),
                 }); Vec::new()
             }
-            _ => self.state.ledger.press_many(source, &binding.actions()),
+            _ => self.repeater.press(source,binding,rate,self.started.elapsed(),&mut self.state.ledger),
         };
         self.emit(result, text && !matches!(binding, Binding::Chord(_) | Binding::Combo(..)));
         self.redraw = true;
@@ -417,6 +432,7 @@ impl Frontend {
     fn button(&mut self, button: Button, source: Source, down: bool) {
         self.poll_chords();
         if !down {
+            let released=self.repeater.release(source,&mut self.state.ledger);self.emit(released,false);
             self.blocked.remove(&(button as u8));
             let released = self.state.release(source);
             self.emit(released, false);
@@ -460,7 +476,7 @@ impl Frontend {
             }
             self.redraw = true;
         } else if self.started.elapsed() >= Duration::from_millis(500) {
-            self.apply_binding(source, self.binding(button), true);
+            self.apply_binding(source, self.binding(button), self.repeat_rate(button), true);
         }
     }
 
@@ -544,8 +560,8 @@ impl Frontend {
         for (i,amount) in strengths.into_iter().enumerate() {
             let source=Source::Stick(i as u8);
             let down=amount > if self.state.is_held(source) {0.30} else {0.45};
-            if down && self.state.mark_down(source) {self.apply_binding(source,mapping.axes[i],false);}
-            else if !down {let released=self.state.release(source);self.emit(released,false);}
+            if down && self.state.mark_down(source) {self.apply_binding(source,mapping.axes[i],mapping.axis_turbo[i],false);}
+            else if !down {let repeated=self.repeater.release(source,&mut self.state.ledger);self.emit(repeated,false);let released=self.state.release(source);self.emit(released,false);}
         }
         if mapping.fine && x==0. && y==0. {
             for (i,button) in DPAD.into_iter().enumerate() {
@@ -684,7 +700,7 @@ pub async fn run() -> Result<(), String> {
     let swap = std::env::var("RUFFLE_SWAP_AB").map(|s| s == "1").unwrap_or(true);
     let mut front = Frontend {
         progress,settings_path,movie_size,display_size:size,restart_slot:None,
-        menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, blocked:Default::default(),
+        menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), blocked:Default::default(),
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,
         quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots, ticks: 0,
     };
@@ -811,7 +827,7 @@ pub async fn run() -> Result<(), String> {
                 }
                 Event::ControllerDeviceRemoved { which, .. } => {
                     if controller.as_ref().is_some_and(|pad| pad.instance_id() == which) {
-                        let released = front.state.disconnected(); front.emit(released, false);
+                        front.cancel_repeats();let released = front.state.disconnected(); front.emit(released, false);
                         front.active.player.lock().unwrap().set_is_playing(false);
                         front.redraw = true;
                         controller = None;
@@ -911,7 +927,7 @@ pub async fn run() -> Result<(), String> {
             for button in [sdl2::mouse::MouseButton::Left, sdl2::mouse::MouseButton::Right] {
                 if mouse.is_mouse_button_pressed(button) { physical.push(Source::Mouse(button as u8)); }
             }
-            let released = front.state.resync_held(physical);
+            front.cancel_repeats();let released = front.state.resync_held(physical);
             front.emit(released, false);
             sync_focus = false;
         }
@@ -923,6 +939,7 @@ pub async fn run() -> Result<(), String> {
         }
         if !front.state.paused {
             front.update_stick(seconds as f32);
+            front.update_repeats();
             for _ in 0..64 {
                 match receiver.try_recv() {
                     Ok(RuffleEvent::TaskPoll(task)) if *task.0.metadata() == front.active.id => { task.0.run(); }

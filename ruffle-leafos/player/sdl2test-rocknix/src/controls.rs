@@ -1,6 +1,6 @@
 //! Local control editor and strictly data-only, versioned per-game mapping storage.
 //! No SDL/GL dependencies: the same state machine is exercised on the host.
-use super::{profiles::{self, Binding, Stick}, cursor, InputMode, MouseSpeed};
+use super::{profiles::{self, Binding, Stick}, cursor, turbo::{self,Rate}, InputMode, MouseSpeed};
 use std::{collections::BTreeMap, fs::{self, File, OpenOptions}, io::{Read, Write}, path::{Path, PathBuf}};
 
 pub const LABELS: [&str; 14] = ["A", "B", "X", "Y", "L1", "R1", "L2", "R2", "Start", "Select", "十字上", "十字下", "十字左", "十字右"];
@@ -17,6 +17,8 @@ pub struct Mapping {
     pub speed: MouseSpeed,
     pub buttons: [Binding; 14],
     pub axes: [Binding; 5],
+    pub turbo: [Rate;14],
+    pub axis_turbo: [Rate;5],
     pub stick: Stick,
     pub fine: bool,
 }
@@ -26,10 +28,13 @@ impl Mapping {
     pub fn directions(&self, swapped: bool) -> Self {
         let mut mapping=self.clone();
         if swapped {
-            for i in 0..4 { std::mem::swap(&mut mapping.buttons[10+i],&mut mapping.axes[i]); }
+            for i in 0..4 { std::mem::swap(&mut mapping.buttons[10+i],&mut mapping.axes[i]); std::mem::swap(&mut mapping.turbo[10+i],&mut mapping.axis_turbo[i]); }
             mapping.stick=Stick::Custom; mapping.fine=false;
         }
         mapping
+    }
+    fn normalize_turbo(&mut self) {
+        for (binding,rate) in self.buttons.iter().zip(self.turbo.iter_mut()).chain(self.axes.iter().zip(self.axis_turbo.iter_mut())) {if !turbo::supported(*binding) {*rate=Rate::Off;}}
     }
     pub fn group(slot: usize) -> Self {
         let mut m = Self::builtin(1);
@@ -45,7 +50,7 @@ impl Mapping {
         m.reset_axes(); m.axes[4] = Binding::LeftClick; m
     }
     pub fn reset_axes(&mut self) {
-        self.axes = [Binding::None;5];
+        self.axes = [Binding::None;5]; self.axis_turbo.fill(Rate::Off);
         for i in 0..4 { self.axes[i] = match self.stick {
             Stick::Mouse => Binding::Pointer(i as u8), Stick::Directions => self.buttons[10+i],
             Stick::Steering if i >= 2 => self.buttons[10+i], _ => Binding::None,
@@ -74,7 +79,7 @@ impl Mapping {
         if let Some(keys) = p.dpad { for (i, key) in keys.into_iter().enumerate() { buttons[10+i] = Binding::Key(key); } }
         let mut mapping = Self { base: base.clamp(1, 12), mode: match p.stick {
             Stick::Mouse if p.dpad.is_none() => InputMode::Mouse, Stick::Mouse => InputMode::Hybrid, _ => InputMode::Keyboard,
-        }, speed: MouseSpeed::Normal, buttons, axes: [Binding::None;5], stick: p.stick, fine: p.dpad.is_none() };
+        }, speed: MouseSpeed::Normal, buttons, turbo:[Rate::Off;14], axis_turbo:[Rate::Off;5], axes: [Binding::None;5], stick: p.stick, fine: p.dpad.is_none() };
         mapping.reset_axes(); mapping
     }
 }
@@ -142,12 +147,14 @@ pub struct Record { pub name: String, pub identity: String, pub mapping: Mapping
 impl Record {
     pub fn encode(&self) -> String {
         let m = &self.mapping;
-        let mut text = format!("version=4\nname={}\nidentity={}\nbase={}\nmode={}\nspeed={}\nstick={}\nfine={}\n", self.name, self.identity, m.base,
+        let mut text = format!("version=5\nname={}\nidentity={}\nbase={}\nmode={}\nspeed={}\nstick={}\nfine={}\n", self.name, self.identity, m.base,
             match m.mode { InputMode::Hybrid => "hybrid", InputMode::Keyboard => "keyboard", InputMode::Mouse => "mouse" },
             match m.speed { MouseSpeed::Slow => "slow", MouseSpeed::Normal => "normal", MouseSpeed::Fast => "fast" },
             match m.stick { Stick::Directions => "directions", Stick::Steering => "steering", Stick::Mouse => "mouse", Stick::None => "none", Stick::Custom => "custom" }, m.fine);
         for (i, binding) in m.buttons.iter().enumerate() { text.push_str(&format!("bind.{i}={}\n", encode_binding(*binding))); }
         for (i, binding) in m.axes.iter().enumerate() { text.push_str(&format!("axis.{i}={}\n", encode_binding(*binding))); }
+        for (i,rate) in m.turbo.iter().enumerate() {text.push_str(&format!("turbo.{i}={}\n",rate.hz()));}
+        for (i,rate) in m.axis_turbo.iter().enumerate() {text.push_str(&format!("axis-turbo.{i}={}\n",rate.hz()));}
         text
     }
 
@@ -160,7 +167,7 @@ impl Record {
         }
         let get = |key: &str| fields.get(key).copied().ok_or_else(|| format!("配置缺少 {key}"));
         let version = get("version")?;
-        let count = match version { "1"=>22,"2"=>25,"3"=>30,"4"=>27,_=>return Err("不支持的配置版本".into()) };
+        let count = match version { "1"=>22,"2"=>25,"3"=>30,"4"=>27,"5"=>46,_=>return Err("不支持的配置版本".into()) };
         if fields.len() != count { return Err("配置字段缺失或未知".into()); }
         // Old appearance fields are validated for compatibility, never applied.
         if matches!(version,"2"|"3") {
@@ -173,16 +180,23 @@ impl Record {
         let identity = get("identity")?.to_string();
         if identity.len() > 4096 || identity.bytes().any(|b| !b.is_ascii_hexdigit()) { return Err("游戏标识无效".into()); }
         let base = get("base")?.parse::<usize>().map_err(|_| "配置基底无效")?;
-        if base > if matches!(version,"3"|"4") {14} else {12} { return Err("配置基底无效".into()); }
+        if base > if matches!(version,"3"|"4"|"5") {14} else {12} { return Err("配置基底无效".into()); }
         let mode = match get("mode")? { "hybrid" => InputMode::Hybrid, "keyboard" => InputMode::Keyboard, "mouse" => InputMode::Mouse, _ => return Err("控制方式无效".into()) };
         let speed = match get("speed")? { "slow" => MouseSpeed::Slow, "normal" => MouseSpeed::Normal, "fast" => MouseSpeed::Fast, _ => return Err("鼠标速度无效".into()) };
-        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if matches!(version,"3"|"4") => Stick::Custom, _ => return Err("摇杆方式无效".into()) };
+        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if matches!(version,"3"|"4"|"5") => Stick::Custom, _ => return Err("摇杆方式无效".into()) };
         let fine = match get("fine")? { "true" => true, "false" => false, _ => return Err("十字精调无效".into()) };
         let mut buttons = [Binding::None; 14];
         for (i, binding) in buttons.iter_mut().enumerate() { *binding = decode_binding(get(&format!("bind.{i}"))?)?; }
-        let mut mapping = Mapping { base, mode, speed, buttons, axes: [Binding::None;5], stick, fine };
-        if matches!(version,"3"|"4") { for (i,binding) in mapping.axes.iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
+        let mut mapping = Mapping { base, mode, speed, buttons, turbo:[Rate::Off;14], axis_turbo:[Rate::Off;5], axes: [Binding::None;5], stick, fine };
+        if matches!(version,"3"|"4"|"5") { for (i,binding) in mapping.axes.iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
         else { mapping.reset_axes(); }
+        if version=="5" {
+            for (i,rate) in mapping.turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("turbo.{i}"))?).ok_or("连发频率无效")?;}
+            for (i,rate) in mapping.axis_turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("axis-turbo.{i}"))?).ok_or("摇杆连发频率无效")?;}
+            for (binding,rate) in mapping.buttons.iter().zip(mapping.turbo.iter()).chain(mapping.axes.iter().zip(mapping.axis_turbo.iter())) {
+                if *rate!=Rate::Off && !turbo::supported(*binding) {return Err("此动作不支持连发".into());}
+            }
+        }
         if mapping.buttons.iter().chain(mapping.axes.iter()).all(|b| *b == Binding::None) { return Err("全空配置已拒绝，请恢复默认".into()); }
         Ok(Self { name, identity, mapping })
     }
@@ -417,14 +431,14 @@ impl Controls {
     }
     pub fn title(&self) -> &str { match self.page { Page::Edit => "编辑按键", Page::Picker => "选择虚拟动作", Page::Confirm => "恢复默认", Page::Cursor => "鼠标光标" } }
     pub fn hint(&self) -> &str { match self.page {
-        Page::Edit => "十字键选择  A 修改/执行  X 恢复此项  B 返回",
+        Page::Edit => "十字选择  A 修改  Y 连发  X 恢复此项  B 返回",
         Page::Picker => "十字键移动  L1/R1 切换类型  A 确认  B 取消",
         Page::Confirm => "A 确认  B 取消",
         Page::Cursor => "左右调整  A 确认  X 恢复此项  B 返回",
     } }
     pub fn lines(&self) -> Vec<String> { match self.page {
-        Page::Edit => LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}", binding_label(self.draft.buttons[i]))).chain([
-            format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}",binding_label(self.draft.axes[i])))).chain([
+        Page::Edit => LABELS.iter().enumerate().map(|(i,s)| format!("{s}{}：{}",self.draft.turbo[i].badge(), binding_label(self.draft.buttons[i]))).chain([
+            format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}{}：{}",self.draft.axis_turbo[i].badge(),binding_label(self.draft.axes[i])))).chain([
             format!("十字鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
             format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }),
             "应用：仅本次".into(), "保存：当前方案".into(), "恢复整套默认".into(), "返回".into()]).collect(),
@@ -433,10 +447,14 @@ impl Controls {
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
         Page::Confirm => vec!["恢复当前方案默认，替换编辑内容？".into(), "A 确认操作".into(), "B 取消操作".into()],
     } }
+    fn selected_repeat(&self) -> Option<(Binding,Rate)> {
+        match self.row {0..=13=>Some((self.draft.buttons[self.row],self.draft.turbo[self.row])),15..=19=>Some((self.draft.axes[self.row-15],self.draft.axis_turbo[self.row-15])),_=>None}
+    }
     pub fn detail(&self) -> String {
         if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {LABELS[self.editing]} else {AXIS_LABELS[self.editing-15]}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
         if self.page == Page::Cursor { return "所有游戏共用一份外观；静止 3.5 秒隐藏，移动显示".into(); }
-        format!("当前生效来源：{}；编辑内容{}", self.source, if self.active.as_ref().unwrap_or(&self.original) == &self.draft { "已应用" } else { "尚未应用" })
+        let repeat=if self.page==Page::Edit {self.selected_repeat().map(|(binding,rate)|if turbo::supported(binding) {format!(" · {}（Y切换）",rate.label())}else{" · 此动作无连发".into()}).unwrap_or_default()}else{String::new()};
+        format!("来源：{}；{}{}", self.source, if self.active.as_ref().unwrap_or(&self.original) == &self.draft { "已应用" } else { "尚未应用" },repeat)
     }
     pub fn nav(&mut self, nav: Nav) -> ResultAction {
         use Nav::*;
@@ -463,7 +481,7 @@ impl Controls {
                     if self.editing>=10 && (self.draft.stick==Stick::Directions || self.draft.stick==Stick::Steering && self.editing>=12) {self.draft.axes[self.editing-10]=binding;}
                 }
                 else { self.draft.axes[self.editing-15] = binding; self.draft.stick = Stick::Custom; }
-                self.go(Page::Edit); self.row = self.editing;
+                self.draft.normalize_turbo(); self.go(Page::Edit); self.row = self.editing;
             }
             return ResultAction::None;
         }
@@ -490,7 +508,16 @@ impl Controls {
             return ResultAction::None;
         }
         if self.page == Page::Edit {
+            if matches!(nav,Y) {
+                if let Some((binding,rate))=self.selected_repeat() {
+                    if turbo::supported(binding) {
+                        let next=rate.next();if self.row<14 {self.draft.turbo[self.row]=next;}else{self.draft.axis_turbo[self.row-15]=next;}
+                        self.status=format!("{}；请应用或保存",next.label());
+                    } else {self.status="连发支持键盘、组合键及鼠标左右键".into();}
+                }
+            }
             if matches!(nav, X) {
+                match self.row {0..=13=>self.draft.turbo[self.row]=Rate::Off,14=>self.draft.axis_turbo.fill(Rate::Off),15..=19=>self.draft.axis_turbo[self.row-15]=Rate::Off,_=>{}}
                 let defaults = Mapping::group(self.game_slot);
                 match self.row { 0..=13 => self.draft.buttons[self.row] = defaults.buttons[self.row], 14 => { self.draft.stick = defaults.stick; self.draft.axes = defaults.axes; }, 15..=19 => {self.draft.axes[self.row-15] = defaults.axes[self.row-15];self.draft.stick=Stick::Custom;}, 20 => self.draft.fine = defaults.fine, 21 => self.draft.speed = defaults.speed, _ => {} }
                 self.status = "此项已恢复方案默认，尚未应用".into();
@@ -499,7 +526,7 @@ impl Controls {
             if matches!(nav, A) {
                 match self.row {
                     0..=13 | 15..=19 if matches!(nav,A) => { self.editing = self.row; self.category = 0; self.go(Page::Picker); },
-                    14 => { let items = [Stick::Mouse,Stick::Directions,Stick::Steering,Stick::None,Stick::Custom]; let i = items.iter().position(|s| *s == self.draft.stick).unwrap(); self.draft.stick = items[(i as i32+adjust).rem_euclid(5) as usize]; if self.draft.stick != Stick::Custom {let press=self.draft.axes[4]; self.draft.reset_axes();self.draft.axes[4]=press;} },
+                    14 => { let items = [Stick::Mouse,Stick::Directions,Stick::Steering,Stick::None,Stick::Custom]; let i = items.iter().position(|s| *s == self.draft.stick).unwrap(); self.draft.stick = items[(i as i32+adjust).rem_euclid(5) as usize]; if self.draft.stick != Stick::Custom {let press=self.draft.axes[4];let rate=self.draft.axis_turbo[4]; self.draft.reset_axes();self.draft.axes[4]=press;self.draft.axis_turbo[4]=rate;} },
                     20 => self.draft.fine = !self.draft.fine,
                     21 => self.draft.speed = match self.draft.speed { MouseSpeed::Slow=>MouseSpeed::Normal,MouseSpeed::Normal=>MouseSpeed::Fast,MouseSpeed::Fast=>MouseSpeed::Slow },
                     22 => return self.apply("仅本次"),
@@ -509,6 +536,7 @@ impl Controls {
                 }
             }
         }
+        self.draft.normalize_turbo();
         ResultAction::None
     }
 }
@@ -535,7 +563,7 @@ mod tests {
     #[test]
     fn reject_unknown_versions_fields_duplicates_and_shell_commands() {
         let f = Fixture::new(); let text = f.record(1,false).encode();
-        for broken in [text.replace("version=4","version=99"),text.clone()+"command=touch /tmp/pwned\n",text.clone()+"version=1\n",text.replace("bind.0=32","bind.0=$(reboot)"),text.replace("base=1","base=99"),text.replace("bind.0=32","bind.0=1073741925"),text.replace("bind.0=32","bind.0=32,32")] { assert!(Record::decode(&broken).is_err(),"{broken}"); }
+        for broken in [text.replace("version=5","version=99"),text.clone()+"command=touch /tmp/pwned\n",text.clone()+"version=1\n",text.replace("bind.0=32","bind.0=$(reboot)"),text.replace("base=1","base=99"),text.replace("bind.0=32","bind.0=1073741925"),text.replace("bind.0=32","bind.0=32,32")] { assert!(Record::decode(&broken).is_err(),"{broken}"); }
         assert!(Record::decode(&"x".repeat(LIMIT+1)).is_err());
     }
     #[test]
@@ -595,7 +623,7 @@ mod tests {
     }
 
     fn legacy_record(r: &Record, version: u8) -> String {
-        let mut text=r.encode().replace("version=4",&format!("version={version}"));
+        let mut text=(r.encode().lines().filter(|line|!line.starts_with("turbo.")&&!line.starts_with("axis-turbo.")).collect::<Vec<_>>().join("\n")+"\n").replace("version=5",&format!("version={version}"));
         if version<3 {text=text.lines().filter(|s|!s.starts_with("axis.")).collect::<Vec<_>>().join("\n")+"\n";}
         if version>1 {text.push_str("cursor-style=arrow\ncursor-color=red\ncursor-size=48\n");}
         text
@@ -611,7 +639,7 @@ mod tests {
             assert!(!f.0.cursor_path().exists());
             f.0.save(&f.0.game,&loaded).unwrap();
             assert_eq!(fs::read_to_string(f.0.game.with_extension("rmap.bak")).unwrap(),legacy);
-            let saved=fs::read_to_string(&f.0.game).unwrap(); assert!(saved.starts_with("version=4\n")); assert!(!saved.contains("cursor-"));
+            let saved=fs::read_to_string(&f.0.game).unwrap(); assert!(saved.starts_with("version=5\n")); assert!(!saved.contains("cursor-"));
         }
         let text=legacy_record(&record,3);
         for bad in [text.replace("cursor-color=red","cursor-color=exec"),text.replace("cursor-size=48","cursor-size=999"),text.replace("cursor-style=arrow","cursor-style=unknown")] {assert!(Record::decode(&bad).is_err());}
@@ -724,6 +752,34 @@ mod tests {
         c.nav(Nav::B); assert_eq!((c.page,c.row),(Page::Edit,19));
         c.row=24; c.nav(Nav::A); c.nav(Nav::B); assert_eq!((c.page,c.row),(Page::Edit,24));
         assert!(matches!(c.nav(Nav::B),ResultAction::Close)); assert!(!c.visible);
+    }
+
+    #[test]
+    fn repeat_is_per_button_and_per_scheme_and_survives_restart() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(Mapping::group(0));
+        c.nav(Nav::Y);c.nav(Nav::Y);assert_eq!(c.draft.turbo[0],Rate::Normal);
+        assert!(c.draft.turbo[1..].iter().all(|rate|*rate==Rate::Off));assert_eq!(c.draft.axis_turbo,[Rate::Off;5]);
+        assert!(c.lines()[0].contains("连10"));c.row=23;c.nav(Nav::A);
+        c.switch_slot(1);assert_eq!(c.draft.turbo,[Rate::Off;14]);
+        let restarted=Controls::new(f.0.clone());assert_eq!(restarted.mappings[0].turbo[0],Rate::Normal);
+        assert_eq!(restarted.mappings[1],Mapping::group(1));
+        let mut c=Controls::new(f.0.clone());c.switch_slot(0);c.begin(c.draft.clone());c.row=0;c.nav(Nav::X);
+        assert_eq!(c.draft.turbo[0],Rate::Off);
+    }
+    #[test]
+    fn old_v4_has_repeat_disabled_and_invalid_repeat_fields_are_rejected() {
+        let f=Fixture::new();let r=Record{mapping:Mapping::group(0),..f.record(1,true)};let text=r.encode();
+        let old=text.lines().filter(|line|!line.starts_with("turbo.")&&!line.starts_with("axis-turbo.")).collect::<Vec<_>>().join("\n").replace("version=5","version=4")+"\n";
+        assert_eq!(Record::decode(&old).unwrap(),r);
+        for bad in [text.replace("turbo.0=0","turbo.0=99"),text.replace("axis-turbo.0=0","axis-turbo.0=10"),text.replace("turbo.0=0\n",""),text.clone()+"turbo.0=0\n"] {assert!(Record::decode(&bad).is_err());}
+        let mut c=Controls::default();c.begin(Mapping::group(0));c.row=15;c.nav(Nav::Y);
+        assert_eq!(c.draft.axis_turbo[0],Rate::Off);assert!(c.status.contains("支持"));
+    }
+    #[test]
+    fn direction_swap_moves_repeat_rates_with_the_assigned_actions() {
+        let mut m=Mapping::group(0);m.turbo[10]=Rate::Fast;m.axes[0]=Binding::Key(13);m.axis_turbo[0]=Rate::Slow;
+        let swapped=m.directions(true);assert_eq!(swapped.axis_turbo[0],Rate::Fast);assert_eq!(swapped.turbo[10],Rate::Slow);
+        assert_eq!(swapped.axes[4],m.axes[4]);assert_eq!(swapped.axis_turbo[4],m.axis_turbo[4]);
     }
 
 }

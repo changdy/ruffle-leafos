@@ -11,6 +11,8 @@ pub mod cursor;
 pub mod shortcuts;
 #[path = "experience.rs"]
 pub mod experience;
+#[path = "turbo.rs"]
+pub mod turbo;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Source {
