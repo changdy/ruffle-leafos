@@ -1,7 +1,7 @@
 //! Read-only physical input observer. Menu taps and chords have their own
 //! lifecycle, independent of SDL's virtual controller and game-held keys.
 use std::time::Duration;
-#[derive(Clone,Copy,Debug,Default)]
+#[derive(Clone,Copy,Debug,Default,PartialEq,Eq)]
 pub struct Snapshot { pub menu: bool, pub a: bool, pub b: bool, pub button_x: bool, pub x: i32, pub y: i32, pub other: bool, pub volume_up: bool, pub volume_down: bool }
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 pub enum Command { Previous, Next, Drag, SwapDirections, MenuTap }
@@ -51,8 +51,8 @@ impl Device {
             if !std::fs::canonicalize(&path).ok()?.to_string_lossy().contains("/devices/platform/") {return None;}
             if std::fs::read_to_string(path.join("device/name")).ok()?.trim() != "Loong Gamepad" { return None; }
             // Leaf's roster namespace hides the physical event node to avoid
-            // duplicate controller input. A separate read-only evdev client
-            // observes events without consuming Leaf's copy or grabbing input.
+            // duplicate controller input. EVIOCGKEY/ABS remains readable while
+            // Leaf owns EVIOCGRAB; an additional event reader receives nothing.
             for (prefix,host_view) in [("/dev/input",false),("/proc/1/root/dev/input",true)] {
                 if let Ok(file)=std::fs::File::open(format!("{prefix}/{name}")) {
                     let mut label=[0u8;128];let mut phys=[0u8;128];let mut id=[0u16;4];
@@ -67,7 +67,7 @@ impl Device {
             }
             None
         });
-        println!("leaf-shortcuts physical_menu_observer={} access=read-only-events host_view={}",physical.is_some(),physical.as_ref().is_some_and(|(_,host)|*host));
+        println!("leaf-shortcuts physical_menu_observer={} access=read-only-state-thread host_view={}",physical.is_some(),physical.as_ref().is_some_and(|(_,host)|*host));
         let (sender,receiver)=std::sync::mpsc::channel();
         let stop=std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let available=physical.is_some();let stopped=stop.clone();
@@ -103,33 +103,24 @@ fn observe(file:std::fs::File,sender:std::sync::mpsc::Sender<(Snapshot,Duration)
         });
         Snapshot{menu:down(316),a:down(305),b:down(304),button_x:down(307),x:axes[2][0],y:axes[3][0],other,volume_up:down(115),volume_down:down(114)}
     };
-    if sender.send((snapshot(&keys,&axes),Duration::ZERO)).is_err(){return;}
-    // Change only this observer fd's timestamp clock, never the device grab.
-    let monotonic:libc::c_int=libc::CLOCK_MONOTONIC;
-    unsafe{libc::ioctl(fd,0x400445a0u64,&monotonic);}
-    let mut events:[libc::input_event;64]=unsafe{std::mem::zeroed()};
+    let mut previous=snapshot(&keys,&axes);
+    if sender.send((previous,Duration::ZERO)).is_err(){return;}
+    let started=std::time::Instant::now();
     while !stop.load(std::sync::atomic::Ordering::Relaxed) {
-        let mut poll=libc::pollfd{fd,events:libc::POLLIN,revents:0};
-        let ready=unsafe{libc::poll(&mut poll,1,25)};
-        if ready<0 {if std::io::Error::last_os_error().kind()==std::io::ErrorKind::Interrupted{continue;}break;}
-        if ready==0{continue;}
-        if poll.revents&(libc::POLLERR|libc::POLLHUP|libc::POLLNVAL)!=0{break;}
-        let count=unsafe{libc::read(fd,events.as_mut_ptr().cast(),std::mem::size_of_val(&events))};
-        if count<=0{break;}
-        for event in events.iter().take(count as usize/std::mem::size_of::<libc::input_event>()) {
-            let changed=match event.type_ {
-                1 if event.value!=2 && usize::from(event.code)<768=>{
-                    let code=usize::from(event.code);if event.value>0{keys[code/8]|=1<<(code%8);}else{keys[code/8]&=!(1<<(code%8));}true
-                },
-                3=>{if let Some(i)=[0u16,1,16,17].iter().position(|code|*code==event.code){axes[i][0]=event.value;keys[316/8]&(1<<(316%8))!=0}else{false}},
-                // Reconnect/resync rather than inventing a tap after dropped events.
-                0 if event.code==3=>return,
-                _=>false,
-            };
-            if changed {
-                let at=Duration::from_secs(event.time.tv_sec.max(0) as u64)+Duration::from_micros(event.time.tv_usec.max(0) as u64);
-                if sender.send((snapshot(&keys,&axes),at)).is_err(){return;}
+        // Independent of the Flash/render thread: a 40ms Menu tap survives a
+        // long VM frame. Query state instead of reading Leaf's grabbed stream.
+        std::thread::sleep(Duration::from_millis(4));
+        if unsafe{libc::ioctl(fd,0x80604518u64,&mut keys)}<0 {break;}
+        let menu=keys[316/8]&(1<<(316%8))!=0;
+        if menu || previous.menu {
+            for (i,code) in [0u64,1,16,17].into_iter().enumerate() {
+                if unsafe{libc::ioctl(fd,0x80184540u64+code,&mut axes[i])}<0{return;}
             }
+        }
+        let current=snapshot(&keys,&axes);
+        if current!=previous {
+            if sender.send((current,started.elapsed())).is_err(){return;}
+            previous=current;
         }
     }
 }
