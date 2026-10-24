@@ -142,6 +142,7 @@ struct Frontend {
     resumed: bool,
     started: Instant,
     diagnostic: bool,
+    scripted_input: bool,
     ticks: u64,
 }
 
@@ -258,9 +259,15 @@ impl Frontend {
         }
     }
     fn poll_chords(&mut self) {
-        let snapshot=self.menu_device.snapshot(); self.menu_held=snapshot.menu;
-        for command in self.chords.update(snapshot) {
+        for (snapshot,at) in self.menu_device.drain() {
+        self.menu_held=snapshot.menu;
+        for command in self.chords.update_at(snapshot,at) {
+            if command==session::shortcuts::Command::MenuTap {
+                println!("leaf-session physical_menu_tap");self.toggle_menu();continue;
+            }
             if self.state.paused {continue;}
+            let consumed=match command {session::shortcuts::Command::Previous=>Some(Button::A),session::shortcuts::Command::Next=>Some(Button::B),session::shortcuts::Command::SwapDirections=>Some(Button::X),session::shortcuts::Command::Drag=>Some(Button::DPadDown),_=>None};
+            if let Some(button)=consumed {self.blocked.insert(button as u8);}
             // The buttons used for a Menu chord must not remain held in Flash.
             for button in DPAD.into_iter().chain([Button::A,Button::B,Button::X]) {
                 let released=self.state.release(Source::Controller(button as u8)); self.emit(released,false);
@@ -275,7 +282,9 @@ impl Frontend {
                     self.toast(if self.state.directions_swapped {"十字键 ↔ 摇杆：已互换（本次）"} else {"十字键 ↔ 摇杆：已恢复"}.into());
                 },
                 Command::Drag => { if self.can_game_input() {let transitions=self.state.toggle_drag(); self.emit(transitions,false); self.toast(if self.state.drag_locked {"鼠标左键保持：开"} else {"鼠标左键保持：关"}.into());} }
+                Command::MenuTap=>{},
             }
+        }
         }
     }
 
@@ -441,12 +450,16 @@ impl Frontend {
         if button != Button::Guide && (self.menu_held || self.blocked.contains(&(button as u8))) {
             self.blocked.insert(button as u8); return;
         }
-        if !self.state.mark_down(source) { return; }
         if button == Button::Guide {
+            // The physical observer owns Menu taps when available. Leaf's
+            // synthetic Guide events must neither duplicate a tap nor acquire
+            // a game-held source whose release can be lost after a chord.
+            if self.menu_device.available()&&!self.scripted_input {return;}
             println!("leaf-session guide_received");
             self.toggle_menu();
             return;
         }
+        if !self.state.mark_down(source) { return; }
         if self.state.paused {
             if self.state.experience.page!=ExperiencePage::Home {
                 let nav=match button{
@@ -702,7 +715,7 @@ pub async fn run() -> Result<(), String> {
         progress,settings_path,movie_size,display_size:size,restart_slot:None,
         menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), blocked:Default::default(),
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,
-        quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots, ticks: 0,
+        quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots || opt.self_test_experience, scripted_input: opt.self_test_slots || opt.self_test_experience, ticks: 0,
     };
     let mut controller: Option<sdl2::controller::GameController> = None;
     let mut pump = sdl.event_pump()?;
@@ -816,7 +829,7 @@ pub async fn run() -> Result<(), String> {
                         Ok(pad) => {
                             println!("leaf-input controller={} mapping={}", pad.name(), pad.mapping());
                             for raw in BUTTONS {
-                                if pad.button(raw) { front.state.mark_down(Source::Controller(normalize_button(raw, swap) as u8)); }
+                                if raw!=Button::Guide && pad.button(raw) { front.state.mark_down(Source::Controller(normalize_button(raw, swap) as u8)); }
                             }
                             front.state.stick = (pad.axis(Axis::LeftX), pad.axis(Axis::LeftY));
                             front.state.require_neutral();
@@ -913,7 +926,7 @@ pub async fn run() -> Result<(), String> {
             let mut physical = Vec::new();
             if let Some(pad) = &controller {
                 for raw in BUTTONS {
-                    if pad.button(raw) { physical.push(Source::Controller(normalize_button(raw, swap) as u8)); }
+                    if raw!=Button::Guide && pad.button(raw) { physical.push(Source::Controller(normalize_button(raw, swap) as u8)); }
                 }
                 for (index, axis) in [(0, Axis::TriggerLeft), (1, Axis::TriggerRight)] {
                     if pad.axis(axis) > 8000 { physical.push(Source::Trigger(index)); }
