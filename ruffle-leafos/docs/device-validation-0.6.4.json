@@ -1,0 +1,13 @@
+{
+  "version": "0.6.4",
+  "status": "pending-physical-device-validation",
+  "requested_device": "192.168.137.47:5555",
+  "host_tests_passed": 71,
+  "arm64_release_build": "passed",
+  "last_confirmed_installed_version": "0.6.3",
+  "not_installed_by_this_iteration": true,
+  "earlier_candidate_physical_test": "failed: Menu event reader could not receive events under Leaf EVIOCGRAB; consequently turbo test did not run through the intended editor",
+  "correction": "Independent 4ms EVIOCGKEY/ABS sampling thread, built and host tested; physical retest pending",
+  "network": "ADB 5555 and SSH 22 timed out; computer is 192.168.137.1/24",
+  "runtime_sha256": "d3069ce4b63e985a84dfe469a4b2c29c0662b87d5ab41acaebfa771cfc18fd43"
+}

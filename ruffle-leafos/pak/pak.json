@@ -1,13 +1,13 @@
 {
   "name": "Ruffle Leaf Preview",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "icon": "art/FLASH.png",
   "platform": "mlp1",
-  "pak_version": "0.6.3",
+  "pak_version": "0.6.4",
   "min_leaf_version": "0.13.0",
   "min_jawaka_version": "0.0.1",
   "type": "TOOL",
-  "description": "Ten per-game control schemes, a direct key editor grid, one global cursor appearance and Menu+X direction swap.",
+  "description": "Per-button hold turbo, reliable physical Menu taps after chords, and Leaf system volume feedback.",
   "provides": {
     "schema": 1,
     "systems": [
@@ -34,7 +34,7 @@
     "cores": [
       {
         "id": "ruffle_probe",
-        "display_name": "Ruffle Leaf 0.6.3 (development preview)",
+        "display_name": "Ruffle Leaf 0.6.4 (development preview)",
         "type": "path",
         "path": "emulators/ruffle-probe/launch-game.sh",
         "supports_menu": true,

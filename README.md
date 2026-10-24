@@ -2,6 +2,8 @@
 
 面向 Miniloong Pocket 1 的 Flash 播放器，当前为 **0.6.3 开发预览**。文档已按当前代码整理，更新于 2026-10-24。
 
+工作区已有 **0.6.4 待真机验收候选**：逐键连发、系统音量反馈及 Menu 输入修正；71 项主机测试和 ARM64 构建通过，设备连接恢复后继续验证。见 [本轮实施记录](ruffle-leafos/docs/input-refresh-20261024.md)。
+
 - [项目说明与构建](ruffle-leafos/README.md)
 - [使用说明](ruffle-leafos/docs/preview-0.6.3.md)：安装、操作、按键映射、原生进度和数据管理。
 - [实现效果](ruffle-leafos/docs/implementation-report.md)：功能结果、代码位置、真机截图和验证范围。
