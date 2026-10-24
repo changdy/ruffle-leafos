@@ -379,6 +379,7 @@ impl Frontend {
             MenuResult::SaveProgress => {self.flush_progress(true);},
             MenuResult::OpenSaves => {self.flush_progress(false);self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);},
             MenuResult::OpenSettings => {self.state.experience.open(ExperiencePage::Settings);},
+            MenuResult::OpenAbout => {self.state.experience.open(ExperiencePage::About);},
             MenuResult::None => {}
         }
         self.redraw = true;
@@ -470,7 +471,8 @@ impl Frontend {
             if self.state.experience.page!=ExperiencePage::Home {
                 let nav=match button{
                     Button::DPadUp=>Some(Nav::Up),Button::DPadDown=>Some(Nav::Down),Button::DPadLeft=>Some(Nav::Left),Button::DPadRight=>Some(Nav::Right),
-                    Button::A|Button::Start=>Some(Nav::A),Button::B|Button::Back=>Some(Nav::B),Button::Y=>Some(Nav::Y),_=>None};
+                    Button::A|Button::Start=>Some(Nav::A),Button::B|Button::Back=>Some(Nav::B),Button::Y=>Some(Nav::Y),
+                    Button::LeftShoulder=>Some(Nav::Prev),Button::RightShoulder=>Some(Nav::Next),_=>None};
                 if let Some(nav)=nav{self.experience_nav(nav);}return;
             }
             if self.state.controls.visible {
@@ -508,7 +510,8 @@ impl Frontend {
         if repeat || !self.state.mark_down(source) { return; }
         if self.state.paused&&self.state.experience.page!=ExperiencePage::Home {
             let nav=match key{Keycode::Up=>Some(Nav::Up),Keycode::Down=>Some(Nav::Down),Keycode::Left=>Some(Nav::Left),Keycode::Right=>Some(Nav::Right),
-                Keycode::Return|Keycode::Space=>Some(Nav::A),Keycode::Escape|Keycode::Backspace=>Some(Nav::B),Keycode::Y=>Some(Nav::Y),_=>None};
+                Keycode::Return|Keycode::Space=>Some(Nav::A),Keycode::Escape|Keycode::Backspace=>Some(Nav::B),Keycode::Y=>Some(Nav::Y),
+                Keycode::Q=>Some(Nav::Prev),Keycode::E=>Some(Nav::Next),_=>None};
             if let Some(nav)=nav{self.experience_nav(nav);}return;
         }
         if key == Keycode::Escape {

@@ -201,7 +201,24 @@ impl Settings {
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
-pub enum Page {#[default] Home,Saves,Settings,Manager,Confirm}
+pub enum Page {#[default] Home,Saves,Settings,Manager,Confirm,About}
+
+pub const ABOUT_TABS:[&str;2]=["项目背景","快捷键"];
+pub const SHORTCUTS:[(&str,&str);8]=[
+    ("M（Menu）","暂停 / 继续游戏"),
+    ("M + A / B","上一个 / 下一个按键方案"),
+    ("M + X","互换十字键与摇杆方向（本次）"),
+    ("M + 十字下","开关鼠标左键保持"),
+    ("音量键 / M + 音量键","系统音量 / 屏幕亮度"),
+    ("按键设置 · L / R","切换方案；主菜单用左右键"),
+    ("动作选择 · L / R","切换动作分类"),
+    ("编辑宫格 · Y","连发：关 / 5 / 10 / 15 次每秒"),
+];
+pub const BACKGROUND:[(&str,&str,&str);3]=[
+    ("为掌机游玩 Flash", "面向迷你龙 Miniloong Pocket 1 / LeafOS 的 Flash 播放器。", "使用 Ruffle 播放本地 SWF，提供掌机按键、鼠标与游戏进度。"),
+    ("项目来源", "基于 aweigit/ruffle-miyooflip 进行适配，播放核心来自 Ruffle。", "菜单参考 Leaf / Jawaka，跟随系统主题；提供十组按键方案。"),
+    ("开源与许可", "Ruffle：MIT / Apache-2.0；Leaf / Jawaka 菜单参考：MIT。", "完整许可与第三方声明随安装包附带。"),
+];
 #[derive(Clone,Debug)]
 pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,Clear(usize),Quit}
 #[derive(Clone,Debug)]
@@ -236,20 +253,29 @@ pub struct Ui {
     pub app:bool,pub started:bool,pub title:String,pub message:String,pub settings:Settings,
     pub games:Vec<Entry>,pub game_index:usize,pub pending:usize,
     pub fps:f64,pub target_fps:f64,
+    pub about_tab:usize,
 }
 impl Ui {
-    pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();}
+    pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::About{self.about_tab=0;}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Ruffle · 数据管理".into(),Page::Confirm=>"确认操作".into()
+        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Ruffle · 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"关于 Ruffle Leaf".into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),
         Page::Settings=>self.settings.rows(),
         Page::Manager=>vec![format!("游戏：  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or("暂无记录")),"清空此游戏的五个存档".into(),"重置此游戏的按键配置".into(),"清空所有游戏存档".into(),"重置所有按键配置".into(),"返回 Leaf".into()],
-        Page::Confirm=>vec!["取消".into(),"确认".into()]
+        Page::Confirm=>vec!["取消".into(),"确认".into()],Page::About=>vec![]
     }}
     pub fn nav(&mut self,nav:super::controls::Nav)->Command{
         use super::controls::Nav;
+        if self.page==Page::About {
+            match nav {
+                Nav::Left|Nav::Prev=>self.about_tab=(self.about_tab+ABOUT_TABS.len()-1)%ABOUT_TABS.len(),
+                Nav::Right|Nav::Next=>self.about_tab=(self.about_tab+1)%ABOUT_TABS.len(),
+                Nav::A|Nav::B=>self.open(Page::Home),_=>{}
+            }
+            return Command::None;
+        }
         let count=self.rows().len();
         match nav {
             Nav::Up=>self.selected=(self.selected+count-1)%count,
@@ -333,6 +359,17 @@ mod tests {
         u.started=true;u.active=0;u.open(Page::Saves);u.selected=1;assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Confirm);assert_eq!(u.selected,0);
         assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Saves);
         u.selected=1;u.nav(Nav::Y);assert_eq!(u.page,Page::Confirm);u.selected=1;assert!(matches!(u.nav(Nav::A),Command::Copy(1)));
+    }
+    #[test] fn about_tabs_wrap_and_return_without_changing_settings_or_progress(){
+        use super::super::controls::Nav;
+        let mut u=Ui::default();u.started=true;u.active=3;u.settings.scale=2;let original=u.settings;
+        u.open(Page::About);assert_eq!(u.about_tab,0);
+        for nav in [Nav::Left,Nav::Right,Nav::Prev,Nav::Next] {assert!(matches!(u.nav(nav),Command::None));}
+        assert_eq!(u.about_tab,0);u.nav(Nav::Next);assert_eq!(u.about_tab,1);
+        u.nav(Nav::Up);u.nav(Nav::Down);assert_eq!(u.about_tab,1);
+        assert!(matches!(u.nav(Nav::B),Command::None));assert_eq!(u.page,Page::Home);
+        u.open(Page::About);assert_eq!(u.about_tab,0);u.nav(Nav::A);assert_eq!(u.page,Page::Home);
+        assert_eq!(u.active,3);assert_eq!(u.settings,original);
     }
     #[test] fn calendar_is_explicit_china_time(){assert_eq!(date(0),"1970-01-01 08:00:00");assert_eq!(date(1709164800),"2024-02-29 08:00:00");}
 }
