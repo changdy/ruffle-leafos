@@ -1,20 +1,18 @@
 # Ruffle LeafOS 工作区
 
-面向 Miniloong Pocket 1 的 Flash 播放器，当前为 **0.6.4 开发预览**。文档已按当前代码整理，更新于 2026-10-24。
+面向迷你龙 Miniloong Pocket 1 的 Flash 播放器，当前为 **0.6.5 开发预览**。更新于 2026-10-24。
 
+本轮结果：
 
-- [项目说明与构建](ruffle-leafos/README.md)
-- [使用说明](ruffle-leafos/docs/preview-0.6.4.md)：安装、操作、按键映射、原生进度和数据管理。
-- [实现效果](ruffle-leafos/docs/implementation-report.md)：功能结果、代码位置、真机截图和验证范围。
-- [TODO](ruffle-leafos/docs/todo.md)：已完成事项及剩余工作。
-- [文档目录](ruffle-leafos/docs/README.md)：当前需求、格式说明及历史记录。
+- 声音统一使用机身音量键控制，菜单仅保留画面设置。
+- 子菜单统一暂停菜单主题，按键与动作选择保留宫格。
+- “按键设置”合并方案选择和编辑，L/R 切换十组方案，独立保存/返回，未保存修改在切换或退出前提示处理。
 
-当前交付位于 [outputs/ruffle-0.6.4/](outputs/ruffle-0.6.4/)，含安装包、源码包、校验和与真机证据。版本化交付保留发布时的文档快照；本轮五项实现、逐项提交和设备验证见项目实施记录。
+文档与交付：
 
-## Git 管理范围
-
-仓库位于工作区根目录，纳入 `ruffle-leafos/` 中的代码、工程配置、测试、文档、依赖锁文件、vendor 参考源码，以及构建和打包所需的 `runtime/leaf-12/`、`target-libs/`。`player/` 和 `vendor/` 的源码以普通文件快照保存；本机已有的内嵌 Git 数据保留，不作为 submodule 提交。源码来源见 [leaf-source.lock.json](ruffle-leafos/leaf-source.lock.json) 和适配工程内的来源锁文件。
-
-工具链、构建缓存、历史工作副本、交付包和设备传输清单位于 `.gitignore` 排除的目录中，继续保留在本机。新克隆需按[构建说明](ruffle-leafos/README.md#构建与验证)准备工具和 Cargo 依赖；`outputs/` 中的历史发布及验证证据需另外保存或获取。
-
-`.gitattributes` 保留源码原始字节，避免自动换行转换使锁定的 SHA-256 失效，并为 Shell 脚本指定 LF。首次提交使用 `main` 分支，暂不配置 remote。
+- [使用说明](ruffle-leafos/docs/preview-0.6.5.md)
+- [本轮结果与验证](ruffle-leafos/docs/menu-refresh-20261024.md)
+- [全部实现结果](ruffle-leafos/docs/implementation-report.md)
+- [TODO](ruffle-leafos/docs/todo.md)
+- [项目构建](ruffle-leafos/README.md) · [文档目录](ruffle-leafos/docs/README.md) · [工作区索引](ruffle-leafos/docs/workspace-index.md)
+- [0.6.5 安装包、源码包与验证证据](outputs/ruffle-0.6.5/)
