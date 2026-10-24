@@ -388,58 +388,63 @@ impl PauseMenu {
 
     unsafe fn draw_controls(&mut self, state: &Session) {
         let controls = &state.controls;
-        self.quad((0.,0.,960.,720.),self.palette[0],None);
-        self.live_label(0, controls.title(),36.,65.,40.,self.palette[1]);
+        use crate::session::controls::{Page,CATEGORIES,GRID_COLS};
+        let subtitle=match controls.page {
+            Page::Edit=>"按键与摇杆 · A 修改 · Y 连发",
+            Page::Picker=>"L1 / R1 切换动作类型",
+            Page::Cursor=>"全局外观 · 所有游戏共用",
+            Page::Confirm=>"请选择确认或取消",
+        };
+        self.leaf_background(controls.title(),subtitle,"返回");
         if controls.page == crate::session::controls::Page::Cursor {
-            self.live_label(12,"预览",21.,735.,51.,self.palette[4]);
-            self.draw_cursor(controls.cursor_draft,(850.,61.));
+            self.live_label(12,"预览",21.,715.,98.,self.palette[4]);
+            self.draw_cursor(controls.cursor_draft,(850.,111.));
         }
         let lines = controls.lines();
-        use crate::session::controls::{Page,CATEGORIES,GRID_COLS};
         if controls.page==Page::Picker {
-            self.live_label_width(1,"L1",22.,18.,111.,52.,true,[0.85,0.91,0.96,1.]);
-            self.live_label_width(2,"R1",22.,890.,111.,52.,true,[0.85,0.91,0.96,1.]);
+            self.live_label_width(1,"L1",22.,18.,149.,52.,true,self.palette[1]);
+            self.live_label_width(2,"R1",22.,890.,149.,52.,true,self.palette[1]);
             for (i,name) in CATEGORIES.iter().enumerate() {
                 let x=77.+i as f32*90.;
-                self.quad((x,101.,84.,43.),if i==controls.category {self.palette[2]} else {self.palette[5]},None);
-                self.live_label_width(3+i,name,22.,x+4.,110.,76.,true,self.palette[if i==controls.category{3}else{1}]);
+                self.leaf_tile((x,139.,84.,43.),i==controls.category);
+                self.live_label_width(65+i,name,22.,x+4.,148.,76.,true,self.palette[if i==controls.category{3}else{1}]);
             }
-            let step=(420./lines.len().div_ceil(GRID_COLS) as f32).min(120.);
+            let step=(375./lines.len().div_ceil(GRID_COLS) as f32).min(100.);
             for (i,line) in lines.iter().enumerate() {
-                let x=45.+(i%GRID_COLS) as f32*176.; let y=165.+(i/GRID_COLS) as f32*step;
-                self.quad((x,y,166.,step-7.),if i==controls.row {self.palette[2]} else {self.palette[5]},None);
-                self.live_label_width(14+i,line,25.,x+9.,y+(step-7.-29.)/2.,148.,true,self.palette[if i==controls.row{3}else{1}]);
+                let x=45.+(i%GRID_COLS) as f32*176.; let y=193.+(i/GRID_COLS) as f32*step;
+                self.leaf_tile((x,y,166.,step-7.),i==controls.row);
+                self.live_label_width(80+i,line,25.,x+9.,y+(step-7.-29.)/2.,148.,true,self.palette[if i==controls.row{3}else{1}]);
             }
-            self.live_label(50,&controls.detail(),22.,45.,602.,self.palette[4]);
-            self.live_label(51,&controls.status,21.,45.,641.,[1.,0.8,0.4,1.]);
-            self.live_label(52,controls.hint(),22.,45.,679.,self.palette[4]);
+            self.live_label_width(54,&controls.detail(),22.,45.,576.,870.,false,self.palette[4]);
+            self.live_label_width(55,&controls.status,21.,45.,608.,870.,false,self.palette[1]);
             return;
         }
         if controls.page==Page::Edit {
             for (i,line) in lines.iter().enumerate() {
-                let x=45.+(i%GRID_COLS) as f32*176.; let y=104.+(i/GRID_COLS) as f32*78.;
+                let x=45.+(i%GRID_COLS) as f32*176.; let y=142.+(i/GRID_COLS) as f32*67.;
                 let color=self.palette[if i==controls.row{3}else{1}];
-                self.quad((x,y,166.,70.),if i==controls.row{self.palette[2]}else{self.palette[5]},None);
+                self.leaf_tile((x,y,166.,60.),i==controls.row);
                 if let Some((label,value))=line.split_once('：') {
-                    self.live_label_width(1+i*2,label,21.,x+9.,y+8.,148.,true,color);
-                    self.live_label_width(2+i*2,value,24.,x+9.,y+35.,148.,true,color);
-                } else { self.live_label_width(1+i*2,line,23.,x+9.,y+23.,148.,true,color); }
+                    self.live_label_width(80+i*2,label,21.,x+9.,y+4.,148.,true,color);
+                    self.live_label_width(81+i*2,value,24.,x+9.,y+29.,148.,true,color);
+                } else { self.live_label_width(80+i*2,line,23.,x+9.,y+18.,148.,true,color); }
             }
-            self.live_label_width(54,&format!("方案 {} · {}",controls.game_slot+1,if state.directions_swapped {"本次方向已互换 · M+X 恢复".into()} else {controls.detail()}),21.,45.,594.,870.,true,self.palette[4]);
-            self.live_label_width(55,&controls.status,21.,45.,636.,870.,true,[1.,0.8,0.4,1.]);
-            self.live_label_width(56,controls.hint(),22.,45.,679.,870.,true,self.palette[4]);
+            self.live_label_width(54,&format!("方案 {} · {}",controls.game_slot+1,if state.directions_swapped {"本次方向已互换 · M+X 恢复".into()} else {controls.detail()}),21.,45.,562.,870.,false,self.palette[4]);
+            self.live_label_width(55,&controls.status,21.,45.,595.,870.,false,self.palette[1]);
             return;
         }
-        let start = (controls.row/7)*7;
-        for (i,line) in lines.iter().enumerate().skip(start).take(7) {
-            let y = 116.+(i-start) as f32*60.;
-            if i == controls.row { self.quad((50.,y,860.,55.),self.palette[2],None); }
-            self.live_label(1+i-start,line,28.,70.,y+10.,self.palette[if i==controls.row{3}else{1}]);
+        for (i,line) in lines.iter().enumerate() {
+            self.leaf_row(1+i,line,143.+i as f32*59.,55.,i==controls.row);
         }
-        self.live_label(8,&format!("{} / {}",controls.row+1,lines.len()),20.,790.,560.,self.palette[4]);
-        self.live_label(9,&controls.detail(),21.,65.,598.,self.palette[4]);
-        self.live_label(10,&controls.status,21.,65.,636.,[1.,0.8,0.4,1.]);
-        self.live_label(11,controls.hint(),21.,65.,679.,self.palette[4]);
+        self.live_label_width(54,&controls.detail(),21.,23.,535.,910.,false,self.palette[4]);
+        self.live_label_width(55,controls.hint(),21.,23.,570.,910.,false,self.palette[4]);
+        self.live_label_width(56,&controls.status,21.,23.,605.,910.,false,self.palette[1]);
+    }
+
+    unsafe fn leaf_tile(&self,rect:(f32,f32,f32,f32),selected:bool) {
+        let radius=if selected{rect.3/2.*[1.,0.25,0.,1.][self.pill_shape as usize]}else{10.};
+        let corners=if selected&&self.pill_shape==3{[false,true,false,true]}else{[true;4]};
+        self.rounded_corners(rect,radius,self.palette[if selected{2}else{5}],corners);
     }
 
     /// Diagnostic-only framebuffer readback, never called during normal play.
