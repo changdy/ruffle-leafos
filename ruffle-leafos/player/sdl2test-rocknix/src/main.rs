@@ -236,6 +236,8 @@ struct Opt {
     progress_slot: Option<u8>,
     #[arg(long)]
     self_test_experience: bool,
+    #[arg(long)]
+    trace_input: bool,
     #[arg(long, aliases=["self-test-controls","self-test-cursor","self-test-menu","self-test-profiles"])]
     self_test_slots: bool,
     #[clap(long)]

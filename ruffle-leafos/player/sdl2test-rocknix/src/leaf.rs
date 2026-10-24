@@ -129,6 +129,7 @@ struct Frontend {
     chords: session::shortcuts::Chords,
     menu_held: bool,
     repeater: Repeater,
+    system_volume: session::system_volume::Monitor,
     blocked: std::collections::BTreeSet<u8>,
     state: Session,
     active: ActivePlayer,
@@ -261,6 +262,7 @@ impl Frontend {
     fn poll_chords(&mut self) {
         for (snapshot,at) in self.menu_device.drain() {
         self.menu_held=snapshot.menu;
+        self.system_volume.observe(snapshot.volume_up,snapshot.volume_down,snapshot.menu,self.started.elapsed());
         for command in self.chords.update_at(snapshot,at) {
             if command==session::shortcuts::Command::MenuTap {
                 println!("leaf-session physical_menu_tap");self.toggle_menu();continue;
@@ -286,6 +288,7 @@ impl Frontend {
             }
         }
         }
+        if !self.menu_device.available() {self.menu_held=false;}
     }
 
     fn controls_nav(&mut self, nav: Nav) {
@@ -713,9 +716,9 @@ pub async fn run() -> Result<(), String> {
     let swap = std::env::var("RUFFLE_SWAP_AB").map(|s| s == "1").unwrap_or(true);
     let mut front = Frontend {
         progress,settings_path,movie_size,display_size:size,restart_slot:None,
-        menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), blocked:Default::default(),
+        menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), system_volume:session::system_volume::Monitor::new(), blocked:Default::default(),
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,
-        quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots || opt.self_test_experience, scripted_input: opt.self_test_slots || opt.self_test_experience, ticks: 0,
+        quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots || opt.self_test_experience || opt.trace_input, scripted_input: opt.self_test_slots || opt.self_test_experience, ticks: 0,
     };
     let mut controller: Option<sdl2::controller::GameController> = None;
     let mut pump = sdl.event_pump()?;
@@ -820,6 +823,11 @@ pub async fn run() -> Result<(), String> {
             push_button(&events,Button::Guide,swap)?;push_button(&events,Button::DPadUp,swap)?;push_button(&events,a,swap)?;script_phase+=1;
         }
         front.poll_chords();
+        if let Some(level)=front.system_volume.poll(front.started.elapsed()) {
+            if front.state.system_volume.as_ref().is_none_or(|(old,_)|*old!=level) {println!("leaf-volume system_percent={level} source=leaf");}
+            front.state.system_volume=Some((level,Instant::now()));front.redraw=true;
+        }
+        if front.state.system_volume.as_ref().is_some_and(|(_,at)|at.elapsed()>=Duration::from_millis(1500)) {front.state.system_volume=None;front.redraw=true;}
         if front.state.toast.as_ref().is_some_and(|(_,at)|at.elapsed()>=Duration::from_secs(3)) {front.state.toast=None;front.redraw=true;}
         for event in pump.poll_iter() {
             match event {
@@ -989,7 +997,7 @@ pub async fn run() -> Result<(), String> {
                     let mut p = front.active.player.lock().unwrap();
                     p.render();
                     drop(p);
-                    if front.state.experience.settings.fps || front.state.drag_locked || front.cursor_visible || front.state.toast.is_some() { menu.draw(size.0, size.1, &front.state, if front.cursor_visible {Some(front.cursor)} else {None}); }
+                    if front.state.experience.settings.fps || front.state.drag_locked || front.cursor_visible || front.state.toast.is_some() || front.state.system_volume.is_some() { menu.draw(size.0, size.1, &front.state, if front.cursor_visible {Some(front.cursor)} else {None}); }
                 }
                 if opt.self_test_slots {
                     if let Some(dir)=&opt.capture_dir {

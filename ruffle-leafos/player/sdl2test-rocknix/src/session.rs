@@ -13,6 +13,8 @@ pub mod shortcuts;
 pub mod experience;
 #[path = "turbo.rs"]
 pub mod turbo;
+#[path = "system_volume.rs"]
+pub mod system_volume;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Source {
@@ -163,6 +165,7 @@ pub enum MenuResult {
 }
 
 pub struct Session {
+    pub system_volume: Option<(u8,std::time::Instant)>,
     pub directions_swapped: bool,
     pub experience: experience::Ui,
     pub toast: Option<(String,std::time::Instant)>,
@@ -188,6 +191,7 @@ pub struct Session {
 impl Session {
     pub fn new(mode: InputMode) -> Self {
         Self {
+            system_volume: None,
             directions_swapped: false,
             experience: experience::Ui::default(),
             toast: None,

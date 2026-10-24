@@ -217,6 +217,10 @@ impl PauseMenu {
         } else if state.drag_locked {
             self.live_chip(61,"左键保持 · M+十字下解除",22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
         }
+        if let Some((level,_))=&state.system_volume {
+            let label=format!("系统音量 {}%{}",level,if state.experience.settings.mute||state.experience.settings.volume==0 {" · 游戏静音"}else{""});
+            self.live_chip(63,&label,23.,(600.,10.),350.,false,[0.96,0.99,1.,1.]);
+        }
         if let Some((message,_))=&state.toast {
                 self.live_chip(60,message,25.,(480.,658.),920.,true,[0.96,0.99,1.,1.]);
         }
