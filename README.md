@@ -1,6 +1,6 @@
 # Ruffle LeafOS 工作区
 
-面向迷你龙 Miniloong Pocket 1 的 Flash 播放器，当前为 **0.6.5 开发预览**。更新于 2026-10-24。
+面向迷你龙 Miniloong Pocket 1 的 Flash 播放器，当前为 **0.6.6 开发预览**。更新于 2026-10-24。
 
 本轮结果：
 
@@ -14,10 +14,10 @@
 
 文档与交付：
 
-- [使用说明](ruffle-leafos/docs/preview-0.6.5.md)
-- [本轮结果与验证](ruffle-leafos/docs/menu-refresh-20261024.md)
-- [菜单后续调整](ruffle-leafos/docs/menu-followup-20261024.md)
+- [使用说明](ruffle-leafos/docs/preview-0.6.6.md)
+- [本轮结果与验证](ruffle-leafos/docs/menu-followup-20261024.md)
+- [0.6.5 菜单调整](ruffle-leafos/docs/menu-refresh-20261024.md)
 - [全部实现结果](ruffle-leafos/docs/implementation-report.md)
 - [TODO](ruffle-leafos/docs/todo.md)
 - [项目构建](ruffle-leafos/README.md) · [文档目录](ruffle-leafos/docs/README.md) · [工作区索引](ruffle-leafos/docs/workspace-index.md)
-- [0.6.5 导航提示修订：安装包、源码包与验证证据](outputs/ruffle-0.6.5-navigation-hint/)
+- [0.6.6：安装包、源码包与验证证据](outputs/ruffle-0.6.6/)

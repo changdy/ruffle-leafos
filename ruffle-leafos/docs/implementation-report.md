@@ -1,6 +1,6 @@
 # 当前实现结果
 
-版本：**0.6.5 开发预览**。文档核对日期：2026-10-24。按当前源码、清单及已有发布验证记录整理；原 0.2.0 审计保存在 [历史交付](../../outputs/ruffle-0.2.0/implementation-report.md)。
+版本：**0.6.6 开发预览**。文档核对日期：2026-10-24。按当前源码、清单及已有发布验证记录整理；原 0.2.0 审计保存在 [历史交付](../../outputs/ruffle-0.2.0/implementation-report.md)。
 
 ## 已实现效果与代码
 
@@ -10,7 +10,8 @@
 | --- | --- | --- |
 | Leaf 接入 | Flash 分类选 SWF 启动；Apps 进入数据管理；最低 Leaf 0.13.0 | [pak.json](../pak/pak.json)、[游戏启动](../pak/emulators/ruffle-probe/launch-game.sh)、[Apps 启动](../pak/launch.sh) |
 | 暂停菜单 | 跟随 Leaf 生效主题及字体，叶片形选中条；暂停冻结 tick 与音频；恢复首帧时间重置 | [pause_menu.rs](../player/sdl2test-rocknix/src/pause_menu.rs)、[theme.sh](../pak/emulators/ruffle-probe/theme.sh)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) |
-| 按键编辑 | “按键设置”直接打开五列宫格，L/R 切换十组方案；实体键及摇杆动作、九类动作 Tab、逐键 Y 连发；独立保存/返回操作区，未保存切换或退出可选择继续编辑、舍弃、保存 | [controls.rs](../player/sdl2test-rocknix/src/controls.rs) |
+| 按键编辑 | “按键设置”主菜单左右即时换方案，A 打开五列宫格，编辑页 L/R 切换十组方案；实体键及摇杆动作、九类动作 Tab、逐键 Y 连发；独立保存/返回操作区，未保存切换或退出可选择继续编辑、舍弃、保存 | [controls.rs](../player/sdl2test-rocknix/src/controls.rs) |
+| 关于 | 项目背景与快捷键两个页签，左右/L/R 切换，A/B 返回；版本、来源及许可说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[pause_menu.rs](../player/sdl2test-rocknix/src/pause_menu.rs) |
 | 游戏快捷键 | M+A/B 循环切换映射，M+十字下切换左键保持，M+X 本次方向互换；切换释放旧输入并等待中立 | [shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs)、[session.rs](../player/sdl2test-rocknix/src/session.rs) |
 | 光标 | 所有游戏共用一份独立全局外观，映射 v5 不含光标字段；默认空心圆＋固定 1×1 中心点；四样式/七色/四尺寸，3.5 秒静止隐藏、移动恢复；旧 arrow 兼容读取 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs)、[controls.rs](../player/sdl2test-rocknix/src/controls.rs) |
 | 原生进度 | 每游戏 5 份 SharedObject 进度与北京时间；启动先选档、复制、保存后重启读另槽；内容指纹身份、校验、原子替换及有效备份回退 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) |
@@ -18,7 +19,9 @@
 | 数据管理 | 所选游戏/全部原生进度清理、按键重置；默认取消、确认后移入本地归档；Apps 不运行演示游戏 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) |
 | 构建与发布 | 固定公开源码、依赖与工具；ARM64 播放器、主机状态测试、清单/ELF/ZIP/指纹检查及源码打包 | [来源锁](../leaf-source.lock.json)、[构建脚本](../scripts/build_player.py)、[打包脚本](../scripts/package_preview.py) |
 
-操作和数据位置见 [使用说明](preview-0.6.5.md)，映射契约见 [格式 v5](controls-format-v5.md)。
+操作和数据位置见 [使用说明](preview-0.6.6.md)，映射契约见 [格式 v5](controls-format-v5.md)。
+
+0.6.6 本轮增加主菜单左右换方案、光标页调节鼠标速度及关于/快捷键。77 项主机回归、ARM64/GLES、隔离物理输入、正式游戏/Apps、用户配置保留与 593 文件安装校验通过，详见[本轮记录](menu-followup-20261024.md)。以下保留 0.6.5 的真机验收范围与截图。
 
 ## 真机效果
 

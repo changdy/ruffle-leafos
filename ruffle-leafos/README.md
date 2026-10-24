@@ -1,6 +1,6 @@
 # Ruffle LeafOS
 
-面向 Miniloong Pocket 1 的 Flash 播放器，当前版本 **0.6.5 开发预览**，已验证环境为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2。
+面向 Miniloong Pocket 1 的 Flash 播放器，当前版本 **0.6.6 开发预览**，已验证环境为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2。
 
 
 已实现每游戏 10 个按键方案、5 份 Flash 原生进度、画面设置、Apps 数据管理，以及所有游戏共用的空心圆加单像素中心点光标。按键编辑直接进入宫格，M+X 可在本次运行互换十字/摇杆方向；模板流程已移除。宫格内按 Y 可逐键设置 5/10/15 次每秒连发；声音统一由系统音量键调节并显示真实数值，已移除游戏音量和静音菜单。真实游戏体验、断电与休眠等验收仍在 [TODO](docs/todo.md)。
@@ -9,9 +9,11 @@
 
 子菜单已统一暂停菜单主题样式；“按键设置”合并方案选择和编辑，L/R 换方案，保存与返回使用独立操作区，切换/退出前提示处理未保存修改。本轮结果见[菜单与方案调整](docs/menu-refresh-20261024.md)。
 
+0.6.6 支持主菜单左右即时换方案，鼠标速度归入“鼠标光标”，“关于”集中项目背景与快捷键，见[本轮结果](docs/menu-followup-20261024.md)。
+
 | 阅读目的 | 文档 |
 | --- | --- |
-| 安装和使用 | [0.6.5 使用说明](docs/preview-0.6.5.md) |
+| 安装和使用 | [0.6.6 使用说明](docs/preview-0.6.6.md) |
 | 查看最终效果、代码位置和验证证据 | [实现结果](docs/implementation-report.md) |
 | 继续开发 | [当前需求](docs/requirements.md)、[TODO](docs/todo.md) |
 | 查数据格式和历史版本 | [文档目录](docs/README.md)、[版本摘要](docs/progress.md) |
@@ -40,7 +42,7 @@
 python scripts/build_player.py build --offline --isolated-config
 python scripts/test_session.py
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-0.6.5-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-0.6.6-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [实现结果](docs/implementation-report.md)。
@@ -63,4 +65,4 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 本机受管 Windows 上 GNU 编译器启动曾报 OS623，当前构建使用 Zig 的 Clang/LLD 配合 SDK 头文件和库，包装器生成在 `build/`。全新机器构建演练保留为待办。
 
-安装目录为 `/mnt/sdcard/Apps/mlp1/RuffleProbe.pak/`。原始 `ruffle.pak` 及各版交付保留；安装、数据路径和回滚注意事项见 [使用说明](docs/preview-0.6.5.md)。
+安装目录为 `/mnt/sdcard/Apps/mlp1/RuffleProbe.pak/`。原始 `ruffle.pak` 及各版交付保留；安装、数据路径和回滚注意事项见 [使用说明](docs/preview-0.6.6.md)。

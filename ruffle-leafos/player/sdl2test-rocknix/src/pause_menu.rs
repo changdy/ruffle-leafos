@@ -308,14 +308,18 @@ impl PauseMenu {
         self.rounded((20.,642.,315.,58.),29.,self.palette[5]);
         self.rounded((620.,642.,320.,58.),29.,self.palette[5]);
         self.rounded_corners((30.,650.,key_width,44.),22.,self.palette[2],[false,true,false,true]);
-        self.rounded_corners((630.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
-        self.rounded_corners((802.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
         self.live_label_width(46,arrows,35.,30.,651.,key_width-5.,true,self.palette[3]);
         self.live_label_width(47,hint,28.,label_x,655.,326.-label_x,false,self.palette[4]);
+        if matches!(navigation,FooterNavigation::Tabs) {
+            self.live_label_width(132,"B 返回",30.,644.,653.,272.,true,self.palette[4]);
+            return;
+        }
+        self.rounded_corners((630.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
+        self.rounded_corners((802.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
         self.live_label_width(48,"B",36.,636.,650.,36.,true,self.palette[3]);
         self.live_label_width(49,back_label,28.,678.,655.,122.,false,self.palette[4]);
         self.live_label_width(50,"A",36.,808.,650.,36.,true,self.palette[3]);
-        self.live_label_width(51,if matches!(navigation,FooterNavigation::Tabs){"返回"}else{"确定"},28.,854.,655.,76.,false,self.palette[4]);
+        self.live_label_width(51,"确定",28.,854.,655.,76.,false,self.palette[4]);
     }
     unsafe fn draw_experience(&mut self,state:&Session) {
         use crate::session::experience::Page;

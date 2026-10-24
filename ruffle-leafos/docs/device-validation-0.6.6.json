@@ -1,0 +1,41 @@
+{
+  "version": "0.6.6",
+  "date": "2026-10-24",
+  "device": "192.168.5.4:5555",
+  "runtime_sha256": "c1ce865b121a7a1d6ade27e266be72bf0f431cf0f67e53fcab2babc9f12ff335",
+  "feature_commits": {
+    "main_scheme_switch": "c092a6a",
+    "mouse_speed_in_cursor_page": "63a589d",
+    "about_and_shortcuts": "3356382"
+  },
+  "host_tests": 77,
+  "arm64_release_build": "passed",
+  "isolated_ARM_GLES_UI_regression": "passed",
+  "physical_input": [
+    "main_left_right_wrap_all_ten_and_A_editor_LR_switch=passed",
+    "cursor_page_speed_applies_immediately_reopen_keeps_and_does_not_save_appearance=passed",
+    "About_background_shortcuts_arrow_and_shoulder_navigation_return=passed",
+    "About_reopen_first_tab_A_return_and_normal_exit=passed"
+  ],
+  "formal_Leaf": [
+    "formal_real_game_editor_unsaved_guard_and_discard_preserve_config=passed",
+    "formal_cursor_page_and_runtime_mouse_speed=passed",
+    "formal_About_tabs_and_normal_exit_preserve_all_user_config=passed",
+    "formal_Apps_entry_exit_and_user_config_preservation=passed"
+  ],
+  "final_About_UI": {
+    "version": "0.6.6",
+    "runtime_sha256": "c1ce865b121a7a1d6ade27e266be72bf0f431cf0f67e53fcab2babc9f12ff335",
+    "About_pages_and_Back_footer": "passed",
+    "normal_exit": "passed"
+  },
+  "functional_validation_runtime_sha256": "5645652ee711db258d618d184f984a2177822c0a5267df21f70e9aecf8bdb672",
+  "final_change_since_functional_validation": "About footer rendering only; one Back hint",
+  "installed_files_verified": 593,
+  "user_configuration_preserved": true,
+  "backup": "/mnt/sdcard/.userdata/mlp1/ruffle-probe/debug-backups/20261024-followup-0.6.6/pak-0.6.5-navigation-hint",
+  "limits": [
+    "Broad human gameplay and listening acceptance remains pending",
+    "Power loss, suspend and long-duration testing remain pending"
+  ]
+}
