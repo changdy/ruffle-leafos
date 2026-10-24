@@ -1,0 +1,84 @@
+name: RetroAchievements account handoff
+
+# The standalone-ra-account-v1 producer (jawakad) and the RetroArch
+# per-launch account handoff:
+#
+#   1. ra-account-test: the checked DB save/clear/revision operations and the
+#      launch resolve that never hands out CONFIGURED without a revision.
+#   2. ra-account-launch-test: which resolved targets may receive the
+#      snapshot (bundled Flycast; DSperate by provider, core, launcher,
+#      id, pak_version >= 2.1.1 and its shipped ra-account-v1 record) and the
+#      child environment built from a stored account.
+#   3. ra-account-retroarch-test: stored rows -> JAWAKA_CHEEVOS_* ->
+#      cheevos_username/password in the generated RetroArch config.
+#   4. ra-account-contract-test: every fixture of the pinned leaf-contracts
+#      standalone-ra-account-v1 set, mapped to the producer's real input and
+#      run through the producer; each output is checked against the contract
+#      and classified by the pinned reference classifier.
+#   5. ra-account-env-ipc-smoke: a real jawakad; the environment each launched
+#      child actually got (authorized, unauthorized, spoofed, app, service,
+#      DSperate grant and refusals).
+#   6. settings-account-test: Settings > Accounts shows an invalid stored
+#      account as not saved, never as a truncated name.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  producer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Jawaka
+        uses: actions/checkout@v4
+        with:
+          path: Jawaka
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libsqlite3-dev sqlite3
+
+      - name: DB, authorization and RetroArch handoff tests
+        run: make -C Jawaka ra-account-test ra-account-launch-test ra-account-retroarch-test
+
+      # Pinned to leaf-contracts main (PR #9's merge). A contract change bumps
+      # this ref, and the sha256 below plus RA_ACCOUNT_FIXTURES_SHA256 in the
+      # Makefile if the fixtures changed, as one reviewed change. Never a
+      # branch name.
+      - name: Check out the pinned service contracts
+        uses: actions/checkout@v4
+        with:
+          repository: Utility-Muffin-Research-Kitchen/leaf-contracts
+          ref: f7c25c6b27ac79beb9ee08b0b4fdde54375df081
+          path: leaf-contracts
+
+      - name: Verify the pinned fixtures
+        run: |
+          echo "981a98efb4f55598918e410d6a443fb2ddf0330e2ee46138175b9cb53d18d534  leaf-contracts/contracts/leaf-services/standalone-ra-account-v1/fixtures.json" |
+            sha256sum -c -
+
+      - name: Replay the contract fixtures through the producer
+        run: make -C Jawaka WORKSPACE_ROOT="$GITHUB_WORKSPACE" ra-account-contract-test
+
+      - name: Real-daemon child environment smoke
+        run: make -C Jawaka ra-account-env-ipc-smoke
+
+  settings-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: Jawaka
+      - name: Check out the pinned UI toolkit
+        uses: actions/checkout@v4
+        with:
+          repository: Utility-Muffin-Research-Kitchen/Catastrophe
+          ref: d06f22cd9919fb516749018fe5cd9bf942fc3fef
+          path: Catastrophe
+      - name: Install native renderer dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsqlite3-dev libcurl4-openssl-dev
+      - name: Settings account row reads the validated account
+        run: make -C Jawaka settings-account-test

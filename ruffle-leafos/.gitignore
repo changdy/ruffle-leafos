@@ -1,0 +1,7 @@
+/.tools/
+/build/
+/**/target/
+/**/build/
+/**/__pycache__/
+/workspace.local.json
+*.part

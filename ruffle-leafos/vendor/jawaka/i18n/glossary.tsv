@@ -1,0 +1,68 @@
+# Leaf zh_CN glossary -- confirmed by AlexL 2026-08-12.
+# Column D proposals with his ✓, or his correction from column E.
+# Constrains every seed and review pass; do not retranslate these terms casually.
+Core	核心
+Emulator	模拟器
+Standalone emulator	独立模拟器
+Frontend	前端
+Save State	即时存档
+Load State	即时读档
+Save Slot	存档位
+Scrape / Scrape Artwork	刮削 / 刮削封面
+Scrape Queue	刮削队列
+Game Art	游戏封面
+Artwork Priority	封面优先级
+Region Priority	区域优先级
+Shader	着色器
+Overlay	叠加层
+Refresh Rate	刷新率
+Black Frame Insertion	黑帧插入
+Rumble	震动
+Rumble Strength	震动强度
+Hotkey	快捷键
+Deadzone	死区
+D-pad	十字键
+Analog stick	摇杆
+Firmware	固件
+Custom firmware	定制系统
+Stock (system)	原厂系统
+Exit to Stock	退出到原厂系统
+Recovery	恢复原系统
+Update Channel	更新通道
+Stable / Beta	稳定版 / 测试版
+Check Releases	检查更新
+Install / Download	安装 / 下载
+Library	游戏库
+Rescan	重新扫描
+Recents	最近游玩
+Favorites	收藏
+Playtime	游玩时长
+Screenshots	截图
+Recording	录制
+5-Game Mode	精选游戏模式
+Boot Splash	开机动画
+Cover Flow / Coverflow	封面流
+Theme	主题
+Color Scheme	配色方案
+Status Bar	状态栏
+Button Hints	按键提示
+Home Layout	主页布局
+List Style	列表样式
+Tab Switching: Glide / Snap	标签切换：滑动 / 直接切换
+Startup Tab	启动标签
+Home Tabs	主页标签
+Cursor Movement	光标移动
+Auto Sleep	自动休眠
+Game Performance	游戏性能
+System (console)	系统
+Arcade	街机
+Bluetooth	蓝牙
+Unavailable	不可用
+Leaf / Jawaka	(keep English)
+RetroArch / RetroAchievements	(keep English)
+PicoDrive, mGBA, snes9x...	(keep English)
+Fugazi, Central Scrutinizer, Joe's Calibrage, Disco Boy, Nimbus	(keep English)
+Pak	(keep English)
+ROM / BIOS / ADB / HDMI / Wi-Fi	(keep English)
+CPU / GPU / DMC	(keep English)
+Source Han Sans	(keep English)

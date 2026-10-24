@@ -1,0 +1,36 @@
+name: Launch core selection
+
+# Which core a library launch uses when the player has not picked one:
+#
+#   1. core-selection-test covers the order with stub availability: a usable
+#      saved choice, then default_core, and alternate_cores (in declared
+#      order, whatever their type) only when the default is unavailable. It
+#      also covers game-over-system masking and all candidates unavailable.
+#   2. standalone-policy-test covers the release content restrictions that
+#      make a path core unavailable for some formats.
+#   3. perf-policy-test covers the AUTO governor-profile rule: the Dreamcast
+#      family (DC, NAOMI, ATOMISWAVE) always runs in performance, whichever
+#      session/game/system/global profile was requested, while other systems
+#      keep the player's override; AUTO boosts every game above 60 Hz.
+#
+# scripts/phase3-core-choice-smoke.sh repeats the order against real per-core
+# availability on a fixture card; run it locally when changing the resolver.
+# scripts/performance-dreamcast-ipc-smoke.sh does the same for the governor
+# policy against a real jawakad on the mock platform.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make core-selection-test
+      - run: make standalone-policy-test
+      - run: make perf-policy-test

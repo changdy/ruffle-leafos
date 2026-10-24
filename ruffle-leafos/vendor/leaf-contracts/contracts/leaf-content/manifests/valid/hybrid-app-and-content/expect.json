@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "note": "PortMaster's shape: contributes content AND has an executable launch.sh, so it is listed in Apps too",
+  "apps_listed": true
+}

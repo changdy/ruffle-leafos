@@ -1,0 +1,36 @@
+{
+  "$comment": "PKG-1 core-app quiesce ordering (contracts.md#pkg-1--core-app-quiesce), for release-managed content replaced under Leaf's own control (OTA payload swap, make stage-app). Same fixture shape as txn1-ordering.json so B4a's tests can share a runner.",
+  "steps": [
+    {
+      "step": 1,
+      "name": "snapshot-desired-and-effective-state",
+      "action": "Snapshot desired and effective state for every service.",
+      "if_crash_here": "Nothing changed; a fresh operation re-snapshots."
+    },
+    {
+      "step": 2,
+      "name": "stop-and-verify",
+      "action": "Stop every affected service with the SVC-1 stop sequence; verify absence.",
+      "if_crash_here": "An unverified stop, or a still-locked stale-generation lease, fails the operation outright. Bytes are never changed under a live process."
+    },
+    {
+      "step": 3,
+      "name": "block-new-starts",
+      "action": "Block new service starts and package-owned foreground launches for the duration.",
+      "if_crash_here": "Block is process-lifetime state; a crash here simply ends the operation before step 4, no payload touched."
+    },
+    {
+      "step": 4,
+      "name": "replace-payload",
+      "action": "Replace the payload. Atomicity of the payload swap itself belongs to Leaf's updater (or the stage-app script for development), not to PKG-1.",
+      "if_crash_here": "Recovery is the updater's own responsibility -- PKG-1 has no journal and no rollback sibling of its own."
+    },
+    {
+      "step": 5,
+      "name": "rescan-and-restore",
+      "action": "Rescan manifests; restore desired state; start services whose desired intent is enabled and whose manifest still validates.",
+      "if_crash_here": "Re-running rescan-and-restore is idempotent: it starts exactly the services whose desired intent is enabled and whose manifest currently validates, regardless of how many times it is interrupted and re-run."
+    }
+  ],
+  "invariant": "Step 2's verified absence is the only thing that licenses step 4. There is no journal because the updater owns payload atomicity; PKG-1's contribution is purely the quiesce/restore bracket around it."
+}

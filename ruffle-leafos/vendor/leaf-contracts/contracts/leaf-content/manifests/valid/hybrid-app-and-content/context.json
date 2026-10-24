@@ -1,0 +1,5 @@
+{
+  "install_lane": "platform",
+  "source_id": "primary",
+  "launch_sh_executable": true
+}

@@ -1,0 +1,10 @@
+[package]
+name = "flv-rs"
+version.workspace = true
+authors = ["David Wendt <dcrkid@gmail.com>"]
+edition.workspace = true
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+bitflags = { workspace = true }
+thiserror = { workspace = true }

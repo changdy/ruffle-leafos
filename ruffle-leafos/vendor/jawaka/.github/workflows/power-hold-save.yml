@@ -1,0 +1,56 @@
+name: Power-hold save policy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - run: make power-hold-save-test boot-resume-test states-core-test retroarch-command-test
+
+  # A real jawakad on the mock platform with scripted power-key edges and a
+  # fake RetroArch; separate so an apt hiccup cannot fail the pure tests.
+  ipc-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libcurl4-openssl-dev
+      - run: make power-hold-save-ipc-smoke
+
+  # Resume Game on Boot: boot A arms with a real power-hold save, then each
+  # acceptance row is a second boot of the same card against a fake RetroArch.
+  boot-resume-ipc-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libcurl4-openssl-dev
+      - run: make boot-resume-ipc-smoke
+
+  # The Save Before Power Off and Resume Game on Boot rows run through the UI
+  # toolkit. Pinned at Catastrophe #18 rather than the launch-notice pin: the
+  # same test's layout check reloads a font onto itself, which loses its path
+  # on Linux before that fix. (The OSD stage tests already run in the PICO-8
+  # workflow.)
+  settings-ui-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: Jawaka
+      - name: Check out the pinned UI toolkit
+        uses: actions/checkout@v4
+        with:
+          repository: Utility-Muffin-Research-Kitchen/Catastrophe
+          ref: cb2bdffa2c6b51b2fdb49262bc1efeddf87e0db1
+          path: Catastrophe
+      - name: Install native UI dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsqlite3-dev libcurl4-openssl-dev
+      - run: make -C Jawaka settings-status-test

@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "missing-file",
+  "note": "the stamp fingerprints every declared file, so a declaration the compiler cannot verify is refused up front"
+}

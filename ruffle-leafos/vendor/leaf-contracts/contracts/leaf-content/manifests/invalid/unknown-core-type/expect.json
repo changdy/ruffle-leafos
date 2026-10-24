@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "unknown-core-type",
+  "note": "the two types are retroarch and path"
+}

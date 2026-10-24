@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "malformed-patterns",
+  "note": "a system with no pattern can never match a ROM folder"
+}

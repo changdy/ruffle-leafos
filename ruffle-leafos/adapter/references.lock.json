@@ -1,0 +1,16 @@
+{
+  "ScummVM-pak": {
+    "url": "https://github.com/Utility-Muffin-Research-Kitchen/ScummVM-pak",
+    "commit": "d0505993a3fd26a586753ef125ff771a49b7c6b1",
+    "used_for": "CONTENT-1 standalone path-core packaging and launch conventions; no ScummVM runtime is included"
+  },
+  "leaf-contracts": {
+    "url": "https://github.com/Utility-Muffin-Research-Kitchen/leaf-contracts",
+    "commit": "a641d6d6977e0bd76dde63d55045783c0724bce9"
+  },
+  "zig": {
+    "version": "0.14.1",
+    "windows_url": "https://ziglang.org/download/0.14.1/zig-x86_64-windows-0.14.1.zip",
+    "windows_sha256": "554f5378228923ffd558eac35e21af020c73789d87afeabf4bfd16f2e6feed2c"
+  }
+}

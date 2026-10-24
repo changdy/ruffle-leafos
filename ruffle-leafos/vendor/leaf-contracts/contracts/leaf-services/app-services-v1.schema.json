@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-services/app-services-v1.schema.json",
+  "title": "app-services-v1 service manifest (SVC-1)",
+  "description": "Normative shape for the `service` and `state` objects a service-bearing pak.json carries. See contracts.md#svc-1--service-manifest. This schema checks static shape only; runtime rules (foreground-must-stay behavior, Primary-root install target, symlink-escape detection, executable-bit checks) are enforced by Jawaka at load/validate time and are exercised by the fixtures in manifests/, not by this schema alone.",
+  "type": "object",
+  "required": ["id", "service"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Top-level stable reverse-DNS package id. Must equal service.id.",
+      "pattern": "^[a-z0-9]+(\\.[a-z0-9]+)+$",
+      "minLength": 3,
+      "maxLength": 128
+    },
+    "service": {
+      "type": "object",
+      "required": ["schema", "id", "run", "restart", "default_enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": 1,
+          "description": "Exactly 1. Unknown values make the service unavailable."
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(\\.[a-z0-9]+)+$",
+          "minLength": 3,
+          "maxLength": 128,
+          "description": "Stable, globally unique, reverse-DNS. Duplicates make both services unavailable."
+        },
+        "run": {
+          "type": "object",
+          "required": ["path"],
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096,
+              "description": "Relative, confined to the pak, a regular executable file. Absolute paths, '..', and symlinks escaping the pak fail validation.",
+              "not": {
+                "pattern": "^/|(^|/)\\.\\.(/|$)"
+              }
+            },
+            "args": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "type": "string",
+                "maxLength": 1024,
+                "description": "Shape-only upper bound in Unicode code points (this JSON Schema keyword has no byte-count form). The real SVC-1 limit is 256 UTF-8 BYTES per argument -- a multibyte string can be under this code-point maxLength and still be over that byte limit. The byte-accurate check is business logic (validate_manifest() in scripts/validate_fixtures.py), not this schema."
+              }
+            }
+          }
+        },
+        "restart": {
+          "type": "string",
+          "enum": ["no", "on-failure"]
+        },
+        "default_enabled": {
+          "const": false,
+          "description": "Must be false for schema: 1. Enablement is always a user act."
+        },
+        "stop_grace_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Absent means 5000. Negative values are rejected. Values above 15000 are clamped to 15000 and logged (clamping happens after schema validation, not encoded here)."
+        },
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "game": {
+              "type": "string",
+              "enum": ["ignore", "stop", "notify"]
+            },
+            "stop_on_storage_change": {
+              "type": "boolean"
+            },
+            "stop_on_suspend": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "description": "Single path component, relative to $USERDATA_PATH.",
+          "minLength": 1,
+          "pattern": "^[^/\\\\]+$",
+          "not": {
+            "const": ".."
+          }
+        },
+        "revoke_on_uninstall": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "not": {
+              "pattern": "^/|(^|/)\\.\\.(/|$)"
+            }
+          }
+        },
+        "retained_roots": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "not": {
+              "pattern": "^/|(^|/)\\.\\.(/|$)"
+            }
+          }
+        }
+      }
+    }
+  }
+}

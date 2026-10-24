@@ -1,0 +1,6 @@
+{
+  "valid": false,
+  "reason": "shared-content-unsupported",
+  "note": "the other half of D16: a shared-lane HYBRID contributes nothing, but remains an ordinary launchable app. Refusing the contribution must never un-list a working app",
+  "apps_listed": true
+}

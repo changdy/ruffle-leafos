@@ -1,0 +1,39 @@
+name: Flycast RetroAchievements route
+
+# The bundled-Flycast proxy route intent (UMRK_FLYCAST_RA_ROUTE, proxy plan
+# P2) and the RAOfflineProxy launch bridge it shares its liveness rule with.
+# The account snapshot itself, including ra-account-launch-test (which also
+# covers route authorization), runs in ra-account.yml.
+#
+#   1. raofflineproxy-bridge-test: the RetroArch transient config bridge, the
+#      health probe, and service liveness across every supervisor state
+#      (STARTING included) with the route value the bundled Flycast child
+#      gets for each.
+#   2. flycast-ra-route-ipc-smoke: a real jawakad; which children get the
+#      route (absent/installed/running/stopped service, account-only build,
+#      control, spoof, RetroArch) and that inherited values never survive.
+#   3. raofflineproxy-bridge-ipc-smoke: a real jawakad, fake service, fake
+#      /leaf/health and fake RetroArch; the RetroArch routing outcomes plus
+#      the bundled Flycast child while the service is RUNNING, unhealthy,
+#      STARTING and stopped.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libsqlite3-dev sqlite3
+      - name: Proxy bridge and liveness unit test
+        run: make raofflineproxy-bridge-test
+      - name: Flycast route intent smoke
+        run: make flycast-ra-route-ipc-smoke
+      - name: Proxy bridge smoke with the bundled Flycast child
+        run: make raofflineproxy-bridge-ipc-smoke

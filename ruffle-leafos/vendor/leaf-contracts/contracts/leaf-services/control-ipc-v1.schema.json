@@ -1,0 +1,262 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-services/control-ipc-v1.schema.json",
+  "title": "control-ipc-v1 (CTL-1)",
+  "description": "Message shapes for Jawaka's service control and status IPC. Transport is Jawaka's existing 4-byte length-prefixed Unix-socket framing (see contracts.md#wire-format-for-ctl-1-and-life-1); this schema validates only the JSON payload inside a frame. Semantic payload ceiling is 64 KiB. Every request and response definition here is closed (additionalProperties: false) and per-operation, because contracts.md is explicit that an unknown op, an unknown field, or a malformed payload must be an error response, never a silently-accepted extra field.",
+  "definitions": {
+    "list_request": {
+      "type": "object",
+      "required": ["v", "op", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "op": { "const": "list" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "capabilities_request": {
+      "type": "object",
+      "required": ["v", "op", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "op": { "const": "capabilities" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "service_scoped_request": {
+      "type": "object",
+      "required": ["v", "op", "id", "service_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "op": { "enum": ["enable", "disable", "run", "stop", "restart", "status"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "service_id": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "logs_request": {
+      "type": "object",
+      "required": ["v", "op", "id", "service_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "op": { "const": "logs" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "service_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "tail": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Optional --tail N. logs only -- export-logs has no tail option."
+        }
+      }
+    },
+    "export_logs_request": {
+      "type": "object",
+      "required": ["v", "op", "id", "service_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "op": { "const": "export-logs" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "service_id": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "request": {
+      "anyOf": [
+        { "$ref": "#/definitions/list_request" },
+        { "$ref": "#/definitions/capabilities_request" },
+        { "$ref": "#/definitions/service_scoped_request" },
+        { "$ref": "#/definitions/logs_request" },
+        { "$ref": "#/definitions/export_logs_request" }
+      ]
+    },
+    "error_response": {
+      "type": "object",
+      "required": ["v", "id", "error"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Stable slug, e.g. unsupported-version, unknown-op, unknown-service, invalid-payload.",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            },
+            "message": {
+              "type": "string",
+              "description": "For humans; may change without notice."
+            },
+            "supported_versions": {
+              "type": "array",
+              "items": { "type": "integer" },
+              "description": "Present only for error.code = unsupported-version."
+            }
+          }
+        }
+      }
+    },
+    "effective_state": {
+      "type": "string",
+      "enum": [
+        "unavailable",
+        "disabled",
+        "stopped",
+        "stale-generation",
+        "starting",
+        "running",
+        "stopping",
+        "backoff",
+        "failed"
+      ]
+    },
+    "coordination_state": {
+      "type": "string",
+      "enum": ["n/a", "subscribed", "unsubscribed"]
+    },
+    "list_response": {
+      "type": "object",
+      "required": ["v", "id", "services"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["service_id", "desired_enabled", "effective_state"],
+            "additionalProperties": false,
+            "properties": {
+              "service_id": { "type": "string" },
+              "desired_enabled": { "type": "boolean" },
+              "effective_state": { "$ref": "#/definitions/effective_state" }
+            }
+          }
+        }
+      }
+    },
+    "ownership_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pgid": { "type": ["integer", "null"] },
+        "launch_instant": { "type": ["string", "null"] }
+      }
+    },
+    "last_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "at": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    },
+    "last_exit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": ["integer", "null"] },
+        "at": { "type": ["string", "null"] }
+      }
+    },
+    "installed_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "lifecycle_policy_stop": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "active": { "type": "boolean" },
+        "reason": {
+          "type": ["string", "null"],
+          "enum": ["game", "storage", "suspend", "package", null]
+        }
+      }
+    },
+    "status_response": {
+      "type": "object",
+      "required": ["v", "id", "service_id", "desired_enabled", "effective_state"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "service_id": { "type": "string" },
+        "desired_enabled": { "type": "boolean" },
+        "effective_state": { "$ref": "#/definitions/effective_state" },
+        "coordination": { "$ref": "#/definitions/coordination_state" },
+        "ownership_identity": { "$ref": "#/definitions/ownership_identity" },
+        "generation_lease_state": {
+          "type": "string",
+          "enum": ["held", "stale", "none"]
+        },
+        "last_transition": { "$ref": "#/definitions/last_transition" },
+        "last_exit": { "$ref": "#/definitions/last_exit" },
+        "restart_count": { "type": "integer", "minimum": 0 },
+        "backoff_or_breaker_reason": { "type": ["string", "null"] },
+        "installed_package": { "$ref": "#/definitions/installed_package" },
+        "lifecycle_policy_stop": { "$ref": "#/definitions/lifecycle_policy_stop" }
+      }
+    },
+    "ack_response": {
+      "type": "object",
+      "required": ["v", "id", "ok"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "ok": { "const": true }
+      }
+    },
+    "logs_response": {
+      "type": "object",
+      "required": ["v", "id", "lines"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "lines": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "redacted": {
+          "type": "boolean",
+          "description": "True if any redaction was applied to this payload."
+        }
+      }
+    },
+    "capabilities_response": {
+      "type": "object",
+      "required": ["v", "id", "capabilities"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "response": {
+      "anyOf": [
+        { "$ref": "#/definitions/error_response" },
+        { "$ref": "#/definitions/list_response" },
+        { "$ref": "#/definitions/status_response" },
+        { "$ref": "#/definitions/ack_response" },
+        { "$ref": "#/definitions/logs_response" },
+        { "$ref": "#/definitions/capabilities_response" }
+      ]
+    }
+  }
+}

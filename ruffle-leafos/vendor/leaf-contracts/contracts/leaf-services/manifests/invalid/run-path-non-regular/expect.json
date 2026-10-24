@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "non-regular-executable",
+  "note": "bin/leaf-syncthing is a directory, not a regular file"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "org.umrk.fixture.orphandescendant",
+  "name": "Service Fixture: Orphan Descendant",
+  "pak_version": "1.0.0",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.fixture.orphandescendant",
+    "run": { "path": "bin/service-fixture", "args": ["orphan-descendant"] },
+    "restart": "no",
+    "default_enabled": false,
+    "stop_grace_ms": 200
+  }
+}

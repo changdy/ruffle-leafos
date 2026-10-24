@@ -1,0 +1,851 @@
+{
+  "name": "ScummVM",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_leaf_version": "0.11.0",
+  "provides": {
+    "schema": 1,
+    "systems": [
+      {
+        "id": "SYS00",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS00"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS00",
+        "image_root": "Images/SYS00",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS01",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS01"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS01",
+        "image_root": "Images/SYS01",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS02",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS02"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS02",
+        "image_root": "Images/SYS02",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS03",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS03"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS03",
+        "image_root": "Images/SYS03",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS04",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS04"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS04",
+        "image_root": "Images/SYS04",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS05",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS05"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS05",
+        "image_root": "Images/SYS05",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS06",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS06"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS06",
+        "image_root": "Images/SYS06",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS07",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS07"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS07",
+        "image_root": "Images/SYS07",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS08",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS08"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS08",
+        "image_root": "Images/SYS08",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS09",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS09"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS09",
+        "image_root": "Images/SYS09",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS10",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS10"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS10",
+        "image_root": "Images/SYS10",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS11",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS11"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS11",
+        "image_root": "Images/SYS11",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS12",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS12"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS12",
+        "image_root": "Images/SYS12",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS13",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS13"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS13",
+        "image_root": "Images/SYS13",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS14",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS14"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS14",
+        "image_root": "Images/SYS14",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS15",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS15"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS15",
+        "image_root": "Images/SYS15",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS16",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS16"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS16",
+        "image_root": "Images/SYS16",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS17",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS17"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS17",
+        "image_root": "Images/SYS17",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS18",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS18"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS18",
+        "image_root": "Images/SYS18",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS19",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS19"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS19",
+        "image_root": "Images/SYS19",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS20",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS20"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS20",
+        "image_root": "Images/SYS20",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS21",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS21"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS21",
+        "image_root": "Images/SYS21",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS22",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS22"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS22",
+        "image_root": "Images/SYS22",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS23",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS23"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS23",
+        "image_root": "Images/SYS23",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS24",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS24"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS24",
+        "image_root": "Images/SYS24",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS25",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS25"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS25",
+        "image_root": "Images/SYS25",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS26",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS26"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS26",
+        "image_root": "Images/SYS26",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS27",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS27"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS27",
+        "image_root": "Images/SYS27",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS28",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS28"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS28",
+        "image_root": "Images/SYS28",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS29",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS29"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS29",
+        "image_root": "Images/SYS29",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS30",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS30"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS30",
+        "image_root": "Images/SYS30",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS31",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS31"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS31",
+        "image_root": "Images/SYS31",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      },
+      {
+        "id": "SYS32",
+        "name": "ScummVM",
+        "patterns": [
+          "SYS32"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SYS32",
+        "image_root": "Images/SYS32",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      }
+    ],
+    "system_extensions": [],
+    "cores": [
+      {
+        "id": "scummvm",
+        "display_name": "ScummVM",
+        "type": "retroarch",
+        "libretro_name": "scummvm",
+        "file_name": "cores/scummvm_libretro.so",
+        "info_name": "info/scummvm_libretro.info",
+        "config_folder": "ScummVM",
+        "supports_menu": true,
+        "supports_savestate": false,
+        "supports_disk_control": false
+      }
+    ]
+  }
+}

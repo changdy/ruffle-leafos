@@ -1,0 +1,14 @@
+{
+  "description": "CTL-1 session run request.",
+  "message": {
+    "v": 1,
+    "op": "run",
+    "id": "3",
+    "service_id": "org.umrk.syncthing"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"op\":\"run\",\"id\":\"3\",\"service_id\":\"org.umrk.syncthing\"}",
+  "frame_total_bytes": 65,
+  "length_prefix_value": 61,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

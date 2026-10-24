@@ -1,0 +1,16 @@
+{
+  "description": "LIFE-1 subscribe rejected: stale-generation peer.",
+  "message": {
+    "v": 1,
+    "id": "2",
+    "error": {
+      "code": "stale-generation-peer",
+      "message": "subscriber pid is not a member of the current generation's reserved process group"
+    }
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"2\",\"error\":{\"code\":\"stale-generation-peer\",\"message\":\"subscriber pid is not a member of the current generation's reserved process group\"}}",
+  "frame_total_bytes": 155,
+  "length_prefix_value": 151,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

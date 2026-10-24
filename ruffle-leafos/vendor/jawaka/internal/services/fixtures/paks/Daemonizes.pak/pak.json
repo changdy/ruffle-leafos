@@ -1,0 +1,13 @@
+{
+  "id": "org.umrk.fixture.daemonizes",
+  "name": "Service Fixture: Daemonizes",
+  "pak_version": "1.0.0",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.fixture.daemonizes",
+    "run": { "path": "bin/service-fixture", "args": ["daemonizes"] },
+    "restart": "no",
+    "default_enabled": false,
+    "stop_grace_ms": 200
+  }
+}

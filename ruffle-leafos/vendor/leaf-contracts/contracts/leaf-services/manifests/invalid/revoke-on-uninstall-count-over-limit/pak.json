@@ -1,0 +1,47 @@
+{
+  "id": "org.umrk.syncthing",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.syncthing",
+    "run": {
+      "path": "bin/leaf-syncthing",
+      "args": [
+        "service",
+        "run"
+      ]
+    },
+    "restart": "on-failure",
+    "default_enabled": false,
+    "stop_grace_ms": 10000,
+    "lifecycle": {
+      "game": "notify",
+      "stop_on_storage_change": true,
+      "stop_on_suspend": true
+    }
+  },
+  "state": {
+    "root": "Syncthing",
+    "revoke_on_uninstall": [
+      "leaf/t-0.json",
+      "leaf/t-1.json",
+      "leaf/t-2.json",
+      "leaf/t-3.json",
+      "leaf/t-4.json",
+      "leaf/t-5.json",
+      "leaf/t-6.json",
+      "leaf/t-7.json",
+      "leaf/t-8.json",
+      "leaf/t-9.json",
+      "leaf/t-10.json",
+      "leaf/t-11.json",
+      "leaf/t-12.json",
+      "leaf/t-13.json",
+      "leaf/t-14.json",
+      "leaf/t-15.json",
+      "leaf/t-16.json"
+    ],
+    "retained_roots": [
+      "Syncthing"
+    ]
+  }
+}

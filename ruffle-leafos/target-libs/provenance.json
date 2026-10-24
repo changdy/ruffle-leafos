@@ -1,0 +1,16 @@
+{
+  "purpose": "Link inputs, not a target rootfs replacement",
+  "libraries": {
+    "libasound.so": {
+      "sha256": "50bd5bb0e3729c9e5624bbaf818c600a979f10a0c85c675c6b1fd2ae9b416496"
+    },
+    "libdbus-1.so": {
+      "sha256": "fb651d3feb893b2c75f9f7c13735a0fa5d8958c3c83eae9dfb6078914f1e2d2c"
+    },
+    "libSDL2.so": {
+      "sha256": "e2ca89362648c369ff4f60de16388b0627ec079c0d95c4666244c16e12c3735b"
+    }
+  },
+  "dbus_source": "Leaf0.13 target /usr/lib/libdbus-1.so.3",
+  "sdl_alsa_source": "User leaf-12 pak, hashes cross-checked in adapter/runtime.lock.json"
+}

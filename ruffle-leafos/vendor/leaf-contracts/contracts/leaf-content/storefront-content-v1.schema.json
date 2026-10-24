@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-content/storefront-content-v1.schema.json",
+  "title": "storefront-content-v1 content[] lane (STORE-CONTENT-1)",
+  "description": "Normative shape for the top-level `content` array a Pak Rat storefront.json may carry alongside `apps`. See docs/content-paks.md in this repository. `schema` stays 1: a gate-unaware client parses apps[], ignores the unknown `content` key, and never sees a content pak at all. Cross-cutting rules (append-only immutable history, ids in exactly one lane, every content artifact actually declaring `provides`) are business logic exercised by the fixtures in storefront/, not by this schema alone.",
+  "type": "object",
+  "required": ["schema", "product"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": 1 },
+    "product": { "const": "pak-rat" },
+    "content": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/definitions/content_package" }
+    }
+  },
+  "definitions": {
+    "package_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})$",
+      "description": "Exact bare MAJOR.MINOR.PATCH, components <= 9999. A leading v, missing component, prerelease/build suffix, or trailing text is invalid."
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["url", "name", "archive", "size", "installed_size", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "archive": { "const": "zip" },
+        "size": { "type": "integer", "minimum": 1 },
+        "installed_size": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "version_entry": {
+      "type": "object",
+      "required": ["version", "min_leaf_version", "artifact"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/definitions/package_version" },
+        "min_leaf_version": { "$ref": "#/definitions/package_version" },
+        "artifact": { "$ref": "#/definitions/artifact" }
+      }
+    },
+    "content_package": {
+      "type": "object",
+      "required": ["id", "name", "version", "packages"],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(\\.[a-z0-9]+)+$",
+          "minLength": 3,
+          "maxLength": 128,
+          "description": "Stable and unique ACROSS BOTH LANES. An id present in apps[] and content[] is an error: both lanes resolve to the same install_path, and two catalog entries pointing at one install path is a duplicate-identity bug."
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "version": { "$ref": "#/definitions/package_version" },
+        "packages": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "required": ["platform", "runtime", "version", "min_leaf_version", "install_name", "artifact"],
+            "additionalProperties": true,
+            "properties": {
+              "platform": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{1,31}$",
+                "not": { "const": "shared" },
+                "description": "A concrete supported platform. \"shared\" is refused in v1: cores and standalone emulator binaries are platform-specific (D16)."
+              },
+              "runtime": { "const": "leaf" },
+              "version": { "$ref": "#/definitions/package_version" },
+              "install_name": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]{0,63}\\.pak$"
+              },
+              "runtime_manifest_path": { "type": "string", "minLength": 1 },
+              "min_leaf_version": { "$ref": "#/definitions/package_version" },
+              "artifact": { "$ref": "#/definitions/artifact" },
+              "versions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 16,
+                "items": { "$ref": "#/definitions/version_entry" },
+                "description": "Strictly descending by numeric version, unique. UNLIKE apps[], no ungated safe floor is required; every entry instead declares min_leaf_version because every content package is gated on this contract by construction."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

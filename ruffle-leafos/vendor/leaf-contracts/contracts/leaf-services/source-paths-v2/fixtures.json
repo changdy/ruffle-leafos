@@ -1,0 +1,216 @@
+{
+  "$comment": "PATH-2 (source-paths-v2) fixtures. Each case is the resolved environment a producer (launcher/Leaf/Jawaka) would export, plus whether it is a valid v2 capability advertisement. validate_fixtures.py checks: plural lists are colon-separated and aligned one-for-one across SDCARD_PATHS/USERDATA_PATHS/SHARED_USERDATA_PATHS/SAVES_PATHS/STATES_PATHS, index 0 (Primary) equals the corresponding singular variable byte-for-byte, and every invalidity below is actually rejected for the stated reason.",
+  "plural_vars": ["SDCARD_PATHS", "USERDATA_PATHS", "SHARED_USERDATA_PATHS", "SAVES_PATHS", "STATES_PATHS"],
+  "singular_aliases": {
+    "SDCARD_PATHS": "SDCARD_PATH",
+    "USERDATA_PATHS": "USERDATA_PATH",
+    "SHARED_USERDATA_PATHS": "SHARED_USERDATA_PATH",
+    "SAVES_PATHS": "SAVES_PATH",
+    "STATES_PATHS": "STATES_PATH"
+  },
+  "cases": [
+    {
+      "name": "one-card",
+      "valid": true,
+      "note": "Secondary never configured -- a single-card device or a build with no Secondary slot at all.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States"
+      }
+    },
+    {
+      "name": "two-card-both-mounted",
+      "valid": true,
+      "note": "MLP1 default: Primary at /mnt/sdcard, Secondary at /media/sdcard1, both currently mounted.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/media/sdcard1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1:/media/sdcard1/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/media/sdcard1/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sdcard1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sdcard1/States"
+      }
+    },
+    {
+      "name": "two-card-secondary-absent",
+      "valid": true,
+      "note": "Secondary is configured (slot 1 stays present in every plural list) but not currently mounted. A listed path is configuration, never proof of a mounted or writable card -- availability is established separately via /proc/self/mountinfo, not by this fixture.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/media/sdcard1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1:/media/sdcard1/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/media/sdcard1/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sdcard1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sdcard1/States"
+      },
+      "secondary_mounted": false
+    },
+    {
+      "name": "invalid-empty-item",
+      "valid": false,
+      "reason": "empty-list-item",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1:",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:"
+      }
+    },
+    {
+      "name": "invalid-colon-in-path",
+      "valid": false,
+      "reason": "colon-in-path",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/media/sd:card1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1:/media/sd:card1/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/media/sd:card1/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sd:card1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sd:card1/States"
+      }
+    },
+    {
+      "name": "invalid-count-mismatch",
+      "valid": false,
+      "reason": "count-mismatch",
+      "note": "SDCARD_PATHS lists two entries but USERDATA_PATHS lists only one -- lists must align one-for-one.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/media/sdcard1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/media/sdcard1/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sdcard1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sdcard1/States"
+      }
+    },
+    {
+      "name": "invalid-order-misalignment",
+      "valid": false,
+      "reason": "order-mismatch",
+      "note": "USERDATA_PATHS lists Secondary before Primary while SDCARD_PATHS lists Primary first -- the same index must refer to the same card across every plural variable.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/media/sdcard1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/media/sdcard1/.userdata/mlp1:/mnt/sdcard/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/media/sdcard1/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sdcard1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sdcard1/States"
+      }
+    },
+    {
+      "name": "invalid-secondary-misalignment",
+      "valid": false,
+      "reason": "order-mismatch",
+      "note": "Index 0 (Primary) is correctly aligned in every list. Only index 1 (Secondary) is wrong: USERDATA_PATHS[1] points beneath the PRIMARY card's root instead of Secondary's, while SDCARD_PATHS[1]/SAVES_PATHS[1]/STATES_PATHS[1] all correctly name Secondary. A checker that only compares index 0 across lists (the index-0-only bug this fixture targets) would call this valid and let a consumer resolve Secondary's launch to Primary's userdata root.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/media/sdcard1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1:/mnt/sdcard/.userdata/mlp1-secondary-mistake",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/media/sdcard1/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sdcard1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sdcard1/States"
+      }
+    },
+    {
+      "name": "invalid-duplicate-root",
+      "valid": false,
+      "reason": "duplicate-root",
+      "note": "SDCARD_PATHS lists /mnt/sdcard twice -- a card cannot be both Primary and Secondary.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/mnt/sdcard",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1:/mnt/sdcard/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/mnt/sdcard/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/mnt/sdcard/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/mnt/sdcard/States"
+      }
+    },
+    {
+      "name": "invalid-primary-singular-mismatch",
+      "valid": false,
+      "reason": "primary-singular-mismatch",
+      "note": "Index 0 of SDCARD_PATHS disagrees byte-for-byte with the singular SDCARD_PATH alias (trailing slash).",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard/:/media/sdcard1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "USERDATA_PATHS": "/mnt/sdcard/.userdata/mlp1:/media/sdcard1/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SHARED_USERDATA_PATHS": "/mnt/sdcard/.userdata/shared:/media/sdcard1/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sdcard1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sdcard1/States"
+      }
+    },
+    {
+      "name": "invalid-env-version-alone-not-capability-proof",
+      "valid": false,
+      "reason": "incomplete-plural-lists",
+      "note": "UMRK_ENV_VERSION=2 is set, but the plural lists were not actually extended (USERDATA_PATHS/SHARED_USERDATA_PATHS absent while SDCARD_PATHS/SAVES_PATHS/STATES_PATHS are the v1 singular-only shape). This is the fixture for the explicit contract rule: UMRK_ENV_VERSION=2 alone is not capability proof -- a consumer must validate every list, not just check the version variable.",
+      "env": {
+        "UMRK_ENV_VERSION": "2",
+        "SDCARD_PATH": "/mnt/sdcard",
+        "SDCARD_PATHS": "/mnt/sdcard:/media/sdcard1",
+        "USERDATA_PATH": "/mnt/sdcard/.userdata/mlp1",
+        "SHARED_USERDATA_PATH": "/mnt/sdcard/.userdata/shared",
+        "SAVES_PATH": "/mnt/sdcard/Saves",
+        "SAVES_PATHS": "/mnt/sdcard/Saves:/media/sdcard1/Saves",
+        "STATES_PATH": "/mnt/sdcard/States",
+        "STATES_PATHS": "/mnt/sdcard/States:/media/sdcard1/States"
+      }
+    }
+  ]
+}

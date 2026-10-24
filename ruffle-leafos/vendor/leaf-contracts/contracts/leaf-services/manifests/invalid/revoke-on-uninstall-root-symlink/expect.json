@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "revoke-on-uninstall-symlink-component",
+  "note": "state.root (Syncthing) itself is a symlink, not a directory"
+}

@@ -1,0 +1,20 @@
+[package]
+name = "ruffle_video"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+swf = { path = "../swf" }
+ruffle_render = { path = "../render" }
+slotmap = { workspace = true }
+thiserror = { workspace = true }
+
+[features]
+default = []

@@ -1,0 +1,238 @@
+{
+  "$comment": "Cross-language wire fixtures for CTL-1/LIFE-1. Each <name>.bin is a complete frame: 4-byte big-endian length prefix + UTF-8 JSON payload. A conforming C or Go implementation must decode <name>.bin into the message described in <name>.json, and re-encoding that same logical message must reproduce <name>.bin byte-for-byte (sha256_of_frame is the byte-for-byte check). This is what a JSON-only fixture cannot catch: a framing or byte-order disagreement between the two languages (B-IPC-01). expect_semantic_ceiling_violation marks the two payload-size boundary cases at/over the 64 KiB CTL-1/LIFE-1 semantic ceiling (distinct from the 16 MiB transport ceiling); life1_error_status_unicode is a non-ASCII-payload case that catches an implementation counting Unicode characters instead of UTF-8 bytes.",
+  "frame_format": "4-byte unsigned big-endian length prefix, then that many bytes of UTF-8 JSON payload.",
+  "fixtures": [
+    {
+      "name": "ctl1_list_request",
+      "description": "CTL-1 list request, no service_id needed.",
+      "frame_total_bytes": 32,
+      "length_prefix_value": 28,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "84e303031f3be627f5fb989cc86b5ebcc54d8d10cf131aa221606658a6abad65"
+    },
+    {
+      "name": "ctl1_list_response",
+      "description": "CTL-1 list response with one service.",
+      "frame_total_bytes": 122,
+      "length_prefix_value": 118,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "ad16edc4c9722ed179679575406e33bfa5bb0561ac8b72a588e0c8fb663b052b"
+    },
+    {
+      "name": "ctl1_status_request",
+      "description": "CTL-1 status request for a specific service.",
+      "frame_total_bytes": 68,
+      "length_prefix_value": 64,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "6a1679cac5dc3de8e9ad06f8db6d4d25559396bcc3f46e363935ce205913235d"
+    },
+    {
+      "name": "ctl1_status_response",
+      "description": "CTL-1 status response, running + subscribed.",
+      "frame_total_bytes": 133,
+      "length_prefix_value": 129,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "93b95ead60c9ee8f6cb2036be90478e05be456eeb1e61f051824c47fc9e64e9c"
+    },
+    {
+      "name": "ctl1_run_request",
+      "description": "CTL-1 session run request.",
+      "frame_total_bytes": 65,
+      "length_prefix_value": 61,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "aefc91d52b8d7072203eeb9c9646936f276a3125950e0436d4fa9e978497fc59"
+    },
+    {
+      "name": "ctl1_ack_response",
+      "description": "CTL-1 generic ack (e.g. for run/stop/enable/disable).",
+      "frame_total_bytes": 30,
+      "length_prefix_value": 26,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "b6c7d19d96b82975723b99d461ea15251b1221a3f6cb261664c49ca6a025276e"
+    },
+    {
+      "name": "ctl1_error_unsupported_version",
+      "description": "CTL-1 error: client sent a v this server cannot serve.",
+      "frame_total_bytes": 120,
+      "length_prefix_value": 116,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "b33ae30552013d538670ed97c05bb10ea47e8e5d8f1376d294282008ea4afe92"
+    },
+    {
+      "name": "ctl1_capabilities_request",
+      "description": "CTL-1 capabilities request.",
+      "frame_total_bytes": 40,
+      "length_prefix_value": 36,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "e7492918ecac65f158a5501a08462bf7bb1df93a50154bdc7347f77827328509"
+    },
+    {
+      "name": "ctl1_capabilities_response",
+      "description": "CTL-1 capabilities response.",
+      "frame_total_bytes": 95,
+      "length_prefix_value": 91,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "14e3e267900c8787b118522d6573386a11b7238d16e0e1e2e598aebed5efe1df"
+    },
+    {
+      "name": "ctl1_logs_response_at_semantic_ceiling",
+      "description": "CTL-1 logs response payload at exactly the 65536-byte (64 KiB) CTL-1/LIFE-1 semantic ceiling -- valid; a conforming server must accept this.",
+      "frame_total_bytes": 65540,
+      "length_prefix_value": 65536,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "43e272f9d1b84723ddf63169a292a20b57a9cd10251b74a1c57e99bf98a1a3c3"
+    },
+    {
+      "name": "ctl1_logs_response_over_semantic_ceiling",
+      "description": "CTL-1 logs response payload one byte over the 65536-byte semantic ceiling. The transport (16 MiB JW_IPC_MAX_FRAME) happily carries this frame; contracts.md is explicit that CTL-1/LIFE-1 treat anything past 64 KiB as a protocol error regardless. This is not a JSON-shape defect -- the payload is otherwise a perfectly valid logs_response -- so an implementation that only schema-validates shape and never checks payload size would wrongly accept it.",
+      "frame_total_bytes": 65541,
+      "length_prefix_value": 65537,
+      "expect_semantic_ceiling_violation": true,
+      "sha256_of_frame": "c011eb3fae2326c5d131a959ccb85b2c948a17fb1468026c0b6cbab2951a9ef5"
+    },
+    {
+      "name": "life1_subscribe_request",
+      "description": "LIFE-1 subscribe, default notify/250ms/0ms.",
+      "frame_total_bytes": 130,
+      "length_prefix_value": 126,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "52e75dc8d7aedd32c91b2e7419dbe048303dec717d8c852057c8fde5bff6ed4a"
+    },
+    {
+      "name": "life1_subscribe_check_request",
+      "description": "LIFE-1 stop subscription with check-before-stop capability.",
+      "frame_total_bytes": 157,
+      "length_prefix_value": 153,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "5135476c2b2b8bebbd8aa685ac9166a64bcafee65e11f105eead85e2187d76c7"
+    },
+    {
+      "name": "life1_subscribe_ack",
+      "description": "LIFE-1 subscribe ack.",
+      "frame_total_bytes": 30,
+      "length_prefix_value": 26,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "5fa6aba6eb461b3037c689f956b23835e8a8d6571fd29f85dfa943f3957d2648"
+    },
+    {
+      "name": "life1_subscribe_reject_stale_generation",
+      "description": "LIFE-1 subscribe rejected: stale-generation peer.",
+      "frame_total_bytes": 155,
+      "length_prefix_value": 151,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "d0c77b06f490ae0992dffa45c34c6a796262dbbf8e657877261ebe5af339ac18"
+    },
+    {
+      "name": "life1_game_start_event",
+      "description": "LIFE-1 game.start event, unsolicited (no id).",
+      "frame_total_bytes": 190,
+      "length_prefix_value": 186,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "a6ca15b16d5b697cd746c2446bad8e6fa7b7170d153c58c2393bac9eb36a0baf"
+    },
+    {
+      "name": "life1_game_check_event",
+      "description": "LIFE-1 game.check event before a mandatory verified stop.",
+      "frame_total_bytes": 190,
+      "length_prefix_value": 186,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "61d466ef02abeb6116c5e7f32cadba5ea843af8195de860aa73fa4d321790a15"
+    },
+    {
+      "name": "life1_waiting_status",
+      "description": "LIFE-1 waiting status reply (zero or more before ready/error).",
+      "frame_total_bytes": 74,
+      "length_prefix_value": 70,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "7e291935a8021d08ed7cce3e86f6c2a6ddf27b9d8ee6f283bbfef2da7995e80e"
+    },
+    {
+      "name": "life1_check_waiting_status",
+      "description": "LIFE-1 check waiting status with bounded pending items and bytes.",
+      "frame_total_bytes": 96,
+      "length_prefix_value": 92,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "b0caabf0d290cfd0188f40bb0ae90de492289b9c0bab5dd0633f50a75a3df5ce"
+    },
+    {
+      "name": "life1_ready_status",
+      "description": "LIFE-1 ready status reply, terminal.",
+      "frame_total_bytes": 54,
+      "length_prefix_value": 50,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "bbfc6e617d471a7434e4a79b6127efcad48f598bd8b2fe5f24c886c1d76cbd3f"
+    },
+    {
+      "name": "life1_stop_status",
+      "description": "LIFE-1 check terminal requesting Jawaka's verified stop.",
+      "frame_total_bytes": 53,
+      "length_prefix_value": 49,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "e723e5eebb1206b4d0287431bc7ae10dda0a384b968239cd696c4ef6d412cc53"
+    },
+    {
+      "name": "life1_error_status",
+      "description": "LIFE-1 error status reply, terminal.",
+      "frame_total_bytes": 91,
+      "length_prefix_value": 87,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "734d18870dffbc32a7517f797acb14d94addec008cc18c1850e5232f897bc436"
+    },
+    {
+      "name": "life1_error_status_unicode",
+      "description": "LIFE-1 error status reply whose reason contains multi-byte UTF-8 characters (three 2-byte code points and one 4-byte code point) -- catches an implementation that counts Unicode characters instead of encoded UTF-8 bytes for the length prefix.",
+      "frame_total_bytes": 95,
+      "length_prefix_value": 91,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "453eecc324d98077e620497c8921af330f395181561cc15a78dfb11b9ae01a54"
+    },
+    {
+      "name": "life1_game_cancel_event",
+      "description": "LIFE-1 game.cancel event (Start now / budget expiry).",
+      "frame_total_bytes": 59,
+      "length_prefix_value": 55,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "33fe92fe11b18568e92a66d5fe66507fc23d3a419053bb7396f038065149aa78"
+    },
+    {
+      "name": "life1_game_abort_event",
+      "description": "LIFE-1 game.abort event for a known-not-started launch.",
+      "frame_total_bytes": 58,
+      "length_prefix_value": 54,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "fa7308f91092f14a283d73e2ab677380273a26c2952182b1c3f2ccd7a90bf820"
+    },
+    {
+      "name": "life1_game_finish_event",
+      "description": "LIFE-1 game.finish event, fire-and-forget.",
+      "frame_total_bytes": 59,
+      "length_prefix_value": 55,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "a488ebe9800f02a6b8170456364400dcef36b3f712f3d979f8b5e123cfbdb2f2"
+    },
+    {
+      "name": "life1_game_state_request",
+      "description": "LIFE-1 game.state query.",
+      "frame_total_bytes": 38,
+      "length_prefix_value": 34,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "d6a2ff08c3daad01fee84162787b00fb8f08a7fdb9707c7885e8040a76b624e4"
+    },
+    {
+      "name": "life1_game_state_response_active",
+      "description": "LIFE-1 game.state response, an authoritative launch is active.",
+      "frame_total_bytes": 169,
+      "length_prefix_value": 165,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "325e5d74818a826cb5ecd6e0f10186e5031fb39e401b5e99676dca89cc2ff5b3"
+    },
+    {
+      "name": "life1_game_state_response_inactive",
+      "description": "LIFE-1 game.state response, no active launch.",
+      "frame_total_bytes": 35,
+      "length_prefix_value": 31,
+      "expect_semantic_ceiling_violation": false,
+      "sha256_of_frame": "b07f26d3cc739b67418ed15bb03812dbd96d1de44739361e998afd8311ec5bf3"
+    }
+  ]
+}

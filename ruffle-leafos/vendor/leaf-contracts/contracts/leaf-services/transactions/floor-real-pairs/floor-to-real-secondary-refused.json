@@ -1,0 +1,35 @@
+{
+  "$comment": "CAT-F floor-to-real transition where the floor happens to be installed on a Secondary app root. The real candidate cannot be promoted in place -- P1 must not become a cross-filesystem transaction.",
+  "scenario": "floor-to-real",
+  "install_target": "secondary",
+  "installed": {
+    "id": "org.umrk.syncthing",
+    "version": "0.0.0-floor",
+    "manifest": {"id": "org.umrk.syncthing", "name": "Syncthing (unavailable on this Leaf version)"},
+    "app_root": "secondary_sd"
+  },
+  "candidate": {
+    "id": "org.umrk.syncthing",
+    "version": "1.0.0",
+    "manifest": {
+      "id": "org.umrk.syncthing",
+      "service": {
+        "schema": 1, "id": "org.umrk.syncthing",
+        "run": {"path": "bin/leaf-syncthing", "args": ["service", "run"]},
+        "restart": "on-failure", "default_enabled": false, "stop_grace_ms": 10000,
+        "lifecycle": {"game": "notify", "stop_on_storage_change": true, "stop_on_suspend": true}
+      },
+      "state": {"root": "Syncthing", "revoke_on_uninstall": ["leaf/trusted-clients.json"], "retained_roots": ["Syncthing"]}
+    }
+  },
+  "expected_outcome": {
+    "allowed": false,
+    "reason": "install-target-secondary-no-cross-filesystem-promote",
+    "action": "Pak Rat refuses the update with a specific explanation and a two-step recovery: uninstall the inert floor, then install the real pak on the offered verified Primary root.",
+    "forbidden_alternatives": [
+      "installing the real pak beside the old floor under the same stable id",
+      "silently copying across roots",
+      "deleting the floor before its ordinary uninstall has committed"
+    ]
+  }
+}

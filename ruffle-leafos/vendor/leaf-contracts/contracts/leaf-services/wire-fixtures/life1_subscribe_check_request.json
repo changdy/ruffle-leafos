@@ -1,0 +1,21 @@
+{
+  "description": "LIFE-1 stop subscription with check-before-stop capability.",
+  "message": {
+    "v": 1,
+    "op": "subscribe",
+    "id": "1",
+    "events": [
+      "game"
+    ],
+    "service_id": "org.umrk.syncthing",
+    "mode": "stop",
+    "ack_ms": 250,
+    "wait_ms": 15000,
+    "check_before_stop": true
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"op\":\"subscribe\",\"id\":\"1\",\"events\":[\"game\"],\"service_id\":\"org.umrk.syncthing\",\"mode\":\"stop\",\"ack_ms\":250,\"wait_ms\":15000,\"check_before_stop\":true}",
+  "frame_total_bytes": 157,
+  "length_prefix_value": 153,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

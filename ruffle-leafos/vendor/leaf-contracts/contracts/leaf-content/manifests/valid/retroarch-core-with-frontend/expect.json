@@ -1,0 +1,4 @@
+{
+  "valid": true,
+  "note": "a type:\"retroarch\" core that ships its own RetroArch frontend, added to an existing system through system_extensions; the frontend must be executable. min_leaf_version is the shared fixture default: a real pak declaring frontend sets the first Leaf release that implements it"
+}

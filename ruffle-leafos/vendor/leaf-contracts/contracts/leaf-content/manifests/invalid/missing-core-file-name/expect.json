@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "missing-core-file-name",
+  "note": "a retroarch core must declare the .so it ships"
+}

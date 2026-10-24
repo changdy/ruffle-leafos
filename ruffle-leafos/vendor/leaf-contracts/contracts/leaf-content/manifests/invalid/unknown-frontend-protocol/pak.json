@@ -1,0 +1,33 @@
+{
+  "name": "MySaturn",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_leaf_version": "0.11.0",
+  "provides": {
+    "schema": 1,
+    "systems": [],
+    "system_extensions": [
+      {
+        "system_id": "SATURN",
+        "add_alternate_cores": [
+          "mysaturn"
+        ]
+      }
+    ],
+    "cores": [
+      {
+        "id": "mysaturn",
+        "display_name": "My Saturn Core",
+        "type": "retroarch",
+        "libretro_name": "mysaturn",
+        "file_name": "cores/mysaturn_libretro.so",
+        "info_name": "info/mysaturn_libretro.info",
+        "config_folder": "MySaturn",
+        "frontend": {
+          "path": "frontend/retroarch.sh",
+          "protocol": "leaf-ra-2"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,325 @@
+{
+  "$comment": "standalone-ra-account-v1 fixtures. Each case is the resolved child-only environment snapshot a producer (the Jawaka launcher daemon) exports to one authorized standalone emulator process after fork(), plus how a consumer (an emulator's native account adapter) must classify it. validate_fixtures.py classifies every case independently. The normative text is docs/standalone-ra-account.md; if this file and that page disagree, the page wins.",
+  "revision_ceiling": "4611686018427387904",
+  "handoff_vars": [
+    "UMRK_RA_ACCOUNT_VERSION",
+    "UMRK_RA_ACCOUNT_STATE",
+    "UMRK_RA_ACCOUNT_USERNAME",
+    "UMRK_RA_ACCOUNT_PASSWORD",
+    "UMRK_RA_ACCOUNT_REVISION"
+  ],
+  "cases": [
+    {
+      "name": "unmanaged-no-handoff",
+      "kind": "unmanaged",
+      "note": "No UMRK_RA_ACCOUNT_* variable is set at all: the target is not authorized, the launcher does not implement the contract, or the launch predates it. The consumer keeps its native account behavior.",
+      "env": {
+        "UMRK_LANGUAGE": "en"
+      }
+    },
+    {
+      "name": "configured-basic",
+      "kind": "valid-handoff",
+      "note": "First saved account, revision 1.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "1"
+      }
+    },
+    {
+      "name": "configured-punctuation",
+      "kind": "valid-handoff",
+      "note": "Quotes, spaces, shell metacharacters, commas and semicolons are valid handoff data. A consumer must copy them as opaque bytes; nothing about the snapshot is shell-expanded or quoted by either side.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "o'hara \"junior\"",
+        "UMRK_RA_ACCOUNT_PASSWORD": "p@$$ w0rd; |, >&`~*?[]{}^%\\!",
+        "UMRK_RA_ACCOUNT_REVISION": "42"
+      }
+    },
+    {
+      "name": "configured-utf8-boundary",
+      "kind": "valid-handoff",
+      "note": "The limits are UTF-8 BYTES, not characters: this username is 32 characters and exactly 63 bytes (31 latin small e with acute + 'x'), the password is 64 characters and exactly 127 bytes (63 e-acute + 'x'). Both are at the inclusive ceiling.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "éééééééééééééééééééééééééééééééx",
+        "UMRK_RA_ACCOUNT_PASSWORD": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééx",
+        "UMRK_RA_ACCOUNT_REVISION": "7"
+      }
+    },
+    {
+      "name": "signed-out-retained-revision",
+      "kind": "valid-handoff",
+      "note": "The user signed out in the launcher: credentials are gone but revision 6 is retained. The consumer must clear its managed credentials and record the sign-out revision so a later lost marker cannot revive the old account.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "signed-out",
+        "UMRK_RA_ACCOUNT_REVISION": "6"
+      }
+    },
+    {
+      "name": "never-configured",
+      "kind": "valid-handoff",
+      "note": "The launcher was never given an account. The consumer preserves an independently configured native emulator account only when no managed marker exists.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "never-configured"
+      }
+    },
+    {
+      "name": "invalid-account-state-passthrough",
+      "kind": "valid-handoff",
+      "note": "The launcher found malformed legacy values in its database and reports that verdict: this is a valid HANDOFF carrying state invalid. A consumer disables managed authentication for the session, shows a correction message, and retains durable data for repair -- invalid is not sign-out.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "invalid"
+      }
+    },
+    {
+      "name": "unreadable-account-source",
+      "kind": "valid-handoff",
+      "note": "The launcher's database could not be read. Like invalid, this must not be mistaken for sign-out or unreadable-as-empty: durable consumer state survives the session.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "unreadable"
+      }
+    },
+    {
+      "name": "signed-out-revision-ceiling",
+      "kind": "valid-handoff",
+      "note": "The revision ceiling 2^62 is inclusive. A save that would exceed it fails rather than wrapping, so this is the largest value a consumer ever sees.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "4611686018427387904"
+      }
+    },
+    {
+      "name": "invalid-handoff-other-vars-without-version",
+      "kind": "invalid-handoff",
+      "reason": "unsupported-version",
+      "note": "UMRK_RA_ACCOUNT_STATE is present but UMRK_RA_ACCOUNT_VERSION is absent. Only the TOTAL absence of every contract variable is unmanaged; a partial snapshot is a malformed handoff.",
+      "env": {
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "1"
+      }
+    },
+    {
+      "name": "invalid-handoff-version-two",
+      "kind": "invalid-handoff",
+      "reason": "unsupported-version",
+      "note": "Version 2 does not exist yet and is refused, never guessed at.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "2",
+        "UMRK_RA_ACCOUNT_STATE": "never-configured"
+      }
+    },
+    {
+      "name": "invalid-handoff-missing-state",
+      "kind": "invalid-handoff",
+      "reason": "missing-account-state",
+      "note": "VERSION without STATE carries no verdict; a consumer cannot pick a transition from it.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1"
+      }
+    },
+    {
+      "name": "invalid-handoff-unknown-state",
+      "kind": "invalid-handoff",
+      "reason": "unknown-account-state",
+      "note": "Only configured, never-configured, signed-out, invalid and unreadable are defined. A fourth spelling of signed-out is a bug, not a synonym.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "signedout",
+        "UMRK_RA_ACCOUNT_REVISION": "3"
+      }
+    },
+    {
+      "name": "invalid-handoff-credentials-on-signed-out",
+      "kind": "invalid-handoff",
+      "reason": "credentials-unexpected",
+      "note": "Credentials present while the state is not configured. Accepting them would make a signed-out account silently playable again.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "signed-out",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "6"
+      }
+    },
+    {
+      "name": "invalid-handoff-configured-missing-username",
+      "kind": "invalid-handoff",
+      "reason": "username-missing",
+      "note": "A configured state must carry the complete pair.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "2"
+      }
+    },
+    {
+      "name": "invalid-handoff-configured-missing-password",
+      "kind": "invalid-handoff",
+      "reason": "password-missing",
+      "note": "A configured state must carry the complete pair.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_REVISION": "2"
+      }
+    },
+    {
+      "name": "invalid-handoff-empty-credential",
+      "kind": "invalid-handoff",
+      "reason": "credential-empty",
+      "note": "An empty username under state configured is an incomplete pair persisted by a pre-contract producer; the handoff declares it unusable instead of letting a consumer authenticate the empty string.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "2"
+      }
+    },
+    {
+      "name": "invalid-handoff-username-oversized",
+      "kind": "invalid-handoff",
+      "reason": "username-oversized",
+      "note": "64 UTF-8 bytes. The limit is 63 bytes excluding NUL; a truncated legacy DB value must be reported as invalid, never silently authenticated.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "4"
+      }
+    },
+    {
+      "name": "invalid-handoff-password-oversized",
+      "kind": "invalid-handoff",
+      "reason": "password-oversized",
+      "note": "128 UTF-8 bytes. The limit is 127 bytes excluding NUL.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "UMRK_RA_ACCOUNT_REVISION": "4"
+      }
+    },
+    {
+      "name": "invalid-handoff-embedded-control-character",
+      "kind": "invalid-handoff",
+      "reason": "credential-control-character",
+      "note": "Embedded NUL, CR or LF must be rejected anywhere in either credential: they cannot survive the producer's storage and env paths intact, so their presence means corruption.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player\r\none",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "5"
+      }
+    },
+    {
+      "name": "invalid-handoff-credential-not-utf8",
+      "kind": "invalid-handoff",
+      "reason": "credential-invalid-utf8",
+      "note": "Byte 0xFF is not valid UTF-8. Fixtures express byte-exact environments through env_b64, base64 per variable, because JSON strings cannot carry invalid UTF-8.",
+      "env_b64": {
+        "UMRK_RA_ACCOUNT_VERSION": "MQ==",
+        "UMRK_RA_ACCOUNT_STATE": "Y29uZmlndXJlZA==",
+        "UMRK_RA_ACCOUNT_USERNAME": "cGxheWVyLW9uZQ==",
+        "UMRK_RA_ACCOUNT_PASSWORD": "c//===",
+        "UMRK_RA_ACCOUNT_REVISION": "OA=="
+      }
+    },
+    {
+      "name": "invalid-handoff-revision-missing",
+      "kind": "invalid-handoff",
+      "reason": "revision-missing",
+      "note": "State configured without a revision. Accepting it would let replayed credentials masquerade as the current account.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse"
+      }
+    },
+    {
+      "name": "invalid-handoff-revision-not-positive",
+      "kind": "invalid-handoff",
+      "reason": "revision-invalid",
+      "note": "Zero, negative, fractional or non-numeric revisions are malformed; the producer never emits one and a consumer must not compare against one.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "signed-out",
+        "UMRK_RA_ACCOUNT_REVISION": "0"
+      }
+    },
+    {
+      "name": "invalid-handoff-revision-non-numeric",
+      "kind": "invalid-handoff",
+      "reason": "revision-invalid",
+      "note": "A signed revision. strtoll, std::stoll and Python int() all accept '+7' as 7; a consumer built on one of them would accept a value the producer can never emit. A revision is one or more ASCII digits and nothing else: no sign, no whitespace, no decimal point.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "+7"
+      }
+    },
+    {
+      "name": "invalid-handoff-revision-overflow",
+      "kind": "invalid-handoff",
+      "reason": "revision-overflow",
+      "note": "One past the 2^62 ceiling. The producer fails such a save rather than wrapping; a consumer rejects the value instead of clamping it.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "4611686018427387905"
+      }
+    },
+    {
+      "name": "invalid-handoff-revision-on-never-configured",
+      "kind": "invalid-handoff",
+      "reason": "revision-unexpected",
+      "note": "A revision on a state that cannot have one (never-configured, invalid, unreadable). A retained sign-out revision is the only credential-less state that carries one.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "never-configured",
+        "UMRK_RA_ACCOUNT_REVISION": "9"
+      }
+    },
+    {
+      "name": "invalid-handoff-retroarch-credentials-leaked",
+      "kind": "invalid-handoff",
+      "reason": "stale-retroarch-credentials",
+      "note": "JAWAKA_CHEEVOS_* belongs to the RetroArch per-launch config handoff and must never reach a standalone child; its presence here means the producer forgot to scrub inherited state after fork.",
+      "env": {
+        "UMRK_RA_ACCOUNT_VERSION": "1",
+        "UMRK_RA_ACCOUNT_STATE": "configured",
+        "UMRK_RA_ACCOUNT_USERNAME": "player-one",
+        "UMRK_RA_ACCOUNT_PASSWORD": "correct horse",
+        "UMRK_RA_ACCOUNT_REVISION": "1",
+        "JAWAKA_CHEEVOS_USERNAME": "player-one",
+        "JAWAKA_CHEEVOS_PASSWORD": "correct horse"
+      }
+    }
+  ]
+}

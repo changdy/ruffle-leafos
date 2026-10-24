@@ -1,0 +1,30 @@
+{
+  "$comment": "CAT-F real-to-floor rollback: a user explicitly rolls a real version back to the floor version. This is a package transaction like any other and TXN-1's quiescence proof applies to the currently-live real service before the floor (serviceless) tree is promoted in its place.",
+  "scenario": "real-to-floor",
+  "install_target": "primary",
+  "installed": {
+    "id": "org.umrk.syncthing",
+    "version": "1.0.0",
+    "manifest": {
+      "id": "org.umrk.syncthing",
+      "service": {
+        "schema": 1, "id": "org.umrk.syncthing",
+        "run": {"path": "bin/leaf-syncthing", "args": ["service", "run"]},
+        "restart": "on-failure", "default_enabled": false, "stop_grace_ms": 10000,
+        "lifecycle": {"game": "notify", "stop_on_storage_change": true, "stop_on_suspend": true}
+      },
+      "state": {"root": "Syncthing", "revoke_on_uninstall": ["leaf/trusted-clients.json"], "retained_roots": ["Syncthing"]}
+    },
+    "runtime_state": "running, enabled"
+  },
+  "candidate": {
+    "id": "org.umrk.syncthing",
+    "version": "0.0.0-floor",
+    "manifest": {"id": "org.umrk.syncthing", "name": "Syncthing (unavailable on this Leaf version)"}
+  },
+  "expected_outcome": {
+    "allowed": true,
+    "action": "TXN-1 quiescence proof required against the currently-running real service before promote (this is a live service, unlike the floor-to-real direction). Stop with the SVC-1 sequence, verify absence, then P1 promote proceeds normally. The rollback stays on the Primary root; retained user data (Syncthing/) is untouched per retained_roots.",
+    "post_state": "service.id org.umrk.syncthing no longer discoverable (no service object); persistent Start with Leaf enablement is cleared as part of the transaction's final database commit, matching an ordinary uninstall-of-service semantics even though the package id remains installed as the floor."
+  }
+}

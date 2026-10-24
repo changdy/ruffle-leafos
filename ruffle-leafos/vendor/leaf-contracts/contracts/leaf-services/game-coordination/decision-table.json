@@ -1,0 +1,66 @@
+{
+  "$comment": "The LIFE-1 game-launch decision table (contracts.md#life-1--game-coordination, 'Decision table at game launch'). Normative and supersedes any prose elsewhere. Rows are evaluated in order; this fixture preserves that order so B1's implementation and its tests can walk it top-to-bottom and stop at the first match, exactly as the contract specifies.",
+  "rows": [
+    {
+      "order": 1,
+      "condition": "stale-generation and its last validated policy explicitly says lifecycle.game: \"ignore\"",
+      "action": "launch-immediately",
+      "note": "Launch immediately after the universal active-record commit. The stale process is outside game coordination by its retained policy."
+    },
+    {
+      "order": 2,
+      "condition": "stale-generation with stop/notify policy, or with no trustworthy retained policy",
+      "action": "surface-and-require-override",
+      "note": "Treat as an unverified stop. Never infer absence from a missing/invalid pak, disabled desired state, or missing/recycled pgid."
+    },
+    {
+      "order": 3,
+      "condition": "no stale generation, and no pak, manifest invalid, service disabled, or lifecycle.game: \"ignore\"",
+      "action": "launch-immediately",
+      "note": "No service wait."
+    },
+    {
+      "order": 4,
+      "condition": "service enabled but process group proven absent by ownership identity",
+      "action": "launch-immediately",
+      "note": "No service wait."
+    },
+    {
+      "order": 5,
+      "condition": "live service, mode stop",
+      "action": "stop-verify-launch",
+      "note": "Run the SVC-1 stop sequence; verify absence; launch."
+    },
+    {
+      "order": 6,
+      "condition": "live service, mode notify, subscribed",
+      "action": "run-exchange",
+      "note": "Run the waiting/ready/error exchange bounded by wait_ms + ack_ms."
+    },
+    {
+      "order": 7,
+      "condition": "live service, mode notify, not subscribed (starting, crashed IPC, reconnecting, or never subscribed)",
+      "action": "stop-verify-launch",
+      "note": "Never launch immediately."
+    },
+    {
+      "order": 8,
+      "condition": "any exchange failure: error, timeout, malformed message or frame, dropped connection",
+      "action": "stop-verify-launch",
+      "note": "Falls back exactly like an unsubscribed live service."
+    },
+    {
+      "order": 9,
+      "condition": "stop cannot be verified in any row above",
+      "action": "surface-and-require-override",
+      "note": "Per SVC-1 'when a stop cannot be verified': surface and require explicit user override."
+    }
+  ],
+  "actions_glossary": {
+    "launch-immediately": "Launch immediately after the universal active-record commit. Zero service-induced wait.",
+    "surface-and-require-override": "Do not launch silently. Surface the stuck/possible-writer service and require an explicit user override to continue.",
+    "stop-verify-launch": "Run the SVC-1 stop sequence, verify absence, then launch. Bounded by stop_grace_ms + 2000ms.",
+    "run-exchange": "Send game.start, run the waiting/ready/error exchange bounded by wait_ms + ack_ms, then launch."
+  },
+  "key_distinction": "absent means no writer exists; unsubscribed means a writer may exist and the cooperative channel is gone. Only the first is a free pass."
+}

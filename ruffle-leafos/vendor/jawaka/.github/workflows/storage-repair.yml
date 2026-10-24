@@ -1,0 +1,22 @@
+name: SD card health and repair advice
+
+# storage-repair-advice-test covers which situation a read-only or held SD
+# card is in and which on-device action can help; in particular that a check
+# which found errors leads to a repair, never to another check.
+# storage-health-test covers how the daemon classifies card health.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make storage-repair-advice-test
+      - run: make storage-health-test

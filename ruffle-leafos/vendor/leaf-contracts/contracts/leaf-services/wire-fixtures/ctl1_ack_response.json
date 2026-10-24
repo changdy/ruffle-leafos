@@ -1,0 +1,13 @@
+{
+  "description": "CTL-1 generic ack (e.g. for run/stop/enable/disable).",
+  "message": {
+    "v": 1,
+    "id": "3",
+    "ok": true
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"3\",\"ok\":true}",
+  "frame_total_bytes": 30,
+  "length_prefix_value": 26,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

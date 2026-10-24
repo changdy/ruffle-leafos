@@ -1,0 +1,53 @@
+{
+  "name": "ScummVM",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_leaf_version": "0.11.0",
+  "provides": {
+    "schema": 1,
+    "systems": [
+      {
+        "id": "SCUMMVM",
+        "name": "ScummVM",
+        "patterns": [
+          "SCUMMVM",
+          "scummvm",
+          "ScummVM"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SCUMMVM",
+        "image_root": "Images/SCUMMVM",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      }
+    ],
+    "system_extensions": [],
+    "cores": [
+      {
+        "id": "scummvm",
+        "display_name": "ScummVM",
+        "type": "retroarch",
+        "libretro_name": "scummvm",
+        "file_name": "cores/scummvm_libretro.so",
+        "info_name": "info/scummvm_libretro.info",
+        "config_folder": "ScummVM",
+        "supports_menu": true,
+        "supports_savestate": false,
+        "supports_disk_control": false
+      }
+    ]
+  }
+}

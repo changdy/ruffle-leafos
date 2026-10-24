@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "unsafe-config-folder",
+  "note": "RetroArch uses config_folder verbatim as a FAT32 directory component; a reserved DOS device name corrupts the Saves/States layout device-wide"
+}

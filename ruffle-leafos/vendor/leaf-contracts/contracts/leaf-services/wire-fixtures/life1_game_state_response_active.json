@@ -1,0 +1,17 @@
+{
+  "description": "LIFE-1 game.state response, an authoritative launch is active.",
+  "message": {
+    "v": 1,
+    "id": "7",
+    "active": true,
+    "launch_id": "launch-0001",
+    "source_id": "secondary_sd",
+    "saves_path": "/media/sdcard1/Saves/nes",
+    "states_path": "/media/sdcard1/States/nes"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"7\",\"active\":true,\"launch_id\":\"launch-0001\",\"source_id\":\"secondary_sd\",\"saves_path\":\"/media/sdcard1/Saves/nes\",\"states_path\":\"/media/sdcard1/States/nes\"}",
+  "frame_total_bytes": 169,
+  "length_prefix_value": 165,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

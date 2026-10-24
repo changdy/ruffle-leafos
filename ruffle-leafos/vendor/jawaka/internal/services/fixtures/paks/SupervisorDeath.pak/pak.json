@@ -1,0 +1,13 @@
+{
+  "id": "org.umrk.fixture.supervisordeath",
+  "name": "Service Fixture: Supervisor Death",
+  "pak_version": "1.0.0",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.fixture.supervisordeath",
+    "run": { "path": "bin/service-fixture", "args": ["supervisor-death"] },
+    "restart": "no",
+    "default_enabled": false,
+    "stop_grace_ms": 1500
+  }
+}

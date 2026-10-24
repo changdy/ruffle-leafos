@@ -1,0 +1,33 @@
+# Local tools, working copies, device transfers, and release archives.
+/adb-tools/
+/flash-transfer/
+/work/
+/outputs/
+
+# Downloaded SDKs and generated build/test output.
+/ruffle-leafos/.tools/
+**/target/
+**/build/
+**/__pycache__/
+*.py[cod]
+*.rs.bk
+*.part
+*.log
+
+# Machine-specific settings and local environment files.
+workspace.local.json
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Editor and operating-system files.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

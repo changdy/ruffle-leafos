@@ -1,0 +1,17 @@
+{
+  "description": "CTL-1 capabilities response.",
+  "message": {
+    "v": 1,
+    "id": "5",
+    "capabilities": [
+      "app-services-v1",
+      "control-ipc-v1",
+      "game-coordination-v1"
+    ]
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"5\",\"capabilities\":[\"app-services-v1\",\"control-ipc-v1\",\"game-coordination-v1\"]}",
+  "frame_total_bytes": 95,
+  "length_prefix_value": 91,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

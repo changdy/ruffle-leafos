@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "escaping-symlink",
+  "note": "the INTERMEDIATE component escapes, not the leaf; resolving only the last component would miss it"
+}

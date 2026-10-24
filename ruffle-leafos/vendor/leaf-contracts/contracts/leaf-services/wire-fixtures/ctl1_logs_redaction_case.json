@@ -1,0 +1,59 @@
+{
+  "$comment": "CTL-1 'logs'/'export-logs' redaction rule fixture (contracts.md#ctl-1--control-and-status-ipc: 'Log tails and exports redact API keys, tokens, cookies, PINs, passwords, password hashes, private keys, and shadow entries.'). Not a byte-level wire fixture like the sibling *.bin files -- this is a before/after case list the redaction implementation and its tests check against. Kept in wire-fixtures/ alongside the logs_response schema it must still satisfy (contracts.md's logs op / control-ipc-v1.schema.json#/definitions/logs_response).",
+  "cases": [
+    {
+      "name": "api-key-in-log-line",
+      "raw_line": "2026-07-27T10:00:00Z upstream: connected with API key sk-live-abc123def456",
+      "redacted_line": "2026-07-27T10:00:00Z upstream: connected with API key [REDACTED]"
+    },
+    {
+      "name": "bearer-token-in-log-line",
+      "raw_line": "2026-07-27T10:00:01Z gateway: Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig",
+      "redacted_line": "2026-07-27T10:00:01Z gateway: Authorization: Bearer [REDACTED]"
+    },
+    {
+      "name": "cookie-in-log-line",
+      "raw_line": "2026-07-27T10:00:02Z gateway: Set-Cookie: session=abcd1234; Path=/",
+      "redacted_line": "2026-07-27T10:00:02Z gateway: Set-Cookie: [REDACTED]"
+    },
+    {
+      "name": "pin-in-log-line",
+      "raw_line": "2026-07-27T10:00:03Z pairing: device entered PIN 481920 to confirm",
+      "redacted_line": "2026-07-27T10:00:03Z pairing: device entered PIN [REDACTED] to confirm"
+    },
+    {
+      "name": "password-in-log-line",
+      "raw_line": "2026-07-27T10:00:04Z ssh-server: password=hunter2 accepted for user umrk",
+      "redacted_line": "2026-07-27T10:00:04Z ssh-server: password=[REDACTED] accepted for user umrk"
+    },
+    {
+      "name": "password-hash-in-log-line",
+      "raw_line": "2026-07-27T10:00:05Z auth: stored hash $6$rounds=5000$abcxyz$longhashvalue...",
+      "redacted_line": "2026-07-27T10:00:05Z auth: stored hash [REDACTED]"
+    },
+    {
+      "name": "private-key-in-log-line",
+      "raw_line": "2026-07-27T10:00:06Z keygen: -----BEGIN OPENSSH PRIVATE KEY----- b3BlbnNzaC1r... -----END OPENSSH PRIVATE KEY-----",
+      "redacted_line": "2026-07-27T10:00:06Z keygen: [REDACTED]"
+    },
+    {
+      "name": "shadow-entry-in-log-line",
+      "raw_line": "2026-07-27T10:00:07Z passwd-sync: umrk:$6$abc$def:19800:0:99999:7:::",
+      "redacted_line": "2026-07-27T10:00:07Z passwd-sync: [REDACTED]"
+    },
+    {
+      "name": "no-secret-present",
+      "raw_line": "2026-07-27T10:00:08Z controller: folder Syncthing-Saves-primary is idle",
+      "redacted_line": "2026-07-27T10:00:08Z controller: folder Syncthing-Saves-primary is idle",
+      "note": "A line with nothing to redact must pass through unchanged, not be dropped or replaced wholesale."
+    }
+  ],
+  "sample_logs_response": {
+    "v": 1, "id": "9",
+    "lines": [
+      "2026-07-27T10:00:00Z upstream: connected with API key [REDACTED]",
+      "2026-07-27T10:00:08Z controller: folder Syncthing-Saves-primary is idle"
+    ],
+    "redacted": true
+  }
+}

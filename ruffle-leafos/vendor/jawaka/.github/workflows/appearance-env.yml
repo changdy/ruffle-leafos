@@ -1,0 +1,21 @@
+name: Appearance env handoff
+
+# The language export contract from umrk-workspace/docs/runtime-paths.md:
+# UMRK_LANGUAGE (canonical) and JAWAKA_LANGUAGE (alias) exported together and
+# equal by jw_appearance_apply_env(), with overwrite semantics that replace any
+# stale value inherited from an earlier game launch.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make appearance-env-test

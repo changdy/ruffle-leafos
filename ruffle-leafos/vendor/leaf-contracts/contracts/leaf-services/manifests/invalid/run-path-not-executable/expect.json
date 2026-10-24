@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "run-path-not-executable",
+  "note": "bin/leaf-syncthing exists and is a regular file, but has no execute bit"
+}

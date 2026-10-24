@@ -1,0 +1,14 @@
+{
+  "description": "LIFE-1 waiting status reply (zero or more before ready/error).",
+  "message": {
+    "v": 1,
+    "status": "waiting",
+    "launch_id": "launch-0001",
+    "pending_items": 3
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"status\":\"waiting\",\"launch_id\":\"launch-0001\",\"pending_items\":3}",
+  "frame_total_bytes": 74,
+  "length_prefix_value": 70,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

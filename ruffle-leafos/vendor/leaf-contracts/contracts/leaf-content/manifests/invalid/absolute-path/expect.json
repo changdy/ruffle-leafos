@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "absolute-path",
+  "note": "MLP1 swaps /mnt/sdcard and /media/sdcard1 across reboots, so an absolute path is not merely inelegant -- it resolves to nothing on the next boot"
+}

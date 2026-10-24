@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "escaping-symlink",
+  "note": "bin/leaf-syncthing is a symlink resolving outside the pak root"
+}

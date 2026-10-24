@@ -1,0 +1,14 @@
+{
+  "description": "LIFE-1 error status reply whose reason contains multi-byte UTF-8 characters (three 2-byte code points and one 4-byte code point) -- catches an implementation that counts Unicode characters instead of encoded UTF-8 bytes for the length prefix.",
+  "message": {
+    "v": 1,
+    "status": "error",
+    "launch_id": "launch-0001",
+    "reason": "upstream caf\u00e9 d\u00e9j\u00e0-vu \ud83d\udd25"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"status\":\"error\",\"launch_id\":\"launch-0001\",\"reason\":\"upstream caf\u00e9 d\u00e9j\u00e0-vu \ud83d\udd25\"}",
+  "frame_total_bytes": 95,
+  "length_prefix_value": 91,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

@@ -1,0 +1,13 @@
+{
+  "id": "org.umrk.fixture.normalexit",
+  "name": "Service Fixture: Normal Exit",
+  "pak_version": "1.0.0",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.fixture.normalexit",
+    "run": { "path": "bin/service-fixture", "args": ["normal-exit"] },
+    "restart": "no",
+    "default_enabled": false,
+    "stop_grace_ms": 300
+  }
+}

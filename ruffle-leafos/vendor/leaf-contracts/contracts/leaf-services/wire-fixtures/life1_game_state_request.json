@@ -1,0 +1,13 @@
+{
+  "description": "LIFE-1 game.state query.",
+  "message": {
+    "v": 1,
+    "op": "game.state",
+    "id": "7"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"op\":\"game.state\",\"id\":\"7\"}",
+  "frame_total_bytes": 38,
+  "length_prefix_value": 34,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

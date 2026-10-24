@@ -1,0 +1,85 @@
+{
+  "$comment": "P1's promote/recovery state table (contracts.md TXN-1, base layer). The install record's commit_token is the single commit point and the discriminator: recovery at boot compares it against the live tree's own per-tree commit marker. A match means the live tree IS the tree the install record names -- nothing to roll forward or back, regardless of how complete a stray staged/promoted tree looks. A mismatch means the transaction that would have updated the install record never reached its commit point, so recovery restores the moved-aside tree (the one the install record still names) and discards anything promoted after it. 'recovery_class' is a machine-checkable summary of the action, derived by validate_fixtures.py from on_disk + install_record independently of this file's prose fields -- see decide_p1_recovery() -- so a case whose prose contradicts its own on_disk state is caught rather than trusted.",
+  "install_record_fields": ["target_path", "package_id", "commit_token", "version"],
+  "per_tree_marker_fields": ["commit_token", "package_id", "version"],
+  "recovery_class_values": ["none", "discard-staged", "rollback-to-moved-aside"],
+  "cases": [
+    {
+      "name": "clean-steady-state",
+      "on_disk": {"live_tree_commit_token": "T1", "staged_tree": null, "moved_aside_tree": null},
+      "install_record": {"commit_token": "T1", "version": "1.0.0"},
+      "crash_point": "none",
+      "recovery_class": "none",
+      "recovery_action": "none -- tokens match, live tree is the install record's tree",
+      "resulting_state": "unchanged"
+    },
+    {
+      "name": "crash-before-stage-written",
+      "on_disk": {"live_tree_commit_token": "T1", "staged_tree": null, "moved_aside_tree": null},
+      "install_record": {"commit_token": "T1", "version": "1.0.0"},
+      "crash_point": "before any staged tree exists for the new version",
+      "recovery_class": "none",
+      "recovery_action": "none -- indistinguishable from clean-steady-state; nothing to recover",
+      "resulting_state": "unchanged, old version live"
+    },
+    {
+      "name": "crash-after-stage-before-move-aside",
+      "on_disk": {"live_tree_commit_token": "T1", "staged_tree": {"commit_token": "T2", "version": "2.0.0"}, "moved_aside_tree": null},
+      "install_record": {"commit_token": "T1", "version": "1.0.0"},
+      "crash_point": "staged tree for T2 fully written and fsynced, but the live tree has not yet been moved aside",
+      "recovery_class": "discard-staged",
+      "recovery_action": "discard the staged tree (it never became authoritative); live tree T1 remains untouched and still matches the install record",
+      "resulting_state": "unchanged, old version live, staged T2 removed"
+    },
+    {
+      "name": "crash-after-move-aside-before-promote",
+      "on_disk": {
+        "live_tree_commit_token": null,
+        "moved_aside_tree": {"commit_token": "T1", "version": "1.0.0"},
+        "staged_tree": {"commit_token": "T2", "version": "2.0.0"}
+      },
+      "install_record": {"commit_token": "T1", "version": "1.0.0"},
+      "crash_point": "old tree moved aside to a transaction sibling, staged tree not yet promoted into the live path",
+      "recovery_class": "rollback-to-moved-aside",
+      "recovery_action": "install record still names T1: restore the moved-aside T1 tree back to the live path and remove the staged T2 tree and any transaction siblings",
+      "resulting_state": "rolled back, old version live"
+    },
+    {
+      "name": "crash-after-promote-before-install-record-commit",
+      "on_disk": {
+        "live_tree_commit_token": "T2",
+        "moved_aside_tree": {"commit_token": "T1", "version": "1.0.0"},
+        "staged_tree": null
+      },
+      "install_record": {"commit_token": "T1", "version": "1.0.0"},
+      "crash_point": "staged T2 tree renamed into the live path, but the install record's commit_token still reads T1 -- the install record, not the rename, is the commit point",
+      "recovery_class": "rollback-to-moved-aside",
+      "recovery_action": "The live tree's own marker (T2) does not match the install record (T1), so the promote is uncommitted regardless of how complete the T2 tree looks: recovery discards the promoted T2 tree, restores the moved-aside T1 tree to the live path, and removes any transaction siblings. The install record is left naming T1, exactly as before the crash -- a client that observed the crash mid-transaction sees no state change once recovery completes.",
+      "resulting_state": "rolled back, old version live",
+      "note": "An earlier draft of this fixture forward-committed T2 here, treating the rename as the commit point. That was wrong: contracts.md names the install record's matching commit token as the discriminator, which makes the install record -- not the filesystem rename -- the single commit point. A rename that outruns the install record update is not yet committed and must be undone, exactly like crash-after-move-aside-before-promote one step earlier."
+    },
+    {
+      "name": "crash-after-full-commit",
+      "on_disk": {"live_tree_commit_token": "T2", "moved_aside_tree": null, "staged_tree": null},
+      "install_record": {"commit_token": "T2", "version": "2.0.0"},
+      "crash_point": "install record updated to T2 and transaction siblings already removed",
+      "recovery_class": "none",
+      "recovery_action": "none -- tokens match",
+      "resulting_state": "unchanged, new version live"
+    },
+    {
+      "name": "same-version-repair",
+      "on_disk": {
+        "live_tree_commit_token": "T1",
+        "moved_aside_tree": {"commit_token": "T1-old", "version": "1.0.0"},
+        "staged_tree": null
+      },
+      "install_record": {"commit_token": "T1-old", "version": "1.0.0"},
+      "crash_point": "a repair reinstall of the SAME version (e.g. corrupted tree reinstalled verbatim) crashed after the rename into the live path but before the install-record commit -- the version string does not change across the transaction, only the commit_token does",
+      "recovery_class": "rollback-to-moved-aside",
+      "recovery_action": "Recovery must not treat identical version strings as proof nothing happened: the per-tree commit_token is the discriminator, not the version. The live tree's marker (T1) differs from the install record's recorded token (T1-old), so this is an uncommitted promote exactly like crash-after-promote-before-install-record-commit: recovery discards the live T1 tree and restores the moved-aside T1-old tree. The repair must be retried from scratch; the corrupted tree is not silently accepted merely because a later attempt looked complete.",
+      "resulting_state": "rolled back, same version string, pre-repair (T1-old) tree live",
+      "note": "This is the case an earlier draft of the plan got wrong twice: first by keying recovery off version equality, and second (in the same fix that corrected that) by still forward-committing the token mismatch instead of rolling it back. The token is the discriminator, and a mismatch always means 'not committed, roll back' -- there is no code path in this design where a mismatched live tree is accepted as newer/better."
+    }
+  ]
+}

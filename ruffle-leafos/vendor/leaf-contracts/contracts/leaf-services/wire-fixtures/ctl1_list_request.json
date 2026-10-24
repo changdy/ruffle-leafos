@@ -1,0 +1,13 @@
+{
+  "description": "CTL-1 list request, no service_id needed.",
+  "message": {
+    "v": 1,
+    "op": "list",
+    "id": "1"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"op\":\"list\",\"id\":\"1\"}",
+  "frame_total_bytes": 32,
+  "length_prefix_value": 28,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

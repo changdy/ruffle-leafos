@@ -1,0 +1,12 @@
+{
+  "name": "ruffle",
+  "version": "leaf-12",
+  "icon": "res/icon.jpg",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_jawaka_version": "0.0.1",
+  "type": "TOOL",
+  "description": "Flash game browser and player packaged for Leaf.",
+  "author": "Ruffle / Leaf port",
+  "repo_url": "https://github.com/ruffle-rs/ruffle"
+}

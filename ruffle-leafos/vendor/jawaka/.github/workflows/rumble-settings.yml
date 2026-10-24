@@ -1,0 +1,21 @@
+name: Rumble settings
+
+# UI rumble and game rumble are two switches sharing one strength. The first
+# load after the old master switch rewrites the settings once; this test pins
+# that mapping so no existing card starts rumbling after an update.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - run: make rumble-settings-test

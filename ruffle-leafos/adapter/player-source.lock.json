@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/aweigit/ruffle-miyooflip",
+  "commit": "3bc39c5e0fdbc9fcde92681706395f6ef70f991b",
+  "cargo_lock_sha256": "c0df2d92702e187a07dd469f7ea58cde731c18ee1941fa8b35d56a4439736404",
+  "package": "sdl2test-rocknix",
+  "relationship": "Matches supplied short source_commit and frontend source paths. Leaf-specific patches absent; NOT proven byte-for-byte source for leaf-12.",
+  "status": "source candidate retrieved; player not rebuilt",
+  "known_missing_leaf_adaptations": [
+    "RUFFLE_* environment controls",
+    "Leaf Apps file menu and Chinese overlay",
+    "Leaf GL present/readback fixes from original build manifest"
+  ],
+  "build_target": "aarch64-unknown-linux-gnu"
+}

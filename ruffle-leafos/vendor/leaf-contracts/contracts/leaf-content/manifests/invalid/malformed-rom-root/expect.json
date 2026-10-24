@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "malformed-rom-root",
+  "note": "one public Roms/ folder per console, per the canonical user-system-folder policy"
+}

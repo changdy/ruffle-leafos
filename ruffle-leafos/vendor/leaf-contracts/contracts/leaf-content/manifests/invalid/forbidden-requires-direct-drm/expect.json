@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "forbidden-requires-direct-drm",
+  "note": "jw_standalone_policy_requires_direct_drm honors metadata alone -- there is no allowlist gate on that path, and a wrong claim can wedge the display"
+}

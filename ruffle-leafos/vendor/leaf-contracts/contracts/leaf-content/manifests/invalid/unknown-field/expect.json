@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "unknown-field",
+  "note": "additionalProperties is false at every level of `provides`; themes are a separate deferred contract"
+}

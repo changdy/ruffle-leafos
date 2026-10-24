@@ -1,0 +1,6 @@
+{
+  "valid": false,
+  "reason": "secondary-source-unsupported",
+  "note": "v1 honors `provides` on the primary card only: a system whose emulator vanishes when a card is pulled is a bad first experience, and the stamp would need mount-state tracking to be correct",
+  "apps_listed": false
+}

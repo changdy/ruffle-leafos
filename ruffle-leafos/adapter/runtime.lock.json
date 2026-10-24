@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "supplied_version": "leaf-12",
+  "supplied_source_commit": "3bc39c5 (public base resolved; Leaf-specific modifications unresolved)",
+  "files": {
+    "bin/ruffle": "b3ecd3094f678a9be3e99602267f345191e02653a023ca6005fe3b0cf5aab342",
+    "lib/libSDL2-2.0.so.0": "e2ca89362648c369ff4f60de16388b0627ec079c0d95c4666244c16e12c3735b",
+    "lib/libasound.so.2": "50bd5bb0e3729c9e5624bbaf818c600a979f10a0c85c675c6b1fd2ae9b416496",
+    "res/menu-font.ttf": "e2bc8a2e7f37474b774fff8db758681ece40bb6947a90d571bce9dd60671a8e4",
+    "pak.json": "f2af0571c70896daa4053a9708cf5089edf71016307cfd591453b15591675ecf",
+    "build-manifest.json": "bade57016634293d40a3d6e4ede84c2b3b8f3e90d69718dcc12e25ed0726270b",
+    "launch.sh": "46722832ea4aaaf1866d1e5b21a20a1c40b969c08f7f53709774c52f59c4a95a"
+  },
+  "source_candidate_lock": "player-source.lock.json"
+}

@@ -1,0 +1,72 @@
+{
+  "$comment": "TXN-1's normative ordering for a service-pak mutation (contracts.md#txn-1--service-pak-mutation-lock). Each step lists what must be durable/verified before the next step may begin, and the crash-recovery consequence of dying at that step. Every step has an explicit applies_to (['update'], ['uninstall'], or both) -- an earlier version of this file described step 4 (revocation) and step 7 (final commit) as if a single 'action' string covered both directions, then contradicted itself in the recovery prose by saying update does not revoke. Steps whose behavior differs by direction now carry action_by_direction instead of a single action string, so there is nothing left to reconcile in prose. This is a sequencing fixture, not a schema -- validate_fixtures.py checks steps 1..N with no gaps, that every step has applies_to plus if_crash_here, and that a direction-varying step uses action_by_direction with exactly the keys its applies_to names.",
+  "target_keying": "canonical Apps-relative target path plus the expected stable package id",
+  "steps": [
+    {
+      "step": 1,
+      "name": "acquire-mutation-lock",
+      "applies_to": ["update", "uninstall"],
+      "action": "Acquire the mutation lock keyed by (canonical target path, expected package id). Blocks new foreground launches, service starts, and any other transaction for that target.",
+      "if_crash_here": "No durable state changed yet. Lock is released with the process; a fresh attempt reacquires it."
+    },
+    {
+      "step": 2,
+      "name": "prove-quiescence",
+      "applies_to": ["update", "uninstall"],
+      "action": "Stop the service with the SVC-1 stop sequence; verify group absence by ownership identity (no non-zombie member of the reserved pgid).",
+      "if_crash_here": "No durable state changed. An unverified stop, or a still-locked stale-generation lease, fails the transaction outright -- it never proceeds to step 3 on an unverified stop."
+    },
+    {
+      "step": 3,
+      "name": "persist-pending-uninstall-intent",
+      "applies_to": ["uninstall"],
+      "action": "After the user confirms uninstall and quiescence (step 2) is proven, atomically persist a pending record in Jawaka's database containing the canonical target, expected package id, and the already cached/validated state declarations.",
+      "skipped_for": {
+        "update": "There is no pending-intent concept for update. An update proceeds directly from step 2 to step 5 (move-aside-and-promote); steps 3 and 4 do not exist on the update path at all."
+      },
+      "if_crash_here": "Not yet durable (the atomic persist itself is the unit) -- either the record exists complete or it does not. If it does not exist, the transaction has not started per TXN-1's model and recovery restores the prior desired/effective state. If it exists, recovery at boot treats this exactly like crash-after-intent-durable at step 4."
+    },
+    {
+      "step": 4,
+      "name": "declarative-revocation",
+      "applies_to": ["uninstall"],
+      "action": "With pending intent durable (step 3 committed), and before any package byte is moved or deleted, delete or quarantine every validated state.revoke_on_uninstall path and verify the result.",
+      "skipped_for": {
+        "update": "Update never revokes state.revoke_on_uninstall paths -- those are uninstall-only by definition (the name says so). An update goes from proven quiescence (step 2) straight to move-aside-and-promote (step 5)."
+      },
+      "if_crash_here": "Intent is already durable, so revocation is deliberately irreversible -- recovery idempotently repeats revocation, it never restores trust material. There is no update-path variant of this step to reconcile."
+    },
+    {
+      "step": 5,
+      "name": "move-aside-and-promote",
+      "applies_to": ["update", "uninstall"],
+      "action_by_direction": {
+        "update": "P1's base-layer promote path: move the live tree aside, promote the candidate tree into place, per the p1-promote-recovery.json state table.",
+        "uninstall": "P1's base-layer promote path with 'promote' meaning removal: move the live tree aside, then remove it (no candidate tree is promoted in its place), per the p1-promote-recovery.json state table."
+      },
+      "if_crash_here": "Governed entirely by p1-promote-recovery.json's commit-token discriminator. For uninstall, this sits under an already-durable pending intent from step 3; for update, there is no such intent and recovery may still restore the prior desired/effective state if the token comparison says the promote never committed."
+    },
+    {
+      "step": 6,
+      "name": "verify-and-syncfs",
+      "applies_to": ["update", "uninstall"],
+      "action": "Verify the package removal/promotion result and require syncfs on the affected userdata and Apps filesystems.",
+      "if_crash_here": "Recovery re-verifies and re-syncfs idempotently; this step has no partial-application hazard beyond what step 5 already covers."
+    },
+    {
+      "step": 7,
+      "name": "final-database-transaction",
+      "applies_to": ["update", "uninstall"],
+      "action_by_direction": {
+        "update": "One final Jawaka database transaction commits the new install record (new commit_token/version) and restores desired/effective enablement -- a service that was enabled and running before the update is re-enabled after it, subject to the new manifest still validating.",
+        "uninstall": "One final Jawaka database transaction clears: the install record, persistent Start with Leaf, and the pending uninstall intent. Clear non-durable session run state as part of the same completion path. The intent deletion is the last durable action -- nothing after it is allowed to be recovery-relevant."
+      },
+      "if_crash_here": "If this transaction did not commit: for update, the prior install record is still present, so recovery resumes from wherever p1-promote-recovery.json's token comparison says the tree actually is, then repeats this step's update variant. For uninstall, the pending intent is still present, so recovery repeats this step's uninstall variant the same way."
+    }
+  ],
+  "invariant": "Security revocation (step 4, uninstall-only) always precedes any package byte moving or being deleted (step 5). Once a pending uninstall's intent is durable (step 3 committed), the transaction never rolls back to a re-armed, unrevoked state -- only forward completion is reachable from there. An update transaction never touches revoke_on_uninstall paths and never creates a pending intent record; steps 3 and 4 simply do not run on that path.",
+  "uninstall_must_not_depend_on_healthy_app": {
+    "source_of_truth": "Jawaka's own cached, last-validated manifest at install time -- never a live query to the app.",
+    "retained_roots_enumeration": "Walk USERDATA_PATHS for every present card, never following symlinks or crossing out of the validated root. Absent cards are listed explicitly as not inventoried, never as removed or empty. A size-read failure is shown as unknown and never blocks uninstall."
+  }
+}

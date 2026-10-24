@@ -1,0 +1,25 @@
+name: Update check
+
+# update-github-check-smoke runs the release check against a local GitHub-shaped
+# HTTPS server: the routine check stops at the newest compatible release on one
+# reused connection, the release picker's list load fetches manifests
+# concurrently, the async job queues and merges results the way jawakad relies
+# on, and a stalled transfer fails instead of hanging the check.
+# update-local-manifest-smoke covers the developer local-manifest path.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libsqlite3-dev
+      - run: make update-github-check-smoke
+      - run: make update-local-manifest-smoke

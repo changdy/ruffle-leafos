@@ -1,0 +1,16 @@
+{
+  "description": "CTL-1 status response, running + subscribed.",
+  "message": {
+    "v": 1,
+    "id": "2",
+    "service_id": "org.umrk.syncthing",
+    "desired_enabled": true,
+    "effective_state": "running",
+    "coordination": "subscribed"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"2\",\"service_id\":\"org.umrk.syncthing\",\"desired_enabled\":true,\"effective_state\":\"running\",\"coordination\":\"subscribed\"}",
+  "frame_total_bytes": 133,
+  "length_prefix_value": 129,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

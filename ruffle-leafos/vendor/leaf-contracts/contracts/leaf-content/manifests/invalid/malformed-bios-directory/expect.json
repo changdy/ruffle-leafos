@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "malformed-bios-directory",
+  "note": "a single safe directory component, not a path"
+}

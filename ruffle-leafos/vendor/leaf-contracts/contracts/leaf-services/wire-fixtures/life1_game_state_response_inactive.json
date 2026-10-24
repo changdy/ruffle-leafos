@@ -1,0 +1,13 @@
+{
+  "description": "LIFE-1 game.state response, no active launch.",
+  "message": {
+    "v": 1,
+    "id": "7",
+    "active": false
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"7\",\"active\":false}",
+  "frame_total_bytes": 35,
+  "length_prefix_value": 31,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

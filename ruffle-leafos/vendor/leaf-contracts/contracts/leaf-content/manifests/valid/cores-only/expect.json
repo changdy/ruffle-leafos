@@ -1,0 +1,4 @@
+{
+  "valid": true,
+  "note": "ships a core and no system -- valid, because another pak's system_extensions may name it"
+}

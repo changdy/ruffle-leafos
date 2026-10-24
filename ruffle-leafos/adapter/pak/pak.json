@@ -1,0 +1,29 @@
+{
+  "name": "Ruffle Probe",
+  "version": "0.1.4",
+  "icon": "art/FLASH.png",
+  "platform": "mlp1",
+  "pak_version": "0.1.4",
+  "min_leaf_version": "0.12.0",
+  "min_jawaka_version": "0.0.1",
+  "type": "TOOL",
+  "description": "Development preview: CJK fallback font, Leaf PulseAudio routing, release diagnostics and native leaf-12 controls; Apps keeps the display probe.",
+  "provides": {
+    "schema": 1,
+    "systems": [{
+      "id": "FLASH", "name": "Flash",
+      "patterns": ["flash"], "extensions": ["swf"],
+      "archive_extensions": [], "archive_mode": "none",
+      "playlist_extensions": [], "m3u_generation": "none",
+      "rom_root": "Roms/flash", "image_root": "Images/flash",
+      "default_core": "ruffle_probe",
+      "icon_flat": "art/FLASH.png", "group": "Computer"
+    }],
+    "cores": [{
+      "id": "ruffle_probe", "display_name": "Ruffle leaf-12 (development preview)",
+      "type": "path", "path": "emulators/ruffle-probe/launch-game.sh",
+      "supports_menu": false, "supports_savestate": false,
+      "supports_disk_control": false
+    }]
+  }
+}

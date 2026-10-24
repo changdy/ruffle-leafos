@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-themes/theme-v1.schema.json",
+  "title": "THEME-1 theme.json",
+  "description": "The shape of theme.json in a THEME-1 theme package. UTF-8 byte limits on name and author, the id-equals-folder rule, reserved names, and every archive and image rule are enforced by scripts/theme_model.py, not by this schema.",
+  "type": "object",
+  "required": ["schema", "id", "name", "author", "version", "min_leaf_version", "license"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+    },
+    "name": {
+      "allOf": [{ "$ref": "#/definitions/display_text" }, { "maxLength": 40 }]
+    },
+    "author": {
+      "allOf": [{ "$ref": "#/definitions/display_text" }, { "maxLength": 60 }]
+    },
+    "version": {
+      "$ref": "#/definitions/version"
+    },
+    "min_leaf_version": {
+      "allOf": [
+        { "$ref": "#/definitions/version" },
+        {
+          "anyOf": [
+            { "pattern": "^0\\.(1[2-9]|[2-9][0-9]|[1-9][0-9]{2,3})\\." },
+            { "pattern": "^[1-9]" }
+          ]
+        }
+      ]
+    },
+    "license": {
+      "type": "string",
+      "enum": ["CC-BY-4.0", "CC-BY-SA-4.0", "CC-BY-NC-SA-2.0", "CC-BY-NC-SA-4.0", "CC0-1.0", "redistribution-permitted"]
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 300,
+      "pattern": "^[^\\u0000-\\u0009\\u000b-\\u001f\\u007f]*$"
+    },
+    "grid": {
+      "type": "object",
+      "required": ["cols", "rows"],
+      "additionalProperties": false,
+      "properties": {
+        "cols": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "rows": { "type": "integer", "minimum": 1, "maximum": 6 }
+      }
+    },
+    "colors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": { "$ref": "#/definitions/color" },
+        "highlight": { "$ref": "#/definitions/color" },
+        "highlight_text": { "$ref": "#/definitions/color" },
+        "underlay": { "$ref": "#/definitions/color" },
+        "tile_border": { "$ref": "#/definitions/color" },
+        "focus_ring": { "$ref": "#/definitions/color" },
+        "underlay_opacity": { "$ref": "#/definitions/level" },
+        "shadow": { "$ref": "#/definitions/level" }
+      }
+    },
+    "status_style": {
+      "type": "string",
+      "enum": ["auto", "light", "dark"]
+    }
+  },
+  "definitions": {
+    "display_text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]*[^\\s\\u0000-\\u001f\\u007f][^\\u0000-\\u001f\\u007f]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})$"
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
+    }
+  }
+}

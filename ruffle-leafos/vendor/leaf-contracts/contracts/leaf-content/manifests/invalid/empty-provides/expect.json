@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "empty-provides",
+  "note": "declares nothing at all"
+}

@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "forbidden-legacy-flat-core",
+  "note": "claims ownership of save/state files from RetroArch's historical flat layout"
+}

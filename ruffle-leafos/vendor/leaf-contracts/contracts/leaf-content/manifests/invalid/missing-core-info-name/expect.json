@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "missing-core-info-name",
+  "note": "RetroArch takes one info DIRECTORY, so the compile materializes a merged one and needs the pak's .info"
+}

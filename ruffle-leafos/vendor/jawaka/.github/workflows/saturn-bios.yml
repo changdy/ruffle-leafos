@@ -1,0 +1,32 @@
+name: Saturn BIOS selection
+
+# The Core actions menu can select which BIOS the YabaSanshiro standalone uses:
+# Default, explicit HLE, or one staged image on either card. Two invariants:
+#
+#   1. bios-test covers the value grammar, game-over-system-over-HLE precedence,
+#      re-validation against the cards mounted right now, and the bounded folder
+#      listing the picker pages through (ordering, size filter, symlinks, 600
+#      eligible files in one folder, cancellation).
+#   2. bios-launch-contract-check is a shallow guard over the call sites in
+#      jawakad and the launcher that bios-test cannot link: the child-only
+#      environment contract with Yabasanshiro-standalone's launch.sh, refusal
+#      before the display handoff, and a persisted choice that stays logical.
+#
+# The wrapper half of that contract is checked in Yabasanshiro-standalone by
+# `make smoke-launch-wrapper`, which lives in its own repository.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make bios-test
+      - run: make bios-launch-contract-check

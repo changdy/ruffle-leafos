@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "too-many-cores",
+  "note": "33 cores; the cap is 32"
+}

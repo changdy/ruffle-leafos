@@ -1,0 +1,22 @@
+name: Weston restart
+
+# Weston outlives the Leaf generation that restarts it (direct-DRM handoff,
+# refresh rate, HDMI output). weston-initd-test runs the real S49weston command
+# strings from a jawakad-like environment and checks the compositor would start
+# from / without the launcher's card LD_LIBRARY_PATH, which otherwise pins
+# replaced card libraries and blocks the shutdown read-only remount.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make weston-initd-test

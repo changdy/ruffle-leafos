@@ -1,0 +1,3355 @@
+# Japanese -- contributed through the Leaf Discord, 2026-09-18.
+# Started from an older leaf.pot: 19 entries for strings since renamed or
+# removed were dropped on import, and newer strings were added untranslated.
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: internal/settings/storage_ui.c
+msgid " Some damaged files were changed."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d %s games"
+msgstr "%d %s ゲーム"
+
+#: internal/settings/settings.c
+msgid "%d Hz"
+msgstr "%d Hz"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d apps"
+msgstr "%d アプリ"
+
+#: internal/settings/settings.c
+msgid "%d done"
+msgstr "%d 件完了"
+
+#: internal/settings/settings.c
+msgid "%d done, %d failed"
+msgstr "%d 件完了、%d 件失敗"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d favorites"
+msgstr "%d お気に入り"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d games"
+msgstr "%d ゲーム"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d games, %d systems, %d apps"
+msgstr "%d ゲーム、%d システム、%d アプリ"
+
+#: cmd/jawaka-menu/main.c
+msgid "%d of %d"
+msgstr "%d / %d"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d theme"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d themes"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "%d/%d done"
+msgstr "%d/%d 件完了"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%dh %dm"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "%dm"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "%ldd ago"
+msgstr "%ld日前"
+
+#: cmd/jawaka-menu/main.c
+msgid "%ldh ago"
+msgstr "%ld時間前"
+
+#: cmd/jawaka-menu/main.c
+msgid "%ldm ago"
+msgstr "%ld分前"
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s can't be installed because Leaf could not read it as a theme.\n"
+"\n"
+"Nothing was changed."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s can't be installed because it is not a valid theme.\n"
+"\n"
+"%s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s can't be installed because the download did not match the catalog.\n"
+"\n"
+"Nothing was changed. Try again later."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s can't be installed right now"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s can't be installed.\n"
+"\n"
+"A theme that comes with Leaf already uses the folder name %s."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s can't be installed.\n"
+"\n"
+"The Themes folder already has %d themes, the most Leaf can list. Uninstall "
+"or remove a theme to make room."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "%s first"
+msgstr "%s を先頭"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s is already your theme"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s is installed.\n"
+"\n"
+"Apply it now?"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s is no longer available in Pak Rat.\n"
+"\n"
+"A copy that is already installed keeps working."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s is not installed by Pak Rat"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s launcher exited (status %s)"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"%s was uninstalled.\n"
+"\n"
+"It was your current theme, so Leaf switched to no theme."
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "%s · %d of %d"
+msgstr "%s · %d / %d"
+
+#: cmd/jawaka-menu/main.c
+msgid "%s · %s · %d of %d"
+msgstr "%s · %s · %d / %d"
+
+#: internal/settings/settings.c
+msgid "%s · fallback"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "%s: %d icons not %dx%d (contain-fit)"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "%s: %d icons ok"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "%s: %d icons over %dpx skipped"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "%s: %d icons over %dpx skipped, %d off-size"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ", %d not found"
+msgstr "、%d 件未検出"
+
+#: internal/settings/settings.c
+msgid "-"
+msgstr "-"
+
+#: internal/settings/settings.c
+msgid "1 min"
+msgstr "1分"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.06 GHz"
+msgstr "1.06 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.10 GHz"
+msgstr "1.10 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.42 GHz"
+msgstr "1.42 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.61 GHz"
+msgstr "1.61 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.80 GHz"
+msgstr "1.80 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.99 GHz"
+msgstr "1.99 GHz"
+
+#: internal/settings/settings.c
+msgid "10 min"
+msgstr "10分"
+
+#: internal/settings/settings.c
+msgid "100/120 Hz only"
+msgstr "100/120 Hz のみ"
+
+#: internal/settings/settings.c
+msgid "12 Hour"
+msgstr "12時間制"
+
+#: internal/retroarch/shader_strings.c
+msgid "120Hz BFI measured 59.249 FPS and further reduces brightness."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"120Hz cadence counters can report periodic drops for nominal 59.94/60fps "
+"content."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"120Hz cadence counters can report periodic drops for nominal 60fps content."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "15 sec"
+msgstr "15秒"
+
+#: internal/settings/settings.c
+msgid "2 min"
+msgstr "2分"
+
+#: cmd/jawaka-menu/main.c
+msgid "200 MHz"
+msgstr "200 MHz"
+
+#: internal/settings/settings.c
+msgid "24 Hour"
+msgstr "24時間制"
+
+#: internal/settings/settings.c
+msgid "30 sec"
+msgstr "30秒"
+
+#: cmd/jawaka-menu/main.c
+msgid "300 MHz"
+msgstr "300 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "324 MHz"
+msgstr "324 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "400 MHz"
+msgstr "400 MHz"
+
+#: internal/settings/settings.c
+msgid "45 sec"
+msgstr "45秒"
+
+#: internal/settings/settings.c
+msgid "4:3"
+msgstr "4:3"
+
+#: internal/settings/settings.c
+msgid "5 min"
+msgstr "5分"
+
+#: cmd/jawaka-launcher/main.c
+msgid "512 KiB candidate"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "528 MHz"
+msgstr "528 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "600 MHz"
+msgstr "600 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "700 MHz"
+msgstr "700 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "780 MHz"
+msgstr "780 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "800 MHz"
+msgstr "800 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "816 MHz"
+msgstr "816 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "A broader preset may apply after you reload the game."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "A lighter handheld LCD grid with softer cell edges."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"A theme folder named %s is already on your SD card.\n"
+"\n"
+"Replace it with %s from Pak Rat so it can be updated? The files in that "
+"folder will be replaced."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"A theme folder with this name is already on your SD card. Installing "
+"replaces it after you confirm."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"A theme that comes with Leaf already uses this folder name, so this one "
+"can't be installed."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "A: Choose   B: Back"
+msgstr "A: 選択   B: 戻る"
+
+#: internal/settings/settings.c
+msgid "A: On/Off   X: Grab to reorder"
+msgstr "A: オン/オフ   X: つかんで並べ替え"
+
+#: internal/settings/settings.c
+msgid "ADB"
+msgstr "ADB"
+
+#: internal/settings/settings.c
+msgid "ADB disable canceled"
+msgstr "ADB の無効化をキャンセルしました"
+
+#: internal/settings/settings.c
+msgid "ADB enable canceled"
+msgstr "ADB の有効化をキャンセルしました"
+
+#: internal/settings/settings.c
+msgid "ADB unavailable on this platform"
+msgstr "このプラットフォームでは ADB を利用できません"
+
+#: internal/settings/settings.c
+msgid "AM/PM"
+msgstr "午前/午後"
+
+#: cmd/jawaka-menu/main.c
+msgid "About"
+msgstr "概要"
+
+#: internal/settings/settings.c
+msgid "Accent"
+msgstr "アクセント"
+
+#: internal/settings/settings.c
+msgid "Accounts"
+msgstr "アカウント"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Actions"
+msgstr "操作"
+
+#: cmd/jawaka-menu/main.c
+msgid "Active"
+msgstr "有効"
+
+#: cmd/jawaka-menu/main.c
+msgid "Active: %s"
+msgstr "有効: %s"
+
+#: cmd/jawaka-menu/main.c
+msgid "Active: %s  Temp: %d C"
+msgstr "有効: %s  温度: %d C"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Adding Splore favorites"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Adds a Pocket-style backing texture and low-cost pixel grid tuned for Game "
+"Boy Color art."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Adds a gray backing texture, low-cost pixel grid, and transparency response "
+"tuned for the original GBA screen."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Adds a lightweight aperture mask and softened scanlines without curvature."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Adds a subdued Pocket-style backing texture, pixel grid, and edge shadows "
+"for original Game Boy games."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Adds lightweight scanlines with reduced darkness for 8-bit, 16-bit, and "
+"PlayStation-era games."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "Adds the fine RGB pixel grid of a handheld LCD panel."
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Adelaide"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "Adjust"
+msgstr "調整"
+
+#: cmd/jawaka-menu/main.c
+msgid "Advanced RetroArch menu"
+msgstr "RetroArch 詳細メニュー"
+
+#: internal/settings/timezones.c
+msgid "Afghanistan"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "All"
+msgstr "すべて"
+
+#: cmd/jawaka-menu/main.c
+msgid "All RetroArch"
+msgstr "RetroArch 全体"
+
+#: cmd/jawaka-menu/main.c
+msgid "All RetroArch requires a Leaf build with Fugazi's conflict resolver."
+msgstr ""
+"RetroArch 全体への適用には、競合解決機能を備えた Leaf ビルドが必要です。"
+
+#: internal/settings/settings.c
+msgid "All Systems"
+msgstr "すべてのシステム"
+
+#: cmd/jawaka-launcher/main.c
+msgid "All rights reserved, redistribution permitted"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Already used by %s"
+msgstr "%s がすでに使用中"
+
+#: internal/settings/timezones.c
+msgid "American Samoa"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Amiga"
+msgstr "Amiga"
+
+#: cmd/jawaka-launcher/main.c
+msgid "An image in the theme is not a supported PNG or JPEG, or is too large."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Appearance"
+msgstr "外観"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Applied"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Applied %s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Apply"
+msgstr "適用"
+
+#: internal/retroarch/shader_strings.c
+msgid "Approximates the softer color response of the Game Boy Color LCD."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Apps"
+msgstr "アプリ"
+
+#: internal/launcher/system_names.c
+msgid "Arcade"
+msgstr "アーケード"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Arrange"
+msgstr "並べ替え"
+
+#: internal/settings/settings.c
+msgid "Artwork Priority"
+msgstr "アートワークの優先順位"
+
+#: internal/launcher/system_names.c
+msgid "Atari 2600"
+msgstr "Atari 2600"
+
+#: internal/launcher/system_names.c
+msgid "Atari 5200"
+msgstr "Atari 5200"
+
+#: internal/launcher/system_names.c
+msgid "Atari 7800"
+msgstr "Atari 7800"
+
+#: internal/launcher/system_names.c
+msgid "Atari Jaguar"
+msgstr "Atari Jaguar"
+
+#: internal/launcher/system_names.c
+msgid "Atari Lynx"
+msgstr "Atari Lynx"
+
+#: internal/settings/timezones.c
+msgid "Atlantic Canada"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Atomiswave"
+msgstr "Atomiswave"
+
+#: internal/settings/settings.c
+msgid "Audio Output"
+msgstr "音声出力"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Author: %s"
+msgstr ""
+
+#: internal/platform/platform_common.c
+msgid "Auto"
+msgstr "自動"
+
+#: internal/settings/settings.c
+msgid "Auto Sleep"
+msgstr "自動スリープ"
+
+#: internal/settings/settings.c
+msgid "Automatic"
+msgstr "自動"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Available"
+msgstr "利用可能"
+
+#: cmd/jawaka-launcher/main.c
+msgid "B: Back      A: Confirm"
+msgstr "B: 戻る      A: 確認"
+
+#: cmd/jawaka-launcher/main.c
+msgid "B: Back      A: Start"
+msgstr "B: 戻る      A: 開始"
+
+#: cmd/jawaka-launcher/main.c
+msgid "B: Back   A: Next"
+msgstr "B: 戻る   A: 次へ"
+
+#: internal/retroarch/shader_strings.c
+msgid "BFI further reduces brightness."
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "BIOS file ready"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Back"
+msgstr "戻る"
+
+#: internal/settings/settings.c
+msgid "Background"
+msgstr "背景"
+
+#: internal/settings/timezones.c
+msgid "Baker Island"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "Balanced"
+msgstr "バランス"
+
+#: internal/settings/timezones.c
+msgid "Bangkok"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Bangladesh"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Battery"
+msgstr "バッテリー"
+
+#: internal/platform/platform_common.c
+msgid "Battery Saver"
+msgstr "バッテリー節約"
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Best at integer or near-integer scaling; the upstream shader can look uneven "
+"at arbitrary scales."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid ""
+"Beta builds are tester previews and may be unstable or lose data. Switch to "
+"the Beta update channel?"
+msgstr ""
+"ベータ版はテスト用で不安定またはデータを失う可能性があります。ベータ更新チャ"
+"ンネルに切り替えますか？"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Black & white"
+msgstr "白黒"
+
+#: internal/settings/settings.c
+msgid "Black Frame Insertion"
+msgstr "黒フレーム挿入"
+
+#: internal/settings/settings.c
+msgid "Black Frame Insertion needs 100 or 120 Hz"
+msgstr "黒フレーム挿入には 100 または 120 Hz が必要です"
+
+#: internal/settings/settings.c
+msgid "Black Frame Insertion off"
+msgstr "黒フレーム挿入: オフ"
+
+#: internal/settings/settings.c
+msgid "Bluetooth"
+msgstr "Bluetooth"
+
+#: internal/settings/settings.c
+msgid "Bluetooth Name"
+msgstr "Bluetooth 名"
+
+#: internal/settings/settings.c
+msgid "Board"
+msgstr "ボード"
+
+#: internal/settings/settings.c
+msgid "Boot Splash"
+msgstr "起動画面"
+
+#: internal/settings/settings.c
+msgid "Both"
+msgstr "両方"
+
+#: internal/settings/settings.c
+msgid "Box art"
+msgstr "ボックスアート"
+
+#: internal/settings/timezones.c
+msgid "Brazil (East)"
+msgstr "ブラジル（東部）"
+
+#: internal/settings/settings.c
+msgid "Breath"
+msgstr "呼吸"
+
+#: internal/settings/settings.c
+msgid "Brightness"
+msgstr "明るさ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Browse"
+msgstr "参照"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Browse BIOS folder"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Busy"
+msgstr "処理中"
+
+#: internal/settings/settings.c
+msgid "Button Background"
+msgstr "ボタンの背景"
+
+#: internal/settings/settings.c
+msgid "Button Hints"
+msgstr "ボタンヒント"
+
+#: internal/settings/settings.c
+msgid "Button Text"
+msgstr "ボタンの文字"
+
+#: cmd/jawaka-launcher/main.c
+msgid "By %s"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "By system"
+msgstr "システム別"
+
+#: cmd/jawaka-menu/main.c
+msgid "CPU"
+msgstr "CPU"
+
+#: internal/settings/settings.c
+msgid "CPU temp"
+msgstr "CPU 温度"
+
+#: internal/retroarch/shader_strings.c
+msgid "CRT Curved"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "CRT Lite"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "CRT Sharp"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"CRT effects reduce brightness; the preset uses a milder mask and scanline "
+"strength than upstream defaults."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: internal/settings/settings.c
+msgid "Cancelled"
+msgstr "キャンセルしました"
+
+#: internal/settings/timezones.c
+msgid "Cape Verde"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Card:"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Carries a Leaf local patch until upstream fixes its GLSL ES precision "
+"mismatch."
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Central Europe"
+msgstr "中央ヨーロッパ"
+
+#: internal/settings/timezones.c
+msgid "Chatham Islands"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Check Releases"
+msgstr "リリースを確認"
+
+#: internal/settings/storage_ui.c
+msgid "Check SD card"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "China"
+msgstr "中国"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Choose"
+msgstr "選択"
+
+#: cmd/jawaka-menu/main.c
+msgid "Choose where RetroArch should load this shader automatically."
+msgstr "このシェーダーを RetroArch が自動的に読み込む範囲を選択します。"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Clear"
+msgstr "クリア"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Clear Done"
+msgstr "完了項目をクリア"
+
+#: internal/settings/settings.c
+msgid "Clock"
+msgstr "時計"
+
+#: internal/settings/storage_ui.c
+msgid "Close the game or app first, then try again."
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "ColecoVision"
+msgstr "ColecoVision"
+
+#: internal/settings/settings.c
+msgid "Color"
+msgstr "色"
+
+#: internal/settings/settings.c
+msgid "Color Scheme"
+msgstr "配色"
+
+#: internal/settings/settings.c
+msgid "Colors"
+msgstr "色"
+
+#: internal/settings/settings.c
+msgid "Comet"
+msgstr "コメット"
+
+#: cmd/jawaka-menu/main.c
+msgid "Command: %s"
+msgstr "コマンド: %s"
+
+#: internal/launcher/system_names.c
+msgid "Commodore 64"
+msgstr "Commodore 64"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Confirm"
+msgstr "確認"
+
+#: internal/settings/storage_ui.c
+msgid "Connect to power or charge the battery to at least 30 percent and try again."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Connect to power or charge the battery to at least 30 percent to repair this card."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Connected"
+msgstr "接続済み"
+
+#: cmd/jawaka-menu/main.c
+msgid "Continue"
+msgstr "続行"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Controller setup failed. Restart Leaf and try again."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Core"
+msgstr "コア"
+
+#: internal/settings/settings.c
+msgid "Could not save"
+msgstr "保存できませんでした"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Couldn't install %s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Couldn't uninstall %s"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Coverflow"
+msgstr "カバーフロー"
+
+#: internal/settings/settings.c
+msgid "Current"
+msgstr "現在"
+
+#: internal/retroarch/shader_strings.c
+msgid "Curvature crops slightly at the screen edges."
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "Custom"
+msgstr "カスタム"
+
+#: cmd/jawaka-launcher/main.c
+msgid "D-pad: Value/Position   B: Back   A: Next"
+msgstr "十字キー: 値/位置   B: 戻る   A: 次へ"
+
+#: cmd/jawaka-menu/main.c
+msgid "DMC"
+msgstr "DMC"
+
+#: internal/settings/timezones.c
+msgid "Darwin"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Default"
+msgstr "デフォルト"
+
+#: internal/settings/settings.c
+msgid "Defaults"
+msgstr "デフォルト"
+
+#: internal/retroarch/shader_strings.c
+msgid "Designed for handheld content."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Designed for handheld content; the grid is very fine at console resolutions."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Details"
+msgstr "詳細"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Device"
+msgstr "デバイス"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Digit"
+msgstr "数字"
+
+#: internal/settings/settings.c
+msgid "Disable"
+msgstr "無効化"
+
+#: internal/settings/settings.c
+msgid "Disable USB ADB and remove Leaf's boot restore marker?"
+msgstr "USB ADB を無効にし、Leaf の起動復元マーカーを削除しますか？"
+
+#: internal/platform/input_shortcuts.c
+msgid "Disabled"
+msgstr "無効"
+
+#: internal/settings/settings.c
+msgid "Disconnected"
+msgstr "切断済み"
+
+#: cmd/jawaka-menu/main.c
+msgid "Disk %d/%d"
+msgstr "ディスク %d/%d"
+
+#: internal/settings/settings.c
+msgid "Display & Sound"
+msgstr "表示とサウンド"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Display Name"
+msgstr "表示名"
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Do not combine with BFI when using mGBA: the no-shader mGBA control falls to "
+"38.499 FPS at 120Hz with BFI."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Done"
+msgstr "完了"
+
+#: internal/settings/settings.c
+msgid "Download"
+msgstr "ダウンロード"
+
+#: internal/settings/settings.c
+msgid "Downloading"
+msgstr "ダウンロード中"
+
+#: internal/launcher/system_names.c
+msgid "Dreamcast"
+msgstr "Dreamcast"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Drop"
+msgstr "離す"
+
+#: internal/settings/timezones.c
+msgid "Dubai"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Eastern Europe"
+msgstr "東ヨーロッパ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Edit the current shader in RetroArch."
+msgstr "現在のシェーダーを RetroArch で編集します。"
+
+#: internal/settings/settings.c
+msgid "Empty"
+msgstr "空"
+
+#: internal/settings/settings.c
+msgid "Enable"
+msgstr "有効化"
+
+#: internal/settings/settings.c
+msgid "Enable USB ADB and restore it at boot?"
+msgstr "USB ADB を有効にし、起動時に復元しますか？"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Enter PIN to exit"
+msgstr "終了するには PIN を入力"
+
+#: internal/settings/settings.c
+msgid "Error"
+msgstr "エラー"
+
+#: internal/settings/timezones.c
+msgid "Eucla"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Exit 5-Game Mode?"
+msgstr "5 ゲームモードを終了しますか？"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Exit to Stock"
+msgstr "標準システムへ戻る"
+
+#: internal/settings/settings.c
+msgid "Extra Large"
+msgstr "特大"
+
+#: internal/settings/settings.c
+msgid "Failed"
+msgstr "失敗"
+
+#: internal/launcher/system_names.c
+msgid "Famicom Disk System"
+msgstr "ファミコンディスクシステム"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Favorite"
+msgstr "お気に入り"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Favorites"
+msgstr "お気に入り"
+
+#: internal/settings/timezones.c
+msgid "Fernando de Noronha"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Filter"
+msgstr "フィルター"
+
+#: internal/settings/settings.c
+msgid "Flat"
+msgstr "フラット"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Folder"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Folder: Themes/%s"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Font"
+msgstr "フォント"
+
+#: internal/settings/settings.c
+msgid "Font Size"
+msgstr "文字サイズ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Forget"
+msgstr "忘れる"
+
+#: internal/settings/settings.c
+msgid "Fountain"
+msgstr "ファウンテン"
+
+#: internal/platform/platform_common.c
+msgid "Frontend"
+msgstr "フロントエンド"
+
+#: internal/retroarch/shader_strings.c
+msgid "GBA Color"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "GBC Color"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "GPU"
+msgstr "GPU"
+
+#: cmd/jawaka-menu/main.c
+msgid "Game"
+msgstr "ゲーム"
+
+#: internal/launcher/system_names.c
+msgid "Game Boy"
+msgstr "ゲームボーイ"
+
+#: internal/launcher/system_names.c
+msgid "Game Boy Advance"
+msgstr "ゲームボーイアドバンス"
+
+#: internal/retroarch/shader_strings.c
+msgid "Game Boy Advance LCD"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Game Boy Color"
+msgstr "ゲームボーイカラー"
+
+#: internal/retroarch/shader_strings.c
+msgid "Game Boy Color LCD"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "Game Boy LCD"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Game Gear"
+msgstr "ゲームギア"
+
+#: internal/settings/settings.c
+msgid "Game Performance"
+msgstr "ゲームパフォーマンス"
+
+#: internal/settings/settings.c
+msgid "Game Rumble"
+msgstr "ゲームの振動"
+
+#: internal/platform/input_shortcuts.c
+msgid "Game Switcher"
+msgstr "ゲーム切替"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Games"
+msgstr "ゲーム"
+
+#: internal/settings/settings.c
+msgid "Games played"
+msgstr "プレイしたゲーム"
+
+#: internal/settings/settings.c
+msgid "Glide"
+msgstr "グライド"
+
+#: internal/settings/settings.c
+msgid "Good"
+msgstr "良好"
+
+#: internal/settings/settings.c
+msgid "Grid"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Grid Size"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "HDMI Output"
+msgstr "HDMI 出力"
+
+#: internal/settings/settings.c
+msgid "HDMI output change failed"
+msgstr "HDMI 出力の変更に失敗しました"
+
+#: internal/settings/settings.c
+msgid "HDMI output unavailable on this platform"
+msgstr "このプラットフォームでは HDMI 出力を利用できません"
+
+#: cmd/jawaka-launcher/main.c
+msgid "HLE"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "HLE, no BIOS file"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Hashing"
+msgstr "ハッシュ計算中"
+
+#: internal/platform/platform_common.c
+msgid "Headset"
+msgstr "ヘッドセット"
+
+#: internal/settings/settings.c
+msgid "Hiccup"
+msgstr "瞬時点滅"
+
+#: internal/settings/settings.c
+msgid "Hidden"
+msgstr "非表示"
+
+#: internal/settings/settings.c
+msgid "Hold Menu, then press the button.   X: Disable"
+msgstr "メニューを押しながらボタンを押します。   X: 無効化"
+
+#: internal/settings/settings.c
+msgid "Home Layout"
+msgstr "ホームレイアウト"
+
+#: internal/settings/settings.c
+msgid "Home Screen"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Home Tabs"
+msgstr "ホームタブ"
+
+#: internal/settings/settings.c
+msgid "Hotkey"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Hotkeys"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Hotkeys & Rumble"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "IP: %s"
+msgstr "IP: %s"
+
+#: internal/settings/settings.c
+msgid "IPv4"
+msgstr "IPv4"
+
+#: internal/settings/settings.c
+msgid "IPv6"
+msgstr "IPv6"
+
+#: internal/settings/settings.c
+msgid "Icon"
+msgstr "アイコン"
+
+#: internal/settings/timezones.c
+msgid "India"
+msgstr "インド"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Info"
+msgstr "情報"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Install"
+msgstr "インストール"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Install cancelled: %s"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Install the matching Leaf system update before checking this card on your "
+"device."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installed"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installed %s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installed version: %s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installing theme"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Intellivision"
+msgstr "Intellivision"
+
+#: internal/retroarch/shader_strings.c
+msgid "It is a scaling filter, not a CRT or LCD simulation."
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Japan / Korea"
+msgstr "日本 / 韓国"
+
+#: cmd/jawaka-menu/main.c
+msgid "Keep"
+msgstr "保持"
+
+#: internal/retroarch/shader_strings.c
+msgid "Keep BFI off: PS1 at 120Hz with BFI measured 50.282 FPS."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Keep Original"
+msgstr "元のまま保持"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Keep data"
+msgstr "データを保持"
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Keep mGBA BFI off: the no-shader core path already falls below full speed at "
+"120Hz with BFI."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Keeps pixel art crisp at integer and non-integer scaling without adding a "
+"CRT effect."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Keeps rectangular pixels as sharp as possible at awkward non-integer scales "
+"while avoiding scrolling shimmer."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Kernel"
+msgstr "カーネル"
+
+#: internal/retroarch/shader_strings.c
+msgid "LCD Grid"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "LCD Grid Fast"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Language"
+msgstr "言語"
+
+#: internal/settings/settings.c
+msgid "Large"
+msgstr "大"
+
+#: internal/settings/settings.c
+msgid "Last played"
+msgstr "最後にプレイ"
+
+#: internal/settings/settings.c
+msgid "Last update: %s"
+msgstr "最終更新: %s"
+
+#: internal/settings/settings.c
+msgid "Later"
+msgstr "後で"
+
+#: cmd/jawaka-menu/main.c
+msgid "Latest"
+msgstr "最新"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Launch"
+msgstr "起動"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Launch canceled"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Leaf"
+msgstr "Leaf"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Leaf can't find %s in the Themes folder"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Leaf couldn't confirm your SD card can be written."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Leaf couldn't identify this card safely. Check the card on a computer "
+"instead."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Leaf couldn't identify this card."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Leaf couldn't safely check this card, so nothing was changed. Check the card "
+"on a computer."
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "Leaf's in-game picker supports GLSL presets (.glslp)."
+msgstr "Leaf のゲーム内選択は GLSL プリセット（.glslp）に対応しています。"
+
+#: cmd/jawaka-menu/main.c
+msgid "Leaf's shader files are incomplete. Update or reinstall Leaf."
+msgstr ""
+"Leaf のシェーダーファイルが不完全です。Leaf を更新または再インストールしてく"
+"ださい。"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Left/Right"
+msgstr "左/右"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library"
+msgstr "ゲームライブラリ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library scan failed"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library scan requested"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library updating..."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "License: %s"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Lighting"
+msgstr "ライティング"
+
+#: internal/settings/timezones.c
+msgid "Line Islands"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "List Style"
+msgstr "リスト形式"
+
+#: cmd/jawaka-menu/main.c
+msgid "Load"
+msgstr "読み込み"
+
+#: cmd/jawaka-menu/main.c
+msgid "Load State"
+msgstr "ステートを読み込む"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Loading preview"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Lock"
+msgstr "ロック"
+
+#: internal/settings/timezones.c
+msgid "Lord Howe Island"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "MS-DOS"
+msgstr "MS-DOS"
+
+#: internal/launcher/system_names.c
+msgid "MSX"
+msgstr "MSX"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Main SD Card"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Manual"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Marquesas Islands"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Memory free"
+msgstr "空きメモリ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Menu"
+msgstr "メニュー"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Menu: Start now"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Missing"
+msgstr "不足"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Missing Only"
+msgstr "不足分のみ"
+
+#: internal/settings/settings.c
+msgid "Mode"
+msgstr "モード"
+
+#: internal/settings/timezones.c
+msgid "Moscow"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Most played"
+msgstr "プレイ回数順"
+
+#: internal/settings/storage_ui.c
+msgid "Mounted"
+msgstr "マウント済み"
+
+#: cmd/jawaka-menu/main.c
+msgid "Move"
+msgstr "移動"
+
+#: internal/settings/settings.c
+msgid "Moving"
+msgstr "移動中"
+
+#: internal/settings/timezones.c
+msgid "Myanmar"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "NEC PC-98"
+msgstr "NEC PC-98"
+
+#: internal/settings/settings.c
+msgid "Nearby"
+msgstr "近く"
+
+#: internal/settings/storage_ui.c
+msgid "Needs check"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Needs repair"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Neo Geo"
+msgstr "Neo Geo"
+
+#: internal/launcher/system_names.c
+msgid "Neo Geo Pocket"
+msgstr "Neo Geo Pocket"
+
+#: internal/launcher/system_names.c
+msgid "Neo Geo Pocket Color"
+msgstr "Neo Geo Pocket Color"
+
+#: internal/settings/timezones.c
+msgid "Nepal"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Network: %s"
+msgstr "ネットワーク: %s"
+
+#: internal/settings/settings.c
+msgid "Never"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "New Zealand"
+msgstr ""
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "New saves may fail"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Newfoundland"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Next page"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Nintendo 64"
+msgstr "Nintendo 64"
+
+#: internal/launcher/system_names.c
+msgid "Nintendo DS"
+msgstr "Nintendo DS"
+
+#: internal/launcher/system_names.c
+msgid "Nintendo Entertainment System"
+msgstr "Nintendo Entertainment System"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No BIOS file"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "No BIOS file selected"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "No apps found"
+msgstr "アプリが見つかりません"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No favorites yet — open a game and press Y to add one"
+msgstr "お気に入りはまだありません。ゲームを開いて Y を押すと追加できます"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No favorites yet — press Y on a game to add one"
+msgstr "お気に入りはまだありません。ゲーム上で Y を押すと追加できます"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No games available"
+msgstr "利用できるゲームがありません"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No games found"
+msgstr "ゲームが見つかりません"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No lock"
+msgstr "ロックなし"
+
+#: internal/settings/settings.c
+msgid "No playtime recorded yet."
+msgstr "プレイ時間はまだ記録されていません。"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No preview"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "No recent games yet — play something and it'll show up here"
+msgstr "最近のゲームはまだありません。ゲームをプレイするとここに表示されます"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No results"
+msgstr "結果なし"
+
+#: cmd/jawaka-menu/main.c
+msgid "No save in this slot"
+msgstr "このスロットにセーブはありません"
+
+#: cmd/jawaka-menu/main.c
+msgid "No saved shader exists at that scope."
+msgstr "その範囲に保存済みシェーダーはありません。"
+
+#: cmd/jawaka-menu/main.c
+msgid "No saves"
+msgstr "セーブなし"
+
+#: cmd/jawaka-menu/main.c
+msgid "No saves to load"
+msgstr "読み込めるセーブがありません"
+
+#: cmd/jawaka-menu/main.c
+msgid "No saves yet"
+msgstr "セーブはまだありません"
+
+#: internal/retroarch/shader_strings.c
+msgid "No screen curvature; use CRT Curved for that."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "No services installed"
+msgstr "インストールされたサービスはありません"
+
+#: cmd/jawaka-menu/main.c
+msgid "No states"
+msgstr "ステートなし"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No themes in Pak Rat yet"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "None"
+msgstr "なし"
+
+#: internal/settings/settings.c
+msgid "Not Found"
+msgstr "見つかりません"
+
+#: internal/settings/settings.c
+msgid "Not connected"
+msgstr "未接続"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Not enough memory to open the BIOS picker"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Not found in the ScreenScraper.fr database."
+msgstr "ScreenScraper.fr のデータベースに見つかりませんでした。"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Not mounted"
+msgstr "未マウント"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Not now"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Now"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "OK"
+msgstr "OK"
+
+#: internal/settings/settings.c
+msgid "OS"
+msgstr "OS"
+
+#: cmd/jawaka-menu/main.c
+msgid "Off"
+msgstr "オフ"
+
+#: internal/settings/settings.c
+msgid "Offsets are standard time; regions adjust for DST"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "On"
+msgstr "オン"
+
+#: internal/settings/settings.c
+msgid "On (%d fps)"
+msgstr "オン（%d fps）"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Open"
+msgstr "開く"
+
+#: internal/settings/settings.c
+msgid "Open-source components"
+msgstr "オープンソースコンポーネント"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Options"
+msgstr "オプション"
+
+#: internal/settings/settings.c
+msgid "Output"
+msgstr "出力"
+
+#: cmd/jawaka-launcher/main.c
+msgid "PIN"
+msgstr "PIN"
+
+#: cmd/jawaka-launcher/main.c
+msgid "PINs did not match - try again"
+msgstr "PIN が一致しません。もう一度試してください"
+
+#: internal/settings/settings.c
+msgid "Paired"
+msgstr "ペアリング済み"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pak Rat"
+msgstr "Pak Rat"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pak Rat Themes"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Pakistan"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Path: Apps/%s"
+msgstr "パス: Apps/%s"
+
+#: internal/settings/settings.c
+msgid "Percent"
+msgstr "パーセント"
+
+#: cmd/jawaka-menu/main.c
+msgid "Performance"
+msgstr "パフォーマンス"
+
+#: cmd/jawaka-menu/main.c
+msgid "Performance unavailable"
+msgstr "パフォーマンス情報を利用できません"
+
+#: internal/settings/settings.c
+msgid "Photographic"
+msgstr "写真風"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pick"
+msgstr "選択"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pick 5 Games"
+msgstr "5 ゲームを選択"
+
+#: internal/settings/settings.c
+msgid "Pick Update"
+msgstr "更新を選択"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pick another Saturn BIOS from the options menu."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Play"
+msgstr "プレイ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Play anyway"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Play directly"
+msgstr "直接プレイ"
+
+#: internal/launcher/system_names.c
+msgid "PlayStation"
+msgstr "PlayStation"
+
+#: internal/launcher/system_names.c
+msgid "PlayStation Portable"
+msgstr "PlayStation Portable"
+
+#: internal/settings/settings.c
+msgid "Playing test sound…"
+msgstr "テスト音声を再生中…"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Playtime"
+msgstr "プレイ時間"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Please wait"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Ports"
+msgstr "ポート"
+
+#: internal/settings/settings.c
+msgid "Power"
+msgstr "電源"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Power Off"
+msgstr "電源オフ"
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Prefer this over Sharp Pixels when non-integer scrolling visibly shimmers."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Press MENU to exit"
+msgstr "終了するには MENU を押す"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Press Menu again"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Previous page"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "Profile"
+msgstr "プロファイル"
+
+#: internal/settings/settings.c
+msgid "Queued"
+msgstr "キュー待ち"
+
+#: cmd/jawaka-menu/main.c
+msgid "Quit"
+msgstr "終了"
+
+#: internal/settings/settings.c
+msgid "RAM"
+msgstr "RAM"
+
+#: internal/settings/settings.c
+msgid "Rainbow"
+msgstr "レインボー"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Re-enter PIN"
+msgstr "PIN を再入力"
+
+#: internal/settings/storage_ui.c
+msgid "Read-only"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reading folder..."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reboot"
+msgstr "再起動"
+
+#: cmd/jawaka-menu/main.c
+msgid "Reboot failed"
+msgstr "再起動に失敗しました"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reboot?"
+msgstr "再起動しますか？"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Recently Played"
+msgstr "最近プレイしたゲーム"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Recents"
+msgstr "最近使った項目"
+
+#: cmd/jawaka-menu/main.c
+msgid "Recommended shaders are unavailable. Update or reinstall Leaf."
+msgstr ""
+"推奨シェーダーを利用できません。Leaf を更新または再インストールしてください。"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reconnect Bluetooth"
+msgstr "Bluetooth を再接続"
+
+#: internal/platform/input_shortcuts.c
+msgid "Recording"
+msgstr "録画"
+
+#: internal/settings/settings.c
+msgid "Recording Hotkey"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Refresh"
+msgstr "更新"
+
+#: internal/settings/settings.c
+msgid "Refresh Rate"
+msgstr "リフレッシュレート"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Refresh this folder"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Region Priority"
+msgstr "地域の優先順位"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reinstall"
+msgstr "再インストール"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reinstalled %s"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Release"
+msgstr "リリース"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Release-managed path"
+msgstr "リリース管理パス"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Releases"
+msgstr "リリース"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Remove"
+msgstr "削除"
+
+#: cmd/jawaka-menu/main.c
+msgid "Remove the saved preset at the selected scope and turn shaders off."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Removing retained Pak Rat data"
+msgstr "保持された Pak Rat データを削除中"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reorder"
+msgstr "並べ替え"
+
+#: internal/settings/settings.c
+msgid "Repair"
+msgstr "修復"
+
+#: internal/settings/storage_ui.c
+msgid "Repair SD card"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Repair isn't installed on this device."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Repair pending"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Replace"
+msgstr "置換"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Replace All"
+msgstr "すべて置換"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Rescan"
+msgstr "再スキャン"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Rescan Library"
+msgstr "ゲームライブラリを再スキャン"
+
+#: cmd/jawaka-menu/main.c
+msgid "Reset"
+msgstr "リセット"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reset Game Overrides"
+msgstr "ゲーム上書きをリセット"
+
+#: cmd/jawaka-menu/main.c
+msgid "Reset Override"
+msgstr "上書きをリセット"
+
+#: internal/settings/settings.c
+msgid "Reset RetroArch Config"
+msgstr "RetroArch 設定をリセット"
+
+#: internal/settings/settings.c
+msgid "Reset shared RetroArch config to packaged defaults?"
+msgstr "共有 RetroArch 設定をパッケージの初期値に戻しますか？"
+
+#: internal/settings/settings.c
+msgid "Restart"
+msgstr "再起動"
+
+#: internal/settings/storage_ui.c
+msgid "Restart and check"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Restart and repair"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Restart now to finish installing?"
+msgstr "インストールを完了するため今すぐ再起動しますか？"
+
+#: internal/settings/storage_ui.c
+msgid "Restarting to check your SD card"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Restarting to repair your SD card"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Resume"
+msgstr "再開"
+
+#: internal/settings/settings.c
+msgid "RetroAchievements"
+msgstr "RetroAchievements"
+
+#: cmd/jawaka-menu/main.c
+msgid "RetroArch Settings"
+msgstr "RetroArch 設定"
+
+#: cmd/jawaka-menu/main.c
+msgid ""
+"RetroArch did not confirm the shader. Reopen Shader or restart the game."
+msgstr ""
+"RetroArch がシェーダーを確認できませんでした。シェーダーを開き直すかゲームを"
+"再起動してください。"
+
+#: cmd/jawaka-menu/main.c
+msgid "RetroArch is not available. Shader unchanged."
+msgstr "RetroArch を利用できません。シェーダーは変更されていません。"
+
+#: internal/settings/settings.c
+msgid "RetroArch reset canceled"
+msgstr "RetroArch のリセットをキャンセルしました"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "RetroArch settings not saved"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Retry"
+msgstr "再試行"
+
+#: cmd/jawaka-menu/main.c
+msgid "Return to Launcher"
+msgstr "ランチャーに戻る"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Return to Leaf?"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Revert"
+msgstr "元に戻す"
+
+#: internal/settings/settings.c
+msgid "Rounded"
+msgstr "角丸"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Run / Stop"
+msgstr "実行 / 停止"
+
+#: internal/settings/settings.c
+msgid "SD Cards"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "SD card is read-only"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "SD card is read-only: %s"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "SD card status unavailable"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "SD read-only"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "SG-1000"
+msgstr "SG-1000"
+
+#: internal/settings/settings.c
+msgid "Safely unmount the secondary SD card?"
+msgstr "セカンダリ SD カードを安全にアンマウントしますか？"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Saturn BIOS"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Saturn BIOS update failed"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "Save & Quit"
+msgstr "保存して終了"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save State"
+msgstr "ステートを保存"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save current shader…"
+msgstr "現在のシェーダーを保存…"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save globally"
+msgstr "全体に保存"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save your edits in RetroArch before you leave."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Saved; active after restart"
+msgstr "保存しました。再起動後に有効になります"
+
+#: internal/settings/settings.c
+msgid "Saving"
+msgstr "保存中"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scan"
+msgstr "スキャン"
+
+#: cmd/jawaka-menu/main.c
+msgid "Scan failed"
+msgstr "スキャンに失敗しました"
+
+#: internal/retroarch/shader_strings.c
+msgid "Scanlines and an aperture mask with a flat screen and crisp scaling."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"Scanlines and aperture mask with screen curvature, rounded corners and "
+"vignetting."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "Scanlines reduce brightness, especially when combined with BFI."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Scanning"
+msgstr "スキャン中"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scanning library..."
+msgstr "ゲームライブラリをスキャン中…"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scanning…"
+msgstr "スキャン中…"
+
+#: cmd/jawaka-menu/main.c
+msgid "Scope"
+msgstr "範囲"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scrape"
+msgstr "情報取得"
+
+#: internal/settings/settings.c
+msgid "Scrape Artwork"
+msgstr "アートワークを取得"
+
+#: internal/settings/settings.c
+msgid "Scrape Queue"
+msgstr "取得キュー"
+
+#: internal/settings/settings.c
+msgid "Scrape Queue - %s"
+msgstr "取得キュー - %s"
+
+#: internal/settings/settings.c
+msgid "Scrape Result"
+msgstr "取得結果"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scrape finished: %d found"
+msgstr "取得完了: %d 件検出"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scraping %s · %d/%d"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scraping paused: %.200s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scraping: %d/%d"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "ScreenScraper.fr"
+msgstr "ScreenScraper.fr"
+
+#: internal/platform/input_shortcuts.c
+msgid "Screenshot"
+msgstr "スクリーンショット"
+
+#: internal/settings/settings.c
+msgid "Screenshot Hotkey"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Screenshots"
+msgstr "スクリーンショット"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Search"
+msgstr "検索"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Search This System"
+msgstr "このシステムを検索"
+
+#: internal/settings/settings.c
+msgid "Searching"
+msgstr "検索中"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Second SD Card"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Secondary Text"
+msgstr "補助文字"
+
+#: internal/launcher/system_names.c
+msgid "Sega 32X"
+msgstr "Sega 32X"
+
+#: internal/launcher/system_names.c
+msgid "Sega CD"
+msgstr "Sega CD"
+
+#: internal/launcher/system_names.c
+msgid "Sega Genesis"
+msgstr "Sega Genesis"
+
+#: internal/launcher/system_names.c
+msgid "Sega Master System"
+msgstr "Sega Master System"
+
+#: internal/launcher/system_names.c
+msgid "Sega Naomi"
+msgstr "Sega Naomi"
+
+#: internal/launcher/system_names.c
+msgid "Sega Saturn"
+msgstr "Sega Saturn"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Select"
+msgstr "選択"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS card is not mounted"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file cannot be read"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is missing"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is not a 512 KiB image"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is not a file"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is unavailable"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file left the BIOS folder"
+msgstr ""
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS path is not usable"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Selection"
+msgstr "選択項目"
+
+#: internal/settings/settings.c
+msgid "Services"
+msgstr "サービス"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Set a PIN"
+msgstr "PIN を設定"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Settings"
+msgstr "設定"
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader"
+msgstr "シェーダー"
+
+#: cmd/jawaka-menu/main.c
+msgid ""
+"Shader failed and the previous shader could not be restored. Reopen the game."
+msgstr ""
+"シェーダーに失敗し、以前のシェーダーも復元できませんでした。ゲームを再起動し"
+"てください。"
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader is active for this session, but could not be saved for %s."
+msgstr "シェーダーはこのセッションで有効ですが、%s に保存できませんでした。"
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader operation failed."
+msgstr "シェーダー操作に失敗しました。"
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader scope"
+msgstr "シェーダーの適用範囲"
+
+#: internal/retroarch/shader_strings.c
+msgid "Sharp Pixels"
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "Sharp Shimmerless"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Show/Hide"
+msgstr "表示/非表示"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Shut Down"
+msgstr "シャットダウン"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Shut Down?"
+msgstr "シャットダウンしますか？"
+
+#: internal/settings/settings.c
+msgid "Signal: %s"
+msgstr "信号: %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Size is not proof that a file is a Saturn BIOS."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Sleep"
+msgstr "スリープ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Sleep failed"
+msgstr "スリープに失敗しました"
+
+#: cmd/jawaka-menu/main.c
+msgid "Sleeping…"
+msgstr "スリープ中…"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Slot"
+msgstr "スロット"
+
+#: cmd/jawaka-menu/main.c
+msgid "Slot %d"
+msgstr "スロット %d"
+
+#: cmd/jawaka-menu/main.c
+msgid "Slot Auto"
+msgstr "スロット自動"
+
+#: internal/settings/settings.c
+msgid "Small"
+msgstr "小"
+
+#: internal/settings/settings.c
+msgid "Snap"
+msgstr "スナップ"
+
+#: internal/settings/settings.c
+msgid "SoC"
+msgstr "SoC"
+
+#: internal/settings/settings.c
+msgid "Soft"
+msgstr "ソフト"
+
+#: internal/settings/timezones.c
+msgid "Solomon Islands"
+msgstr ""
+
+#: internal/platform/platform_common.c
+msgid "Speaker"
+msgstr "スピーカー"
+
+#: internal/settings/settings.c
+msgid "Speed"
+msgstr "速度"
+
+#: internal/settings/settings.c
+msgid "Split Over 10MB"
+msgstr "10 MB 超を分割"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Splore import incomplete"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Square"
+msgstr "正方形"
+
+#: internal/settings/settings.c
+msgid "Stable"
+msgstr "安定版"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start"
+msgstr "開始"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start 5-Game Mode"
+msgstr "5 ゲームモードを開始"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start 5-Game Mode?"
+msgstr "5 ゲームモードを開始しますか？"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start with Leaf"
+msgstr "Leaf で起動"
+
+#: internal/settings/settings.c
+msgid "Startup Tab"
+msgstr "起動時のタブ"
+
+#: internal/settings/settings.c
+msgid "Static"
+msgstr "常時点灯"
+
+#: internal/settings/settings.c
+msgid "Status Bar"
+msgstr "ステータスバー"
+
+#: internal/settings/settings.c
+msgid "Status: %s"
+msgstr "状態: %s"
+
+#: internal/settings/settings.c
+msgid "Stop"
+msgstr "停止"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Stop All"
+msgstr "すべて停止"
+
+#: internal/settings/settings.c
+msgid "Stopped test sound"
+msgstr "テスト音声を停止しました"
+
+#: internal/settings/settings.c
+msgid "Storage free"
+msgstr "空きストレージ"
+
+#: internal/settings/settings.c
+msgid "Strength"
+msgstr "強度"
+
+#: internal/settings/settings.c
+msgid "Stretch"
+msgstr "引き伸ばし"
+
+#: internal/settings/settings.c
+msgid "Strong"
+msgstr "強"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Style"
+msgstr "スタイル"
+
+#: internal/retroarch/shader_strings.c
+msgid "Subtle Scanlines"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Super Famicom"
+msgstr "スーパーファミコン"
+
+#: internal/launcher/system_names.c
+msgid "Super Game Boy"
+msgstr "スーパーゲームボーイ"
+
+#: internal/launcher/system_names.c
+msgid "Super Nintendo"
+msgstr "Super Nintendo"
+
+#: internal/settings/settings.c
+msgid "Sweep"
+msgstr "スイープ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Switch"
+msgstr "切替"
+
+#: internal/settings/settings.c
+msgid ""
+"Switch Leaf to %s?\n"
+"\n"
+"Leaf restarts to apply it."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Switcher"
+msgstr "切替画面"
+
+#: internal/settings/timezones.c
+msgid "Sydney"
+msgstr "シドニー"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Checking saves"
+msgstr ""
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Stopping"
+msgstr ""
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Syncing %d item"
+msgstr ""
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Syncing %d items"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "System"
+msgstr "システム"
+
+#: internal/settings/settings.c
+msgid "System Icons"
+msgstr "システムアイコン"
+
+#: cmd/jawaka-launcher/main.c
+msgid "System Update"
+msgstr "システム更新"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Systems"
+msgstr "システム"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Tab"
+msgstr "タブ"
+
+#: internal/settings/settings.c
+msgid "Tab Switching"
+msgstr "タブ切替"
+
+#: internal/settings/settings.c
+msgid "Tabs"
+msgstr "タブ"
+
+#: internal/retroarch/shader_strings.c
+msgid "Tames colors authored for the original Game Boy Advance LCD."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Test Sound"
+msgstr "テスト音声"
+
+#: internal/settings/settings.c
+msgid "Text"
+msgstr "文字"
+
+#: cmd/jawaka-launcher/main.c
+msgid "That BIOS file cannot be saved as a selection."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "That card is not mounted right now."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "That file name is too long to select."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "That folder could not be read."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "That folder name is too long to open."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"The Themes folder already has %d themes, the most Leaf can list. Remove one "
+"to install this theme."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"The card passed the check but couldn't be made writable. Restart your "
+"device, then try Check SD card."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"The check took too long. Your SD card is still protected. You can check it "
+"on a computer or restart to try again."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"The last check or repair did not finish. Restart your device to check the "
+"card before saving is enabled again."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "The repair couldn't be started. Check the card on a computer instead."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"The repair did not finish. The log may include changes that were attempted."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "The repair log on your device has the details."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"The repair log on your device lists the files that were changed. The list "
+"may not be complete."
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "The saved shader could not be removed."
+msgstr "保存済みシェーダーを削除できませんでした。"
+
+#: internal/retroarch/shader_strings.c
+msgid "The texture and grid intentionally soften bright flat colors."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme contains files a theme is not allowed to have."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme did not pass Leaf's checks."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme has artwork for a system name that is not valid."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme has more than one wallpaper in the same folder."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme has no preview image."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme is too large."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme uses a folder name reserved for themes that come with Leaf."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's id is not valid or does not match its folder."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's layout or color settings are not valid."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's license is not one Leaf accepts."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's name, author, version or description is not valid."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's required Leaf version is missing or not valid."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's theme.json has settings this version of Leaf does not know."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's theme.json is missing or can't be read."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's zip file contains unsafe file names or links."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's zip file is damaged or uses an unsupported format."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's zip file must hold exactly one folder."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Theme"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Theme colors"
+msgstr "テーマの色"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Themes"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "This RetroArch build does not support Leaf's shader picker."
+msgstr "この RetroArch ビルドは Leaf のシェーダー選択に対応していません。"
+
+#: internal/settings/storage_ui.c
+msgid "This card is working normally."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "This card isn't mounted."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "This card's file system can't be repaired on this device."
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "This folder"
+msgstr "このフォルダー"
+
+#: cmd/jawaka-menu/main.c
+msgid "This game"
+msgstr "このゲーム"
+
+#: internal/retroarch/shader_strings.c
+msgid "This is a scaling filter, not a CRT simulation."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid ""
+"This is a stronger display simulation than the simpler GBC Color preset."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "This is your current theme."
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid ""
+"This replaces the shader for every RetroArch game and can replace Fugazi. "
+"Continue?"
+msgstr ""
+"すべての RetroArch ゲームのシェーダーを置き換え、Fugazi も置き換える可能性が"
+"あります。続行しますか？"
+
+#: cmd/jawaka-menu/main.c
+msgid ""
+"This shader could not compile or link on this video driver. Previous shader "
+"restored."
+msgstr ""
+"このシェーダーは現在の映像ドライバーでコンパイルまたはリンクできません。以前"
+"のシェーダーに戻しました。"
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"This theme is no longer available in Pak Rat. Your installed copy keeps "
+"working."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Time Zone"
+msgstr "タイムゾーン"
+
+#: internal/settings/storage_ui.c
+msgid "To repair it, turn off your device and check the card on a computer."
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "Tonga"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Total"
+msgstr "合計"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Try Splore again"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "TurboGrafx-16"
+msgstr "TurboGrafx-16"
+
+#: internal/launcher/system_names.c
+msgid "TurboGrafx-CD"
+msgstr "TurboGrafx-CD"
+
+#: internal/settings/storage_ui.c
+msgid "Turn off your device and check the card on a computer."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Type to search"
+msgstr "入力して検索"
+
+#: internal/settings/settings.c
+msgid "UI Rumble"
+msgstr ""
+
+#: internal/settings/timezones.c
+msgid "UK / Ireland"
+msgstr "英国 / アイルランド"
+
+#: internal/settings/timezones.c
+msgid "US Alaska"
+msgstr "米国アラスカ"
+
+#: internal/settings/timezones.c
+msgid "US Arizona"
+msgstr "米国アリゾナ"
+
+#: internal/settings/timezones.c
+msgid "US Central"
+msgstr "米国中部"
+
+#: internal/settings/timezones.c
+msgid "US Eastern"
+msgstr "米国東部"
+
+#: internal/settings/timezones.c
+msgid "US Hawaii"
+msgstr "米国ハワイ"
+
+#: internal/settings/timezones.c
+msgid "US Mountain"
+msgstr "米国山岳部"
+
+#: internal/settings/timezones.c
+msgid "US Pacific"
+msgstr "米国太平洋岸"
+
+#: internal/settings/timezones.c
+msgid "UTC"
+msgstr "UTC"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Unavailable"
+msgstr "利用不可"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstall"
+msgstr "アンインストール"
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"Uninstall %s?\n"
+"\n"
+"This deletes Themes/%s from your SD card."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"Uninstall %s?\n"
+"\n"
+"This deletes Themes/%s from your SD card. It is your current theme, so Leaf "
+"will switch to no theme."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstall cancelled: %s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstalled %s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstalled %s. Switched to no theme."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstalling theme"
+msgstr ""
+
+#: internal/platform/platform_common.c
+msgid "Unknown"
+msgstr "不明"
+
+#: internal/settings/settings.c
+msgid "Unmount"
+msgstr "アンマウント"
+
+#: internal/settings/settings.c
+msgid "Unmount canceled"
+msgstr "アンマウントをキャンセルしました"
+
+#: internal/settings/settings.c
+msgid "Unmount failed"
+msgstr "アンマウントに失敗しました"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Unpair"
+msgstr "ペアリング解除"
+
+#: internal/settings/settings.c
+msgid "Unsupported"
+msgstr "未対応"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Up one level"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Up/Down"
+msgstr "上下"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Update"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Update Channel"
+msgstr "更新チャンネル"
+
+#: internal/settings/settings.c
+msgid "Update status unavailable"
+msgstr "更新状態を取得できません"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Updated %s to version %s"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Updating theme"
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "Uptime"
+msgstr "稼働時間"
+
+#: cmd/jawaka-menu/main.c
+msgid "Use Advanced to edit it in RetroArch."
+msgstr "詳細メニューを開いて RetroArch で編集します。"
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for GBA content."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for Game Boy Color content."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for original Game Boy Advance content."
+msgstr ""
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for original Game Boy content."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Use the system setting"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Vectrex"
+msgstr "Vectrex"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Version %s needs Leaf %s or newer."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Version: %s"
+msgstr ""
+
+#: internal/launcher/system_names.c
+msgid "Virtual Boy"
+msgstr "バーチャルボーイ"
+
+#: internal/settings/settings.c
+msgid "Visible"
+msgstr "表示"
+
+#: internal/settings/settings.c
+msgid "Volume"
+msgstr "音量"
+
+#: internal/settings/settings.c
+msgid "Weak"
+msgstr "弱"
+
+#: internal/settings/settings.c
+msgid "Wi-Fi"
+msgstr "Wi-Fi"
+
+#: internal/launcher/system_names.c
+msgid "WonderSwan"
+msgstr "WonderSwan"
+
+#: internal/launcher/system_names.c
+msgid "WonderSwan Color"
+msgstr "WonderSwan Color"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Wrong PIN, try again"
+msgstr "PIN が違います。もう一度試してください"
+
+#: cmd/jawaka-launcher/main.c
+msgid "X: Drop   D-pad: Move"
+msgstr "X: 離す   十字キー: 移動"
+
+#: cmd/jawaka-launcher/main.c
+msgid "X: Grab   Y: Remove   B: Back   A: Next"
+msgstr "X: つかむ   Y: 削除   B: 戻る   A: 次へ"
+
+#: internal/settings/storage_ui.c
+msgid "You can save files again."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card check did not finish successfully."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is protected"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your SD card is protected because your last shutdown didn't finish saving. "
+"Restart your device to check it."
+msgstr ""
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Your SD card is read-only"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your SD card is read-only after a file system error. You can't save new "
+"files or changes to this card. This can happen after an unexpected shutdown."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your SD card is read-only. Nothing new can be saved to it."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your SD card is read-only. The cause couldn't be determined. You can't save "
+"new files or changes to this card."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your SD card is still protected. Turn off your device, repair the card on a "
+"computer, safely eject it, then insert it and turn your device on to check "
+"it again."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your SD card is waiting for repair. Nothing new can be saved to it."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is write-protected"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your SD card isn't available."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card needs repair"
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Your card passed the file system check."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Your device can't write to this card, so it can't be repaired here."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your device can't write to this card. If you use an adapter with a lock "
+"switch, check that it isn't set to lock."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your device will restart to check and repair this card. Damaged files may be "
+"shortened, renamed, or recovered under new names. Back up important files on "
+"a computer first if you need to recover them. Keep your device connected to "
+"power until the check finishes."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your device will restart to check this card. If the check passes, you can "
+"save files again."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your device's internal storage can't record the repair. Check the card on a "
+"computer instead."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid "Your last shutdown didn't finish saving."
+msgstr ""
+
+#: internal/settings/storage_ui.c
+msgid ""
+"Your other SD card is still read-only, so your library can't update yet."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"Your saves and save states may not be kept while this SD card is read-only."
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid ""
+"Your saves and save states may not be kept while this SD card is waiting for "
+"repair."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "audio output failed"
+msgstr "音声出力に失敗しました"
+
+#: internal/settings/settings.c
+msgid "boot splash unavailable on this platform"
+msgstr "このプラットフォームでは起動画面を利用できません"
+
+#: internal/settings/settings.c
+msgid "brightness failed"
+msgstr "明るさの変更に失敗しました"
+
+#: internal/settings/settings.c
+msgid "count|Systems"
+msgstr "システム数"
+
+#: cmd/jawaka-launcher/main.c
+msgid "daily quota exceeded"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "empty"
+msgstr "空"
+
+#: internal/settings/storage_ui.c
+msgid "exFAT cards can't be repaired on this device yet."
+msgstr ""
+
+#: internal/settings/settings.c
+msgid "font is fixed while a CJK language is selected"
+msgstr "CJK 言語の選択中はフォントを変更できません"
+
+#: internal/settings/settings.c
+msgid "font load failed"
+msgstr "フォントの読み込みに失敗しました"
+
+#: cmd/jawaka-menu/main.c
+msgid "just now"
+msgstr "たった今"
+
+#: internal/settings/storage_ui.c
+msgid "launcher SD card"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "newest"
+msgstr "新しい順"
+
+#: cmd/jawaka-menu/main.c
+msgid "oldest"
+msgstr "古い順"
+
+#: cmd/jawaka-menu/main.c
+msgid "overwrites"
+msgstr "上書き"
+
+#: internal/settings/settings.c
+msgid "performance unavailable"
+msgstr "パフォーマンス情報を利用できません"
+
+#: internal/settings/settings.c
+msgid "platform|System"
+msgstr "システム"
+
+#: internal/settings/settings.c
+msgid "refresh rate change failed"
+msgstr "リフレッシュレートの変更に失敗しました"
+
+#: internal/settings/settings.c
+msgid "refresh rate unavailable on this platform"
+msgstr "このプラットフォームではリフレッシュレートを利用できません"
+
+#: internal/settings/storage_ui.c
+msgid "second SD card"
+msgstr ""
+
+#: cmd/jawaka-launcher/main.c
+msgid "space"
+msgstr "スペース"
+
+#: cmd/jawaka-launcher/main.c
+msgid "status|Update"
+msgstr ""
+
+#: cmd/jawaka-menu/main.c
+msgid "that scope"
+msgstr "その範囲"
+
+#: cmd/jawaka-menu/main.c
+msgid "unsaved · %d of %d"
+msgstr "未保存 · %d / %d"
+
+#: cmd/jawaka-menu/main.c
+msgid "unsaved · %s · %d of %d"
+msgstr "未保存 · %s · %d / %d"
+
+#: internal/settings/settings.c
+msgid "volume failed"
+msgstr "音量の変更に失敗しました"
+
+#: internal/settings/settings.c
+msgid "—"
+msgstr "—"

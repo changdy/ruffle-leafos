@@ -1,0 +1,3265 @@
+# Vietnamese -- contributed by Nhân Nhanh Nhẩu (Discord), 2026-10-05.
+# Their file as sent, except that this header replaces the one it kept
+# from leaf.pot.
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+#: internal/settings/storage_ui.c
+msgid " Some damaged files were changed."
+msgstr " Một số tệp bị hỏng đã được sửa đổi."
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d %s games"
+msgstr "%d trò chơi %s"
+
+#: internal/settings/settings.c
+msgid "%d Hz"
+msgstr "%d Hz"
+
+#: internal/settings/settings.c
+msgid "%d K"
+msgstr "%d K"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d apps"
+msgstr "%d ứng dụng"
+
+#: internal/settings/settings.c
+msgid "%d done"
+msgstr "%d xong"
+
+#: internal/settings/settings.c
+msgid "%d done, %d failed"
+msgstr "%d xong, %d thất bại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d favorites"
+msgstr "%d yêu thích"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d games"
+msgstr "%d trò chơi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d games, %d systems, %d apps"
+msgstr "%d trò chơi, %d hệ máy, %d ứng dụng"
+
+#: cmd/jawaka-menu/main.c
+msgid "%d of %d"
+msgstr "%d / %d"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d theme"
+msgstr "%d giao diện"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%d themes"
+msgstr "%d giao diện"
+
+#: internal/settings/settings.c
+msgid "%d/%d done"
+msgstr "%d/%d hoàn tất"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%dh %dm"
+msgstr "%d giờ %d phút"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%dm"
+msgstr "%d phút"
+
+#: cmd/jawaka-menu/main.c
+msgid "%ldd ago"
+msgstr "%ld ngày trước"
+
+#: cmd/jawaka-menu/main.c
+msgid "%ldh ago"
+msgstr "%ld giờ trước"
+
+#: cmd/jawaka-menu/main.c
+msgid "%ldm ago"
+msgstr "%ld phút trước"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s can't be installed because Leaf could not read it as a theme.\n\nNothing was changed."
+msgstr "Không thể cài đặt %s vì Leaf không nhận diện được định dạng giao diện.\n\nChưa có thay đổi nào."
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s can't be installed because it is not a valid theme.\n\n%s"
+msgstr "Không thể cài đặt %s vì giao diện không hợp lệ.\n\n%s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s can't be installed because the download did not match the catalog.\n\nNothing was changed. Try again later."
+msgstr "Không thể cài đặt %s vì tệp tải về không khớp với danh mục dữ liệu.\n\nChưa có thay đổi nào. Vui lòng thử lại sau."
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s can't be installed right now"
+msgstr "Hiện không thể cài đặt %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s can't be installed.\n\nA theme that comes with Leaf already uses the folder name %s."
+msgstr "Không thể cài đặt %s.\n\nGiao diện mặc định của Leaf đã sử dụng tên thư mục %s."
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s can't be installed.\n\nThe Themes folder already has %d themes, the most Leaf can list. Uninstall or remove a theme to make room."
+msgstr "Không thể cài đặt %s.\n\nThư mục Themes đã đạt giới hạn tối đa %d giao diện. Hãy xóa bớt một giao diện để lấy dung lượng trống."
+
+#: internal/settings/settings.c
+msgid "%s first"
+msgstr "Ưu tiên %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s is already your theme"
+msgstr "%s đã là giao diện hiện tại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s is installed.\n\nApply it now?"
+msgstr "%s đã cài đặt xong.\n\nÁp dụng ngay bây giờ?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s is no longer available in Pak Rat.\n\nA copy that is already installed keeps working."
+msgstr "%s không còn trên Pak Rat nữa.\n\nBản đã cài trên máy vẫn tiếp tục hoạt động bình thường."
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s is not installed by Pak Rat"
+msgstr "%s không được cài đặt qua Pak Rat"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s launcher exited (status %s)"
+msgstr "Trình khởi chạy %s đã thoát (mã trạng thái %s)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "%s was uninstalled.\n\nIt was your current theme, so Leaf switched to no theme."
+msgstr "%s đã được gỡ cài đặt.\n\nDo đang là giao diện hiện tại, Leaf đã chuyển về giao diện gốc cơ bản."
+
+#: cmd/jawaka-menu/main.c
+msgid "%s · %d of %d"
+msgstr "%s · %d / %d"
+
+#: cmd/jawaka-menu/main.c
+msgid "%s · %s · %d of %d"
+msgstr "%s · %s · %d / %d"
+
+#: internal/settings/settings.c
+msgid "%s · fallback"
+msgstr "%s · dự phòng"
+
+#: internal/settings/settings.c
+msgid "%s: %d icons not %dx%d (contain-fit)"
+msgstr "%s: %d biểu tượng sai chuẩn %dx%d (chế độ contain-fit)"
+
+#: internal/settings/settings.c
+msgid "%s: %d icons ok"
+msgstr "%s: %d biểu tượng hợp lệ"
+
+#: internal/settings/settings.c
+msgid "%s: %d icons over %dpx skipped"
+msgstr "%s: bỏ qua %d biểu tượng vượt quá %dpx"
+
+#: internal/settings/settings.c
+msgid "%s: %d icons over %dpx skipped, %d off-size"
+msgstr "%s: bỏ qua %d biểu tượng vượt %dpx, %d sai kích thước"
+
+#: cmd/jawaka-launcher/main.c
+msgid ", %d not found"
+msgstr ", không tìm thấy %d"
+
+#: internal/settings/settings.c
+msgid "-"
+msgstr "-"
+
+#: internal/settings/settings.c
+msgid "1 min"
+msgstr "1 phút"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.06 GHz"
+msgstr "1.06 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.10 GHz"
+msgstr "1.10 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.42 GHz"
+msgstr "1.42 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.61 GHz"
+msgstr "1.61 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.80 GHz"
+msgstr "1.80 GHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "1.99 GHz"
+msgstr "1.99 GHz"
+
+#: internal/settings/settings.c
+msgid "10 min"
+msgstr "10 phút"
+
+#: internal/settings/settings.c
+msgid "100/120 Hz only"
+msgstr "Chỉ khả dụng tại 100/120 Hz"
+
+#: internal/settings/settings.c
+msgid "12 Hour"
+msgstr "12 giờ"
+
+#: internal/retroarch/shader_strings.c
+msgid "120Hz BFI measured 59.249 FPS and further reduces brightness."
+msgstr "BFI 120Hz đo được 59.249 FPS và sẽ làm giảm thêm độ sáng màn hình."
+
+#: internal/retroarch/shader_strings.c
+msgid "120Hz cadence counters can report periodic drops for nominal 59.94/60fps content."
+msgstr "Bộ đếm chu kỳ 120Hz có thể ghi nhận hiện tượng khựng khung hình định kỳ ở nội dung chuẩn 59.94/60fps."
+
+#: internal/retroarch/shader_strings.c
+msgid "120Hz cadence counters can report periodic drops for nominal 60fps content."
+msgstr "Bộ đếm chu kỳ 120Hz có thể ghi nhận hiện tượng khựng khung hình định kỳ ở nội dung chuẩn 60fps."
+
+#: internal/settings/settings.c
+msgid "15 sec"
+msgstr "15 giây"
+
+#: internal/settings/settings.c
+msgid "2 min"
+msgstr "2 phút"
+
+#: cmd/jawaka-menu/main.c
+msgid "200 MHz"
+msgstr "200 MHz"
+
+#: internal/settings/settings.c
+msgid "24 Hour"
+msgstr "24 giờ"
+
+#: internal/settings/settings.c
+msgid "30 sec"
+msgstr "30 giây"
+
+#: cmd/jawaka-menu/main.c
+msgid "300 MHz"
+msgstr "300 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "324 MHz"
+msgstr "324 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "400 MHz"
+msgstr "400 MHz"
+
+#: internal/settings/settings.c
+msgid "45 sec"
+msgstr "45 giây"
+
+#: internal/settings/settings.c
+msgid "4:3"
+msgstr "4:3"
+
+#: internal/settings/settings.c
+msgid "5 min"
+msgstr "5 phút"
+
+#: cmd/jawaka-launcher/main.c
+msgid "512 KiB candidate"
+msgstr "Tệp tương thích 512 KiB"
+
+#: cmd/jawaka-menu/main.c
+msgid "528 MHz"
+msgstr "528 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "600 MHz"
+msgstr "600 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "700 MHz"
+msgstr "700 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "780 MHz"
+msgstr "780 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "800 MHz"
+msgstr "800 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "816 MHz"
+msgstr "816 MHz"
+
+#: cmd/jawaka-menu/main.c
+msgid "A broader preset may apply after you reload the game."
+msgstr "Thiết lập cấu hình bao quát hơn có thể áp dụng sau khi bạn tải lại trò chơi."
+
+#: internal/retroarch/shader_strings.c
+msgid "A lighter handheld LCD grid with softer cell edges."
+msgstr "Lưới màn hình LCD cầm tay thanh mảnh hơn với viền điểm ảnh mềm mại."
+
+#: cmd/jawaka-launcher/main.c
+msgid "A theme folder named %s is already on your SD card.\n\nReplace it with %s from Pak Rat so it can be updated? The files in that folder will be replaced."
+msgstr "Thư mục giao diện có tên %s đã tồn tại trên thẻ SD.\n\nGhi đè bằng %s từ Pak Rat để hỗ trợ cập nhật sau này? Mọi tệp trong thư mục sẽ bị thay thế."
+
+#: cmd/jawaka-launcher/main.c
+msgid "A theme folder with this name is already on your SD card. Installing replaces it after you confirm."
+msgstr "Thư mục giao diện trùng tên này đã có sẵn trên thẻ SD. Thao tác cài đặt sẽ ghi đè sau khi bạn xác nhận."
+
+#: cmd/jawaka-launcher/main.c
+msgid "A theme that comes with Leaf already uses this folder name, so this one can't be installed."
+msgstr "Giao diện hệ thống của Leaf đã dùng tên thư mục này nên không thể cài đặt."
+
+#: internal/settings/settings.c
+msgid "A: Choose   B: Back"
+msgstr "A: Chọn   B: Quay lại"
+
+#: internal/settings/settings.c
+msgid "A: On/Off   X: Grab to reorder"
+msgstr "A: Bật/Tắt   X: Giữ để đổi vị trí"
+
+#: internal/settings/settings.c
+msgid "ADB"
+msgstr "ADB"
+
+#: internal/settings/settings.c
+msgid "ADB disable canceled"
+msgstr "Đã hủy tắt ADB"
+
+#: internal/settings/settings.c
+msgid "ADB enable canceled"
+msgstr "Đã hủy bật ADB"
+
+#: internal/settings/settings.c
+msgid "ADB unavailable on this platform"
+msgstr "ADB không hỗ trợ trên nền tảng này"
+
+#: internal/settings/settings.c
+msgid "AM/PM"
+msgstr "SA/CH"
+
+#: cmd/jawaka-menu/main.c
+msgid "About"
+msgstr "Giới thiệu"
+
+#: internal/settings/settings.c
+msgid "Accent"
+msgstr "Màu nhấn"
+
+#: internal/settings/settings.c
+msgid "Accounts"
+msgstr "Tài khoản"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Actions"
+msgstr "Thao tác"
+
+#: cmd/jawaka-menu/main.c
+msgid "Active"
+msgstr "Đang hoạt động"
+
+#: cmd/jawaka-menu/main.c
+msgid "Active: %s"
+msgstr "Đang dùng: %s"
+
+#: cmd/jawaka-menu/main.c
+msgid "Active: %s  Temp: %d C"
+msgstr "Đang dùng: %s  Nhiệt độ: %d°C"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Adding Splore favorites"
+msgstr "Đang thêm danh sách yêu thích Splore"
+
+#: internal/retroarch/shader_strings.c
+msgid "Adds a Pocket-style backing texture and low-cost pixel grid tuned for Game Boy Color art."
+msgstr "Mô phỏng lớp nền phong cách máy Pocket và lưới điểm ảnh nhẹ tối ưu cho đồ họa Game Boy Color."
+
+#: internal/retroarch/shader_strings.c
+msgid "Adds a gray backing texture, low-cost pixel grid, and transparency response tuned for the original GBA screen."
+msgstr "Thêm nền xám, lưới điểm ảnh nhẹ và độ tương phản xuyên sáng tối ưu theo màn hình GBA gốc."
+
+#: internal/retroarch/shader_strings.c
+msgid "Adds a lightweight aperture mask and softened scanlines without curvature."
+msgstr "Tạo hiệu ứng mặt nạ tia (aperture mask) nhẹ và đường quét mềm mại trên màn phẳng."
+
+#: internal/retroarch/shader_strings.c
+msgid "Adds a subdued Pocket-style backing texture, pixel grid, and edge shadows for original Game Boy games."
+msgstr "Mô phỏng lớp nền trầm kiểu Pocket, lưới điểm ảnh và đổ bóng viền cho game Game Boy cổ điển."
+
+#: internal/retroarch/shader_strings.c
+msgid "Adds lightweight scanlines with reduced darkness for 8-bit, 16-bit, and PlayStation-era games."
+msgstr "Tạo đường quét nhẹ nhàng giảm độ tối, thích hợp cho game thế hệ 8-bit, 16-bit và PlayStation."
+
+#: internal/retroarch/shader_strings.c
+msgid "Adds the fine RGB pixel grid of a handheld LCD panel."
+msgstr "Mô phỏng lưới điểm ảnh phụ RGB siêu mịn của tấm nền LCD cầm tay."
+
+#: internal/settings/timezones.c
+msgid "Adelaide"
+msgstr "Adelaide"
+
+#: cmd/jawaka-menu/main.c
+msgid "Adjust"
+msgstr "Điều chỉnh"
+
+#: cmd/jawaka-menu/main.c
+msgid "Advanced RetroArch menu"
+msgstr "Menu RetroArch nâng cao"
+
+#: internal/settings/timezones.c
+msgid "Afghanistan"
+msgstr "Afghanistan"
+
+#: internal/settings/settings.c
+msgid "All"
+msgstr "Tất cả"
+
+#: cmd/jawaka-menu/main.c
+msgid "All RetroArch"
+msgstr "Toàn bộ RetroArch"
+
+#: cmd/jawaka-menu/main.c
+msgid "All RetroArch requires a Leaf build with Fugazi's conflict resolver."
+msgstr "Tùy chọn Toàn bộ RetroArch yêu cầu bản Leaf có tích hợp bộ xử lý xung đột của Fugazi."
+
+#: internal/settings/settings.c
+msgid "All Systems"
+msgstr "Tất cả hệ máy"
+
+#: cmd/jawaka-launcher/main.c
+msgid "All rights reserved, redistribution permitted"
+msgstr "Bảo lưu mọi quyền, cho phép phân phối lại"
+
+#: internal/settings/settings.c
+msgid "Already used by %s"
+msgstr "Đã được dùng bởi %s"
+
+#: internal/settings/timezones.c
+msgid "American Samoa"
+msgstr "Samoa thuộc Mỹ"
+
+#: internal/launcher/system_names.c
+msgid "Amiga"
+msgstr "Amiga"
+
+#: cmd/jawaka-launcher/main.c
+msgid "An image in the theme is not a supported PNG or JPEG, or is too large."
+msgstr "Hình ảnh trong giao diện không đúng chuẩn PNG/JPEG hoặc dung lượng quá lớn."
+
+#: internal/settings/settings.c
+msgid "Appearance"
+msgstr "Giao diện & Hiển thị"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Applied"
+msgstr "Đã áp dụng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Applied %s"
+msgstr "Đã áp dụng %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Apply"
+msgstr "Áp dụng"
+
+#: internal/retroarch/shader_strings.c
+msgid "Approximates the softer color response of the Game Boy Color LCD."
+msgstr "Mô phỏng dải màu dịu mắt đặc trưng của màn LCD Game Boy Color."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Apps"
+msgstr "Ứng dụng"
+
+#: internal/launcher/system_names.c
+msgid "Arcade"
+msgstr "Điện tử thùng (Arcade)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Arrange"
+msgstr "Sắp xếp"
+
+#: internal/settings/settings.c
+msgid "Artwork Priority"
+msgstr "Ưu tiên nguồn hình ảnh"
+
+#: internal/launcher/system_names.c
+msgid "Atari 2600"
+msgstr "Atari 2600"
+
+#: internal/launcher/system_names.c
+msgid "Atari 5200"
+msgstr "Atari 5200"
+
+#: internal/launcher/system_names.c
+msgid "Atari 7800"
+msgstr "Atari 7800"
+
+#: internal/launcher/system_names.c
+msgid "Atari Jaguar"
+msgstr "Atari Jaguar"
+
+#: internal/launcher/system_names.c
+msgid "Atari Lynx"
+msgstr "Atari Lynx"
+
+#: internal/settings/timezones.c
+msgid "Atlantic Canada"
+msgstr "Đại Tây Dương (Canada)"
+
+#: internal/launcher/system_names.c
+msgid "Atomiswave"
+msgstr "Atomiswave"
+
+#: internal/settings/settings.c
+msgid "Audio Output"
+msgstr "Đầu ra âm thanh"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Author: %s"
+msgstr "Tác giả: %s"
+
+#: internal/platform/platform_common.c
+msgid "Auto"
+msgstr "Tự động"
+
+#: internal/settings/settings.c
+msgid "Auto Sleep"
+msgstr "Tự động ngủ"
+
+#: internal/settings/settings.c
+msgid "Automatic"
+msgstr "Tự động"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Available"
+msgstr "Khả dụng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "B: Back      A: Confirm"
+msgstr "B: Quay lại      A: Xác nhận"
+
+#: cmd/jawaka-launcher/main.c
+msgid "B: Back      A: Start"
+msgstr "B: Quay lại      A: Bắt đầu"
+
+#: cmd/jawaka-launcher/main.c
+msgid "B: Back   A: Next"
+msgstr "B: Quay lại   A: Tiếp theo"
+
+#: internal/retroarch/shader_strings.c
+msgid "BFI further reduces brightness."
+msgstr "BFI sẽ làm giảm bớt độ sáng màn hình."
+
+#: internal/launcher/bios.c
+msgid "BIOS file ready"
+msgstr "Tệp BIOS đã sẵn sàng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Back"
+msgstr "Quay lại"
+
+#: internal/settings/settings.c
+msgid "Background"
+msgstr "Nền"
+
+#: internal/settings/timezones.c
+msgid "Baker Island"
+msgstr "Đảo Baker"
+
+#: cmd/jawaka-menu/main.c
+msgid "Balanced"
+msgstr "Cân bằng"
+
+#: internal/settings/timezones.c
+msgid "Bangkok"
+msgstr "Băng Cốc"
+
+#: internal/settings/timezones.c
+msgid "Bangladesh"
+msgstr "Bangladesh"
+
+#: internal/settings/settings.c
+msgid "Battery"
+msgstr "Pin"
+
+#: internal/platform/platform_common.c
+msgid "Battery Saver"
+msgstr "Tiết kiệm pin"
+
+#: internal/retroarch/shader_strings.c
+msgid "Best at integer or near-integer scaling; the upstream shader can look uneven at arbitrary scales."
+msgstr "Hiển thị tối ưu ở tỷ lệ phóng nguyên bản; shader gốc có thể bị lệch răng cưa ở tỷ lệ tùy ý."
+
+#: internal/settings/settings.c
+msgid "Beta builds are tester previews and may be unstable or lose data. Switch to the Beta update channel?"
+msgstr "Bản thử nghiệm Beta có thể hoạt động không ổn định hoặc làm mất dữ liệu. Bạn có muốn chuyển sang kênh cập nhật Beta?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Black & white"
+msgstr "Đen trắng"
+
+#: internal/settings/settings.c
+msgid "Black Frame Insertion"
+msgstr "Chèn khung hình đen (BFI)"
+
+#: internal/settings/settings.c
+msgid "Black Frame Insertion needs 100 or 120 Hz"
+msgstr "Chèn khung hình đen yêu cầu tần số quét 100 hoặc 120 Hz"
+
+#: internal/settings/settings.c
+msgid "Black Frame Insertion off"
+msgstr "Tắt chèn khung hình đen"
+
+#: internal/settings/settings.c
+msgid "Bluetooth"
+msgstr "Bluetooth"
+
+#: internal/settings/settings.c
+msgid "Bluetooth Name"
+msgstr "Tên Bluetooth"
+
+#: internal/settings/settings.c
+msgid "Board"
+msgstr "Bo mạch"
+
+#: internal/settings/settings.c
+msgid "Boot Splash"
+msgstr "Logo khởi động"
+
+#: internal/settings/settings.c
+msgid "Both"
+msgstr "Cả hai"
+
+#: internal/settings/settings.c
+msgid "Box art"
+msgstr "Ảnh bìa đĩa (Box art)"
+
+#: internal/settings/timezones.c
+msgid "Brazil (East)"
+msgstr "Brazil (Miền Đông)"
+
+#: internal/settings/settings.c
+msgid "Breath"
+msgstr "Nhịp thở (Breath)"
+
+#: internal/settings/settings.c
+msgid "Brightness"
+msgstr "Độ sáng"
+
+#: cmd/jawaka-menu/main.c
+msgid "Browse"
+msgstr "Duyệt"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Browse BIOS folder"
+msgstr "Duyệt thư mục BIOS"
+
+#: internal/settings/settings.c
+msgid "Busy"
+msgstr "Đang bận"
+
+#: internal/settings/settings.c
+msgid "Button Background"
+msgstr "Nền nút bấm"
+
+#: internal/settings/settings.c
+msgid "Button Hints"
+msgstr "Gợi ý phím bấm"
+
+#: internal/settings/settings.c
+msgid "Button Text"
+msgstr "Chữ trên nút"
+
+#: cmd/jawaka-launcher/main.c
+msgid "By %s"
+msgstr "Bởi %s"
+
+#: internal/settings/settings.c
+msgid "By system"
+msgstr "Theo hệ máy"
+
+#: cmd/jawaka-menu/main.c
+msgid "CPU"
+msgstr "CPU"
+
+#: internal/settings/settings.c
+msgid "CPU temp"
+msgstr "Nhiệt độ CPU"
+
+#: internal/retroarch/shader_strings.c
+msgid "CRT Curved"
+msgstr "CRT màn cong"
+
+#: internal/retroarch/shader_strings.c
+msgid "CRT Lite"
+msgstr "CRT Lite (nhẹ)"
+
+#: internal/retroarch/shader_strings.c
+msgid "CRT Sharp"
+msgstr "CRT sắc nét"
+
+#: internal/retroarch/shader_strings.c
+msgid "CRT effects reduce brightness; the preset uses a milder mask and scanline strength than upstream defaults."
+msgstr "Hiệu ứng CRT làm giảm độ sáng; cấu hình này dùng lưới bóng tia và đường quét nhẹ hơn so với bản gốc."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Cancel"
+msgstr "Hủy"
+
+#: internal/settings/settings.c
+msgid "Cancelled"
+msgstr "Đã hủy"
+
+#: internal/settings/timezones.c
+msgid "Cape Verde"
+msgstr "Cape Verde"
+
+#: internal/settings/storage_ui.c
+msgid "Card:"
+msgstr "Thẻ nhớ:"
+
+#: internal/retroarch/shader_strings.c
+msgid "Carries a Leaf local patch until upstream fixes its GLSL ES precision mismatch."
+msgstr "Tích hợp bản vá tạm thời của Leaf trong khi chờ mã nguồn gốc sửa lỗi lệch độ chính xác GLSL ES."
+
+#: internal/settings/timezones.c
+msgid "Central Europe"
+msgstr "Trung Âu"
+
+#: internal/settings/timezones.c
+msgid "Chatham Islands"
+msgstr "Quần đảo Chatham"
+
+#: internal/settings/settings.c
+msgid "Check Releases"
+msgstr "Kiểm tra bản cập nhật mới"
+
+#: internal/settings/storage_ui.c
+msgid "Check SD card"
+msgstr "Kiểm tra thẻ SD"
+
+#: internal/settings/timezones.c
+msgid "China"
+msgstr "Trung Quốc"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Choose"
+msgstr "Chọn"
+
+#: cmd/jawaka-menu/main.c
+msgid "Choose where RetroArch should load this shader automatically."
+msgstr "Chọn phạm vi áp dụng tự động cho shader này trong RetroArch."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Clear"
+msgstr "Xóa"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Clear Done"
+msgstr "Xóa mục đã hoàn thành"
+
+#: internal/settings/settings.c
+msgid "Clock"
+msgstr "Đồng hồ"
+
+#: internal/settings/storage_ui.c
+msgid "Close the game or app first, then try again."
+msgstr "Vui lòng thoát trò chơi hoặc ứng dụng trước, rồi thử lại."
+
+#: internal/launcher/system_names.c
+msgid "ColecoVision"
+msgstr "ColecoVision"
+
+#: internal/settings/settings.c
+msgid "Color"
+msgstr "Màu sắc"
+
+#: internal/settings/settings.c
+msgid "Color Scheme"
+msgstr "Tông màu"
+
+#: internal/settings/settings.c
+msgid "Color Temperature"
+msgstr "Nhiệt độ màu"
+
+#: internal/settings/settings.c
+msgid "Color temperature change failed"
+msgstr "Đổi nhiệt độ màu không thành công"
+
+#: internal/settings/settings.c
+msgid "Color temperature unavailable on this platform"
+msgstr "Nhiệt độ màu không khả dụng trên phần cứng này"
+
+#: internal/settings/settings.c
+msgid "Color temperature unavailable while HDMI is active"
+msgstr "Không thể chỉnh nhiệt độ màu khi đang xuất qua HDMI"
+
+#: internal/settings/settings.c
+msgid "Colors"
+msgstr "Màu sắc"
+
+#: internal/settings/settings.c
+msgid "Comet"
+msgstr "Sao chổi (Comet)"
+
+#: cmd/jawaka-menu/main.c
+msgid "Command: %s"
+msgstr "Lệnh: %s"
+
+#: internal/launcher/system_names.c
+msgid "Commodore 64"
+msgstr "Commodore 64"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Confirm"
+msgstr "Xác nhận"
+
+#: internal/settings/storage_ui.c
+msgid "Connect to power or charge the battery to at least 30 percent and try again."
+msgstr "Cắm sạc hoặc sạc pin tối thiểu 30% rồi thử lại."
+
+#: internal/settings/storage_ui.c
+msgid "Connect to power or charge the battery to at least 30 percent to repair this card."
+msgstr "Cắm sạc hoặc sạc pin trên 30% để tiến hành sửa lỗi thẻ này."
+
+#: internal/settings/settings.c
+msgid "Connected"
+msgstr "Đã kết nối"
+
+#: cmd/jawaka-menu/main.c
+msgid "Continue"
+msgstr "Tiếp tục"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Controller setup failed. Restart Leaf and try again."
+msgstr "Cài đặt tay cầm thất bại. Hãy khởi động lại Leaf và thử lại."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Core"
+msgstr "Nhân giả lập (Core)"
+
+#: internal/settings/settings.c
+msgid "Could not save"
+msgstr "Không thể lưu"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Couldn't install %s"
+msgstr "Không thể cài đặt %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Couldn't uninstall %s"
+msgstr "Không thể gỡ cài đặt %s"
+
+#: internal/settings/settings.c
+msgid "Coverflow"
+msgstr "Coverflow"
+
+#: internal/settings/settings.c
+msgid "Current"
+msgstr "Hiện tại"
+
+#: internal/retroarch/shader_strings.c
+msgid "Curvature crops slightly at the screen edges."
+msgstr "Hiệu ứng màn cong sẽ cắt nhẹ một chút ở mép viền hình ảnh."
+
+#: cmd/jawaka-menu/main.c
+msgid "Custom"
+msgstr "Tùy chỉnh"
+
+#: cmd/jawaka-launcher/main.c
+msgid "D-pad: Value/Position   B: Back   A: Next"
+msgstr "D-pad: Giá trị/Vị trí   B: Quay lại   A: Tiếp theo"
+
+#: cmd/jawaka-menu/main.c
+msgid "DMC"
+msgstr "DMC"
+
+#: internal/settings/timezones.c
+msgid "Darwin"
+msgstr "Darwin"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Default"
+msgstr "Mặc định"
+
+#: internal/settings/settings.c
+msgid "Defaults"
+msgstr "Mặc định"
+
+#: internal/retroarch/shader_strings.c
+msgid "Designed for handheld content."
+msgstr "Thiết kế tối ưu cho game máy cầm tay."
+
+#: internal/retroarch/shader_strings.c
+msgid "Designed for handheld content; the grid is very fine at console resolutions."
+msgstr "Tối ưu cho game máy cầm tay; lưới điểm ảnh sẽ rất mịn nếu áp dụng ở độ phân giải console."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Details"
+msgstr "Chi tiết"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Device"
+msgstr "Thiết bị"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Digit"
+msgstr "Chữ số"
+
+#: internal/settings/settings.c
+msgid "Disable"
+msgstr "Tắt"
+
+#: internal/settings/settings.c
+msgid "Disable USB ADB and remove Leaf's boot restore marker?"
+msgstr "Tắt USB ADB và xóa cờ kích hoạt lại khi khởi động của Leaf?"
+
+#: internal/platform/input_shortcuts.c
+msgid "Disabled"
+msgstr "Đã vô hiệu hóa"
+
+#: internal/settings/settings.c
+msgid "Disconnected"
+msgstr "Đã ngắt kết nối"
+
+#: cmd/jawaka-menu/main.c
+msgid "Disk %d/%d"
+msgstr "Đĩa %d/%d"
+
+#: internal/settings/settings.c
+msgid "Display & Sound"
+msgstr "Màn hình & Âm thanh"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Display Name"
+msgstr "Tên hiển thị"
+
+#: internal/retroarch/shader_strings.c
+msgid "Do not combine with BFI when using mGBA: the no-shader mGBA control falls to 38.499 FPS at 120Hz with BFI."
+msgstr "Không nên bật cùng lúc với BFI trên mGBA: mGBA gốc (không shader) bị tụt xuống 38.499 FPS ở 120Hz khi bật BFI."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Done"
+msgstr "Xong"
+
+#: internal/settings/settings.c
+msgid "Download"
+msgstr "Tải xuống"
+
+#: internal/settings/settings.c
+msgid "Downloading"
+msgstr "Đang tải xuống"
+
+#: internal/launcher/system_names.c
+msgid "Dreamcast"
+msgstr "Dreamcast"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Drop"
+msgstr "Thả"
+
+#: internal/settings/timezones.c
+msgid "Dubai"
+msgstr "Dubai"
+
+#: internal/settings/timezones.c
+msgid "Eastern Europe"
+msgstr "Đông Âu"
+
+#: cmd/jawaka-menu/main.c
+msgid "Edit the current shader in RetroArch."
+msgstr "Chỉnh sửa trực tiếp shader hiện tại trong RetroArch."
+
+#: internal/settings/settings.c
+msgid "Empty"
+msgstr "Trống"
+
+#: internal/settings/settings.c
+msgid "Enable"
+msgstr "Bật"
+
+#: internal/settings/settings.c
+msgid "Enable USB ADB and restore it at boot?"
+msgstr "Bật USB ADB và tự động giữ nguyên sau khi khởi động lại?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Enter PIN to exit"
+msgstr "Nhập mã PIN để thoát"
+
+#: internal/settings/settings.c
+msgid "Error"
+msgstr "Lỗi"
+
+#: internal/settings/timezones.c
+msgid "Eucla"
+msgstr "Eucla"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Exit 5-Game Mode?"
+msgstr "Thoát Chế độ 5 Trò chơi?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Exit to Stock"
+msgstr "Thoát về giao diện gốc"
+
+#: internal/settings/settings.c
+msgid "Extra Large"
+msgstr "Rất lớn"
+
+#: internal/settings/settings.c
+msgid "Failed"
+msgstr "Thất bại"
+
+#: internal/launcher/system_names.c
+msgid "Famicom Disk System"
+msgstr "Famicom Disk System"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Favorite"
+msgstr "Yêu thích"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Favorites"
+msgstr "Yêu thích"
+
+#: internal/settings/timezones.c
+msgid "Fernando de Noronha"
+msgstr "Fernando de Noronha"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Filter"
+msgstr "Lọc"
+
+#: internal/settings/settings.c
+msgid "Flat"
+msgstr "Phẳng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Folder"
+msgstr "Thư mục"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Folder: Themes/%s"
+msgstr "Thư mục: Themes/%s"
+
+#: internal/settings/settings.c
+msgid "Font"
+msgstr "Phông chữ"
+
+#: internal/settings/settings.c
+msgid "Font Size"
+msgstr "Cỡ chữ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Forget"
+msgstr "Quên kết nối"
+
+#: internal/settings/settings.c
+msgid "Fountain"
+msgstr "Đài phun (Fountain)"
+
+#: internal/platform/platform_common.c
+msgid "Frontend"
+msgstr "Giao diện quản lý"
+
+#: internal/retroarch/shader_strings.c
+msgid "GBA Color"
+msgstr "Màu GBA"
+
+#: internal/retroarch/shader_strings.c
+msgid "GBC Color"
+msgstr "Màu GBC"
+
+#: cmd/jawaka-menu/main.c
+msgid "GPU"
+msgstr "GPU"
+
+#: cmd/jawaka-menu/main.c
+msgid "Game"
+msgstr "Trò chơi"
+
+#: internal/launcher/system_names.c
+msgid "Game Boy"
+msgstr "Game Boy"
+
+#: internal/launcher/system_names.c
+msgid "Game Boy Advance"
+msgstr "Game Boy Advance"
+
+#: internal/retroarch/shader_strings.c
+msgid "Game Boy Advance LCD"
+msgstr "LCD Game Boy Advance"
+
+#: internal/launcher/system_names.c
+msgid "Game Boy Color"
+msgstr "Game Boy Color"
+
+#: internal/retroarch/shader_strings.c
+msgid "Game Boy Color LCD"
+msgstr "LCD Game Boy Color"
+
+#: internal/retroarch/shader_strings.c
+msgid "Game Boy LCD"
+msgstr "LCD Game Boy"
+
+#: internal/launcher/system_names.c
+msgid "Game Gear"
+msgstr "Game Gear"
+
+#: internal/settings/settings.c
+msgid "Game Performance"
+msgstr "Hiệu năng khi chơi"
+
+#: internal/settings/settings.c
+msgid "Game Rumble"
+msgstr "Rung phản hồi trong game"
+
+#: internal/platform/input_shortcuts.c
+msgid "Game Switcher"
+msgstr "Trình chuyển nhanh trò chơi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Games"
+msgstr "Trò chơi"
+
+#: internal/settings/settings.c
+msgid "Games played"
+msgstr "Đã chơi"
+
+#: internal/settings/settings.c
+msgid "Glide"
+msgstr "Lướt nhẹ"
+
+#: internal/settings/settings.c
+msgid "Good"
+msgstr "Tốt"
+
+#: internal/settings/settings.c
+msgid "Grid"
+msgstr "Dạng lưới"
+
+#: internal/settings/settings.c
+msgid "Grid Size"
+msgstr "Kích cỡ lưới"
+
+#: internal/settings/settings.c
+msgid "HDMI Output"
+msgstr "Xuất hình HDMI"
+
+#: internal/settings/settings.c
+msgid "HDMI output change failed"
+msgstr "Chuyển chế độ xuất hình HDMI thất bại"
+
+#: internal/settings/settings.c
+msgid "HDMI output unavailable on this platform"
+msgstr "Tính năng xuất hình HDMI không hỗ trợ trên thiết bị này"
+
+#: cmd/jawaka-launcher/main.c
+msgid "HLE"
+msgstr "HLE"
+
+#: cmd/jawaka-launcher/main.c
+msgid "HLE, no BIOS file"
+msgstr "HLE (không cần tệp BIOS)"
+
+#: internal/settings/settings.c
+msgid "Hashing"
+msgstr "Đang kiểm tra băm (Hash)"
+
+#: internal/platform/platform_common.c
+msgid "Headset"
+msgstr "Tai nghe"
+
+#: internal/settings/settings.c
+msgid "Hiccup"
+msgstr "Ngắt nhịp"
+
+#: internal/settings/settings.c
+msgid "Hidden"
+msgstr "Ẩn"
+
+#: internal/settings/settings.c
+msgid "Hold Menu, then press the button.   X: Disable"
+msgstr "Giữ Menu rồi bấm phím muốn gán.   X: Hủy gán"
+
+#: internal/settings/settings.c
+msgid "Home Layout"
+msgstr "Bố cục Trang chủ"
+
+#: internal/settings/settings.c
+msgid "Home Screen"
+msgstr "Màn hình chính"
+
+#: internal/settings/settings.c
+msgid "Home Tabs"
+msgstr "Các thẻ Trang chủ"
+
+#: internal/settings/settings.c
+msgid "Hotkey"
+msgstr "Phím tắt"
+
+#: internal/settings/settings.c
+msgid "Hotkeys"
+msgstr "Phím tắt"
+
+#: internal/settings/settings.c
+msgid "Hotkeys & Rumble"
+msgstr "Phím tắt & Độ rung"
+
+#: internal/settings/settings.c
+msgid "IP: %s"
+msgstr "IP: %s"
+
+#: internal/settings/settings.c
+msgid "IPv4"
+msgstr "IPv4"
+
+#: internal/settings/settings.c
+msgid "IPv6"
+msgstr "IPv6"
+
+#: internal/settings/settings.c
+msgid "Icon"
+msgstr "Biểu tượng"
+
+#: internal/settings/timezones.c
+msgid "India"
+msgstr "Ấn Độ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Info"
+msgstr "Thông tin"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Install"
+msgstr "Cài đặt"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Install cancelled: %s"
+msgstr "Đã hủy cài đặt: %s"
+
+#: internal/settings/storage_ui.c
+msgid "Install the matching Leaf system update before checking this card on your device."
+msgstr "Cần cài bản cập nhật Leaf tương thích trước khi kiểm tra thẻ nhớ này trên máy."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installed"
+msgstr "Đã cài đặt"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installed %s"
+msgstr "Đã cài đặt %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installed version: %s"
+msgstr "Phiên bản hiện tại: %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Installing theme"
+msgstr "Đang cài đặt giao diện"
+
+#: internal/launcher/system_names.c
+msgid "Intellivision"
+msgstr "Intellivision"
+
+#: internal/retroarch/shader_strings.c
+msgid "It is a scaling filter, not a CRT or LCD simulation."
+msgstr "Đây là bộ lọc tỷ lệ phóng ảnh, không phải hiệu ứng mô phỏng màn hình CRT hay LCD."
+
+#: internal/settings/timezones.c
+msgid "Japan / Korea"
+msgstr "Nhật Bản / Hàn Quốc"
+
+#: cmd/jawaka-menu/main.c
+msgid "Keep"
+msgstr "Giữ lại"
+
+#: internal/retroarch/shader_strings.c
+msgid "Keep BFI off: PS1 at 120Hz with BFI measured 50.282 FPS."
+msgstr "Nên tắt BFI: Giả lập PS1 ở 120Hz kèm BFI thực tế chỉ đạt 50.282 FPS."
+
+#: internal/settings/settings.c
+msgid "Keep Original"
+msgstr "Giữ nguyên gốc"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Keep data"
+msgstr "Giữ lại dữ liệu"
+
+#: internal/retroarch/shader_strings.c
+msgid "Keep mGBA BFI off: the no-shader core path already falls below full speed at 120Hz with BFI."
+msgstr "Nên tắt BFI trên mGBA: nhân giả lập gốc đã chạy dưới tốc độ chuẩn khi bật BFI ở 120Hz."
+
+#: internal/retroarch/shader_strings.c
+msgid "Keeps pixel art crisp at integer and non-integer scaling without adding a CRT effect."
+msgstr "Giữ hình ảnh pixel luôn sắc nét ở cả tỉ lệ nguyên và lẻ mà không cần dùng hiệu ứng CRT."
+
+#: internal/retroarch/shader_strings.c
+msgid "Keeps rectangular pixels as sharp as possible at awkward non-integer scales while avoiding scrolling shimmer."
+msgstr "Giữ điểm ảnh vuông vức sắc nét ở các tỉ lệ co giãn không tròn số, đồng thời khử hiện tượng nhấp nháy khi cuộn cảnh."
+
+#: internal/settings/settings.c
+msgid "Kernel"
+msgstr "Nhân (Kernel)"
+
+#: internal/retroarch/shader_strings.c
+msgid "LCD Grid"
+msgstr "Lưới LCD"
+
+#: internal/retroarch/shader_strings.c
+msgid "LCD Grid Fast"
+msgstr "Lưới LCD (tối ưu tốc độ)"
+
+#: internal/settings/settings.c
+msgid "Language"
+msgstr "Ngôn ngữ"
+
+#: internal/settings/settings.c
+msgid "Large"
+msgstr "Lớn"
+
+#: internal/settings/settings.c
+msgid "Last played"
+msgstr "Chơi gần nhất"
+
+#: internal/settings/settings.c
+msgid "Last update: %s"
+msgstr "Cập nhật lần cuối: %s"
+
+#: internal/settings/settings.c
+msgid "Later"
+msgstr "Để sau"
+
+#: cmd/jawaka-menu/main.c
+msgid "Latest"
+msgstr "Mới nhất"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Launch"
+msgstr "Chơi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Launch canceled"
+msgstr "Đã hủy vào game"
+
+#: internal/settings/settings.c
+msgid "Leaf"
+msgstr "Leaf"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Leaf can't find %s in the Themes folder"
+msgstr "Leaf không tìm thấy %s trong thư mục Themes"
+
+#: internal/settings/storage_ui.c
+msgid "Leaf checked this card and found file system errors, usually left by a shutdown that didn't finish saving. To keep your files safe, you can't save to this card until it's repaired."
+msgstr "Leaf phát hiện lỗi hệ thống tệp trên thẻ này, thường do tắt nguồn đột ngột khi chưa kịp ghi dữ liệu. Để đảm bảo an toàn, tính năng lưu tệp sẽ tạm khóa cho đến khi thẻ được sửa xong."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Leaf couldn't confirm your SD card can be written."
+msgstr "Leaf không thể xác nhận quyền ghi dữ liệu lên thẻ SD."
+
+#: internal/settings/storage_ui.c
+msgid "Leaf couldn't identify this card safely. Check the card on a computer instead."
+msgstr "Leaf không thể nhận dạng an toàn thẻ này. Vui lòng cắm thẻ vào máy tính để kiểm tra."
+
+#: internal/settings/storage_ui.c
+msgid "Leaf couldn't identify this card."
+msgstr "Leaf không thể nhận dạng thẻ này."
+
+#: internal/settings/storage_ui.c
+msgid "Leaf couldn't repair this card on your device. Turn off your device, repair the card on a computer, then check it here to save to it again."
+msgstr "Leaf không thể sửa thẻ trực tiếp trên máy. Hãy tắt nguồn, sửa lỗi thẻ bằng máy tính, sau đó gắn lại và kiểm tra tại đây để khôi phục quyền lưu tệp."
+
+#: internal/settings/storage_ui.c
+msgid "Leaf couldn't safely check this card, so nothing was changed. Check the card on a computer."
+msgstr "Leaf không thể quét an toàn thẻ nhớ này nên dữ liệu được giữ nguyên. Vui lòng kiểm tra thẻ trên máy tính."
+
+#: cmd/jawaka-menu/main.c
+msgid "Leaf's in-game picker supports GLSL presets (.glslp)."
+msgstr "Menu tùy chọn nhanh của Leaf hỗ trợ cấu hình shader GLSL (.glslp)."
+
+#: cmd/jawaka-menu/main.c
+msgid "Leaf's shader files are incomplete. Update or reinstall Leaf."
+msgstr "Các tệp shader của Leaf đang bị thiếu. Vui lòng cập nhật hoặc cài đặt lại Leaf."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Left/Right"
+msgstr "Trái/Phải"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library"
+msgstr "Thư viện trò chơi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library scan failed"
+msgstr "Quét thư viện thất bại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library scan requested"
+msgstr "Đã yêu cầu quét thư viện"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Library updating..."
+msgstr "Đang cập nhật thư viện..."
+
+#: cmd/jawaka-launcher/main.c
+msgid "License: %s"
+msgstr "Giấy phép: %s"
+
+#: internal/settings/settings.c
+msgid "Lighting"
+msgstr "Đèn LED"
+
+#: internal/settings/timezones.c
+msgid "Line Islands"
+msgstr "Quần đảo Line"
+
+#: internal/settings/settings.c
+msgid "List Style"
+msgstr "Kiểu danh sách"
+
+#: cmd/jawaka-menu/main.c
+msgid "Load"
+msgstr "Tải"
+
+#: cmd/jawaka-menu/main.c
+msgid "Load State"
+msgstr "Tải điểm lưu (Load State)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Loading preview"
+msgstr "Đang tải ảnh xem trước"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Lock"
+msgstr "Khóa"
+
+#: internal/settings/timezones.c
+msgid "Lord Howe Island"
+msgstr "Đảo Lord Howe"
+
+#: internal/launcher/system_names.c
+msgid "MS-DOS"
+msgstr "MS-DOS"
+
+#: internal/launcher/system_names.c
+msgid "MSX"
+msgstr "MSX"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Main SD Card"
+msgstr "Thẻ SD chính (Slot 1)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Manual"
+msgstr "Thủ công"
+
+#: internal/settings/timezones.c
+msgid "Marquesas Islands"
+msgstr "Quần đảo Marquesas"
+
+#: internal/settings/settings.c
+msgid "Memory free"
+msgstr "RAM trống"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Menu"
+msgstr "Menu"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Menu: Start now"
+msgstr "Menu: Chơi ngay"
+
+#: internal/settings/settings.c
+msgid "Missing"
+msgstr "Còn thiếu"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Missing Only"
+msgstr "Chỉ mục còn thiếu"
+
+#: internal/settings/settings.c
+msgid "Mode"
+msgstr "Chế độ"
+
+#: internal/settings/timezones.c
+msgid "Moscow"
+msgstr "Mát-xcơ-va"
+
+#: internal/settings/settings.c
+msgid "Most played"
+msgstr "Chơi nhiều nhất"
+
+#: internal/settings/storage_ui.c
+msgid "Mounted"
+msgstr "Đã gắn thẻ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Move"
+msgstr "Di chuyển"
+
+#: internal/settings/settings.c
+msgid "Moving"
+msgstr "Chuyển động"
+
+#: internal/settings/timezones.c
+msgid "Myanmar"
+msgstr "Myanmar"
+
+#: internal/launcher/system_names.c
+msgid "NEC PC-98"
+msgstr "NEC PC-98"
+
+#: internal/settings/settings.c
+msgid "Nearby"
+msgstr "Lân cận"
+
+#: internal/settings/storage_ui.c
+msgid "Needs check"
+msgstr "Cần kiểm tra"
+
+#: internal/settings/storage_ui.c
+msgid "Needs repair"
+msgstr "Cần sửa chữa"
+
+#: internal/launcher/system_names.c
+msgid "Neo Geo"
+msgstr "Neo Geo"
+
+#: internal/launcher/system_names.c
+msgid "Neo Geo Pocket"
+msgstr "Neo Geo Pocket"
+
+#: internal/launcher/system_names.c
+msgid "Neo Geo Pocket Color"
+msgstr "Neo Geo Pocket Color"
+
+#: internal/settings/timezones.c
+msgid "Nepal"
+msgstr "Nepal"
+
+#: internal/settings/settings.c
+msgid "Network: %s"
+msgstr "Mạng: %s"
+
+#: internal/settings/settings.c
+msgid "Neutral"
+msgstr "Trung tính"
+
+#: internal/settings/settings.c
+msgid "Never"
+msgstr "Không bao giờ"
+
+#: internal/settings/timezones.c
+msgid "New Zealand"
+msgstr "New Zealand"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "New saves may fail"
+msgstr "Bản lưu mới có thể không ghi được"
+
+#: internal/settings/timezones.c
+msgid "Newfoundland"
+msgstr "Newfoundland"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Next page"
+msgstr "Trang sau"
+
+#: internal/launcher/system_names.c
+msgid "Nintendo 64"
+msgstr "Nintendo 64"
+
+#: internal/launcher/system_names.c
+msgid "Nintendo DS"
+msgstr "Nintendo DS"
+
+#: internal/launcher/system_names.c
+msgid "Nintendo Entertainment System"
+msgstr "Nintendo Entertainment System (NES)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No BIOS file"
+msgstr "Chưa có tệp BIOS"
+
+#: internal/launcher/bios.c
+msgid "No BIOS file selected"
+msgstr "Chưa chọn tệp BIOS"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No apps found"
+msgstr "Không có ứng dụng nào"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No favorites yet — open a game and press Y to add one"
+msgstr "Chưa có mục yêu thích — mở trò chơi và nhấn Y để thêm"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No favorites yet — press Y on a game to add one"
+msgstr "Chưa có mục yêu thích — nhấn Y tại trò chơi để thêm"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No games available"
+msgstr "Không có trò chơi nào"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No games found"
+msgstr "Không tìm thấy trò chơi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No lock"
+msgstr "Không đặt khóa"
+
+#: internal/settings/settings.c
+msgid "No playtime recorded yet."
+msgstr "Chưa có dữ liệu thời gian chơi."
+
+#: cmd/jawaka-launcher/main.c
+msgid "No preview"
+msgstr "Không có ảnh xem trước"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No recent games yet — play something and it'll show up here"
+msgstr "Chưa có game gần đây — hãy mở một trò chơi để hiển thị tại đây"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No results"
+msgstr "Không tìm thấy kết quả"
+
+#: cmd/jawaka-menu/main.c
+msgid "No save in this slot"
+msgstr "Không có dữ liệu trong ô lưu này"
+
+#: cmd/jawaka-menu/main.c
+msgid "No saved shader exists at that scope."
+msgstr "Không có cấu hình shader nào từng được lưu ở cấp này."
+
+#: cmd/jawaka-menu/main.c
+msgid "No saves"
+msgstr "Chưa có dữ liệu lưu"
+
+#: cmd/jawaka-menu/main.c
+msgid "No saves to load"
+msgstr "Không có bản lưu nào để tải"
+
+#: cmd/jawaka-menu/main.c
+msgid "No saves yet"
+msgstr "Chưa có bản lưu nào"
+
+#: internal/retroarch/shader_strings.c
+msgid "No screen curvature; use CRT Curved for that."
+msgstr "Không bo cong màn hình; hãy dùng shader CRT Curved nếu muốn hiệu ứng cong."
+
+#: internal/settings/settings.c
+msgid "No services installed"
+msgstr "Chưa cài đặt dịch vụ nền nào"
+
+#: cmd/jawaka-menu/main.c
+msgid "No states"
+msgstr "Chưa có save state"
+
+#: cmd/jawaka-launcher/main.c
+msgid "No themes in Pak Rat yet"
+msgstr "Chưa có giao diện nào trên Pak Rat"
+
+#: cmd/jawaka-menu/main.c
+msgid "None"
+msgstr "Không có"
+
+#: internal/settings/settings.c
+msgid "Not Found"
+msgstr "Không tìm thấy"
+
+#: internal/settings/settings.c
+msgid "Not connected"
+msgstr "Chưa kết nối"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Not enough memory to open the BIOS picker"
+msgstr "Không đủ bộ nhớ để mở danh sách chọn BIOS"
+
+#: internal/settings/settings.c
+msgid "Not found in the ScreenScraper.fr database."
+msgstr "Không tìm thấy dữ liệu trên ScreenScraper.fr."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Not mounted"
+msgstr "Chưa nhận thẻ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Not now"
+msgstr "Để sau"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Now"
+msgstr "Bây giờ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "OK"
+msgstr "OK"
+
+#: internal/settings/settings.c
+msgid "OS"
+msgstr "Hệ điều hành"
+
+#: cmd/jawaka-menu/main.c
+msgid "Off"
+msgstr "Tắt"
+
+#: internal/settings/settings.c
+msgid "Offsets are standard time; regions adjust for DST"
+msgstr "Múi giờ tính theo giờ chuẩn; tự bù trừ giờ mùa hè (DST)"
+
+#: internal/settings/settings.c
+msgid "On"
+msgstr "Bật"
+
+#: internal/settings/settings.c
+msgid "On (%d fps)"
+msgstr "Bật (%d fps)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Open"
+msgstr "Mở"
+
+#: internal/settings/settings.c
+msgid "Open-source components"
+msgstr "Thành phần mã nguồn mở"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Options"
+msgstr "Tùy chọn"
+
+#: internal/settings/settings.c
+msgid "Output"
+msgstr "Đầu ra"
+
+#: cmd/jawaka-launcher/main.c
+msgid "PIN"
+msgstr "Mã PIN"
+
+#: cmd/jawaka-launcher/main.c
+msgid "PINs did not match - try again"
+msgstr "Mã PIN không khớp - vui lòng thử lại"
+
+#: internal/settings/settings.c
+msgid "Paired"
+msgstr "Đã ghép nối"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pak Rat"
+msgstr "Pak Rat"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pak Rat Themes"
+msgstr "Giao diện Pak Rat"
+
+#: internal/settings/timezones.c
+msgid "Pakistan"
+msgstr "Pakistan"
+
+#: internal/settings/settings.c
+msgid "Panel only"
+msgstr "Chỉ màn hình chính"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Path: Apps/%s"
+msgstr "Đường dẫn: Apps/%s"
+
+#: internal/settings/settings.c
+msgid "Percent"
+msgstr "Phần trăm"
+
+#: cmd/jawaka-menu/main.c
+msgid "Performance"
+msgstr "Hiệu năng"
+
+#: cmd/jawaka-menu/main.c
+msgid "Performance unavailable"
+msgstr "Không khả dụng mức hiệu năng"
+
+#: internal/settings/settings.c
+msgid "Photographic"
+msgstr "Chân thực (Photographic)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pick"
+msgstr "Chọn"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pick 5 Games"
+msgstr "Chọn 5 trò chơi"
+
+#: internal/settings/settings.c
+msgid "Pick Update"
+msgstr "Chọn bản cập nhật"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Pick another Saturn BIOS from the options menu."
+msgstr "Chọn tệp BIOS Saturn khác trong menu tùy chọn."
+
+#: internal/settings/settings.c
+msgid "Play"
+msgstr "Chơi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Play anyway"
+msgstr "Vẫn tiếp tục vào game"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Play directly"
+msgstr "Chơi trực tiếp"
+
+#: internal/launcher/system_names.c
+msgid "PlayStation"
+msgstr "PlayStation"
+
+#: internal/launcher/system_names.c
+msgid "PlayStation Portable"
+msgstr "PlayStation Portable"
+
+#: internal/settings/settings.c
+msgid "Playing test sound…"
+msgstr "Đang thử âm thanh…"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Playtime"
+msgstr "Thời gian chơi"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Please wait"
+msgstr "Vui lòng đợi"
+
+#: internal/launcher/system_names.c
+msgid "Ports"
+msgstr "Bản port"
+
+#: internal/settings/settings.c
+msgid "Power"
+msgstr "Nguồn điện"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Power Off"
+msgstr "Tắt nguồn"
+
+#: internal/retroarch/shader_strings.c
+msgid "Prefer this over Sharp Pixels when non-integer scrolling visibly shimmers."
+msgstr "Nên dùng cấu hình này thay vì Sharp Pixels nếu cuộn cảnh ở tỷ lệ lẻ xuất hiện nhấp nháy."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Press MENU to exit"
+msgstr "Nhấn MENU để thoát"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Press Menu again"
+msgstr "Nhấn Menu thêm lần nữa"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Previous page"
+msgstr "Trang trước"
+
+#: cmd/jawaka-menu/main.c
+msgid "Profile"
+msgstr "Cấu hình"
+
+#: internal/settings/settings.c
+msgid "Queued"
+msgstr "Trong hàng đợi"
+
+#: cmd/jawaka-menu/main.c
+msgid "Quit"
+msgstr "Thoát"
+
+#: internal/settings/settings.c
+msgid "RAM"
+msgstr "RAM"
+
+#: internal/settings/settings.c
+msgid "Rainbow"
+msgstr "Bảy sắc cầu vồng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Re-enter PIN"
+msgstr "Nhập lại mã PIN"
+
+#: internal/settings/storage_ui.c
+msgid "Read-only"
+msgstr "Chỉ đọc"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reading folder..."
+msgstr "Đang đọc thư mục..."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reboot"
+msgstr "Khởi động lại"
+
+#: cmd/jawaka-menu/main.c
+msgid "Reboot failed"
+msgstr "Khởi động lại thất bại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reboot?"
+msgstr "Khởi động lại máy?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Recently Played"
+msgstr "Chơi gần đây"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Recents"
+msgstr "Gần đây"
+
+#: cmd/jawaka-menu/main.c
+msgid "Recommended shaders are unavailable. Update or reinstall Leaf."
+msgstr "Shader khuyến nghị không có sẵn. Hãy cập nhật hoặc cài lại Leaf."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reconnect Bluetooth"
+msgstr "Kết nối lại Bluetooth"
+
+#: internal/platform/input_shortcuts.c
+msgid "Recording"
+msgstr "Đang quay màn hình"
+
+#: internal/settings/settings.c
+msgid "Recording Hotkey"
+msgstr "Phím tắt quay màn hình"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Refresh"
+msgstr "Làm mới"
+
+#: internal/settings/settings.c
+msgid "Refresh Rate"
+msgstr "Tần số quét"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Refresh this folder"
+msgstr "Làm mới thư mục này"
+
+#: internal/settings/settings.c
+msgid "Region Priority"
+msgstr "Ưu tiên phân vùng game"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reinstall"
+msgstr "Cài đặt lại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reinstalled %s"
+msgstr "Đã cài đặt lại %s"
+
+#: internal/settings/settings.c
+msgid "Release"
+msgstr "Bản chính thức"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Release-managed path"
+msgstr "Đường dẫn theo bản phát hành"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Releases"
+msgstr "Bản phát hành"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Remove"
+msgstr "Gỡ bỏ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Remove the saved preset at the selected scope and turn shaders off."
+msgstr "Xóa cấu hình đã lưu tại cấp độ đã chọn và tắt hoàn toàn shader."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Removing retained Pak Rat data"
+msgstr "Đang dọn dữ liệu tạm của Pak Rat"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reorder"
+msgstr "Sắp xếp lại"
+
+#: internal/settings/settings.c
+msgid "Repair"
+msgstr "Sửa chữa"
+
+#: internal/settings/storage_ui.c
+msgid "Repair SD card"
+msgstr "Sửa lỗi thẻ SD"
+
+#: internal/settings/storage_ui.c
+msgid "Repair isn't installed on this device."
+msgstr "Công cụ sửa lỗi chưa được tích hợp trên thiết bị."
+
+#: internal/settings/storage_ui.c
+msgid "Repair on battery"
+msgstr "Sửa lỗi bằng nguồn pin"
+
+#: internal/settings/storage_ui.c
+msgid "Repair pending"
+msgstr "Chờ sửa chữa"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Replace"
+msgstr "Thay thế"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Replace All"
+msgstr "Thay thế toàn bộ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Rescan"
+msgstr "Quét lại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Rescan Library"
+msgstr "Quét lại thư viện"
+
+#: cmd/jawaka-menu/main.c
+msgid "Reset"
+msgstr "Đặt lại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Reset Game Overrides"
+msgstr "Xóa cấu hình riêng của game"
+
+#: cmd/jawaka-menu/main.c
+msgid "Reset Override"
+msgstr "Đặt lại cấu hình ghi đè"
+
+#: internal/settings/settings.c
+msgid "Reset RetroArch Config"
+msgstr "Khôi phục cài đặt RetroArch"
+
+#: internal/settings/settings.c
+msgid "Reset shared RetroArch config to packaged defaults?"
+msgstr "Khôi phục toàn bộ cấu hình RetroArch về mặc định ban đầu?"
+
+#: internal/settings/settings.c
+msgid "Restart"
+msgstr "Khởi động lại"
+
+#: internal/settings/storage_ui.c
+msgid "Restart and check"
+msgstr "Khởi động lại và kiểm tra"
+
+#: internal/settings/storage_ui.c
+msgid "Restart and repair"
+msgstr "Khởi động lại và sửa lỗi"
+
+#: internal/settings/settings.c
+msgid "Restart now to finish installing?"
+msgstr "Khởi động lại ngay để hoàn tất cài đặt?"
+
+#: internal/settings/storage_ui.c
+msgid "Restarting to check your SD card"
+msgstr "Đang khởi động lại để quét lỗi thẻ SD"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Restarting to repair your SD card"
+msgstr "Đang khởi động lại để sửa chữa thẻ SD"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Resume"
+msgstr "Tiếp tục chơi"
+
+#: internal/settings/settings.c
+msgid "RetroAchievements"
+msgstr "Hệ thống danh hiệu (RetroAchievements)"
+
+#: cmd/jawaka-menu/main.c
+msgid "RetroArch Settings"
+msgstr "Cài đặt RetroArch"
+
+#: cmd/jawaka-menu/main.c
+msgid "RetroArch did not confirm the shader. Reopen Shader or restart the game."
+msgstr "RetroArch chưa lưu nhận shader. Hãy mở lại mục Shader hoặc khởi động lại game."
+
+#: cmd/jawaka-menu/main.c
+msgid "RetroArch is not available. Shader unchanged."
+msgstr "RetroArch hiện không phản hồi. Giữ nguyên shader cũ."
+
+#: internal/settings/settings.c
+msgid "RetroArch reset canceled"
+msgstr "Đã hủy khôi phục cài đặt RetroArch"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "RetroArch settings not saved"
+msgstr "Cài đặt RetroArch chưa được lưu"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Retry"
+msgstr "Thử lại"
+
+#: cmd/jawaka-menu/main.c
+msgid "Return to Launcher"
+msgstr "Trở về màn hình chính"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Return to Leaf?"
+msgstr "Quay lại Leaf?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Revert"
+msgstr "Hoàn tác"
+
+#: internal/settings/settings.c
+msgid "Rounded"
+msgstr "Bo viền"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Run / Stop"
+msgstr "Chạy / Dừng"
+
+#: internal/settings/settings.c
+msgid "SD Cards"
+msgstr "Thẻ nhớ SD"
+
+#: cmd/jawaka-launcher/main.c
+msgid "SD card is read-only"
+msgstr "Thẻ SD đang bị khóa chỉ đọc"
+
+#: cmd/jawaka-launcher/main.c
+msgid "SD card is read-only: %s"
+msgstr "Thẻ SD bị khóa chỉ đọc: %s"
+
+#: internal/settings/storage_ui.c
+msgid "SD card status unavailable"
+msgstr "Không lấy được thông tin thẻ SD"
+
+#: cmd/jawaka-launcher/main.c
+msgid "SD read-only"
+msgstr "SD chỉ đọc"
+
+#: internal/launcher/system_names.c
+msgid "SG-1000"
+msgstr "SG-1000"
+
+#: internal/settings/settings.c
+msgid "Safely unmount the secondary SD card?"
+msgstr "Ngắt kết nối an toàn thẻ nhớ phụ (Slot 2)?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Saturn BIOS"
+msgstr "BIOS Saturn"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Saturn BIOS update failed"
+msgstr "Cập nhật BIOS Saturn thất bại"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save & Quit"
+msgstr "Lưu & Thoát"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save State"
+msgstr "Lưu nhanh (Save State)"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save current shader…"
+msgstr "Lưu cấu hình shader này…"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save globally"
+msgstr "Lưu áp dụng toàn bộ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Save your edits in RetroArch before you leave."
+msgstr "Hãy lưu lại các chỉnh sửa trong RetroArch trước khi thoát."
+
+#: internal/settings/settings.c
+msgid "Saved; active after restart"
+msgstr "Đã lưu; sẽ có hiệu lực sau khi khởi động lại"
+
+#: internal/settings/settings.c
+msgid "Saving"
+msgstr "Đang lưu"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scan"
+msgstr "Quét"
+
+#: cmd/jawaka-menu/main.c
+msgid "Scan failed"
+msgstr "Quét thất bại"
+
+#: internal/retroarch/shader_strings.c
+msgid "Scanlines and an aperture mask with a flat screen and crisp scaling."
+msgstr "Hiệu ứng đường quét và mặt nạ tia dạng phẳng, giữ tỷ lệ phóng sắc nét."
+
+#: internal/retroarch/shader_strings.c
+msgid "Scanlines and aperture mask with screen curvature, rounded corners and vignetting."
+msgstr "Đường quét và mặt nạ tia kết hợp màn cong CRT, bo góc và tối viền."
+
+#: internal/retroarch/shader_strings.c
+msgid "Scanlines reduce brightness, especially when combined with BFI."
+msgstr "Hiệu ứng đường quét làm giảm độ sáng màn hình, rõ nhất khi bật cùng BFI."
+
+#: internal/settings/settings.c
+msgid "Scanning"
+msgstr "Đang quét"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scanning library..."
+msgstr "Đang quét thư viện trò chơi..."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scanning…"
+msgstr "Đang quét…"
+
+#: cmd/jawaka-menu/main.c
+msgid "Scope"
+msgstr "Cấp độ áp dụng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scrape"
+msgstr "Tải dữ liệu bìa (Scrape)"
+
+#: internal/settings/settings.c
+msgid "Scrape Artwork"
+msgstr "Tải ảnh bìa & thông tin game"
+
+#: internal/settings/settings.c
+msgid "Scrape Queue"
+msgstr "Hàng chờ tải dữ liệu game"
+
+#: internal/settings/settings.c
+msgid "Scrape Queue - %s"
+msgstr "Hàng chờ tải - %s"
+
+#: internal/settings/settings.c
+msgid "Scrape Result"
+msgstr "Kết quả nạp dữ liệu"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scrape finished: %d found"
+msgstr "Tải hoàn tất: tìm thấy %d mục"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scraping %s · %d/%d"
+msgstr "Đang tải %s · %d/%d"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scraping paused: %.200s"
+msgstr "Tạm dừng tải dữ liệu: %.200s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Scraping: %d/%d"
+msgstr "Đang tải dữ liệu: %d/%d"
+
+#: internal/settings/settings.c
+msgid "ScreenScraper.fr"
+msgstr "ScreenScraper.fr"
+
+#: internal/platform/input_shortcuts.c
+msgid "Screenshot"
+msgstr "Chụp ảnh màn hình"
+
+#: internal/settings/settings.c
+msgid "Screenshot Hotkey"
+msgstr "Phím tắt chụp màn hình"
+
+#: internal/settings/settings.c
+msgid "Screenshots"
+msgstr "Ảnh chụp màn hình"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Search"
+msgstr "Tìm kiếm"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Search This System"
+msgstr "Tìm trong hệ máy này"
+
+#: internal/settings/settings.c
+msgid "Searching"
+msgstr "Đang tìm kiếm"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Second SD Card"
+msgstr "Thẻ SD phụ (Slot 2)"
+
+#: internal/settings/settings.c
+msgid "Secondary Text"
+msgstr "Văn bản phụ"
+
+#: internal/launcher/system_names.c
+msgid "Sega 32X"
+msgstr "Sega 32X"
+
+#: internal/launcher/system_names.c
+msgid "Sega CD"
+msgstr "Sega CD"
+
+#: internal/launcher/system_names.c
+msgid "Sega Genesis"
+msgstr "Sega Genesis"
+
+#: internal/launcher/system_names.c
+msgid "Sega Master System"
+msgstr "Sega Master System"
+
+#: internal/launcher/system_names.c
+msgid "Sega Naomi"
+msgstr "Sega Naomi"
+
+#: internal/launcher/system_names.c
+msgid "Sega Saturn"
+msgstr "Sega Saturn"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Select"
+msgstr "Chọn"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS card is not mounted"
+msgstr "Thẻ nhớ chứa tệp BIOS chưa được nhận"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file cannot be read"
+msgstr "Không thể đọc tệp BIOS đã chọn"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is missing"
+msgstr "Không tìm thấy tệp BIOS đã chọn"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is not a 512 KiB image"
+msgstr "Tệp BIOS đã chọn không phải dạng ảnh ROM 512 KiB"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is not a file"
+msgstr "Mục đã chọn không phải là tệp hợp lệ"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file is unavailable"
+msgstr "Tệp BIOS đã chọn hiện không khả dụng"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS file left the BIOS folder"
+msgstr "Tệp BIOS đã chọn không nằm đúng trong thư mục BIOS"
+
+#: internal/launcher/bios.c
+msgid "Selected BIOS path is not usable"
+msgstr "Đường dẫn tệp BIOS không hợp lệ"
+
+#: internal/settings/settings.c
+msgid "Selection"
+msgstr "Mục chọn"
+
+#: internal/settings/settings.c
+msgid "Services"
+msgstr "Dịch vụ hệ thống"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Set a PIN"
+msgstr "Cài đặt mã PIN"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Settings"
+msgstr "Cài đặt"
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader"
+msgstr "Shader đồ họa"
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader failed and the previous shader could not be restored. Reopen the game."
+msgstr "Khởi chạy shader thất bại và không thể khôi phục shader trước. Vui lòng vào lại game."
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader is active for this session, but could not be saved for %s."
+msgstr "Shader đã bật cho lần chơi này, nhưng không thể lưu cấu hình cho %s."
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader operation failed."
+msgstr "Thao tác trên shader thất bại."
+
+#: cmd/jawaka-menu/main.c
+msgid "Shader scope"
+msgstr "Cấp độ áp dụng shader"
+
+#: internal/retroarch/shader_strings.c
+msgid "Sharp Pixels"
+msgstr "Pixel sắc cạnh"
+
+#: internal/retroarch/shader_strings.c
+msgid "Sharp Shimmerless"
+msgstr "Sắc nét khử nhấp nháy"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Show/Hide"
+msgstr "Hiện/Ẩn"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Shut Down"
+msgstr "Tắt máy"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Shut Down?"
+msgstr "Tắt máy?"
+
+#: internal/settings/settings.c
+msgid "Signal: %s"
+msgstr "Tín hiệu: %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Size is not proof that a file is a Saturn BIOS."
+msgstr "Dung lượng trùng khớp không chứng minh được tệp này là BIOS chuẩn của Saturn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Sleep"
+msgstr "Ngủ (Sleep)"
+
+#: cmd/jawaka-menu/main.c
+msgid "Sleep failed"
+msgstr "Không thể vào chế độ ngủ"
+
+#: cmd/jawaka-menu/main.c
+msgid "Sleeping…"
+msgstr "Đang vào chế độ ngủ…"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Slot"
+msgstr "Ô"
+
+#: cmd/jawaka-menu/main.c
+msgid "Slot %d"
+msgstr "Ô lưu %d"
+
+#: cmd/jawaka-menu/main.c
+msgid "Slot Auto"
+msgstr "Ô lưu tự động"
+
+#: internal/settings/settings.c
+msgid "Small"
+msgstr "Nhỏ"
+
+#: internal/settings/settings.c
+msgid "Snap"
+msgstr "Chuyển gấp (Snap)"
+
+#: internal/settings/settings.c
+msgid "SoC"
+msgstr "Vi xử lý (SoC)"
+
+#: internal/settings/settings.c
+msgid "Soft"
+msgstr "Dịu mắt"
+
+#: internal/settings/timezones.c
+msgid "Solomon Islands"
+msgstr "Quần đảo Solomon"
+
+#: internal/platform/platform_common.c
+msgid "Speaker"
+msgstr "Loa"
+
+#: internal/settings/settings.c
+msgid "Speed"
+msgstr "Tốc độ"
+
+#: internal/settings/settings.c
+msgid "Split Over 10MB"
+msgstr "Tách tệp trên 10MB"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Splore import incomplete"
+msgstr "Nhập dữ liệu Splore chưa xong"
+
+#: internal/settings/settings.c
+msgid "Square"
+msgstr "Vuông"
+
+#: internal/settings/settings.c
+msgid "Stable"
+msgstr "Bản ổn định"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start"
+msgstr "Bắt đầu"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start 5-Game Mode"
+msgstr "Vào Chế độ 5 Trò chơi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start 5-Game Mode?"
+msgstr "Bật Chế độ 5 Trò chơi?"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Start with Leaf"
+msgstr "Mở cùng Leaf"
+
+#: internal/settings/settings.c
+msgid "Startup Tab"
+msgstr "Thẻ mở khi khởi động"
+
+#: internal/settings/settings.c
+msgid "Static"
+msgstr "Tĩnh"
+
+#: internal/settings/settings.c
+msgid "Status Bar"
+msgstr "Thanh trạng thái"
+
+#: internal/settings/settings.c
+msgid "Status: %s"
+msgstr "Trạng thái: %s"
+
+#: internal/settings/settings.c
+msgid "Stop"
+msgstr "Dừng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Stop All"
+msgstr "Dừng tất cả"
+
+#: internal/settings/settings.c
+msgid "Stopped test sound"
+msgstr "Đã dừng âm thử"
+
+#: internal/settings/settings.c
+msgid "Storage free"
+msgstr "Dung lượng bộ nhớ trống"
+
+#: internal/settings/settings.c
+msgid "Strength"
+msgstr "Cường độ"
+
+#: internal/settings/settings.c
+msgid "Stretch"
+msgstr "Kéo giãn"
+
+#: internal/settings/settings.c
+msgid "Strong"
+msgstr "Mạnh"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Style"
+msgstr "Phong cách"
+
+#: internal/retroarch/shader_strings.c
+msgid "Subtle Scanlines"
+msgstr "Đường quét mờ dịu"
+
+#: internal/launcher/system_names.c
+msgid "Super Famicom"
+msgstr "Super Famicom"
+
+#: internal/launcher/system_names.c
+msgid "Super Game Boy"
+msgstr "Super Game Boy"
+
+#: internal/launcher/system_names.c
+msgid "Super Nintendo"
+msgstr "Super Nintendo (SNES)"
+
+#: internal/settings/settings.c
+msgid "Sweep"
+msgstr "Quét lướt (Sweep)"
+
+#: cmd/jawaka-menu/main.c
+msgid "Switch"
+msgstr "Chuyển đổi"
+
+#: internal/settings/settings.c
+msgid "Switch Leaf to %s?\n\nLeaf restarts to apply it."
+msgstr "Đổi giao diện Leaf sang %s?\n\nLeaf sẽ khởi động lại để áp dụng."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Switcher"
+msgstr "Trình chuyển nhanh"
+
+#: internal/settings/timezones.c
+msgid "Sydney"
+msgstr "Sydney"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Checking saves"
+msgstr "Syncthing: Đang kiểm tra bản lưu"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Stopping"
+msgstr "Syncthing: Đang dừng"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Syncing %d item"
+msgstr "Syncthing: Đang đồng bộ %d mục"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Syncthing: Syncing %d items"
+msgstr "Syncthing: Đang đồng bộ %d mục"
+
+#: cmd/jawaka-menu/main.c
+msgid "System"
+msgstr "Hệ thống"
+
+#: internal/settings/settings.c
+msgid "System Icons"
+msgstr "Biểu tượng hệ thống"
+
+#: cmd/jawaka-launcher/main.c
+msgid "System Update"
+msgstr "Cập nhật hệ thống"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Systems"
+msgstr "Hệ máy"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Tab"
+msgstr "Thẻ"
+
+#: internal/settings/settings.c
+msgid "Tab Switching"
+msgstr "Chuyển thẻ"
+
+#: internal/settings/settings.c
+msgid "Tabs"
+msgstr "Thẻ danh mục"
+
+#: internal/retroarch/shader_strings.c
+msgid "Tames colors authored for the original Game Boy Advance LCD."
+msgstr "Làm dịu tông màu vốn bị đẩy sáng quá mức trên màn hình GBA gốc."
+
+#: internal/settings/settings.c
+msgid "Test Sound"
+msgstr "Thử âm thanh"
+
+#: internal/settings/settings.c
+msgid "Text"
+msgstr "Chữ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "That BIOS file cannot be saved as a selection."
+msgstr "Không thể lưu tệp BIOS đã chọn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "That card is not mounted right now."
+msgstr "Thẻ nhớ hiện chưa được nhận diện."
+
+#: cmd/jawaka-launcher/main.c
+msgid "That file name is too long to select."
+msgstr "Tên tệp quá dài, không thể chọn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "That folder could not be read."
+msgstr "Không thể truy cập thư mục này."
+
+#: cmd/jawaka-launcher/main.c
+msgid "That folder name is too long to open."
+msgstr "Tên thư mục quá dài, không thể mở."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The Themes folder already has %d themes, the most Leaf can list. Remove one to install this theme."
+msgstr "Thư mục Themes đã chứa tối đa %d giao diện. Hãy xóa bớt một giao diện để cài đặt thêm."
+
+#: internal/settings/storage_ui.c
+msgid "The card passed the check but couldn't be made writable. Restart your device, then try Check SD card."
+msgstr "Thẻ đã kiểm tra xong nhưng không mở được quyền ghi. Hãy khởi động lại thiết bị rồi bấm Kiểm tra thẻ SD một lần nữa."
+
+#: internal/settings/storage_ui.c
+msgid "The check took too long. Your SD card is still protected. You can check it on a computer or restart to try again."
+msgstr "Quá trình quét quá lâu. Thẻ nhớ vẫn đang khóa bảo vệ. Bạn có thể kiểm tra trên máy tính hoặc khởi động lại thiết bị để thử lại."
+
+#: internal/settings/storage_ui.c
+msgid "The last check or repair did not finish. Restart your device to check the card before saving is enabled again."
+msgstr "Lần quét hoặc sửa lỗi trước bị ngắt quãng. Hãy khởi động lại máy để kiểm tra thẻ trước khi mở lại quyền lưu."
+
+#: internal/settings/storage_ui.c
+msgid "The last check took too long and stopped. Restart your device to check the card again before saving is enabled."
+msgstr "Quá trình quét trước mất quá nhiều thời gian nên đã dừng lại. Hãy khởi động lại thiết bị để quét lại trước khi bật tính năng lưu."
+
+#: internal/settings/storage_ui.c
+msgid "The repair couldn't be started. Check the card on a computer instead."
+msgstr "Không thể khởi động trình sửa lỗi. Vui lòng quét kiểm tra thẻ trên máy tính."
+
+#: internal/settings/storage_ui.c
+msgid "The repair did not finish. The log may include changes that were attempted."
+msgstr "Quá trình sửa lỗi chưa hoàn tất. Tệp nhật ký có thể hiển thị những thay đổi đã được thực hiện dở dang."
+
+#: internal/settings/storage_ui.c
+msgid "The repair log on your device has the details."
+msgstr "Nhật ký sửa lỗi trên thiết bị sẽ hiển thị chi tiết."
+
+#: internal/settings/storage_ui.c
+msgid "The repair log on your device lists the files that were changed. The list may not be complete."
+msgstr "Nhật ký trên thiết bị ghi lại danh sách tệp đã được can thiệp sửa chữa (có thể chưa liệt kê toàn bộ)."
+
+#: cmd/jawaka-menu/main.c
+msgid "The saved shader could not be removed."
+msgstr "Không thể xóa shader đã lưu."
+
+#: internal/retroarch/shader_strings.c
+msgid "The texture and grid intentionally soften bright flat colors."
+msgstr "Lớp nền và lưới điểm ảnh chủ động làm dịu các mảng màu bệt quá chói."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme contains files a theme is not allowed to have."
+msgstr "Giao diện chứa các tệp không được phép sử dụng."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme did not pass Leaf's checks."
+msgstr "Giao diện không vượt qua bài kiểm tra tính tương thích của Leaf."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme has artwork for a system name that is not valid."
+msgstr "Giao diện chứa ảnh bìa cho hệ máy không tồn tại."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme has more than one wallpaper in the same folder."
+msgstr "Thư mục giao diện chứa nhiều hơn một tệp hình nền."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme has no preview image."
+msgstr "Giao diện không có ảnh xem trước."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme is too large."
+msgstr "Kích thước gói giao diện quá lớn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme uses a folder name reserved for themes that come with Leaf."
+msgstr "Giao diện sử dụng tên thư mục trùng với giao diện hệ thống của Leaf."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's id is not valid or does not match its folder."
+msgstr "Mã định danh (ID) giao diện không hợp lệ hoặc không khớp tên thư mục."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's layout or color settings are not valid."
+msgstr "Cấu hình bố cục hoặc màu sắc của giao diện không hợp lệ."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's license is not one Leaf accepts."
+msgstr "Giấy phép của giao diện không được Leaf hỗ trợ."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's name, author, version or description is not valid."
+msgstr "Tên, tác giả, phiên bản hoặc mô tả giao diện không hợp lệ."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's required Leaf version is missing or not valid."
+msgstr "Thông tin phiên bản Leaf yêu cầu bị thiếu hoặc không đúng chuẩn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's theme.json has settings this version of Leaf does not know."
+msgstr "Tệp theme.json chứa các thông số mà phiên bản Leaf này chưa hỗ trợ."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's theme.json is missing or can't be read."
+msgstr "Tệp theme.json bị thiếu hoặc không thể đọc được."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's zip file contains unsafe file names or links."
+msgstr "Tệp nén zip của giao diện chứa liên kết hoặc tên tệp không an toàn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's zip file is damaged or uses an unsupported format."
+msgstr "Tệp zip giao diện bị hỏng hoặc sai định dạng nén."
+
+#: cmd/jawaka-launcher/main.c
+msgid "The theme's zip file must hold exactly one folder."
+msgstr "Tệp nén zip giao diện bắt buộc chỉ chứa đúng một thư mục gốc."
+
+#: internal/settings/settings.c
+msgid "Theme"
+msgstr "Giao diện"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Theme colors"
+msgstr "Màu giao diện"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Themes"
+msgstr "Giao diện"
+
+#: cmd/jawaka-menu/main.c
+msgid "This RetroArch build does not support Leaf's shader picker."
+msgstr "Bản dựng RetroArch này không tương thích với bảng chọn shader của Leaf."
+
+#: internal/settings/storage_ui.c
+msgid "This card is working normally."
+msgstr "Thẻ nhớ hoạt động bình thường."
+
+#: internal/settings/storage_ui.c
+msgid "This card isn't mounted."
+msgstr "Thẻ nhớ chưa được nhận diện."
+
+#: internal/settings/storage_ui.c
+msgid "This card's file system can't be repaired on this device."
+msgstr "Không thể sửa định dạng hệ thống tệp của thẻ này trên máy."
+
+#: cmd/jawaka-menu/main.c
+msgid "This folder"
+msgstr "Thư mục này"
+
+#: cmd/jawaka-menu/main.c
+msgid "This game"
+msgstr "Trò chơi này"
+
+#: internal/retroarch/shader_strings.c
+msgid "This is a scaling filter, not a CRT simulation."
+msgstr "Đây là bộ lọc nâng tỷ lệ hiển thị, không phải bộ giả lập màn CRT."
+
+#: internal/retroarch/shader_strings.c
+msgid "This is a stronger display simulation than the simpler GBC Color preset."
+msgstr "Bộ mô phỏng hiển thị này tái tạo chân thực hơn cấu hình GBC Color thông thường."
+
+#: cmd/jawaka-launcher/main.c
+msgid "This is your current theme."
+msgstr "Đây là giao diện bạn đang sử dụng."
+
+#: cmd/jawaka-menu/main.c
+msgid "This replaces the shader for every RetroArch game and can replace Fugazi. Continue?"
+msgstr "Thao tác này sẽ áp dụng shader cho toàn bộ game trong RetroArch và có thể ghi đè lên Fugazi. Tiếp tục?"
+
+#: cmd/jawaka-menu/main.c
+msgid "This shader could not compile or link on this video driver. Previous shader restored."
+msgstr "Shader không thể biên dịch hoặc liên kết trên driver đồ họa này. Đã khôi phục shader trước đó."
+
+#: cmd/jawaka-launcher/main.c
+msgid "This theme is no longer available in Pak Rat. Your installed copy keeps working."
+msgstr "Giao diện này đã bị gỡ khỏi Pak Rat. Bản đã cài đặt trên máy vẫn hoạt động bình thường."
+
+#: internal/settings/settings.c
+msgid "Time Zone"
+msgstr "Múi giờ"
+
+#: internal/settings/storage_ui.c
+msgid "To repair it, turn off your device and check the card on a computer."
+msgstr "Để khắc phục, hãy tắt máy và cắm thẻ vào máy tính để sửa lỗi."
+
+#: internal/settings/timezones.c
+msgid "Tonga"
+msgstr "Tonga"
+
+#: internal/settings/settings.c
+msgid "Total"
+msgstr "Tổng cộng"
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Try Splore again"
+msgstr "Thử lại Splore"
+
+#: internal/launcher/system_names.c
+msgid "TurboGrafx-16"
+msgstr "TurboGrafx-16"
+
+#: internal/launcher/system_names.c
+msgid "TurboGrafx-CD"
+msgstr "TurboGrafx-CD"
+
+#: internal/settings/storage_ui.c
+msgid "Turn off your device and check the card on a computer."
+msgstr "Tắt máy và kiểm tra lại thẻ trên máy tính."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Type to search"
+msgstr "Nhập để tìm kiếm"
+
+#: internal/settings/settings.c
+msgid "UI Rumble"
+msgstr "Rung phản hồi giao diện"
+
+#: internal/settings/timezones.c
+msgid "UK / Ireland"
+msgstr "Anh / Ireland"
+
+#: internal/settings/timezones.c
+msgid "US Alaska"
+msgstr "Hoa Kỳ (Alaska)"
+
+#: internal/settings/timezones.c
+msgid "US Arizona"
+msgstr "Hoa Kỳ (Arizona)"
+
+#: internal/settings/timezones.c
+msgid "US Central"
+msgstr "Hoa Kỳ (Miền Trung)"
+
+#: internal/settings/timezones.c
+msgid "US Eastern"
+msgstr "Hoa Kỳ (Miền Đông)"
+
+#: internal/settings/timezones.c
+msgid "US Hawaii"
+msgstr "Hoa Kỳ (Hawaii)"
+
+#: internal/settings/timezones.c
+msgid "US Mountain"
+msgstr "Hoa Kỳ (Miền Núi)"
+
+#: internal/settings/timezones.c
+msgid "US Pacific"
+msgstr "Hoa Kỳ (Thái Bình Dương)"
+
+#: internal/settings/timezones.c
+msgid "UTC"
+msgstr "UTC"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Unavailable"
+msgstr "Không khả dụng"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstall"
+msgstr "Gỡ cài đặt"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstall %s?\n\nThis deletes Themes/%s from your SD card."
+msgstr "Gỡ cài đặt %s?\n\nThư mục Themes/%s trên thẻ SD sẽ bị xóa hoàn toàn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstall %s?\n\nThis deletes Themes/%s from your SD card. It is your current theme, so Leaf will switch to no theme."
+msgstr "Gỡ cài đặt %s?\n\nThư mục Themes/%s sẽ bị xóa khỏi thẻ SD. Vì đây là giao diện đang dùng, Leaf sẽ trở về giao diện mặc định."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstall cancelled: %s"
+msgstr "Đã hủy gỡ cài đặt: %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstalled %s"
+msgstr "Đã gỡ cài đặt %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstalled %s. Switched to no theme."
+msgstr "Đã gỡ cài đặt %s. Đã quay về giao diện mặc định."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Uninstalling theme"
+msgstr "Đang gỡ cài đặt giao diện"
+
+#: internal/platform/platform_common.c
+msgid "Unknown"
+msgstr "Không rõ"
+
+#: internal/settings/settings.c
+msgid "Unmount"
+msgstr "Ngắt kết nối (Unmount)"
+
+#: internal/settings/settings.c
+msgid "Unmount canceled"
+msgstr "Đã hủy ngắt kết nối"
+
+#: internal/settings/settings.c
+msgid "Unmount failed"
+msgstr "Ngắt kết nối thất bại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Unpair"
+msgstr "Hủy ghép nối"
+
+#: internal/settings/settings.c
+msgid "Unsupported"
+msgstr "Không hỗ trợ"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Up one level"
+msgstr "Lên thư mục cha"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Up/Down"
+msgstr "Lên/Xuống"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Update"
+msgstr "Cập nhật"
+
+#: internal/settings/settings.c
+msgid "Update Channel"
+msgstr "Kênh cập nhật"
+
+#: internal/settings/settings.c
+msgid "Update status unavailable"
+msgstr "Không lấy được trạng thái cập nhật"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Updated %s to version %s"
+msgstr "Đã cập nhật %s lên bản %s"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Updating theme"
+msgstr "Đang cập nhật giao diện"
+
+#: internal/settings/settings.c
+msgid "Uptime"
+msgstr "Thời gian hoạt động"
+
+#: cmd/jawaka-menu/main.c
+msgid "Use Advanced to edit it in RetroArch."
+msgstr "Vào mục Nâng cao để chỉnh sửa trực tiếp trong RetroArch."
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for GBA content."
+msgstr "Chỉ dùng cho trò chơi GBA."
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for Game Boy Color content."
+msgstr "Chỉ dùng cho trò chơi Game Boy Color."
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for original Game Boy Advance content."
+msgstr "Chỉ dùng cho các trò chơi Game Boy Advance gốc."
+
+#: internal/retroarch/shader_strings.c
+msgid "Use only for original Game Boy content."
+msgstr "Chỉ dùng cho các trò chơi Game Boy gốc."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Use the system setting"
+msgstr "Dùng theo cài đặt hệ thống"
+
+#: internal/launcher/system_names.c
+msgid "Vectrex"
+msgstr "Vectrex"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Version %s needs Leaf %s or newer."
+msgstr "Phiên bản %s yêu cầu Leaf %s hoặc mới hơn."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Version: %s"
+msgstr "Phiên bản: %s"
+
+#: internal/launcher/system_names.c
+msgid "Virtual Boy"
+msgstr "Virtual Boy"
+
+#: internal/settings/settings.c
+msgid "Visible"
+msgstr "Hiển thị"
+
+#: internal/settings/settings.c
+msgid "Volume"
+msgstr "Âm lượng"
+
+#: internal/settings/settings.c
+msgid "Weak"
+msgstr "Yếu"
+
+#: internal/settings/settings.c
+msgid "Wi-Fi"
+msgstr "Wi-Fi"
+
+#: internal/launcher/system_names.c
+msgid "WonderSwan"
+msgstr "WonderSwan"
+
+#: internal/launcher/system_names.c
+msgid "WonderSwan Color"
+msgstr "WonderSwan Color"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Wrong PIN, try again"
+msgstr "Sai mã PIN, vui lòng thử lại"
+
+#: cmd/jawaka-launcher/main.c
+msgid "X: Drop   D-pad: Move"
+msgstr "X: Thả   D-pad: Di chuyển"
+
+#: cmd/jawaka-launcher/main.c
+msgid "X: Grab   Y: Remove   B: Back   A: Next"
+msgstr "X: Cầm   Y: Xóa   B: Quay lại   A: Tiếp theo"
+
+#: internal/settings/storage_ui.c
+msgid "You can save files again."
+msgstr "Bây giờ bạn đã có thể lưu tệp bình thường."
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card check did not finish successfully."
+msgstr "Quá trình quét thẻ nhớ không thành công."
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is protected"
+msgstr "Thẻ SD đang được bảo vệ chống ghi"
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is protected because your last shutdown didn't finish saving. Restart your device to check it."
+msgstr "Thẻ nhớ đang tạm khóa chống ghi do lần tắt máy trước chưa lưu xong. Hãy khởi động lại để máy quét kiểm tra thẻ."
+
+#: cmd/jawaka-osd/game_launch.c
+msgid "Your SD card is read-only"
+msgstr "Thẻ SD của bạn đang ở chế độ chỉ đọc"
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is read-only after a file system error. You can't save new files or changes to this card. This can happen after an unexpected shutdown."
+msgstr "Thẻ SD đã bị khóa chỉ đọc do phát hiện lỗi tệp hệ thống (thường do tắt máy đột ngột). Hiện không thể lưu tệp mới hay sửa dữ liệu."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your SD card is read-only. Nothing new can be saved to it."
+msgstr "Thẻ SD đang ở chế độ chỉ đọc. Không thể lưu thêm dữ liệu."
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is read-only. The cause couldn't be determined. You can't save new files or changes to this card."
+msgstr "Thẻ SD đang ở chế độ chỉ đọc chưa rõ nguyên nhân. Không thể ghi mới hay chỉnh sửa dữ liệu trên thẻ này."
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is still protected. Turn off your device, repair the card on a computer, safely eject it, then insert it and turn your device on to check it again."
+msgstr "Thẻ nhớ vẫn đang bị khóa bảo vệ. Hãy tắt nguồn máy, sửa lỗi thẻ trên máy tính, ngắt thẻ an toàn rồi lắp lại vào máy để kiểm tra lại."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your SD card is waiting for repair. Nothing new can be saved to it."
+msgstr "Thẻ SD đang chờ sửa chữa. Không thể ghi dữ liệu mới vào lúc này."
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card is write-protected"
+msgstr "Thẻ SD đang bị khóa chống ghi"
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your SD card isn't available."
+msgstr "Thẻ SD hiện không sẵn sàng."
+
+#: internal/settings/storage_ui.c
+msgid "Your SD card needs repair"
+msgstr "Thẻ SD của bạn cần được sửa lỗi"
+
+#: internal/settings/storage_ui.c
+msgid "Your card passed the file system check."
+msgstr "Thẻ nhớ đã vượt qua bài kiểm tra hệ thống tệp."
+
+#: internal/settings/storage_ui.c
+msgid "Your device can't write to this card, so it can't be repaired here."
+msgstr "Máy không có quyền ghi lên thẻ này nên không thể tự sửa lỗi tại đây."
+
+#: internal/settings/storage_ui.c
+msgid "Your device can't write to this card. If you use an adapter with a lock switch, check that it isn't set to lock."
+msgstr "Máy không thể ghi vào thẻ. Nếu bạn dùng áo thẻ (adapter), hãy kiểm tra gạt khóa chống ghi (Lock) xem có đang bật không."
+
+#: internal/settings/storage_ui.c
+msgid "Your device will restart to check and repair this card on battery power. If the battery drops below 30 percent before repair starts, it won't run. Damaged files may be shortened, renamed, or recovered under new names. Back up important files on a computer first."
+msgstr "Máy sẽ khởi động lại để kiểm tra và sửa thẻ nhớ bằng nguồn pin (yêu cầu pin trên 30%). Các tệp hỏng có thể bị cắt bớt hoặc đổi tên khi khôi phục. Hãy sao lưu các tệp quan trọng vào máy tính trước."
+
+#: internal/settings/storage_ui.c
+msgid "Your device will restart to check and repair this card. Damaged files may be shortened, renamed, or recovered under new names. Back up important files on a computer first if you need to recover them. Keep your device connected to power until the check finishes."
+msgstr "Máy sẽ khởi động lại để quét và sửa thẻ nhớ. Các tệp hỏng có thể bị cắt bớt hoặc đổi tên. Hãy sao lưu các tệp quan trọng vào máy tính trước và luôn cắm nguồn sạc cho đến khi hoàn tất."
+
+#: internal/settings/storage_ui.c
+msgid "Your device will restart to check this card. If the check passes, you can save files again."
+msgstr "Thiết bị sẽ khởi động lại để quét thẻ. Nếu thẻ đạt chuẩn, quyền lưu tệp sẽ được kích hoạt lại."
+
+#: internal/settings/storage_ui.c
+msgid "Your device's internal storage can't record the repair. Check the card on a computer instead."
+msgstr "Bộ nhớ trong của máy không thể ghi nhật ký sửa lỗi. Hãy kiểm tra thẻ trên máy tính."
+
+#: internal/settings/storage_ui.c
+msgid "Your last shutdown didn't finish saving."
+msgstr "Lần tắt máy gần nhất chưa hoàn tất tiến trình lưu."
+
+#: internal/settings/storage_ui.c
+msgid "Your other SD card is still read-only, so your library can't update yet."
+msgstr "Thẻ nhớ còn lại vẫn đang bị khóa chỉ đọc nên chưa thể cập nhật thư viện trò chơi."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your saves and save states may not be kept while this SD card is read-only."
+msgstr "Bản lưu trong game và save state có thể bị mất khi thẻ SD đang ở chế độ chỉ đọc."
+
+#: cmd/jawaka-launcher/main.c
+msgid "Your saves and save states may not be kept while this SD card is waiting for repair."
+msgstr "Bản lưu trong game và save state có thể không lưu được khi thẻ SD đang chờ sửa chữa."
+
+#: internal/settings/settings.c
+msgid "audio output failed"
+msgstr "lỗi đầu ra âm thanh"
+
+#: internal/settings/settings.c
+msgid "boot splash unavailable on this platform"
+msgstr "logo khởi động không hỗ trợ trên nền tảng này"
+
+#: internal/settings/settings.c
+msgid "brightness failed"
+msgstr "chỉnh độ sáng thất bại"
+
+#: internal/settings/settings.c
+msgid "count|Systems"
+msgstr "Hệ máy"
+
+#: cmd/jawaka-launcher/main.c
+msgid "daily quota exceeded"
+msgstr "đã vượt giới hạn lượt tải trong ngày"
+
+#: cmd/jawaka-menu/main.c
+msgid "empty"
+msgstr "trống"
+
+#: internal/settings/storage_ui.c
+msgid "exFAT cards can't be repaired on this device yet."
+msgstr "Thiết bị hiện chưa hỗ trợ tự sửa thẻ định dạng exFAT."
+
+#: internal/settings/settings.c
+msgid "font is fixed while a CJK language is selected"
+msgstr "phông chữ bị cố định khi dùng nhóm ngôn ngữ Trung/Nhật/Hàn (CJK)"
+
+#: internal/settings/settings.c
+msgid "font load failed"
+msgstr "tải phông chữ thất bại"
+
+#: cmd/jawaka-menu/main.c
+msgid "just now"
+msgstr "vừa xong"
+
+#: internal/settings/storage_ui.c
+msgid "launcher SD card"
+msgstr "thẻ SD khởi chạy hệ thống"
+
+#: cmd/jawaka-menu/main.c
+msgid "newest"
+msgstr "mới nhất"
+
+#: cmd/jawaka-menu/main.c
+msgid "oldest"
+msgstr "cũ nhất"
+
+#: cmd/jawaka-menu/main.c
+msgid "overwrites"
+msgstr "ghi đè"
+
+#: internal/settings/settings.c
+msgid "performance unavailable"
+msgstr "không khả dụng hiệu năng"
+
+#: internal/settings/settings.c
+msgid "platform|System"
+msgstr "Hệ máy"
+
+#: internal/settings/settings.c
+msgid "refresh rate change failed"
+msgstr "đổi tần số quét thất bại"
+
+#: internal/settings/settings.c
+msgid "refresh rate unavailable on this platform"
+msgstr "tần số quét không hỗ trợ trên thiết bị này"
+
+#: internal/settings/storage_ui.c
+msgid "second SD card"
+msgstr "thẻ SD phụ (Slot 2)"
+
+#: cmd/jawaka-launcher/main.c
+msgid "space"
+msgstr "dấu cách"
+
+#: cmd/jawaka-launcher/main.c
+msgid "status|Update"
+msgstr "Cập nhật"
+
+#: cmd/jawaka-menu/main.c
+msgid "that scope"
+msgstr "cấp độ đó"
+
+#: cmd/jawaka-menu/main.c
+msgid "unsaved · %d of %d"
+msgstr "chưa lưu · %d / %d"
+
+#: cmd/jawaka-menu/main.c
+msgid "unsaved · %s · %d of %d"
+msgstr "chưa lưu · %s · %d / %d"
+
+#: internal/settings/settings.c
+msgid "volume failed"
+msgstr "chỉnh âm lượng thất bại"
+
+#: internal/settings/settings.c
+msgid "—"
+msgstr "—"

@@ -1,0 +1,172 @@
+[workspace]
+members = [
+    "core",
+    "core/macros",
+    "core/build_playerglobal",
+    "swf",
+    "flv",
+    "wstr",
+
+    "frontend-utils",
+
+    "sdl2test-flip",
+    "sdl2test-rocknix",
+    "sdl2test-u",
+    "sdl2test-tb",
+
+    "render",
+    "render/naga-agal",
+    "render/pixel_bender",
+
+    "stub-report",
+
+    "video",
+    "video/software",
+    "video/external",
+]
+default-members = ["sdl2test-u"]
+resolver = "2"
+
+[workspace.package]
+authors = ["aweigit"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/aweigit/ruffle-miyooflip"
+repository = "https://github.com/aweigit/ruffle-miyooflip"
+version = "0.3.0"
+
+[workspace.dependencies]
+tracing = "0.1.43"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+naga = { version = "27.0.3", features = ["wgsl-out"] }
+wgpu = "27.0.1"
+egui = "0.33.3"
+clap = { version = "4.5.60", features = ["derive"] }
+cpal =  { git = "https://github.com/RustAudio/cpal", rev = "33e05ec94b5670c6f02080acf3fd6d8ac21e37cd"}
+anyhow = "1.0"
+gc-arena = { git = "https://github.com/kyren/gc-arena.git", rev = "75671ae03f53718357b741ed4027560f14e90836", features = ["hashbrown", "indexmap", "smallvec", "slotmap"] }
+slotmap = "1.1.1"
+async-channel = "2.5.0"
+bitflags = "2.11.0"
+bytemuck = "1.25.0"
+chrono = { version = "0.4.44", default-features = false }
+enum-map = "2.7.3"
+flate2 = "1.1.9"
+futures = "0.3.32"
+image = { version = "0.25.9", default-features = false }
+js-sys = "0.3.85"
+web-sys = "0.3.85"
+log = "0.4.29"
+num-derive = "0.4.2"
+num-traits = "0.2.19"
+serde = "1.0.228"
+thiserror = "2.0.18"
+url = "2.5.8"
+quick-xml = "0.37.5"
+regress = { git = "https://github.com/ruffle-rs/regras3", rev = "6d48179d6bd448f2cc66b76352c9f048dde968d1" }
+# Make sure to match wasm-bindgen-cli version to this everywhere.
+wasm-bindgen = "=0.2.108"
+walkdir = "2.5.0"
+tokio = "1.50.0"
+rfd = { version = "0.17.2", default-features = false, features = ["wayland", "xdg-portal"] }
+memmap2 = "0.9.10"
+libtest-mimic = "0.8.1"
+regex = "1.12.3"
+toml = "1.0.6"
+toml_edit = "0.25.4"
+vfs = "0.12.2"
+smallvec = { version = "1.15.1", features = ["const_new", "union"] }
+serde_json = "1.0.149"
+percent-encoding = "2.3.2"
+approx = "0.5.1"
+encoding_rs = "0.8.35"
+byteorder = "1.5"
+bitstream-io = "4.9.0"
+indicatif = "0.18"
+rayon = "1.11.0"
+sha2 = "0.10.9"
+indexmap = "2.13.0"
+fnv = "1.0.7"
+hashbrown = "0.16.1"
+fluent-templates = "0.13.3"
+lzma-rs = "0.3.0"
+tempfile = "3.26.0"
+tracing-wasm = "0.2.1"
+
+# [patch.crates-io]
+# wgpu-hal = { path = "./wgpu-hal-27.0.4" }
+
+[workspace.lints.rust]
+# Clippy nightly often adds new/buggy lints that we want to ignore.
+# Don't warn about these new lints on stable.
+renamed_and_removed_lints = "allow"
+unknown_lints = "allow"
+
+[workspace.lints.clippy]
+# Notice: this is an important lint in Ruffle as we have a lot of trivially
+# copyable objects (e.g. Gc pointers). It may produce false positives depending
+# on platform.
+# In case it happens, add `#[allow(clippy::trivially_copy_pass_by_ref)]` and
+# add a comment explaining why.
+trivially_copy_pass_by_ref = "deny"
+redundant_clone = "deny"
+unused_async = "deny"
+
+# LONG-TERM: These lints are unhelpful.
+manual_map = "allow"             # Less readable: Suggests `opt.map(..)` instead of `if let Some(opt) { .. }`
+manual_range_contains = "allow"  # Less readable: Suggests `(a..b).contains(n)` instead of `n >= a && n < b`
+assigning_clones = "allow"       # Sometimes useful, but more often than not it doesn't do anything as
+                                 # we overwrite an empty item. And sometimes it can even be a footgun
+                                 # by keeping big allocations alive.
+
+# Don't optimize build scripts and macros.
+[profile.release.build-override]
+opt-level = 0
+
+[profile.dev]
+panic = "unwind"
+
+[profile.release]
+panic = "abort" # panic时直接终止，不进行栈展开，可减小二进制体积
+opt-level = 2        # 启用2级别的代码性能优化
+lto = true           # 启用“胖”链接时优化 (LTO)，进行跨模块的全局优化
+codegen-units = 1    # 将代码生成单元设为1，允许编译器进行更深度的优化 
+strip = true         # 剥离调试符号，进一步减小二进制文件体积
+
+[profile.dev.package.h263-rs]
+opt-level = 3
+
+[profile.dev.package.h263-rs-yuv]
+opt-level = 3
+
+[profile.dev.package.nihav_core]
+opt-level = 3
+
+[profile.dev.package.nihav_codec_support]
+opt-level = 3
+
+[profile.dev.package.nihav_duck]
+opt-level = 3
+
+# TODO: Set rustflags here instead of in tools/build_wasm.ts, when that
+# feature becomes stable. See: https://github.com/rust-lang/cargo/issues/10271
+# Until then, these custom profiles let cargo keep the build cache alive
+# across "dual-wasm" builds, separating it for the two .wasm modules.
+[profile.web-wasm-mvp]
+inherits = "release"
+
+[profile.web-wasm-extensions]
+inherits = "release"
+
+[profile.ci]
+inherits = "release"
+debug-assertions = true
+overflow-checks = true
+# "Not too slow to compile, fast enough to run."
+opt-level = 2
+# Takes too long, especially on Windows, with marginal benefit otherwise.
+lto = "off"
+# This is also set with higher authority in `test_rust.yml`.
+incremental = true
+# Right between the defaults of 16 and 256, for crate fragment caching.
+codegen-units = 64

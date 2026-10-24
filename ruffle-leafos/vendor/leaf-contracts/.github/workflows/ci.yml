@@ -1,0 +1,41 @@
+name: ci
+
+# These fixtures are what third parties build against, so a red main here
+# means somebody's pak is being judged against a contract that does not
+# validate. Keep it green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  fixtures:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CONTENT-1 / CAT-1 / STORE-CONTENT-1
+        run: python3 contracts/leaf-content/scripts/validate_fixtures.py
+
+      - name: SVC-1 / CTL-1 / LIFE-1 / PATH-2 / PKG-1 / TXN-1 / standalone-ra-account-v1
+        run: python3 contracts/leaf-services/scripts/validate_fixtures.py
+
+      - name: THEME-1
+        run: python3 contracts/leaf-themes/scripts/validate_fixtures.py
+
+      - name: Fixtures must be regenerable, not hand-patched
+        run: |
+          # The generators are the source of truth for the generated fixture
+          # trees. If regenerating changes anything, someone edited output.
+          python3 contracts/leaf-content/scripts/gen_content_fixtures.py
+          python3 contracts/leaf-content/scripts/gen_merge_fixtures.py
+          python3 contracts/leaf-content/scripts/gen_generation_fixtures.py
+          python3 contracts/leaf-themes/scripts/gen_theme_fixtures.py
+          if ! git diff --quiet; then
+            echo "regenerating the fixtures changed them -- edit the generator, not its output" >&2
+            git diff --stat >&2
+            exit 1
+          fi
+          echo "fixtures match their generators"

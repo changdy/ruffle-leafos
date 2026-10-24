@@ -1,0 +1,5 @@
+{
+  "install_lane": "shared",
+  "source_id": "primary",
+  "launch_sh_executable": true
+}

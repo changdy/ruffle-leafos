@@ -1,0 +1,9 @@
+{
+  "valid": false,
+  "reason": "duplicate-service-id",
+  "note": "pak-a.json and pak-b.json declare the same service.id (org.umrk.syncthing); both services become unavailable, neither wins",
+  "applies_to": [
+    "pak-a.json",
+    "pak-b.json"
+  ]
+}

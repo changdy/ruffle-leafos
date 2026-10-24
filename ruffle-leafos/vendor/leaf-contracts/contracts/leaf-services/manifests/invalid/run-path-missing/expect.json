@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "run-path-missing",
+  "note": "bin/does-not-exist is never created by this fixture"
+}

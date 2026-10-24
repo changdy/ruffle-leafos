@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "core-type-field-mismatch",
+  "note": "frontend belongs to a retroarch core: a path core is its own executable, so it has no RetroArch to replace"
+}

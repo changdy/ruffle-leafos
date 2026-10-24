@@ -1,0 +1,52 @@
+{
+  "version": "0.4.0",
+  "requirements": "v2.5",
+  "date": "2026-10-23",
+  "timezone": "Asia/Shanghai",
+  "connection": "ADB TCP 192.168.137.238:5555",
+  "installed": true,
+  "runtime_sha256": "17487ccc2ccd14cfcee07b93e135c51928aa6328707a5672ace4af64306fc90f",
+  "backup": "/mnt/sdcard/.userdata/mlp1/ruffle-probe/debug-backups/20261023-controls-0.4.0/pak-0.3.0",
+  "verified_install_files": 591,
+  "host_tests": {
+    "passed": 31,
+    "new": 13
+  },
+  "device": {
+    "platform": "Miniloong Pocket 1 / Leaf 0.13.0 / AArch64",
+    "gpu": "Mali-G52 / OpenGL ES 3.2",
+    "self_test_controls": "passed; SDL event queue -> same menu and input state machine",
+    "saved_mapping_restart": "passed",
+    "twelve_profiles_regression": "passed; Mota",
+    "formal_leaf_evdev": "passed; Menu, A/B, Y combo, X single reset, resume, quit",
+    "old_cfg_preserved": true,
+    "no_residual_player": true,
+    "screenshots_visually_checked": true,
+    "input_balances": {
+      "controls-test.log": {
+        "presses": 5,
+        "releases": 5,
+        "balanced": true
+      },
+      "profiles-test.log": {
+        "presses": 107,
+        "releases": 107,
+        "balanced": true
+      }
+    }
+  },
+  "storage_validation_scope": "Control configurations and user templates; does not establish reliable game progress saves",
+  "resolved_debug_incidents": [
+    "Generated POSIX scripts normalized to LF after package validator rejection",
+    "Diagnostic BMP captures filled tmpfs; only this iteration directories moved to SD debug-tests; final suite passed on SD; tmpfs has 179 MB free"
+  ],
+  "manual_acceptance": "pending; automatic evdev injection is not human gameplay acceptance",
+  "pending": [
+    "favorites and temporary mouse layer",
+    "Flash text input soft keyboard (deferred)",
+    "persistent display/audio settings",
+    "game rename/identity migration",
+    "reliable native game progress and backups",
+    "suspend and full fault/compatibility matrix"
+  ]
+}

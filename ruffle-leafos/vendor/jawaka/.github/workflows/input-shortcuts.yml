@@ -1,0 +1,50 @@
+name: Input shortcuts
+
+# Leaf's in-game Menu chords: which physical button performs which action.
+# Settings writes these bindings and jawakad reads them, so both sides have to
+# interpret the same persisted strings -- input-shortcuts-test is what proves
+# they cannot drift apart.
+#
+# retroarch-config-test guards the MLP1 hotkey ownership and migration matrix.
+# It builds in both platform shapes, because the migration only compiles under
+# -DPLATFORM_MLP1 and the default host build would never reach it.
+#
+# shortcut-dispatch-check is a shallow direct-call guard over the dispatch
+# functions; it does not follow the call graph. See the script header.
+#
+# stick-calibration-test covers the MLP1 stick normalization: the built-in
+# default and the deadzone floor that keeps a resting stick at zero.
+#
+# The proxy test uses pipes and a private file sink. Linux CI covers its
+# event state machine; the MLP1 spike covers actual evdev/uinput and SDL.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make input-shortcuts-test
+      - run: make stick-calibration-test
+      - run: make retroarch-config-test
+      - run: make shader-catalog-test shader-picker-test shader-menu-contract-test retroarch-command-test
+      - run: make shortcut-dispatch-check
+      - run: make menu-escape-test jawaka-input-proxy-chord-test
+      - run: build/bin/input-proxy-chord-test
+
+  # Split out because it is the only job here that needs a dependency: the
+  # smoke runs a real jawakad, which links libcurl. Keeping it separate means
+  # an apt hiccup cannot fail the three checks that need nothing.
+  ipc-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev sqlite3
+      - run: make shortcut-ipc-smoke

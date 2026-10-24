@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-content/content-art-v2.schema.json",
+  "title": "CONTENT-ART-2 optional content-pak wordmarks, color wordmarks and grid icons",
+  "description": "Validates content_art independently of the frozen CONTENT-1 provides block. Filesystem and post-merge eligibility rules use art_model.py.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "content_art": {
+      "type": "object",
+      "required": [
+        "schema",
+        "systems"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": 2,
+          "type": "number"
+        },
+        "systems": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/definitions/system"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "system": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]{2,32}$"
+        },
+        "wordmark": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "not": {
+            "pattern": "\u0000"
+          }
+        },
+        "wordmark_color": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "not": {
+            "pattern": "\u0000"
+          }
+        },
+        "grid_icon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "not": {
+            "pattern": "\u0000"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "wordmark"
+          ]
+        },
+        {
+          "required": [
+            "wordmark_color"
+          ]
+        },
+        {
+          "required": [
+            "grid_icon"
+          ]
+        }
+      ]
+    }
+  }
+}

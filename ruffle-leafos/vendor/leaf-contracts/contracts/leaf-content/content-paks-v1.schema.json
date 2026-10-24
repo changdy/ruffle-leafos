@@ -1,0 +1,222 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-content/content-paks-v1.schema.json",
+  "title": "content-paks-v1 provides manifest (CONTENT-1)",
+  "description": "Normative shape for the `provides` object a content-bearing pak.json carries. See docs/content-paks.md in this repository. This schema checks static shape only. Rules that need the filesystem or the merge (path existence, executable bit, symlink escape, config_folder safety, namespace collisions, default_core resolution, shared-lane and secondary-source refusal) are business logic enforced by Jawaka and by validate_fixtures.py, exercised by the fixtures in manifests/ and merge/, not by this schema alone.",
+  "type": "object",
+  "required": ["provides"],
+  "additionalProperties": true,
+  "properties": {
+    "provides": {
+      "type": "object",
+      "required": ["schema"],
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": 1,
+          "description": "Exactly 1. A newer schema is refused, never guessed at."
+        },
+        "systems": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/definitions/system" }
+        },
+        "system_extensions": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/definitions/system_extension" }
+        },
+        "cores": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/definitions/core" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "description": "Relative to the pak root, confined to the pak. Absolute paths, '..' components, and symlinks escaping the pak fail validation. Existence, regular-file, and executable checks are business logic.",
+      "not": {
+        "pattern": "^/|(^|/)\\.\\.(/|$)"
+      }
+    },
+    "system_id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_]{2,32}$"
+    },
+    "core_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]{2,64}$"
+    },
+    "rom_extension": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]{1,16}$"
+    },
+    "archive_extension": {
+      "type": "string",
+      "pattern": "^[a-z0-9]{1,8}$"
+    },
+    "system": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "patterns",
+        "extensions",
+        "default_core",
+        "rom_root",
+        "image_root",
+        "icon_flat"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/system_id" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": { "type": "string", "minLength": 1, "maxLength": 64 }
+        },
+        "extensions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": { "$ref": "#/definitions/rom_extension" }
+        },
+        "archive_extensions": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/definitions/archive_extension" }
+        },
+        "archive_inner_extensions": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "$ref": "#/definitions/rom_extension" }
+        },
+        "archive_mode": {
+          "type": "string",
+          "enum": ["pass_through", "extract", "none"]
+        },
+        "file_names": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "ignore_file_names": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "playlist_extensions": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/definitions/archive_extension" }
+        },
+        "m3u_generation": {
+          "type": "string",
+          "enum": ["none", "auto", "manual"]
+        },
+        "default_core": { "$ref": "#/definitions/core_id" },
+        "alternate_cores": {
+          "type": "array",
+          "maxItems": 16,
+          "items": { "$ref": "#/definitions/core_id" }
+        },
+        "rom_root": {
+          "type": "string",
+          "pattern": "^Roms/[A-Za-z0-9_-]{1,32}$",
+          "description": "One stable public ROM folder name per system."
+        },
+        "image_root": {
+          "type": "string",
+          "pattern": "^Images/[A-Za-z0-9_-]{1,32}$"
+        },
+        "bios_notes": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+        },
+        "icon_flat": { "$ref": "#/definitions/relative_path" },
+        "icon_photographic": {
+          "anyOf": [
+            { "$ref": "#/definitions/relative_path" },
+            { "type": "null" }
+          ]
+        },
+        "screenscraper_platform_ids": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "type": "integer", "minimum": 1, "maximum": 99999 }
+        },
+        "group": {
+          "anyOf": [
+            { "type": "string", "minLength": 1, "maxLength": 32 },
+            { "type": "null" }
+          ]
+        },
+        "bios_directory": {
+          "anyOf": [
+            { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,32}$" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "system_extension": {
+      "type": "object",
+      "required": ["system_id", "add_alternate_cores"],
+      "additionalProperties": false,
+      "description": "The ONLY way a pak may touch an existing system. Exactly two fields, so the validator never infers intent from which fields happen to be present.",
+      "properties": {
+        "system_id": { "$ref": "#/definitions/system_id" },
+        "add_alternate_cores": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": { "$ref": "#/definitions/core_id" }
+        }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "required": ["path", "protocol"],
+      "additionalProperties": false,
+      "description": "Retroarch cores only. A pak-supplied RetroArch frontend that Leaf launches in place of its own RetroArch binary. `path` is a pak-relative regular executable (existence, regular-file and executable checks are business logic). `protocol` names the LEAF-RA-1 command protocol the frontend speaks; docs/leaf-retroarch-frontend.md is normative.",
+      "properties": {
+        "path": { "$ref": "#/definitions/relative_path" },
+        "protocol": { "type": "string", "enum": ["leaf-ra-1"] }
+      }
+    },
+    "core": {
+      "type": "object",
+      "required": ["id", "display_name", "type"],
+      "additionalProperties": false,
+      "description": "Per-type required/forbidden field pairing (retroarch needs libretro_name/file_name/info_name/config_folder, may carry frontend, and forbids path; path needs path and forbids the retroarch-only fields, frontend included) is business logic, not encoded here.",
+      "properties": {
+        "id": { "$ref": "#/definitions/core_id" },
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "type": { "type": "string", "enum": ["retroarch", "path"] },
+        "libretro_name": { "$ref": "#/definitions/core_id" },
+        "file_name": { "$ref": "#/definitions/relative_path" },
+        "info_name": { "$ref": "#/definitions/relative_path" },
+        "config_folder": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "RetroArch uses this verbatim as a FAT32 directory component for Saves/ and States/. Checked against jw_ra_core_folder_is_safe, not merely against a length bound."
+        },
+        "frontend": { "$ref": "#/definitions/frontend" },
+        "path": { "$ref": "#/definitions/relative_path" },
+        "supports_menu": { "type": "boolean" },
+        "supports_savestate": { "type": "boolean" },
+        "supports_disk_control": { "type": "boolean" },
+        "needs_swap": { "type": "boolean" }
+      }
+    }
+  }
+}

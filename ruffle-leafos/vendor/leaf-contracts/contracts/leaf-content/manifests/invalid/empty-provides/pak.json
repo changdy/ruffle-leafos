@@ -1,0 +1,12 @@
+{
+  "name": "ScummVM",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_leaf_version": "0.11.0",
+  "provides": {
+    "schema": 1,
+    "systems": [],
+    "system_extensions": [],
+    "cores": []
+  }
+}

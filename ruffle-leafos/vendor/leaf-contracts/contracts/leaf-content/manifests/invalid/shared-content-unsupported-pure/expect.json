@@ -1,0 +1,6 @@
+{
+  "valid": false,
+  "reason": "shared-content-unsupported",
+  "note": "a pure content pak under Apps/shared/. Still CLASSIFIED rather than ignored, so it cannot slip through as an unrecognized pure app -- and with no launch.sh it stays hidden from Apps",
+  "apps_listed": false
+}

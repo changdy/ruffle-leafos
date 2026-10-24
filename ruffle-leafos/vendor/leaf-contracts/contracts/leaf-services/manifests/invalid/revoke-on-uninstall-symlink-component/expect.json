@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "revoke-on-uninstall-symlink-component",
+  "note": "state.root/leaf is a symlink; no existing component of a revoke_on_uninstall path may be a symlink"
+}

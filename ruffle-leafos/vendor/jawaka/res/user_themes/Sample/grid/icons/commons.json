@@ -1,0 +1,27 @@
+{
+  "GW": {
+    "page": "https://commons.wikimedia.org/wiki/File:Game_and_watch_logo.svg",
+    "asset": "https://upload.wikimedia.org/wikipedia/commons/4/41/Game_and_watch_logo.svg",
+    "commons_page_revision": "1267076166"
+  },
+  "AMIGA": {
+    "page": "https://commons.wikimedia.org/wiki/File:Amiga_Logo_1985.svg",
+    "asset": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Amiga_Logo_1985.svg",
+    "commons_page_revision": "790669034"
+  },
+  "VB": {
+    "page": "https://commons.wikimedia.org/wiki/File:Virtualboy_logo.svg",
+    "asset": "https://upload.wikimedia.org/wikipedia/commons/9/96/Virtualboy_logo.svg",
+    "commons_page_revision": "1114680915"
+  },
+  "COLECO": {
+    "page": "https://commons.wikimedia.org/wiki/File:COLECO_VISION_LOGO_%28SINGLE_LINE%29.svg",
+    "asset": "https://upload.wikimedia.org/wikipedia/commons/5/50/COLECO_VISION_LOGO_%28SINGLE_LINE%29.svg",
+    "commons_page_revision": "1199181189"
+  },
+  "VECTREX": {
+    "page": "https://commons.wikimedia.org/wiki/File:Vectrex_vector_logo.svg",
+    "asset": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Vectrex_vector_logo.svg",
+    "commons_page_revision": "769107730"
+  }
+}

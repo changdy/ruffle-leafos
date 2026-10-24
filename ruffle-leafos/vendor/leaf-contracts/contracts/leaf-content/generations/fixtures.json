@@ -1,0 +1,1422 @@
+{
+  "contract": "effective-catalog-v1",
+  "note": "selector/stamp lifecycle. `resolution` is what a reader does per catalog load (structural validation only); `provenance` is what jawakad alone does at startup and before a ROM scan (full hashing); `publication` and `cleanup` cover the content-addressed publish protocol; `digest` locks the canonical-bytes and tree-hash rules against hand-written literals.",
+  "platform": "mlp1",
+  "installed_release_id": "2026-08-28-gabc1234",
+  "resolution": [
+    {
+      "name": "resolves-selected-generation",
+      "note": "the ordinary path: both consumers agree on whatever `current` names, and neither of them rehashes a core to get there.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "generation",
+        "generation": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+        "reason": null
+      }
+    },
+    {
+      "name": "selector-swap",
+      "note": "after a swap both readers resolve the NEW generation. A reader already inside the old immutable directory may finish its snapshot; it just never starts a new one there.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-09-01-gdeadbee",
+        "release_defaults_valid": true,
+        "current": "gen-e5800d76c76feb224504ec711ca6edbb1f1c4b0f89ae0d032023ded262a76597\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          },
+          "gen-e5800d76c76feb224504ec711ca6edbb1f1c4b0f89ae0d032023ded262a76597": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-09-01-gdeadbee",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "generation",
+        "generation": "gen-e5800d76c76feb224504ec711ca6edbb1f1c4b0f89ae0d032023ded262a76597",
+        "reason": null
+      }
+    },
+    {
+      "name": "selector-missing",
+      "note": "the state left behind by invalidation, or by a crash mid-compile. Release defaults, not an error.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": null,
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "selector-missing"
+      }
+    },
+    {
+      "name": "selector-malformed-no-newline",
+      "note": "the grammar is exact. This value names a directory a reader is about to open, so anything permissive here is a path-handling bug waiting to happen.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "selector-malformed"
+      }
+    },
+    {
+      "name": "selector-malformed-uppercase-hex",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "selector-malformed"
+      }
+    },
+    {
+      "name": "selector-malformed-traversal",
+      "note": "the reason a strict grammar exists at all.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "../../elsewhere\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "selector-malformed"
+      }
+    },
+    {
+      "name": "generation-missing",
+      "note": "a valid selector naming a directory that is not there.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {},
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "generation-missing"
+      }
+    },
+    {
+      "name": "generation-incomplete-outputs",
+      "note": "the directory exists but cores.json does not. A partially written generation must never be served.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "generation-missing"
+      }
+    },
+    {
+      "name": "stamp-missing",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": null,
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "stamp-missing"
+      }
+    },
+    {
+      "name": "stamp-schema-unsupported",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 2,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "stamp-schema-unsupported"
+      }
+    },
+    {
+      "name": "stamp-platform-mismatch",
+      "note": "a card moved between devices. The systems list is platform-specific, so this is a fallback, not a warning.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "tg5040",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "stamp-platform-mismatch"
+      }
+    },
+    {
+      "name": "stamp-release-mismatch-after-ota",
+      "note": "D2: the post-OTA system list must match the new release exactly. A stale catalog that silently pins a user to a pre-OTA system list is worse than not shipping the feature.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-09-01-gdeadbee",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "stamp-release-mismatch"
+      }
+    },
+    {
+      "name": "release-identity-unavailable",
+      "note": "T-5: release.json missing or unreadable. The compiler never guesses an identity.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": null,
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "release-identity-unavailable"
+      }
+    },
+    {
+      "name": "release-defaults-invalid",
+      "note": "T-4: when BOTH the effective generation and the release defaults fail, the answer is an explicit catalog error. There is no stale-data fallback to reach for.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": false,
+        "current": null,
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "catalog-error",
+        "generation": null,
+        "reason": "release-defaults-invalid"
+      }
+    },
+    {
+      "name": "cs-survives-daemon-restart",
+      "note": "T-4: a long-lived CS process outliving a jawakad crash. During the gap the selector is absent, so CS serves release defaults -- never the generation it had cached a moment ago.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": null,
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "reader"
+      },
+      "expect": {
+        "resolution": "release-defaults",
+        "generation": null,
+        "reason": "selector-missing"
+      },
+      "cache_note": "CS may cache structural validation only while the exact `current` value and installed release_id are unchanged; both changed here, so the cache is void."
+    }
+  ],
+  "provenance": [
+    {
+      "name": "producer-fresh",
+      "note": "everything hashes as recorded; no recompile.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "producer",
+        "on_disk": {
+          "base": {
+            "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "contributors": [
+            {
+              "provider": "mlp1/ScummVM.pak",
+              "source_id": "primary",
+              "pak_version": "1.0.0",
+              "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "files": [
+                {
+                  "rel": "art/SCUMMVM.png",
+                  "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expect": {
+        "action": "none",
+        "reason": null,
+        "invalidate_selector_first": false
+      }
+    },
+    {
+      "name": "producer-base-mismatch",
+      "note": "an OTA or a manual drag-the-ZIP replaced the release defaults. base.info_sha256 is in the stamp precisely so a partial manual copy that left release_id alone is still caught.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "producer",
+        "on_disk": {
+          "base": {
+            "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+          },
+          "contributors": [
+            {
+              "provider": "mlp1/ScummVM.pak",
+              "source_id": "primary",
+              "pak_version": "1.0.0",
+              "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "files": [
+                {
+                  "rel": "art/SCUMMVM.png",
+                  "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expect": {
+        "action": "compile",
+        "reason": "stamp-base-mismatch",
+        "invalidate_selector_first": true
+      }
+    },
+    {
+      "name": "producer-contributor-mismatch-swapped-so",
+      "note": "P1-7: the .so was swapped without touching `provides`. Fingerprinting every DECLARED FILE, not just the manifest, is what catches this -- the compiler's status output asserted that exact file was present and usable.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "producer",
+        "on_disk": {
+          "base": {
+            "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "contributors": [
+            {
+              "provider": "mlp1/ScummVM.pak",
+              "source_id": "primary",
+              "pak_version": "1.0.0",
+              "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "files": [
+                {
+                  "rel": "art/SCUMMVM.png",
+                  "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expect": {
+        "action": "compile",
+        "reason": "stamp-contributor-mismatch",
+        "invalidate_selector_first": true
+      }
+    },
+    {
+      "name": "producer-invalidates-selector-before-recompiling",
+      "note": "the ordering is the contract: unlink `current`, fsync, THEN recompile. During the gap every new reader gets release defaults, and a crash mid-compile leaves no selector rather than one pointing at unverified output.",
+      "state": {
+        "platform": "mlp1",
+        "installed_release_id": "2026-08-28-gabc1234",
+        "release_defaults_valid": true,
+        "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+        "generations": {
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+            "present": true,
+            "stamp": {
+              "schema": 1,
+              "platform": "mlp1",
+              "release_id": "2026-08-28-gabc1234",
+              "base": {
+                "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+              },
+              "contributors": [
+                {
+                  "provider": "mlp1/ScummVM.pak",
+                  "source_id": "primary",
+                  "pak_version": "1.0.0",
+                  "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "files": [
+                    {
+                      "rel": "art/SCUMMVM.png",
+                      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+                "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+                "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+              }
+            },
+            "outputs": [
+              "systems.json",
+              "cores.json",
+              "info"
+            ]
+          }
+        },
+        "role": "producer",
+        "on_disk": {
+          "base": {
+            "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "contributors": [
+            {
+              "provider": "mlp1/ScummVM.pak",
+              "source_id": "primary",
+              "pak_version": "1.0.0",
+              "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "files": [
+                {
+                  "rel": "art/SCUMMVM.png",
+                  "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expect": {
+        "action": "compile",
+        "reason": "stamp-base-mismatch",
+        "invalidate_selector_first": true
+      }
+    }
+  ],
+  "publication": [
+    {
+      "name": "publish-new-generation",
+      "existing": {},
+      "temp_stamp": {
+        "schema": 1,
+        "platform": "mlp1",
+        "release_id": "2026-08-28-gabc1234",
+        "base": {
+          "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "contributors": [
+          {
+            "provider": "mlp1/ScummVM.pak",
+            "source_id": "primary",
+            "pak_version": "1.0.0",
+            "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "files": [
+              {
+                "rel": "art/SCUMMVM.png",
+                "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+              }
+            ]
+          }
+        ],
+        "output": {
+          "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        }
+      },
+      "temp_outputs": {
+        "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "expect": {
+        "outcome": "published",
+        "generation": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+        "reason": null
+      }
+    },
+    {
+      "name": "identical-generation-reuse",
+      "note": "T-2: a no-op recompile lands on the same content-addressed name, is verified, and reuses the existing directory. No counter, no garbage, no second copy.",
+      "existing": {
+        "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+          "stamp": {
+            "schema": 1,
+            "platform": "mlp1",
+            "release_id": "2026-08-28-gabc1234",
+            "base": {
+              "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            },
+            "contributors": [
+              {
+                "provider": "mlp1/ScummVM.pak",
+                "source_id": "primary",
+                "pak_version": "1.0.0",
+                "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                "files": [
+                  {
+                    "rel": "art/SCUMMVM.png",
+                    "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                  }
+                ]
+              }
+            ],
+            "output": {
+              "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+              "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+            }
+          },
+          "outputs_sha256": {
+            "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+            "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+          }
+        }
+      },
+      "temp_stamp": {
+        "schema": 1,
+        "platform": "mlp1",
+        "release_id": "2026-08-28-gabc1234",
+        "base": {
+          "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "contributors": [
+          {
+            "provider": "mlp1/ScummVM.pak",
+            "source_id": "primary",
+            "pak_version": "1.0.0",
+            "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "files": [
+              {
+                "rel": "art/SCUMMVM.png",
+                "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+              }
+            ]
+          }
+        ],
+        "output": {
+          "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        }
+      },
+      "temp_outputs": {
+        "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "expect": {
+        "outcome": "reused",
+        "generation": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+        "reason": null
+      }
+    },
+    {
+      "name": "generation-digest-conflict",
+      "note": "the same name holding different bytes is corruption. Fail closed, diagnose it, and do NOT overwrite a directory a reader may be inside.",
+      "existing": {
+        "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0": {
+          "stamp": {
+            "schema": 1,
+            "platform": "mlp1",
+            "release_id": "2026-08-28-gabc1234",
+            "base": {
+              "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            },
+            "contributors": [
+              {
+                "provider": "mlp1/ScummVM.pak",
+                "source_id": "primary",
+                "pak_version": "1.0.0",
+                "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                "files": [
+                  {
+                    "rel": "art/SCUMMVM.png",
+                    "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                  }
+                ]
+              }
+            ],
+            "output": {
+              "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+              "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+            }
+          },
+          "outputs_sha256": {
+            "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+            "cores_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+          }
+        }
+      },
+      "temp_stamp": {
+        "schema": 1,
+        "platform": "mlp1",
+        "release_id": "2026-08-28-gabc1234",
+        "base": {
+          "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "contributors": [
+          {
+            "provider": "mlp1/ScummVM.pak",
+            "source_id": "primary",
+            "pak_version": "1.0.0",
+            "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "files": [
+              {
+                "rel": "art/SCUMMVM.png",
+                "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+              }
+            ]
+          }
+        ],
+        "output": {
+          "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        }
+      },
+      "temp_outputs": {
+        "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "expect": {
+        "outcome": "conflict",
+        "generation": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+        "reason": "generation-digest-conflict"
+      }
+    },
+    {
+      "name": "compile-failure-leaves-readable-diagnostics",
+      "note": "diagnostics.json lives OUTSIDE every generation, so a compile that produced no directory at all still leaves an explanation a developer and the Pak Rat UI can read.",
+      "existing": {},
+      "temp_stamp": null,
+      "temp_outputs": null,
+      "expect": {
+        "outcome": "failed",
+        "generation": null,
+        "reason": "compile-failed"
+      },
+      "diagnostics_path": "catalog/diagnostics.json",
+      "diagnostics_survive_failure": true
+    }
+  ],
+  "cleanup": [
+    {
+      "name": "temp-only-cleanup",
+      "note": "S-4/T-4: v1 removes abandoned temp directories and NOTHING else. Finalized generations persist across daemon restarts because a CS process may still be reading one.",
+      "entries": [
+        "tmp-a1b2c3",
+        "tmp-d4e5f6",
+        "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+        "gen-e5800d76c76feb224504ec711ca6edbb1f1c4b0f89ae0d032023ded262a76597"
+      ],
+      "current": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0\n",
+      "expect": {
+        "removed": [
+          "tmp-a1b2c3",
+          "tmp-d4e5f6"
+        ],
+        "kept": [
+          "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+          "gen-e5800d76c76feb224504ec711ca6edbb1f1c4b0f89ae0d032023ded262a76597"
+        ],
+        "selected": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0"
+      }
+    }
+  ],
+  "digest": [
+    {
+      "name": "canonical-stamp-bytes",
+      "note": "the exact bytes hashed to name a generation, spelled out by hand. Producer and both readers must agree on this or they disagree about which generation is current.",
+      "stamp": {
+        "schema": 1,
+        "platform": "mlp1",
+        "release_id": "2026-08-28-gabc1234",
+        "base": {
+          "systems_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "cores_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "info_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "contributors": [
+          {
+            "provider": "mlp1/ScummVM.pak",
+            "source_id": "primary",
+            "pak_version": "1.0.0",
+            "provides_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "files": [
+              {
+                "rel": "art/SCUMMVM.png",
+                "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+              }
+            ]
+          }
+        ],
+        "output": {
+          "systems_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "cores_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "info_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        }
+      },
+      "canonical_bytes": "{\"base\":{\"cores_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"info_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"systems_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"},\"contributors\":[{\"files\":[{\"rel\":\"art/SCUMMVM.png\",\"sha256\":\"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\"}],\"pak_version\":\"1.0.0\",\"provider\":\"mlp1/ScummVM.pak\",\"provides_sha256\":\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\",\"source_id\":\"primary\"}],\"output\":{\"cores_sha256\":\"2222222222222222222222222222222222222222222222222222222222222222\",\"info_sha256\":\"3333333333333333333333333333333333333333333333333333333333333333\",\"systems_sha256\":\"1111111111111111111111111111111111111111111111111111111111111111\"},\"platform\":\"mlp1\",\"release_id\":\"2026-08-28-gabc1234\",\"schema\":1}\n",
+      "digest": "d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0",
+      "generation": "gen-d9aa59ef1f2e8dcbe3e91bcd23e59b0597ef028a1a09c246c3c1ca307c6cbae0"
+    },
+    {
+      "name": "contributor-ordering-is-normative",
+      "note": "arrays keep their order through canonicalization, so the producer must sort contributors by provider (and each contributor's files by rel) BEFORE hashing. Unsorted input produces a different, wrong digest.",
+      "sorted_providers": [
+        "mlp1/Alpha.pak",
+        "mlp1/Beta.pak"
+      ],
+      "unsorted_providers": [
+        "mlp1/Beta.pak",
+        "mlp1/Alpha.pak"
+      ],
+      "digests_must_differ": true
+    },
+    {
+      "name": "tree-hash-length-prefix",
+      "note": "without the uint64 length prefix, {'a': 'x', 'b': 'yz'} and {'a': 'xy', 'b': 'z'} hash identically -- an .info directory could be rewritten across a file boundary and keep a valid stamp.",
+      "left": {
+        "a": "x",
+        "b": "yz"
+      },
+      "right": {
+        "a": "xy",
+        "b": "z"
+      },
+      "digests_must_differ": true
+    },
+    {
+      "name": "tree-hash-empty",
+      "note": "a missing .info directory and an empty one contribute the same nothing, so they hash the same.",
+      "entries": {},
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

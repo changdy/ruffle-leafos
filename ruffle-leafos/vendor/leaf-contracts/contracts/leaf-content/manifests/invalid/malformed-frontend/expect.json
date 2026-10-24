@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "malformed-frontend",
+  "note": "frontend is an object with exactly path and protocol; a bare string is the likeliest slip. A missing or non-string path and an unknown key are the same reason"
+}

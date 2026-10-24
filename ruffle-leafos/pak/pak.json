@@ -1,0 +1,46 @@
+{
+  "name": "Ruffle Leaf Preview",
+  "version": "0.6.2",
+  "icon": "art/FLASH.png",
+  "platform": "mlp1",
+  "pak_version": "0.6.2",
+  "min_leaf_version": "0.13.0",
+  "min_jawaka_version": "0.0.1",
+  "type": "TOOL",
+  "description": "Hollow ring with a one-pixel center replaces the arrow cursor; preserves saved mappings and existing appearance controls.",
+  "provides": {
+    "schema": 1,
+    "systems": [
+      {
+        "id": "FLASH",
+        "name": "Flash",
+        "patterns": [
+          "flash"
+        ],
+        "extensions": [
+          "swf"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "none",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/flash",
+        "image_root": "Images/flash",
+        "default_core": "ruffle_probe",
+        "icon_flat": "art/FLASH.png",
+        "group": "Computer"
+      }
+    ],
+    "cores": [
+      {
+        "id": "ruffle_probe",
+        "display_name": "Ruffle Leaf 0.6.2 (development preview)",
+        "type": "path",
+        "path": "emulators/ruffle-probe/launch-game.sh",
+        "supports_menu": true,
+        "supports_savestate": false,
+        "supports_disk_control": false
+      }
+    ]
+  }
+}

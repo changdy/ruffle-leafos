@@ -1,0 +1,408 @@
+{
+  "contract": "storefront-content-v1",
+  "note": "Hand-authored. Only the content-lane rules are exercised here; version grammar, versions[] ordering, artifact completeness and HTTPS are unchanged and are already covered by the existing generator and CI validator. `artifacts` stands in for what the generator learns by opening the built .pak.zip -- the lane is a claim, the artifact is the fact.",
+  "artifact_template": {
+    "url": "https://umrk.dev/pakrat/v1/artifacts/x/1.0.0/X.mlp1.pak.zip",
+    "name": "X.mlp1.pak.zip",
+    "archive": "zip",
+    "size": 1024,
+    "installed_size": 4096,
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "cases": [
+    {
+      "name": "content-lane-all-gated",
+      "note": "the case that makes the lane necessary. Every version gates on the release that ships this contract, so there is no ungated safe floor -- and inside content[] that is correct, not an error.",
+      "valid": true,
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [],
+        "content": [
+          {
+            "id": "org.umrk.scummvm",
+            "name": "ScummVM",
+            "version": "1.0.0",
+            "packages": [
+              {
+                "platform": "mlp1",
+                "runtime": "leaf",
+                "version": "1.0.0",
+                "install_name": "ScummVM.pak",
+                "min_leaf_version": "0.11.0",
+                "artifact": {
+                  "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.scummvm/1.0.0/ScummVM.mlp1.pak.zip",
+                  "name": "ScummVM.mlp1.pak.zip",
+                  "archive": "zip",
+                  "size": 1024,
+                  "installed_size": 4096,
+                  "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+                },
+                "versions": [
+                  {
+                    "version": "1.0.0",
+                    "min_leaf_version": "0.11.0",
+                    "artifact": {
+                      "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.scummvm/1.0.0/ScummVM.mlp1.pak.zip",
+                      "name": "ScummVM.mlp1.pak.zip",
+                      "archive": "zip",
+                      "size": 1024,
+                      "installed_size": 4096,
+                      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "artifacts": { "org.umrk.scummvm": { "declares_provides": true } },
+      "expect_visible_to_gate_unaware": []
+    },
+    {
+      "name": "gate-unaware-client-sees-only-apps",
+      "note": "the same document parsed by a client that predates this contract: it reads apps[], ignores the unknown content key, and never learns a content pak exists.",
+      "valid": true,
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [
+          {
+            "id": "org.umrk.sshserver",
+            "name": "SSH Server",
+            "version": "0.3.0",
+            "packages": [
+              {
+                "platform": "mlp1",
+                "runtime": "leaf",
+                "version": "0.3.0",
+                "install_name": "ssh-server.pak",
+                "artifact": {
+                  "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.sshserver/0.3.0/ssh-server.mlp1.pak.zip",
+                  "name": "ssh-server.mlp1.pak.zip",
+                  "archive": "zip",
+                  "size": 1024,
+                  "installed_size": 4096,
+                  "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+                },
+                "versions": [
+                  {
+                    "version": "0.3.0",
+                    "artifact": {
+                      "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.sshserver/0.3.0/ssh-server.mlp1.pak.zip",
+                      "name": "ssh-server.mlp1.pak.zip",
+                      "archive": "zip",
+                      "size": 1024,
+                      "installed_size": 4096,
+                      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "content": [
+          {
+            "id": "org.umrk.scummvm",
+            "name": "ScummVM",
+            "version": "1.0.0",
+            "packages": [
+              {
+                "platform": "mlp1",
+                "runtime": "leaf",
+                "version": "1.0.0",
+                "install_name": "ScummVM.pak",
+                "min_leaf_version": "0.11.0",
+                "artifact": {
+                  "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.scummvm/1.0.0/ScummVM.mlp1.pak.zip",
+                  "name": "ScummVM.mlp1.pak.zip",
+                  "archive": "zip",
+                  "size": 1024,
+                  "installed_size": 4096,
+                  "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "artifacts": {
+        "org.umrk.sshserver": { "declares_provides": false },
+        "org.umrk.scummvm": { "declares_provides": true }
+      },
+      "expect_visible_to_gate_unaware": ["org.umrk.sshserver"]
+    },
+    {
+      "name": "id-in-both-lanes",
+      "note": "S-3: both lanes resolve to the same install_path (mlp1/PortMaster.pak). Two catalog entries pointing at one install path is a duplicate-identity bug.",
+      "valid": false,
+      "reason": "id-in-both-lanes",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [
+          { "id": "org.umrk.portmaster", "name": "PortMaster", "version": "0.1.2", "packages": [] }
+        ],
+        "content": [
+          { "id": "org.umrk.portmaster", "name": "PortMaster", "version": "0.2.0", "packages": [] }
+        ]
+      },
+      "artifacts": {}
+    },
+    {
+      "name": "content-artifact-without-provides",
+      "note": "the lane is a claim; the built .pak is the fact. A package in content[] whose artifact declares no `provides` would install and then contribute nothing.",
+      "valid": false,
+      "reason": "content-artifact-without-provides",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [],
+        "content": [
+          {
+            "id": "org.umrk.notcontent",
+            "name": "Not Content",
+            "version": "1.0.0",
+            "packages": [
+              { "platform": "mlp1", "runtime": "leaf", "version": "1.0.0", "install_name": "NotContent.pak" }
+            ]
+          }
+        ]
+      },
+      "artifacts": { "org.umrk.notcontent": { "declares_provides": false } }
+    },
+    {
+      "name": "provides-artifact-in-apps-lane",
+      "note": "the mirror rule. A pak that declares `provides` is gated on this contract by construction, so apps[] -- the gate-unaware lane -- is the wrong home for it.",
+      "valid": false,
+      "reason": "provides-artifact-in-apps-lane",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [
+          {
+            "id": "org.umrk.scummvm",
+            "name": "ScummVM",
+            "version": "1.0.0",
+            "packages": [
+              { "platform": "mlp1", "runtime": "leaf", "version": "1.0.0", "install_name": "ScummVM.pak" }
+            ]
+          }
+        ],
+        "content": []
+      },
+      "artifacts": { "org.umrk.scummvm": { "declares_provides": true } }
+    },
+    {
+      "name": "shared-platform-in-content",
+      "note": "D16: cores and standalone emulator binaries are platform-specific, so there is nothing a shared content pak could correctly ship.",
+      "valid": false,
+      "reason": "shared-platform-in-content",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [],
+        "content": [
+          {
+            "id": "org.umrk.scummvm",
+            "name": "ScummVM",
+            "version": "1.0.0",
+            "packages": [
+              { "platform": "shared", "runtime": "leaf", "version": "1.0.0", "install_name": "ScummVM.pak" }
+            ]
+          }
+        ]
+      },
+      "artifacts": { "org.umrk.scummvm": { "declares_provides": true } }
+    },
+    {
+      "name": "unknown-runtime",
+      "valid": false,
+      "reason": "unknown-runtime",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [],
+        "content": [
+          {
+            "id": "org.umrk.scummvm",
+            "name": "ScummVM",
+            "version": "1.0.0",
+            "packages": [
+              { "platform": "mlp1", "runtime": "portmaster", "version": "1.0.0", "install_name": "ScummVM.pak" }
+            ]
+          }
+        ]
+      },
+      "artifacts": { "org.umrk.scummvm": { "declares_provides": true } }
+    },
+    {
+      "name": "immutable-history-violated",
+      "note": "the safe-floor exemption is the ONLY rule content[] relaxes. Published entries stay frozen -- exact-version Restore depends on their artifacts still matching their recorded hash.",
+      "valid": false,
+      "reason": "immutable-history-violated",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [],
+        "content": [
+          {
+            "id": "org.umrk.scummvm",
+            "name": "ScummVM",
+            "version": "1.0.0",
+            "packages": [
+              {
+                "platform": "mlp1",
+                "runtime": "leaf",
+                "version": "1.0.0",
+                "install_name": "ScummVM.pak",
+                "published_history": [
+                  {
+                    "version": "1.0.0",
+                    "min_leaf_version": "0.11.0",
+                    "artifact": {
+                      "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.scummvm/1.0.0/ScummVM.mlp1.pak.zip",
+                      "name": "ScummVM.mlp1.pak.zip",
+                      "archive": "zip",
+                      "size": 1024,
+                      "installed_size": 4096,
+                      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+                    }
+                  }
+                ],
+                "versions": [
+                  {
+                    "version": "1.0.0",
+                    "min_leaf_version": "0.11.0",
+                    "artifact": {
+                      "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.scummvm/1.0.0/ScummVM.mlp1.pak.zip",
+                      "name": "ScummVM.mlp1.pak.zip",
+                      "archive": "zip",
+                      "size": 2048,
+                      "installed_size": 4096,
+                      "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "artifacts": { "org.umrk.scummvm": { "declares_provides": true } }
+    },
+    {
+      "name": "ungated-content-version",
+      "note": "Content packages depend on CONTENT-1 and therefore every published version must name the Leaf release that introduced that contract. The lane relaxes the safe-floor requirement; it does not allow ungated content.",
+      "valid": false,
+      "reason": "ungated-content-version",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [],
+        "content": [
+          {
+            "id": "org.umrk.scummvm",
+            "name": "ScummVM",
+            "version": "1.0.0",
+            "packages": [
+              {
+                "platform": "mlp1",
+                "runtime": "leaf",
+                "version": "1.0.0",
+                "install_name": "ScummVM.pak",
+                "artifact": {
+                  "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.scummvm/1.0.0/ScummVM.mlp1.pak.zip",
+                  "name": "ScummVM.mlp1.pak.zip",
+                  "archive": "zip",
+                  "size": 1024,
+                  "installed_size": 4096,
+                  "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+                },
+                "versions": [
+                  {
+                    "version": "1.0.0",
+                    "artifact": {
+                      "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.scummvm/1.0.0/ScummVM.mlp1.pak.zip",
+                      "name": "ScummVM.mlp1.pak.zip",
+                      "archive": "zip",
+                      "size": 1024,
+                      "installed_size": 4096,
+                      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "artifacts": { "org.umrk.scummvm": { "declares_provides": true } }
+    },
+    {
+      "name": "apps-lane-still-needs-a-safe-floor",
+      "note": "regression guard: content[]'s exemption must not leak into apps[]. A gate-unaware client still needs an ungated version it can install.",
+      "valid": false,
+      "reason": "missing-safe-floor",
+      "storefront": {
+        "schema": 1,
+        "product": "pak-rat",
+        "apps": [
+          {
+            "id": "org.umrk.sshserver",
+            "name": "SSH Server",
+            "version": "0.3.0",
+            "packages": [
+              {
+                "platform": "mlp1",
+                "runtime": "leaf",
+                "version": "0.3.0",
+                "install_name": "ssh-server.pak",
+                "versions": [
+                  {
+                    "version": "0.3.0",
+                    "min_leaf_version": "0.11.0",
+                    "artifact": {
+                      "url": "https://umrk.dev/pakrat/v1/artifacts/org.umrk.sshserver/0.3.0/ssh-server.mlp1.pak.zip",
+                      "name": "ssh-server.mlp1.pak.zip",
+                      "archive": "zip",
+                      "size": 1024,
+                      "installed_size": 4096,
+                      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "content": []
+      },
+      "artifacts": { "org.umrk.sshserver": { "declares_provides": false } }
+    }
+  ],
+  "open_button_cases": [
+    {
+      "name": "hybrid-gets-open",
+      "note": "PortMaster's shape: in content[], but Open is offered because the INSTALLED pak has an executable launch.sh.",
+      "installed_pak": { "install_path": "mlp1/PortMaster.pak", "launch_sh_executable": true },
+      "lane": "content",
+      "expect_open": true
+    },
+    {
+      "name": "pure-content-pak-has-no-open",
+      "installed_pak": { "install_path": "mlp1/ScummVM.pak", "launch_sh_executable": false },
+      "lane": "content",
+      "expect_open": false
+    },
+    {
+      "name": "sideloaded-pak-in-no-lane-still-answers",
+      "note": "the rule has to hold for a pak the storefront has never heard of, which is why it reads the install rather than the lane.",
+      "installed_pak": { "install_path": "mlp1/Homebrew.pak", "launch_sh_executable": true },
+      "lane": null,
+      "expect_open": true
+    }
+  ]
+}

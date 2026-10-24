@@ -1,0 +1,41 @@
+name: Pak Rat themes
+
+# Store themes are held to THEME-1 on the device before anything is promoted,
+# and that check has to agree with the store's reference validator reason for
+# reason. The contract is pinned; bump the ref with the contract.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  themes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Jawaka
+        uses: actions/checkout@v4
+        with:
+          path: Jawaka
+
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libcurl4-openssl-dev sqlite3
+
+      - name: Check out the pinned theme contract
+        uses: actions/checkout@v4
+        with:
+          repository: Utility-Muffin-Research-Kitchen/leaf-contracts
+          ref: 31c161c28313092e367679f59843c2605d2c652c
+          path: leaf-contracts
+
+      - name: Verify THEME-1 validation against the contract fixtures
+        run: make -C Jawaka WORKSPACE_ROOT="$GITHUB_WORKSPACE" theme-package-test
+
+      - name: Verify the themes lane, install roots, ownership, recovery and launcher caps
+        run: make -C Jawaka pakrat-catalog-test pakrat-state-logic-test pakrat-txn-test schema-v6-test user-themes-test
+
+      - name: Install, update and uninstall themes through the real installer
+        run: make -C Jawaka pakrat-theme-smoke

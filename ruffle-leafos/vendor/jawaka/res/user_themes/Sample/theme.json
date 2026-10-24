@@ -1,0 +1,15 @@
+{
+  "name": "Sample",
+  "author": "Geekstrada",
+  "version": "0.1",
+  "schema": 1,
+  "grid": { "cols": 3, "rows": 2 },
+  "status_style": "auto",
+  "colors": {
+    "text": "#5C6367",
+    "highlight": "#68C7C3",
+    "highlight_text": "#12292B",
+    "underlay": "#FFFFFF",
+    "underlay_opacity": 178
+  }
+}

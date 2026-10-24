@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "forbidden-status",
+  "note": "the compiler sets status from verified on-disk reality, never from a manifest"
+}

@@ -1,0 +1,43 @@
+[package]
+name = "sdl2test-rocknix"
+version = "0.6.2"
+edition = "2021"
+
+[dependencies]
+sdl2 = { version = "0.38.0", features = ["raw-window-handle"] }
+glow = "0.14"
+thiserror = "1.0"
+raw-window-handle = "0.6"
+clap = { workspace = true }
+
+ruffle_core = { path = "../core", features = [
+    "audio",
+    "symphonia",
+    "mp3",
+    "nellymoser",
+    "lzma",
+    "default_compatibility_rules",
+    "default_font",
+] }
+
+ruffle_common = { path = "../core/common" }
+ruffle_video_software = { path = "../video/software" }
+ruffle_video_external = { path = "../video/external" }
+ruffle_frontend_utils = { path = "../frontend-utils", features = ["cpal", "navigator", "fs"] }
+ruffle_render = { path = "../render", features = ["clap"] }
+
+log = { workspace = true }
+bytemuck = { version = "1", features = ["derive"] }
+env_logger = "0.11"
+
+async-task = "4.7.1"
+ttf-parser = "0.25"
+ab_glyph = "=0.2.32"
+libc = "=0.2.186"
+
+url = "2.5.2"
+
+tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros"] }
+
+[features]
+jpegxr = ["ruffle_core/jpegxr"]

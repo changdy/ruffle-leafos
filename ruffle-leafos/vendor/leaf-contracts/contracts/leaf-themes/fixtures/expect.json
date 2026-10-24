@@ -1,0 +1,365 @@
+{
+  "fixtures": [
+    {
+      "file": "invalid/absolute-path.zip",
+      "reasons": [
+        "theme-absolute-path"
+      ],
+      "warnings": [],
+      "note": "an entry name starting with /"
+    },
+    {
+      "file": "invalid/archive-too-large.zip",
+      "reasons": [
+        "theme-archive-too-large"
+      ],
+      "warnings": [],
+      "note": "just over 10 MiB on disk: a stored 10 MiB LICENSE.txt, which would otherwise pass every other limit. Rejected from the file size alone",
+      "in_memory": true
+    },
+    {
+      "file": "invalid/author-invalid.zip",
+      "reasons": [
+        "theme-author-invalid"
+      ],
+      "warnings": [],
+      "note": "an author of only spaces"
+    },
+    {
+      "file": "invalid/backslash-path.zip",
+      "reasons": [
+        "theme-backslash-path"
+      ],
+      "warnings": [],
+      "note": "a backslash is a separator on Windows and a filename byte everywhere else, so it means two different paths"
+    },
+    {
+      "file": "invalid/color-invalid.zip",
+      "reasons": [
+        "theme-color-invalid"
+      ],
+      "warnings": [],
+      "note": "#12345 is five hex digits"
+    },
+    {
+      "file": "invalid/color-level-invalid.zip",
+      "reasons": [
+        "theme-color-level-invalid"
+      ],
+      "warnings": [],
+      "note": "underlay_opacity 256; the range is 0-255"
+    },
+    {
+      "file": "invalid/compression-ratio.zip",
+      "reasons": [
+        "theme-compression-ratio"
+      ],
+      "warnings": [],
+      "note": "a 64 KiB LICENSE.txt of spaces deflates to about 1/158 of its size; no entry may expand more than 100 times"
+    },
+    {
+      "file": "invalid/description-invalid.zip",
+      "reasons": [
+        "theme-description-invalid"
+      ],
+      "warnings": [],
+      "note": "301 characters; the cap is 300"
+    },
+    {
+      "file": "invalid/duplicate-entry.zip",
+      "reasons": [
+        "theme-duplicate-entry"
+      ],
+      "warnings": [],
+      "note": "grid/icons/FC.png appears twice; FAT32 can hold only one"
+    },
+    {
+      "file": "invalid/entry-name-encoding.zip",
+      "reasons": [
+        "theme-entry-name-encoding"
+      ],
+      "warnings": [],
+      "note": "an entry name that is not UTF-8 (a raw 0xFF byte)"
+    },
+    {
+      "file": "invalid/grid-invalid.zip",
+      "reasons": [
+        "theme-grid-invalid"
+      ],
+      "warnings": [],
+      "note": "9 columns; the launcher's range is 1-8"
+    },
+    {
+      "file": "invalid/hidden-file.zip",
+      "reasons": [
+        "theme-hidden-file"
+      ],
+      "warnings": [],
+      "note": "what a macOS Finder zip adds: .DS_Store and a __MACOSX tree"
+    },
+    {
+      "file": "invalid/id-invalid.zip",
+      "reasons": [
+        "theme-id-invalid"
+      ],
+      "warnings": [],
+      "note": "ids are lowercase: ^[a-z0-9][a-z0-9-]{1,39}$"
+    },
+    {
+      "file": "invalid/id-mismatch.zip",
+      "reasons": [
+        "theme-id-mismatch"
+      ],
+      "warnings": [],
+      "note": "the folder is other-folder but theme.json says id-mismatch"
+    },
+    {
+      "file": "invalid/image-dimensions.zip",
+      "reasons": [
+        "theme-image-dimensions"
+      ],
+      "warnings": [],
+      "note": "a 1025 px wide label; art is capped at 1024 px per edge"
+    },
+    {
+      "file": "invalid/malformed-archive.zip",
+      "reasons": [
+        "theme-malformed-archive"
+      ],
+      "warnings": [],
+      "note": "LICENSE.txt's CRC-32 does not match its bytes; found only after the size stages pass and the entries are read back"
+    },
+    {
+      "file": "invalid/malformed-manifest.zip",
+      "reasons": [
+        "theme-malformed-manifest"
+      ],
+      "warnings": [],
+      "note": "theme.json is cut off mid-object"
+    },
+    {
+      "file": "invalid/manifest-too-large.zip",
+      "reasons": [
+        "theme-manifest-too-large"
+      ],
+      "warnings": [],
+      "note": "valid JSON padded with spaces to 65,537 bytes; the launcher reads at most 64 KiB"
+    },
+    {
+      "file": "invalid/min-leaf-version.zip",
+      "reasons": [
+        "theme-min-leaf-version"
+      ],
+      "warnings": [],
+      "note": "0.11.0 predates Grid View and user themes"
+    },
+    {
+      "file": "invalid/missing-manifest.zip",
+      "reasons": [
+        "theme-missing-manifest"
+      ],
+      "warnings": [],
+      "note": "no theme.json"
+    },
+    {
+      "file": "invalid/missing-preview.zip",
+      "reasons": [
+        "theme-missing-preview"
+      ],
+      "warnings": [],
+      "note": "no preview.png"
+    },
+    {
+      "file": "invalid/multiple-wallpapers.zip",
+      "reasons": [
+        "theme-multiple-wallpapers"
+      ],
+      "warnings": [],
+      "note": "grid/wallpaper.png and grid/wallpaper.jpg; the launcher would only ever draw one"
+    },
+    {
+      "file": "invalid/name-invalid.zip",
+      "reasons": [
+        "theme-name-invalid"
+      ],
+      "warnings": [],
+      "note": "an empty name"
+    },
+    {
+      "file": "invalid/not-single-folder.zip",
+      "reasons": [
+        "theme-not-single-folder"
+      ],
+      "warnings": [],
+      "note": "the theme's files zipped without their folder, the most common packaging mistake"
+    },
+    {
+      "file": "invalid/path-traversal.zip",
+      "reasons": [
+        "theme-path-traversal"
+      ],
+      "warnings": [],
+      "note": "a .. component"
+    },
+    {
+      "file": "invalid/reserved-name.zip",
+      "reasons": [
+        "theme-reserved-name"
+      ],
+      "warnings": [],
+      "note": "sample would collide with the bundled Sample theme on a FAT32 card"
+    },
+    {
+      "file": "invalid/reserved-system-id.zip",
+      "reasons": [
+        "theme-reserved-system-id"
+      ],
+      "warnings": [],
+      "note": "_default is Leaf's fallback, not a tile, and is never themed"
+    },
+    {
+      "file": "invalid/special-file.zip",
+      "reasons": [
+        "theme-special-file"
+      ],
+      "warnings": [],
+      "note": "LICENSE.txt is a FIFO (Unix mode 0010644)"
+    },
+    {
+      "file": "invalid/status-style-invalid.zip",
+      "reasons": [
+        "theme-status-style-invalid"
+      ],
+      "warnings": [],
+      "note": "sepia is not light, dark or auto"
+    },
+    {
+      "file": "invalid/symlink.zip",
+      "reasons": [
+        "theme-symlink"
+      ],
+      "warnings": [],
+      "note": "grid/icons/GBA.png is a symbolic link (Unix mode 0120777) to FC.png"
+    },
+    {
+      "file": "invalid/system-id-invalid.zip",
+      "reasons": [
+        "theme-system-id-invalid"
+      ],
+      "warnings": [],
+      "note": "grid/labels/snes.png: system ids are ^[A-Z0-9_]{2,32}$"
+    },
+    {
+      "file": "invalid/too-many-entries.zip",
+      "reasons": [
+        "theme-too-many-entries"
+      ],
+      "warnings": [],
+      "note": "513 entries, each a valid 1x1 label; the cap is 512 including directory entries"
+    },
+    {
+      "file": "invalid/uncompressed-too-large.zip",
+      "reasons": [
+        "theme-uncompressed-too-large"
+      ],
+      "warnings": [],
+      "note": "25 MiB of LICENSE.txt plus the rest of the theme; the entry compresses at about 98.7:1, under the ratio limit, so only the total is over"
+    },
+    {
+      "file": "invalid/unknown-field.zip",
+      "reasons": [
+        "theme-unknown-field"
+      ],
+      "warnings": [],
+      "note": "a top-level key THEME-1 does not define"
+    },
+    {
+      "file": "invalid/unknown-file.zip",
+      "reasons": [
+        "theme-unknown-file"
+      ],
+      "warnings": [],
+      "note": "a README.md is not on the path allowlist"
+    },
+    {
+      "file": "invalid/unknown-license.zip",
+      "reasons": [
+        "theme-unknown-license"
+      ],
+      "warnings": [],
+      "note": "MIT is not on the license list"
+    },
+    {
+      "file": "invalid/unknown-schema.zip",
+      "reasons": [
+        "theme-unknown-schema"
+      ],
+      "warnings": [],
+      "note": "schema 99, a number no reader will ever accept"
+    },
+    {
+      "file": "invalid/unsupported-compression.zip",
+      "reasons": [
+        "theme-unsupported-compression"
+      ],
+      "warnings": [],
+      "note": "LICENSE.txt uses method 12 (bzip2); only stored (0) and deflated (8) are accepted, so the device never needs another decompressor"
+    },
+    {
+      "file": "invalid/unsupported-image.zip",
+      "reasons": [
+        "theme-unsupported-image"
+      ],
+      "warnings": [],
+      "note": "grid/icons/FC.png holds JPEG bytes; the extension is not trusted"
+    },
+    {
+      "file": "invalid/version-invalid.zip",
+      "reasons": [
+        "theme-version-invalid"
+      ],
+      "warnings": [],
+      "note": "1.0 is not MAJOR.MINOR.PATCH (it is the bundled Sample's version)"
+    },
+    {
+      "file": "valid/cc-by-nc-sa-4.zip",
+      "reasons": [],
+      "warnings": [],
+      "note": "a theme declaring CC BY-NC-SA 4.0 with its license notice"
+    },
+    {
+      "file": "valid/cc-by-nc-sa.zip",
+      "reasons": [],
+      "warnings": [],
+      "note": "a theme declaring CC BY-NC-SA 2.0 with its license notice"
+    },
+    {
+      "file": "valid/colors-only.zip",
+      "reasons": [],
+      "warnings": [
+        "theme-no-art"
+      ],
+      "note": "the smallest store theme: theme.json and a preview, colors only. Accepted, with a warning that it ships no art"
+    },
+    {
+      "file": "valid/full.zip",
+      "reasons": [],
+      "warnings": [],
+      "note": "every allowlisted file kind, both views, the Apps tile, deflated, with directory entries; wallpaper at the 2048 px edge"
+    },
+    {
+      "file": "valid/off-size-icon.zip",
+      "reasons": [],
+      "warnings": [
+        "theme-icon-off-size"
+      ],
+      "note": "a 256x256 icon is accepted and drawn contain-fit, with a warning"
+    },
+    {
+      "file": "valid/shared-icons.zip",
+      "reasons": [],
+      "warnings": [],
+      "note": "one icon set at the root that both views read, plus a Cover Flow override for FC, which wins over the shared FC in that view"
+    }
+  ]
+}

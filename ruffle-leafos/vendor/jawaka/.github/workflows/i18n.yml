@@ -1,0 +1,29 @@
+name: i18n
+
+# Two invariants, both cheap:
+#   1. i18n/leaf.pot matches the code. A UI-string change without a regenerated
+#      .pot means translators are translating against a stale key list, and the
+#      coverage gate is measuring the wrong denominator.
+#   2. Every committed translation parses, has no orphan keys (the signature of
+#      a renamed English string), and keeps printf conversions compatible with
+#      its key -- i18n-compile.py refuses a %d that became %s, which would
+#      otherwise crash snprintf on device.
+# No gettext tooling is needed: extraction is tools/i18n-extract.py, which
+# knows the render funnels xgettext cannot see (see the header comment there).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  strings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify the committed .pot and any translations
+        run: make i18n-check

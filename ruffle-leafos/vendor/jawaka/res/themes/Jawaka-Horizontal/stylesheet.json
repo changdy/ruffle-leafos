@@ -1,0 +1,47 @@
+{
+  "ui": {
+    "ui_font": { "path": "fonts/SpaceGrotesk/SpaceGrotesk-Regular.ttf", "size": 36 },
+    "text_color": "#993B41",
+    "background_color": "#D3D0CC",
+    "highlight_color": "#993B41",
+    "highlight_text_color": "#D3D0CC",
+    "disabled_color": "#CABCBA",
+    "hint_color": "#993B41",
+    "tab_color": "#993B4170",
+    "tab_selected_color": "#993B41",
+    "pill_radius_ratio": 1.0
+  },
+  "status_bar": { "show_battery_level": true, "show_clock": true, "show_wifi": true, "text_color": "#993B41" },
+  "button_hints": {
+    "button_a_color": "#CABCBA",
+    "button_b_color": "#CABCBA",
+    "button_x_color": "#CABCBA",
+    "button_y_color": "#CABCBA",
+    "button_bg_color": "#CABCBA",
+    "glyph_bg_color": "#993B41",
+    "button_text_color": "#D3D0CC",
+    "text_color": "#993B41"
+  },
+  "menu": { "background_color": "#D3D0CC" },
+  "cjk_font": { "path": "fonts/SourceHanSansCN/SourceHanSansCN-Regular.otf", "size": 36 },
+  "launcher": {
+    "layout": "horizontal",
+    "carousel_skew": 28,
+    "console_colors": {
+      "GB":     "#9BBC0F",
+      "GBC":    "#5A2D81",
+      "GBA":    "#6B4FB8",
+      "FC":     "#A33C3C",
+      "SFC":    "#8A7FB8",
+      "NDS":    "#7A8A95",
+      "MD":     "#1F1F1F",
+      "MS":     "#2A4A8F",
+      "GG":     "#3A3A3A",
+      "LYNX":   "#A04020",
+      "NEOGEO": "#C9A227",
+      "PCE":    "#D8C8B0",
+      "PS":     "#3C3C46",
+      "ARCADE": "#D0801C"
+    }
+  }
+}

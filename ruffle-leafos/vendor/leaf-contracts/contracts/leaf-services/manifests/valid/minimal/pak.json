@@ -1,0 +1,12 @@
+{
+  "id": "org.umrk.thing",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.thing",
+    "run": {
+      "path": "bin/thing"
+    },
+    "restart": "no",
+    "default_enabled": false
+  }
+}

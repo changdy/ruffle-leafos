@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "resolved_stop_grace_ms": 5000,
+  "note": "absent stop_grace_ms resolves to the SVC-1 default"
+}

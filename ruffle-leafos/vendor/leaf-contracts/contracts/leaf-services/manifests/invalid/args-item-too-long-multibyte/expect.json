@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "args-item-too-long",
+  "note": "the arg is exactly 256 Unicode code points (u+00e9, 2 bytes each in UTF-8) but 512 UTF-8 bytes, over the 256-byte limit; a code-point-counting check would wrongly accept this"
+}

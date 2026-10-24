@@ -1,0 +1,15 @@
+{
+  "description": "LIFE-1 check waiting status with bounded pending items and bytes.",
+  "message": {
+    "v": 1,
+    "status": "waiting",
+    "launch_id": "launch-0001",
+    "pending_items": 3,
+    "pending_bytes": 49152
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"status\":\"waiting\",\"launch_id\":\"launch-0001\",\"pending_items\":3,\"pending_bytes\":49152}",
+  "frame_total_bytes": 96,
+  "length_prefix_value": 92,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

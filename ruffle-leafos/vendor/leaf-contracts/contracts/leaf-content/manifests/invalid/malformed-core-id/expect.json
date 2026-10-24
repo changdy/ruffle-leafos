@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "malformed-core-id",
+  "note": "core ids are ^[a-z0-9_]{2,64}$"
+}

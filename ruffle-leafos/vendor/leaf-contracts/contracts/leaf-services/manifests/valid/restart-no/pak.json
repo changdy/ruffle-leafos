@@ -1,0 +1,31 @@
+{
+  "id": "org.umrk.syncthing",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.syncthing",
+    "run": {
+      "path": "bin/leaf-syncthing",
+      "args": [
+        "service",
+        "run"
+      ]
+    },
+    "restart": "no",
+    "default_enabled": false,
+    "stop_grace_ms": 10000,
+    "lifecycle": {
+      "game": "notify",
+      "stop_on_storage_change": true,
+      "stop_on_suspend": true
+    }
+  },
+  "state": {
+    "root": "Syncthing",
+    "revoke_on_uninstall": [
+      "leaf/trusted-clients.json"
+    ],
+    "retained_roots": [
+      "Syncthing"
+    ]
+  }
+}

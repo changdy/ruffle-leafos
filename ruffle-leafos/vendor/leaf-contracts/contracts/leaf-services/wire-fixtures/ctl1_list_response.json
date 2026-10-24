@@ -1,0 +1,19 @@
+{
+  "description": "CTL-1 list response with one service.",
+  "message": {
+    "v": 1,
+    "id": "1",
+    "services": [
+      {
+        "service_id": "org.umrk.syncthing",
+        "desired_enabled": false,
+        "effective_state": "disabled"
+      }
+    ]
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"1\",\"services\":[{\"service_id\":\"org.umrk.syncthing\",\"desired_enabled\":false,\"effective_state\":\"disabled\"}]}",
+  "frame_total_bytes": 122,
+  "length_prefix_value": 118,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

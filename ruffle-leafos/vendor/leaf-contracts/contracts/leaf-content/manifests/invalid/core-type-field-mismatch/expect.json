@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "core-type-field-mismatch",
+  "note": "a path core carrying retroarch-only fields; the validator never infers intent from which fields happen to be present"
+}

@@ -1,0 +1,19 @@
+{
+  "description": "CTL-1 error: client sent a v this server cannot serve.",
+  "message": {
+    "v": 1,
+    "id": "4",
+    "error": {
+      "code": "unsupported-version",
+      "message": "server supports v1 only",
+      "supported_versions": [
+        1
+      ]
+    }
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"id\":\"4\",\"error\":{\"code\":\"unsupported-version\",\"message\":\"server supports v1 only\",\"supported_versions\":[1]}}",
+  "frame_total_bytes": 120,
+  "length_prefix_value": 116,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

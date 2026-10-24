@@ -1,0 +1,26 @@
+# Fixture for jawaka-i18n-test -- NOT a translation. Each entry exists to prove one
+# behavior, so edit it only alongside the assertion it serves:
+#   Settings / Display & Sound  translated plainly and with an ampersand
+#   verb|Open                   a context-qualified key resolves
+#   Refresh Rate                fuzzy, so the compiler drops it and it falls back
+#   Untranslated Thing          present with an empty msgstr, so it falls back
+# The test used to depend on a fixture that was never committed, so it could not
+# be run from the repo -- which is how a buffer overflow in it went unseen.
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Display & Sound"
+msgstr "显示与声音"
+
+msgid "verb|Open"
+msgstr "打开"
+
+#, fuzzy
+msgid "Refresh Rate"
+msgstr "刷新率"
+
+msgid "Untranslated Thing"
+msgstr ""

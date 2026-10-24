@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "unknown-extension-field",
+  "note": "system_extensions has exactly two fields; there is no shape in which a pak overrides a first-party default core"
+}

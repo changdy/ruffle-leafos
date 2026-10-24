@@ -1,0 +1,14 @@
+{
+  "description": "CTL-1 status request for a specific service.",
+  "message": {
+    "v": 1,
+    "op": "status",
+    "id": "2",
+    "service_id": "org.umrk.syncthing"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"op\":\"status\",\"id\":\"2\",\"service_id\":\"org.umrk.syncthing\"}",
+  "frame_total_bytes": 68,
+  "length_prefix_value": 64,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

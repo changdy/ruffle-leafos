@@ -1,0 +1,186 @@
+{
+  "$comment": "LIFE-1 subscription accept/reject fixtures. These separate the declared service_id in the subscribe payload (game-coordination-v1.schema.json#/definitions/subscribe_request) from trusted connection metadata Jawaka obtains itself (SO_PEERCRED on MLP1). The declared service_id is never authentication -- see contracts.md#life-1--game-coordination. peer_credential.membership is a structured, machine-derivable fact ('matches-current-generation' | 'stale-generation' | 'different-service' | 'foreground-app'), relative to the request's own declared service_id -- it is NOT the same field as outcome.accepted. validate_fixtures.py's decide_subscription() computes accept/reject FROM peer_credential alone and asserts it equals outcome -- it does not trust outcome directly, which is what let an inverted or self-contradictory case pass silently before. ack_ms/wait_ms clamp cases carry resolved_ack_ms/resolved_wait_ms, checked the same way resolved_stop_grace_ms is checked for SVC-1 manifests.",
+  "membership_values": ["matches-current-generation", "stale-generation", "different-service", "foreground-app"],
+  "cases": [
+    {
+      "name": "current-group-peer-accepted",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "1", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "notify",
+        "ack_ms": 250, "wait_ms": 0
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 4242,
+        "membership": "matches-current-generation",
+        "note": "pid 4242 is a non-zombie member of the currently reserved process group for org.umrk.syncthing, obtained via SO_PEERCRED"
+      },
+      "outcome": {
+        "accepted": true,
+        "response": {"v": 1, "id": "1", "ok": true},
+        "note": "Registration is bound to this exact supervised generation. A valid re-subscription from the same current generation replaces the previous registration."
+      }
+    },
+    {
+      "name": "stale-generation-peer-rejected",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "2", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "notify",
+        "ack_ms": 250, "wait_ms": 0
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 9001,
+        "membership": "stale-generation",
+        "note": "pid 9001 belongs to a process group from a Jawaka generation prior to the currently held generation lease for org.umrk.syncthing -- e.g. a straggler from before an old-generation-lock-contention resolved."
+      },
+      "outcome": {
+        "accepted": false,
+        "response": {
+          "v": 1, "id": "2",
+          "error": {"code": "stale-generation-peer", "message": "subscriber pid is not a member of the current generation's reserved process group"}
+        }
+      }
+    },
+    {
+      "name": "wrong-group-peer-rejected",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "3", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "notify",
+        "ack_ms": 250, "wait_ms": 0
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 5555,
+        "membership": "different-service",
+        "note": "pid 5555 is real and non-zombie, but is a member of a different service's reserved process group (org.umrk.other-service), not org.umrk.syncthing's."
+      },
+      "outcome": {
+        "accepted": false,
+        "response": {
+          "v": 1, "id": "3",
+          "error": {"code": "wrong-group-peer", "message": "subscriber pid belongs to a different service's process group"}
+        }
+      }
+    },
+    {
+      "name": "foreground-app-peer-rejected",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "4", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "notify",
+        "ack_ms": 250, "wait_ms": 0
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 6006,
+        "membership": "foreground-app",
+        "note": "pid 6006 is a foreground .pak app launched directly by the launcher (child_kind APP), not a member of any supervised service's reserved group. A foreground app declaring a service_id it does not own cannot subscribe."
+      },
+      "outcome": {
+        "accepted": false,
+        "response": {
+          "v": 1, "id": "4",
+          "error": {"code": "foreground-app-peer", "message": "subscriber pid is a foreground app, not a supervised service process"}
+        }
+      }
+    },
+    {
+      "name": "missing-peer-credential-rejected",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "5", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "notify",
+        "ack_ms": 250, "wait_ms": 0
+      },
+      "peer_credential": {
+        "available": false,
+        "membership": null,
+        "note": "SO_PEERCRED lookup failed or returned no usable pid for this connection. Native test-only credential injection must not exist in the MLP1 build, so there is no fallback path here -- an unavailable credential is rejected outright."
+      },
+      "outcome": {
+        "accepted": false,
+        "response": {
+          "v": 1, "id": "5",
+          "error": {"code": "missing-peer-credential", "message": "unable to obtain peer credentials for this connection"}
+        }
+      }
+    },
+    {
+      "name": "resubscription-same-generation-replaces-registration",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "6", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "stop",
+        "ack_ms": 500, "wait_ms": 5000
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 4242,
+        "membership": "matches-current-generation",
+        "note": "Same pid/group as current-group-peer-accepted, re-subscribing with a different mode/ack_ms/wait_ms (e.g. after a user settings change)."
+      },
+      "outcome": {
+        "accepted": true,
+        "response": {"v": 1, "id": "6", "ok": true},
+        "note": "Replaces the prior registration for org.umrk.syncthing from the same generation; there is at most one live registration per service per generation."
+      }
+    },
+    {
+      "name": "stop-check-capability-accepted",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "9", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "stop",
+        "ack_ms": 250, "wait_ms": 15000, "check_before_stop": true
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 4242,
+        "membership": "matches-current-generation",
+        "note": "The current supervised Syncthing controller advertises the optional check-before-stop extension."
+      },
+      "outcome": {
+        "accepted": true,
+        "response": {"v": 1, "id": "9", "ok": true},
+        "note": "The capability changes only the pre-stop check. Every proceed path still uses the supervisor's verified stop."
+      }
+    },
+    {
+      "name": "ack-ms-over-ceiling-clamped",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "7", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "notify",
+        "ack_ms": 5000, "wait_ms": 0
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 4242,
+        "membership": "matches-current-generation",
+        "note": "Same accepted peer as current-group-peer-accepted; only ack_ms is out of range here."
+      },
+      "outcome": {
+        "accepted": true,
+        "response": {"v": 1, "id": "7", "ok": true},
+        "note": "ack_ms=5000 is schema-valid (shape only requires a non-negative integer) but over the 1000ms protocol ceiling. Per contracts.md this is CLAMPED, mirroring stop_grace_ms's treatment in SVC-1 -- it is not rejected."
+      },
+      "resolved_ack_ms": 1000
+    },
+    {
+      "name": "wait-ms-over-ceiling-clamped",
+      "request": {
+        "v": 1, "op": "subscribe", "id": "8", "events": ["game"],
+        "service_id": "org.umrk.syncthing", "mode": "notify",
+        "ack_ms": 250, "wait_ms": 20000
+      },
+      "peer_credential": {
+        "available": true,
+        "pid": 4242,
+        "membership": "matches-current-generation",
+        "note": "Same accepted peer as current-group-peer-accepted; only wait_ms is out of range here."
+      },
+      "outcome": {
+        "accepted": true,
+        "response": {"v": 1, "id": "8", "ok": true},
+        "note": "wait_ms=20000 is schema-valid but over the 15000ms protocol ceiling; clamped, not rejected."
+      },
+      "resolved_wait_ms": 15000
+    }
+  ]
+}

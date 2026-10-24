@@ -1,0 +1,61 @@
+{
+  "id": "org.umrk.syncthing",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.syncthing",
+    "run": {
+      "path": "bin/leaf-syncthing",
+      "args": [
+        "service",
+        "run"
+      ]
+    },
+    "restart": "on-failure",
+    "default_enabled": false,
+    "stop_grace_ms": 10000,
+    "lifecycle": {
+      "game": "notify",
+      "stop_on_storage_change": true,
+      "stop_on_suspend": true
+    }
+  },
+  "state": {
+    "root": "Syncthing",
+    "revoke_on_uninstall": [
+      "leaf/token-0.json",
+      "leaf/token-1.json",
+      "leaf/token-2.json",
+      "leaf/token-3.json",
+      "leaf/token-4.json",
+      "leaf/token-5.json",
+      "leaf/token-6.json",
+      "leaf/token-7.json",
+      "leaf/token-8.json",
+      "leaf/token-9.json",
+      "leaf/token-10.json",
+      "leaf/token-11.json",
+      "leaf/token-12.json",
+      "leaf/token-13.json",
+      "leaf/token-14.json",
+      "leaf/token-15.json"
+    ],
+    "retained_roots": [
+      "Syncthing/root-0",
+      "Syncthing/root-1",
+      "Syncthing/root-2",
+      "Syncthing/root-3",
+      "Syncthing/root-4",
+      "Syncthing/root-5",
+      "Syncthing/root-6",
+      "Syncthing/root-7",
+      "Syncthing/root-8",
+      "Syncthing/root-9",
+      "Syncthing/root-10",
+      "Syncthing/root-11",
+      "Syncthing/root-12",
+      "Syncthing/root-13",
+      "Syncthing/root-14",
+      "Syncthing/root-15"
+    ]
+  }
+}

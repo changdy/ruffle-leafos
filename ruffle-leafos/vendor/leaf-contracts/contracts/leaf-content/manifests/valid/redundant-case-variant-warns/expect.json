@@ -1,0 +1,7 @@
+{
+  "valid": true,
+  "note": "accepted, but warned: matching is already case-insensitive, so the extra variants do nothing",
+  "warnings": [
+    "redundant-case-variant"
+  ]
+}

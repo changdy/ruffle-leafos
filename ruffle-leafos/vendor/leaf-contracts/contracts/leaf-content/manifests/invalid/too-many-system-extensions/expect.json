@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "too-many-system-extensions",
+  "note": "33 extensions; the cap is 32"
+}

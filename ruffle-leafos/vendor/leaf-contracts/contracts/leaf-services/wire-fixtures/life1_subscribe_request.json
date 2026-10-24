@@ -1,0 +1,20 @@
+{
+  "description": "LIFE-1 subscribe, default notify/250ms/0ms.",
+  "message": {
+    "v": 1,
+    "op": "subscribe",
+    "id": "1",
+    "events": [
+      "game"
+    ],
+    "service_id": "org.umrk.syncthing",
+    "mode": "notify",
+    "ack_ms": 250,
+    "wait_ms": 0
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"op\":\"subscribe\",\"id\":\"1\",\"events\":[\"game\"],\"service_id\":\"org.umrk.syncthing\",\"mode\":\"notify\",\"ack_ms\":250,\"wait_ms\":0}",
+  "frame_total_bytes": 130,
+  "length_prefix_value": 126,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "not-executable",
+  "note": "the frontend is exec'd in place of RetroArch, so frontend.path gets the same executable check as a path core's path"
+}

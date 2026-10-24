@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-content/content-scrape-v1.schema.json",
+  "title": "CONTENT-SCRAPE-1 optional content-pak scraping metadata",
+  "description": "Validates the optional top-level content_scrape companion block. CONTENT-1 validates provides separately.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "content_scrape": {
+      "type": "object",
+      "required": ["schema", "systems"],
+      "additionalProperties": false,
+      "properties": {
+        "schema": { "const": 1 },
+        "systems": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": { "$ref": "#/definitions/system" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "system": {
+      "type": "object",
+      "required": ["id", "name_source", "lookup_extension"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]{2,32}$"
+        },
+        "name_source": {
+          "const": "descriptor"
+        },
+        "lookup_extension": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]{1,16}$"
+        }
+      }
+    }
+  }
+}

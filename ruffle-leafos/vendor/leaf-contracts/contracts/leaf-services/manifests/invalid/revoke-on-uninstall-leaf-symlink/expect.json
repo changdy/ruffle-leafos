@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "revoke-on-uninstall-symlink-component",
+  "note": "Syncthing/trusted-clients.json (the declared leaf entry itself) is an existing symlink, not the real file"
+}

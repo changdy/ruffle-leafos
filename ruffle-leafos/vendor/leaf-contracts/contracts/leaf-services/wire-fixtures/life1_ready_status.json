@@ -1,0 +1,13 @@
+{
+  "description": "LIFE-1 ready status reply, terminal.",
+  "message": {
+    "v": 1,
+    "status": "ready",
+    "launch_id": "launch-0001"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"status\":\"ready\",\"launch_id\":\"launch-0001\"}",
+  "frame_total_bytes": 54,
+  "length_prefix_value": 50,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

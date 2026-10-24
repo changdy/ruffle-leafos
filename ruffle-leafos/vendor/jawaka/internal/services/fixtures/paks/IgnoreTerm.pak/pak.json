@@ -1,0 +1,13 @@
+{
+  "id": "org.umrk.fixture.ignoreterm",
+  "name": "Service Fixture: Ignore TERM",
+  "pak_version": "1.0.0",
+  "service": {
+    "schema": 1,
+    "id": "org.umrk.fixture.ignoreterm",
+    "run": { "path": "bin/service-fixture", "args": ["ignore-term"] },
+    "restart": "no",
+    "default_enabled": false,
+    "stop_grace_ms": 200
+  }
+}

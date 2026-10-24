@@ -1,0 +1,54 @@
+{
+  "$comment": "Supervisor state fixtures for the inherited generation lease (SVC-1). Each scenario is a precondition/action/outcome triple that A2's implementation and its tests must reproduce bit-for-bit. These are not JSON-schema-checkable; validate_fixtures.py only checks this file's own shape (every scenario has the required keys) and that every distinct 'category' named here has at least one scenario, per A0's Done-when list.",
+  "lease_path": "$UMRK_RUNTIME_PATH/services/<service-id>/generation.lease",
+  "scenarios": [
+    {
+      "name": "clean-acquisition",
+      "category": "clean-acquisition",
+      "precondition": "No generation.lease file exists yet for this service-id, or it exists unlocked (no live flock holder).",
+      "action": "New Jawaka generation opens (creating if absent) generation.lease and attempts LOCK_EX|LOCK_NB.",
+      "outcome": "Lock succeeds immediately. Jawaka records the ownership reservation (leader pid/pgid, launch instant, normalized lifecycle policy snapshot) and proceeds to launch the service, subject to lifecycle policy.",
+      "signalling_permitted": true
+    },
+    {
+      "name": "old-generation-lock-contention",
+      "category": "old-generation-lock-contention",
+      "precondition": "A prior Jawaka generation is still alive and holds LOCK_EX on generation.lease via an inherited-holder or guardian descendant per SVC-1.",
+      "action": "A new Jawaka generation starts (e.g. after a restart while the old one has not fully exited) and attempts LOCK_EX|LOCK_NB on the same lease file.",
+      "outcome": "LOCK_NB fails with EWOULDBLOCK. Jawaka reports effective state stale-generation for the service, keeps the desired enablement value unchanged, and does not start a replacement process. It retries the non-blocking acquisition once per second while desired enablement remains true; an explicit user Run triggers one immediate extra attempt.",
+      "signalling_permitted": false
+    },
+    {
+      "name": "acquisition-after-last-old-holder-exits",
+      "category": "acquisition-after-last-old-holder-exits",
+      "precondition": "Old-generation-lock-contention was in force; the last process holding the lease's open file description (inherited-holder or guardian) has now exited, closing its duplicate of the descriptor.",
+      "action": "The new Jawaka generation's periodic (1s) or Run-triggered LOCK_EX|LOCK_NB retry runs again against the same still-open lease file.",
+      "outcome": "The lock succeeds. This is the positive proof that every cooperating holder from the old generation is gone. Jawaka retires the stale ownership record and starts the desired service, subject to lifecycle policy. It never unlinks or recreates the lease file to force this transition.",
+      "signalling_permitted": true
+    },
+    {
+      "name": "stale-record-report-only",
+      "category": "stale-ownership-record-report-only",
+      "precondition": "After a Jawaka process restart, the old ownership reservation in runtime tmpfs is gone (children were re-parented to init/nearest subreaper), but the recorded pgid number may still be observed in /proc, possibly even reused by an unrelated later process.",
+      "action": "Any caller (status IPC, lifecycle decision table, restart logic) inspects the stale ownership record or a /proc pgid match alone.",
+      "outcome": "The stale record, and a bare pgid match against /proc, is report-only. Elapsed time, a missing leader pid, or PDEATHSIG delivery are never treated as permission to signal. Only a held reservation for that exact pgid (i.e. one this live generation itself acquired and verified) authorizes signalling. This holds identically whether the pgid was never reused, or was reused by a same-numbered unrelated process.",
+      "signalling_permitted": false
+    },
+    {
+      "name": "daemon-restart-cleanup-preserves-lease",
+      "category": "daemon-restart-cleanup-preserves-lease",
+      "precondition": "Jawaka restarts and performs its normal scratch-file cleanup (stale sockets etc.) under $UMRK_RUNTIME_PATH.",
+      "action": "Cleanup walks the runtime directory.",
+      "outcome": "generation.lease files and their inode identity under $UMRK_RUNTIME_PATH/services/*/ are preserved untouched. The whole tree, including every lease file, disappears only at reboot when tmpfs itself is recreated -- the point at which no old service process can possibly survive.",
+      "signalling_permitted": false
+    },
+    {
+      "name": "stale-generation-with-untrustworthy-policy",
+      "category": "stale-generation-fail-safe-policy",
+      "precondition": "A stale generation's lease is still held (old-generation-lock-contention), and the last validated lifecycle policy snapshot for that service is missing or unparseable.",
+      "action": "A lifecycle decision (e.g. LIFE-1 game-launch decision table, or a storage/suspend trigger) needs to know whether the stale group is a writer under lifecycle.game/stop_on_storage_change/stop_on_suspend.",
+      "outcome": "Fail safe as though every stop trigger were enabled. A missing pak or a disabled desired state does not prove the old process stopped.",
+      "signalling_permitted": false
+    }
+  ]
+}

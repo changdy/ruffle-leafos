@@ -1,0 +1,4 @@
+{
+  "valid": true,
+  "note": "absent lifecycle means game: ignore, stop_on_storage_change: false, stop_on_suspend: false"
+}

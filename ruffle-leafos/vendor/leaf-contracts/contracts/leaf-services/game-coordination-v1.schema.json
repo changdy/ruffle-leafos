@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-services/game-coordination-v1.schema.json",
+  "title": "game-coordination-v1 (LIFE-1)",
+  "description": "Message shapes for the one cooperative lifecycle path: game launch. Rides the same 4-byte length-prefixed framing as CTL-1 over a persistent subscriber connection (see contracts.md#life-1--game-coordination). This schema validates JSON payload shape only; peer-credential acceptance (SO_PEERCRED vs. the reserved process group) is not JSON-visible and is covered by supervisor-state/ and the accept/reject fixtures, not by this schema.",
+  "definitions": {
+    "subscribe_request": {
+      "type": "object",
+      "required": ["v", "op", "id", "events", "service_id", "mode", "ack_ms", "wait_ms"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "op": { "const": "subscribe" },
+        "id": { "type": "string", "minLength": 1 },
+        "events": {
+          "type": "array",
+          "items": { "const": "game" },
+          "minItems": 1
+        },
+        "service_id": { "type": "string", "minLength": 1 },
+        "mode": { "type": "string", "enum": ["notify", "stop"] },
+        "ack_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Protocol ceiling is 1000ms, but contracts.md says this range is CLAMPED, not rejected -- mirroring stop_grace_ms's clamp-not-reject treatment in SVC-1. A value above 1000 is schema-valid and gets clamped (to 1000) by business logic (resolve_ack_ms() in scripts/validate_fixtures.py), never turned into a protocol error. Only a negative value is a genuine shape violation."
+        },
+        "wait_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Same clamp-not-reject treatment as ack_ms; protocol ceiling 15000ms, clamped by resolve_wait_ms()."
+        },
+        "check_before_stop": {
+          "type": "boolean",
+          "description": "Optional, defaults false, and is valid only with mode stop. Business validation enforces that cross-field rule."
+        }
+      }
+    },
+    "subscribe_ack": {
+      "type": "object",
+      "required": ["v", "id", "ok"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "ok": { "const": true }
+      }
+    },
+    "subscribe_reject": {
+      "type": "object",
+      "required": ["v", "id", "error"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "stale-generation-peer",
+                "wrong-group-peer",
+                "foreground-app-peer",
+                "missing-peer-credential",
+                "unknown-service"
+              ]
+            },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    },
+    "game_start_event": {
+      "type": "object",
+      "required": ["v", "event", "launch_id", "source_id", "saves_path", "states_path", "wait_budget_ms"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "event": { "const": "game.start" },
+        "launch_id": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string", "enum": ["primary", "secondary_sd"] },
+        "saves_path": { "type": "string" },
+        "states_path": { "type": "string" },
+        "wait_budget_ms": { "type": "integer", "minimum": 0, "maximum": 15000 }
+      }
+    },
+    "game_check_event": {
+      "type": "object",
+      "required": ["v", "event", "launch_id", "source_id", "saves_path", "states_path", "wait_budget_ms"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "event": { "const": "game.check" },
+        "launch_id": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string", "enum": ["primary", "secondary_sd"] },
+        "saves_path": { "type": "string" },
+        "states_path": { "type": "string" },
+        "wait_budget_ms": { "type": "integer", "minimum": 0, "maximum": 15000 }
+      }
+    },
+    "game_cancel_event": {
+      "type": "object",
+      "required": ["v", "event", "launch_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "event": { "const": "game.cancel" },
+        "launch_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "game_abort_event": {
+      "type": "object",
+      "required": ["v", "event", "launch_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "event": { "const": "game.abort" },
+        "launch_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "game_finish_event": {
+      "type": "object",
+      "required": ["v", "event", "launch_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "event": { "const": "game.finish" },
+        "launch_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "waiting_status": {
+      "type": "object",
+      "required": ["v", "status", "launch_id", "pending_items"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "status": { "const": "waiting" },
+        "launch_id": { "type": "string", "minLength": 1 },
+        "pending_items": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "check_waiting_status": {
+      "type": "object",
+      "required": ["v", "status", "launch_id", "pending_items", "pending_bytes"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "status": { "const": "waiting" },
+        "launch_id": { "type": "string", "minLength": 1 },
+        "pending_items": { "type": "integer", "minimum": 0 },
+        "pending_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "ready_status": {
+      "type": "object",
+      "required": ["v", "status", "launch_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "status": { "const": "ready" },
+        "launch_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "stop_status": {
+      "type": "object",
+      "required": ["v", "status", "launch_id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "status": { "const": "stop" },
+        "launch_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "error_status": {
+      "type": "object",
+      "required": ["v", "status", "launch_id", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "status": { "const": "error" },
+        "launch_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string" }
+      }
+    },
+    "game_state_request": {
+      "type": "object",
+      "required": ["v", "op", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "op": { "const": "game.state" },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "game_state_response_active": {
+      "type": "object",
+      "required": ["v", "id", "active", "launch_id", "source_id", "saves_path", "states_path"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "active": { "const": true },
+        "launch_id": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string", "enum": ["primary", "secondary_sd"] },
+        "saves_path": { "type": "string" },
+        "states_path": { "type": "string" }
+      }
+    },
+    "game_state_response_inactive": {
+      "type": "object",
+      "required": ["v", "id", "active"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "id": { "type": "string" },
+        "active": { "const": false }
+      }
+    }
+  }
+}

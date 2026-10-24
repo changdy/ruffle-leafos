@@ -1,0 +1,57 @@
+{
+  "ui": {
+    "ui_font": {
+      "path": "fonts/SpaceGrotesk/SpaceGrotesk-Regular.ttf",
+      "size": 36
+    },
+    "text_color": "#E8F1E3",
+    "background_color": "#0F160E",
+    "highlight_color": "#7FB069",
+    "highlight_text_color": "#0F160E",
+    "disabled_color": "#7E9579",
+    "hint_color": "#7E9579",
+    "tab_color": "#7FB06970",
+    "tab_selected_color": "#7FB069",
+    "pill_radius_ratio": 1.0
+  },
+  "status_bar": {
+    "show_battery_level": true,
+    "show_clock": true,
+    "show_wifi": true,
+    "text_color": "#E8F1E3"
+  },
+  "button_hints": {
+    "button_a_color": "#243020",
+    "button_b_color": "#243020",
+    "button_x_color": "#243020",
+    "button_y_color": "#243020",
+    "button_bg_color": "#243020",
+    "glyph_bg_color": "#7FB069",
+    "button_text_color": "#0F160E",
+    "text_color": "#E8F1E3"
+  },
+  "menu": {
+    "background_color": "#0F160E"
+  },
+  "cjk_font": {
+    "path": "fonts/SourceHanSansCN/SourceHanSansCN-Regular.otf",
+    "size": 36
+  },
+  "launcher": {
+    "layout": "grid",
+    "grid_cols": 4,
+    "grid_rows": 3,
+    "grid_margin": 45,
+    "grid_gutter": 48,
+    "grid_radius_pct": 18,
+    "grid_border_w": 2,
+    "grid_focus_border_w": 6,
+    "grid_border_color": "#FFFFFF3C",
+    "grid_focus_border_color": "#22E8F0",
+    "grid_anim_ms": 180,
+    "grid_icon_dir": "system_icons",
+    "grid_label_dir": "grid_labels",
+    "grid_focus_scale_pct": 120,
+    "grid_status_scale_pct": 70
+  }
+}

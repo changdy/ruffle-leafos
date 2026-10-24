@@ -1,0 +1,6 @@
+libdir=C:/Users/changdy/Documents/Codex/2026-10-23/new-chat-4/ruffle-leafos/target-libs
+Name: alsa
+Description: User-supplied leaf-12 ALSA link library; version not inferred
+Version: 0
+Libs: -L${libdir} -lasound
+Cflags:

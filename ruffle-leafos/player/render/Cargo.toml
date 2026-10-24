@@ -1,0 +1,54 @@
+[package]
+name = "ruffle_render"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+ruffle_wstr = { path = "../wstr" }
+swf = { path = "../swf"}
+pixel_bender = { path = "pixel_bender"}
+tracing = { workspace = true }
+gif = "0.14.1"
+png = "0.18.1"
+flate2 = { workspace = true }
+smallvec = { workspace = true }
+lyon = { version = "1.0.1", optional = true }
+lyon_geom = "1.0.6"
+thiserror = { workspace = true }
+wasm-bindgen = { workspace = true, optional = true }
+enum-map = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+clap = { workspace = true, optional = true }
+h263-rs-yuv = { git = "https://github.com/ruffle-rs/h263-rs", rev = "b3f905511acc7b80861dac45fdc5ca913b6029e5"}
+num-traits = { workspace = true }
+num-derive = { workspace = true }
+byteorder = { workspace = true }
+wgpu = { workspace = true, optional = true }
+indexmap = { workspace = true }
+naga-agal = { path = "naga-agal" }
+
+# This crate has a `compile_error!` on apple platforms
+[target.'cfg(not(target_vendor = "apple"))'.dependencies.renderdoc]
+version = "0.12.1"
+optional = true
+
+[dependencies.jpeg-decoder]
+version = "0.3.2"
+default-features = false # can't use rayon on web
+
+[dev-dependencies]
+approx = { workspace = true }
+
+[features]
+default = []
+tessellator = ["lyon"]
+web = ["wasm-bindgen"]
+wgpu = ["dep:wgpu"]
+serde = ["dep:serde"]

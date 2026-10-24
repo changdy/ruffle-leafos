@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "unknown-schema",
+  "note": "a newer schema is refused, never guessed at, so a v2 pak fails loudly on a v1 device"
+}

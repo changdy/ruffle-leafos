@@ -1,0 +1,250 @@
+{
+  "name": "ScummVM",
+  "platform": "mlp1",
+  "pak_version": "1.0.0",
+  "min_leaf_version": "0.11.0",
+  "provides": {
+    "schema": 1,
+    "systems": [
+      {
+        "id": "SCUMMVM",
+        "name": "ScummVM",
+        "patterns": [
+          "SCUMMVM"
+        ],
+        "extensions": [
+          "scummvm",
+          "svm"
+        ],
+        "archive_extensions": [],
+        "archive_mode": "pass_through",
+        "playlist_extensions": [],
+        "m3u_generation": "none",
+        "rom_root": "Roms/SCUMMVM",
+        "image_root": "Images/SCUMMVM",
+        "default_core": "scummvm",
+        "icon_flat": "art/SCUMMVM.png",
+        "icon_photographic": null,
+        "screenscraper_platform_ids": [
+          123
+        ],
+        "group": "Computer",
+        "bios_directory": null
+      }
+    ],
+    "system_extensions": [
+      {
+        "system_id": "SYS00",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS01",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS02",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS03",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS04",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS05",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS06",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS07",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS08",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS09",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS10",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS11",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS12",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS13",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS14",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS15",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS16",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS17",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS18",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS19",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS20",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS21",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS22",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS23",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS24",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS25",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS26",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS27",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS28",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS29",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS30",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS31",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      },
+      {
+        "system_id": "SYS32",
+        "add_alternate_cores": [
+          "scummvm"
+        ]
+      }
+    ],
+    "cores": [
+      {
+        "id": "scummvm",
+        "display_name": "ScummVM",
+        "type": "retroarch",
+        "libretro_name": "scummvm",
+        "file_name": "cores/scummvm_libretro.so",
+        "info_name": "info/scummvm_libretro.info",
+        "config_folder": "ScummVM",
+        "supports_menu": true,
+        "supports_savestate": false,
+        "supports_disk_control": false
+      }
+    ]
+  }
+}

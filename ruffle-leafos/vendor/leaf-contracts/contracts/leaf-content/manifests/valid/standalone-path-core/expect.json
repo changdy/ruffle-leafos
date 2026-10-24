@@ -1,0 +1,4 @@
+{
+  "valid": true,
+  "note": "a type:\"path\" standalone emulator instead of a libretro core; the target must be executable"
+}

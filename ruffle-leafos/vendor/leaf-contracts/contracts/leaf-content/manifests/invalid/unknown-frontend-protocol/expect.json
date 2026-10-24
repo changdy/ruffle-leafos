@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "unknown-frontend-protocol",
+  "note": "a protocol this reader does not speak is refused, never guessed at, so a pak written for a later protocol cannot be run through the wrong one"
+}

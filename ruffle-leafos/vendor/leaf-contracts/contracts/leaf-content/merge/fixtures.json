@@ -1,0 +1,2251 @@
+{
+  "contract": "content-paks-v1",
+  "note": "base + contributor inputs -> expected merged catalog. `expect_diagnostics` is hand-asserted; `expected` and `expected_sha256` are generated and must be reproduced byte-identically by Jawaka's compiler.",
+  "base": {
+    "platform": "mlp1",
+    "systems": [
+      {
+        "id": "SNES",
+        "name": "Super Nintendo",
+        "patterns": [
+          "SNES",
+          "snes"
+        ],
+        "extensions": [
+          "sfc",
+          "smc"
+        ],
+        "rom_root": "Roms/SNES",
+        "image_root": "Images/SNES",
+        "default_core": "snes9x",
+        "alternate_cores": []
+      },
+      {
+        "id": "PSX",
+        "name": "PlayStation",
+        "patterns": [
+          "PSX"
+        ],
+        "extensions": [
+          "cue",
+          "chd"
+        ],
+        "rom_root": "Roms/PSX",
+        "image_root": "Images/PSX",
+        "default_core": "pcsx_rearmed",
+        "alternate_cores": []
+      }
+    ],
+    "cores": [
+      {
+        "id": "snes9x",
+        "display_name": "Snes9x",
+        "type": "retroarch",
+        "libretro_name": "snes9x",
+        "file_name": "snes9x_libretro.so",
+        "info_name": "snes9x_libretro.info",
+        "config_folder": "Snes9x",
+        "status": "packaged"
+      },
+      {
+        "id": "pcsx_rearmed",
+        "display_name": "PCSX ReARMed",
+        "type": "retroarch",
+        "libretro_name": "pcsx_rearmed",
+        "file_name": "pcsx_rearmed_libretro.so",
+        "info_name": "pcsx_rearmed_libretro.info",
+        "config_folder": "PCSX-ReARMed",
+        "status": "packaged"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "accept-new-system",
+      "note": "the ordinary case: a new system id, no namespace collision.",
+      "contributors": [
+        {
+          "provider": "mlp1/ScummVM.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [],
+      "diagnostics": [],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SCUMMVM",
+            "name": "ScummVM",
+            "patterns": [
+              "SCUMMVM"
+            ],
+            "extensions": [
+              "scummvm"
+            ],
+            "rom_root": "Roms/SCUMMVM",
+            "image_root": "Images/SCUMMVM",
+            "default_core": "scummvm",
+            "alternate_cores": [],
+            "icon_flat": "art/SCUMMVM.png",
+            "provider": "mlp1/ScummVM.pak"
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "scummvm",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/scummvm_libretro.info",
+            "config_folder": "ScummVM",
+            "provider": "mlp1/ScummVM.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "4c7fd0197f1149b10f99b1c51200682db5a679671660ae282f7b322f7b521c9f"
+    },
+    {
+      "name": "accept-system-extension",
+      "note": "system_extensions[] is the ONLY way to touch an existing system; the alternate core is appended, nothing is restated.",
+      "contributors": [
+        {
+          "provider": "mlp1/MySnes.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [],
+            "cores": [
+              {
+                "id": "mysnescore",
+                "display_name": "My SNES Core",
+                "type": "retroarch",
+                "libretro_name": "mysnescore",
+                "file_name": "cores/mysnescore_libretro.so",
+                "info_name": "info/mysnescore_libretro.info",
+                "config_folder": "MySnes"
+              }
+            ],
+            "system_extensions": [
+              {
+                "system_id": "SNES",
+                "add_alternate_cores": [
+                  "mysnescore"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expect_diagnostics": [],
+      "diagnostics": [],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": [
+              "mysnescore"
+            ]
+          }
+        ],
+        "cores": [
+          {
+            "id": "mysnescore",
+            "display_name": "My SNES Core",
+            "type": "retroarch",
+            "libretro_name": "mysnescore",
+            "file_name": "cores/mysnescore_libretro.so",
+            "info_name": "info/mysnescore_libretro.info",
+            "config_folder": "MySnes",
+            "provider": "mlp1/MySnes.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "5d835535f5bde61b1e7721d69b0ef4124aefacd5d21d0cc228cde2a186c169ea"
+    },
+    {
+      "name": "accept-frontend-core",
+      "note": "a retroarch core that ships its own RetroArch frontend (LEAF-RA-1), added to an existing system. The merge copies an accepted core entry through verbatim, so `frontend` reaches the merged core row unchanged and still pak-relative, beside the generated provider and status.",
+      "contributors": [
+        {
+          "provider": "mlp1/MySnes32.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [],
+            "cores": [
+              {
+                "id": "mysnes32",
+                "display_name": "My SNES Core (32-bit)",
+                "type": "retroarch",
+                "libretro_name": "mysnes32",
+                "file_name": "cores/mysnes32_libretro.so",
+                "info_name": "info/mysnes32_libretro.info",
+                "config_folder": "MySnes32",
+                "frontend": {
+                  "path": "frontend/retroarch.sh",
+                  "protocol": "leaf-ra-1"
+                }
+              }
+            ],
+            "system_extensions": [
+              {
+                "system_id": "SNES",
+                "add_alternate_cores": [
+                  "mysnes32"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expect_core_fields": {
+        "mysnes32": {
+          "frontend": {
+            "path": "frontend/retroarch.sh",
+            "protocol": "leaf-ra-1"
+          },
+          "provider": "mlp1/MySnes32.pak",
+          "status": "packaged",
+          "requires_direct_drm": false
+        }
+      },
+      "expect_diagnostics": [],
+      "diagnostics": [],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": [
+              "mysnes32"
+            ]
+          }
+        ],
+        "cores": [
+          {
+            "id": "mysnes32",
+            "display_name": "My SNES Core (32-bit)",
+            "type": "retroarch",
+            "libretro_name": "mysnes32",
+            "file_name": "cores/mysnes32_libretro.so",
+            "info_name": "info/mysnes32_libretro.info",
+            "config_folder": "MySnes32",
+            "frontend": {
+              "path": "frontend/retroarch.sh",
+              "protocol": "leaf-ra-1"
+            },
+            "provider": "mlp1/MySnes32.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "6559ada7918709a75bef8af2b90d05a84a91bb8a09a16450745c0543d41dc797"
+    },
+    {
+      "name": "base-collision-system-id",
+      "note": "a systems[] entry whose id already exists is a COLLISION, not an override. Overriding a first-party system is a non-goal.",
+      "contributors": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SNES",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "base-collision"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "base-collision",
+          "detail": "system SNES claims system_id=snes already owned by the release catalog"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "scummvm",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/scummvm_libretro.info",
+            "config_folder": "ScummVM",
+            "provider": "mlp1/Rogue.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "14215b53a1b05d7cb08ec681846b615cacfd4542f07c60642f0dd4b31b30d54a"
+    },
+    {
+      "name": "base-collision-pattern",
+      "note": "P1-5: a unique id is not enough. Folder matching is first-match-wins, so claiming another system's pattern steals its ROM folder.",
+      "contributors": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM",
+                  "snes"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "base-collision"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "base-collision",
+          "detail": "system SCUMMVM claims pattern=snes already owned by the release catalog"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "scummvm",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/scummvm_libretro.info",
+            "config_folder": "ScummVM",
+            "provider": "mlp1/Rogue.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "14215b53a1b05d7cb08ec681846b615cacfd4542f07c60642f0dd4b31b30d54a"
+    },
+    {
+      "name": "base-collision-rom-root",
+      "contributors": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SNES",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "base-collision"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "base-collision",
+          "detail": "system SCUMMVM claims rom_root=roms/snes already owned by the release catalog"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "scummvm",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/scummvm_libretro.info",
+            "config_folder": "ScummVM",
+            "provider": "mlp1/Rogue.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "14215b53a1b05d7cb08ec681846b615cacfd4542f07c60642f0dd4b31b30d54a"
+    },
+    {
+      "name": "base-collision-image-root",
+      "contributors": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SNES",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "note": "the system is refused for its image_root claim alone. Its core is untouched and stays in the catalog -- refusing a system does not retract a core another pak may extend a system with.",
+      "expect_diagnostics": [
+        "base-collision"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "base-collision",
+          "detail": "system SCUMMVM claims image_root=images/snes already owned by the release catalog"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "scummvm",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/scummvm_libretro.info",
+            "config_folder": "ScummVM",
+            "provider": "mlp1/Rogue.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "14215b53a1b05d7cb08ec681846b615cacfd4542f07c60642f0dd4b31b30d54a"
+    },
+    {
+      "name": "base-collision-core-id",
+      "contributors": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "snes9x",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "snes9x",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "note": "the core collides and is dropped; the system survives because default_core snes9x still resolves -- to the RELEASE core, which is exactly what should happen.",
+      "expect_diagnostics": [
+        "base-collision"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "base-collision",
+          "detail": "core snes9x claims core_id=snes9x already owned by the release catalog"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SCUMMVM",
+            "name": "ScummVM",
+            "patterns": [
+              "SCUMMVM"
+            ],
+            "extensions": [
+              "scummvm"
+            ],
+            "rom_root": "Roms/SCUMMVM",
+            "image_root": "Images/SCUMMVM",
+            "default_core": "snes9x",
+            "alternate_cores": [],
+            "icon_flat": "art/SCUMMVM.png",
+            "provider": "mlp1/Rogue.pak"
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "baf2d7f7f5d1f4e10f8a70dce837f567125d334ca7e228eea549fd3a7b73a505"
+    },
+    {
+      "name": "base-collision-config-folder",
+      "note": "case-folded: 'snes9x' collides with the release 'Snes9x'. RetroArch would otherwise write both cores' saves into one FAT32 directory.",
+      "contributors": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "snes9x"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "base-collision",
+        "default-core-unavailable"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "base-collision",
+          "detail": "core scummvm claims config_folder=snes9x already owned by the release catalog"
+        },
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "default-core-unavailable",
+          "detail": "system SCUMMVM needs core scummvm, which is not available after merge; the system is refused too rather than producing a tile that cannot launch"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "ce36d8f368cea1575a2b906b0f8e5039b6947dcccea79573e94f61de984a0dbc"
+    },
+    {
+      "name": "base-collision-info-name",
+      "note": "materialized .info FILENAMES share one merged directory, so the basename is a namespace even though the pak-relative paths differ.",
+      "contributors": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/snes9x_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "base-collision",
+        "default-core-unavailable"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "base-collision",
+          "detail": "core scummvm claims info_name=snes9x_libretro.info already owned by the release catalog"
+        },
+        {
+          "provider": "mlp1/Rogue.pak",
+          "reason": "default-core-unavailable",
+          "detail": "system SCUMMVM needs core scummvm, which is not available after merge; the system is refused too rather than producing a tile that cannot launch"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "ce36d8f368cea1575a2b906b0f8e5039b6947dcccea79573e94f61de984a0dbc"
+    },
+    {
+      "name": "contributor-collision-both-refused",
+      "note": "D9: BOTH sides are refused. Never resolved by readdir order -- a contract that depends on directory iteration is not a contract.",
+      "contributors": [
+        {
+          "provider": "mlp1/Alpha.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "ALPHA",
+                "name": "ScummVM",
+                "patterns": [
+                  "ALPHA"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/ALPHA",
+                "default_core": "alpha",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "alpha",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "alpha",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/alpha_libretro.info",
+                "config_folder": "Alpha"
+              }
+            ],
+            "system_extensions": []
+          }
+        },
+        {
+          "provider": "mlp1/Beta.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "BETA",
+                "name": "ScummVM",
+                "patterns": [
+                  "BETA"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/BETA",
+                "default_core": "beta",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "beta",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "beta",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/beta_libretro.info",
+                "config_folder": "Beta"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "note_detail": "both systems claim rom_root Roms/SCUMMVM",
+      "expect_diagnostics": [
+        "contributor-collision",
+        "contributor-collision"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Alpha.pak",
+          "reason": "contributor-collision",
+          "detail": "system ALPHA claims rom_root=roms/scummvm, also claimed by mlp1/Beta.pak; both refused"
+        },
+        {
+          "provider": "mlp1/Beta.pak",
+          "reason": "contributor-collision",
+          "detail": "system BETA claims rom_root=roms/scummvm, also claimed by mlp1/Alpha.pak; both refused"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "alpha",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "alpha",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/alpha_libretro.info",
+            "config_folder": "Alpha",
+            "provider": "mlp1/Alpha.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "beta",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "beta",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/beta_libretro.info",
+            "config_folder": "Beta",
+            "provider": "mlp1/Beta.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "a5a1aeb0fb79224dd5864479fefeff1bf043b4c0ffc8c7cc13ff51c3a0a7c2e4"
+    },
+    {
+      "name": "casefold-contributor-collision",
+      "note": "matching is already case-insensitive, so 'SCUMMVM' and 'scummvm' are the same claim.",
+      "contributors": [
+        {
+          "provider": "mlp1/Alpha.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "ALPHA",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/ALPHA",
+                "image_root": "Images/ALPHA",
+                "default_core": "alpha",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "alpha",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "alpha",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/alpha_libretro.info",
+                "config_folder": "Alpha"
+              }
+            ],
+            "system_extensions": []
+          }
+        },
+        {
+          "provider": "mlp1/Beta.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "BETA",
+                "name": "ScummVM",
+                "patterns": [
+                  "scummvm"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/BETA",
+                "image_root": "Images/BETA",
+                "default_core": "beta",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "beta",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "beta",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/beta_libretro.info",
+                "config_folder": "Beta"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "contributor-collision",
+        "contributor-collision"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Alpha.pak",
+          "reason": "contributor-collision",
+          "detail": "system ALPHA claims pattern=scummvm, also claimed by mlp1/Beta.pak; both refused"
+        },
+        {
+          "provider": "mlp1/Beta.pak",
+          "reason": "contributor-collision",
+          "detail": "system BETA claims pattern=scummvm, also claimed by mlp1/Alpha.pak; both refused"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "alpha",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "alpha",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/alpha_libretro.info",
+            "config_folder": "Alpha",
+            "provider": "mlp1/Alpha.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "beta",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "beta",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/beta_libretro.info",
+            "config_folder": "Beta",
+            "provider": "mlp1/Beta.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "a5a1aeb0fb79224dd5864479fefeff1bf043b4c0ffc8c7cc13ff51c3a0a7c2e4"
+    },
+    {
+      "name": "default-core-unavailable",
+      "note": "the pak's core is refused for a base collision, so its system is refused too. A tile that cannot launch is worse than no tile -- dependency cleanup is part of the merge.",
+      "contributors": [
+        {
+          "provider": "mlp1/ScummVM.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "scummvm",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "SNES9X"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "base-collision",
+        "default-core-unavailable"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/ScummVM.pak",
+          "reason": "base-collision",
+          "detail": "core scummvm claims config_folder=snes9x already owned by the release catalog"
+        },
+        {
+          "provider": "mlp1/ScummVM.pak",
+          "reason": "default-core-unavailable",
+          "detail": "system SCUMMVM needs core scummvm, which is not available after merge; the system is refused too rather than producing a tile that cannot launch"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "ce36d8f368cea1575a2b906b0f8e5039b6947dcccea79573e94f61de984a0dbc"
+    },
+    {
+      "name": "unknown-default-core",
+      "note": "distinct from default-core-unavailable: nothing was refused, the manifest simply names a core that exists nowhere. Different diagnosis, different developer fix.",
+      "contributors": [
+        {
+          "provider": "mlp1/ScummVM.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "SCUMMVM",
+                "name": "ScummVM",
+                "patterns": [
+                  "SCUMMVM"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/SCUMMVM",
+                "image_root": "Images/SCUMMVM",
+                "default_core": "nosuchcore",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "scummvm",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "scummvm",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/scummvm_libretro.info",
+                "config_folder": "ScummVM"
+              }
+            ],
+            "system_extensions": []
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "unknown-default-core"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/ScummVM.pak",
+          "reason": "unknown-default-core",
+          "detail": "system SCUMMVM needs core nosuchcore, which is not available after merge; the system is refused too rather than producing a tile that cannot launch"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "scummvm",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/scummvm_libretro.info",
+            "config_folder": "ScummVM",
+            "provider": "mlp1/ScummVM.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "aaad002c27a0aaa0ba457fe3c2495f7e28f15eb0e4201f4a712696f535450a37"
+    },
+    {
+      "name": "dangling-extension-system",
+      "note": "T-5: an extension whose system is absent after merge is dropped and logged, not silently ignored.",
+      "contributors": [
+        {
+          "provider": "mlp1/MySnes.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [],
+            "cores": [
+              {
+                "id": "mysnescore",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "mysnescore",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/mysnescore_libretro.info",
+                "config_folder": "MySnes"
+              }
+            ],
+            "system_extensions": [
+              {
+                "system_id": "NOSUCH",
+                "add_alternate_cores": [
+                  "mysnescore"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "dangling-extension-system"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/MySnes.pak",
+          "reason": "dangling-extension-system",
+          "detail": "system_extensions names NOSUCH, which no system provides after merge; extension dropped"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "mysnescore",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "mysnescore",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/mysnescore_libretro.info",
+            "config_folder": "MySnes",
+            "provider": "mlp1/MySnes.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "85bde079f90cb6ad30130a828c3b438dfe9ab637bc33d6a3b45bb3e7ef6203d0"
+    },
+    {
+      "name": "dangling-alternate-core",
+      "note": "the extension is ACCEPTED and the one bad name dropped: a single typo should not cost the developer the other entries.",
+      "contributors": [
+        {
+          "provider": "mlp1/MySnes.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [],
+            "cores": [
+              {
+                "id": "mysnescore",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "mysnescore",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/mysnescore_libretro.info",
+                "config_folder": "MySnes"
+              }
+            ],
+            "system_extensions": [
+              {
+                "system_id": "SNES",
+                "add_alternate_cores": [
+                  "mysnescore",
+                  "ghost"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "dangling-alternate-core"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/MySnes.pak",
+          "reason": "dangling-alternate-core",
+          "detail": "system_extensions for SNES names core ghost, absent after merge; that name dropped, extension accepted"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": [
+              "mysnescore"
+            ]
+          }
+        ],
+        "cores": [
+          {
+            "id": "mysnescore",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "mysnescore",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/mysnescore_libretro.info",
+            "config_folder": "MySnes",
+            "provider": "mlp1/MySnes.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "9c1c8a25f4590b9f196f132d667706889b9613ddbe0ee6ef6b691eb521a46b37"
+    },
+    {
+      "name": "refusal-cascade",
+      "note": "one pass is not enough. Alpha's core collides with the base, which refuses Alpha's system, which strands Beta's extension on that system. Cleanup iterates to a fixed point.",
+      "contributors": [
+        {
+          "provider": "mlp1/Alpha.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [
+              {
+                "id": "ALPHA",
+                "name": "ScummVM",
+                "patterns": [
+                  "ALPHA"
+                ],
+                "extensions": [
+                  "scummvm"
+                ],
+                "rom_root": "Roms/ALPHA",
+                "image_root": "Images/ALPHA",
+                "default_core": "alpha",
+                "alternate_cores": [],
+                "icon_flat": "art/SCUMMVM.png"
+              }
+            ],
+            "cores": [
+              {
+                "id": "alpha",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "alpha",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/alpha_libretro.info",
+                "config_folder": "Snes9x"
+              }
+            ],
+            "system_extensions": []
+          }
+        },
+        {
+          "provider": "mlp1/Beta.pak",
+          "provides": {
+            "schema": 1,
+            "systems": [],
+            "cores": [
+              {
+                "id": "beta",
+                "display_name": "ScummVM",
+                "type": "retroarch",
+                "libretro_name": "beta",
+                "file_name": "cores/scummvm_libretro.so",
+                "info_name": "info/beta_libretro.info",
+                "config_folder": "Beta"
+              }
+            ],
+            "system_extensions": [
+              {
+                "system_id": "ALPHA",
+                "add_alternate_cores": [
+                  "beta"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "expect_diagnostics": [
+        "base-collision",
+        "default-core-unavailable",
+        "dangling-extension-system"
+      ],
+      "diagnostics": [
+        {
+          "provider": "mlp1/Alpha.pak",
+          "reason": "base-collision",
+          "detail": "core alpha claims config_folder=snes9x already owned by the release catalog"
+        },
+        {
+          "provider": "mlp1/Alpha.pak",
+          "reason": "default-core-unavailable",
+          "detail": "system ALPHA needs core alpha, which is not available after merge; the system is refused too rather than producing a tile that cannot launch"
+        },
+        {
+          "provider": "mlp1/Beta.pak",
+          "reason": "dangling-extension-system",
+          "detail": "system_extensions names ALPHA, which no system provides after merge; extension dropped"
+        }
+      ],
+      "expected": {
+        "platform": "mlp1",
+        "systems": [
+          {
+            "id": "PSX",
+            "name": "PlayStation",
+            "patterns": [
+              "PSX"
+            ],
+            "extensions": [
+              "cue",
+              "chd"
+            ],
+            "rom_root": "Roms/PSX",
+            "image_root": "Images/PSX",
+            "default_core": "pcsx_rearmed",
+            "alternate_cores": []
+          },
+          {
+            "id": "SNES",
+            "name": "Super Nintendo",
+            "patterns": [
+              "SNES",
+              "snes"
+            ],
+            "extensions": [
+              "sfc",
+              "smc"
+            ],
+            "rom_root": "Roms/SNES",
+            "image_root": "Images/SNES",
+            "default_core": "snes9x",
+            "alternate_cores": []
+          }
+        ],
+        "cores": [
+          {
+            "id": "beta",
+            "display_name": "ScummVM",
+            "type": "retroarch",
+            "libretro_name": "beta",
+            "file_name": "cores/scummvm_libretro.so",
+            "info_name": "info/beta_libretro.info",
+            "config_folder": "Beta",
+            "provider": "mlp1/Beta.pak",
+            "status": "packaged",
+            "requires_direct_drm": false
+          },
+          {
+            "id": "pcsx_rearmed",
+            "display_name": "PCSX ReARMed",
+            "type": "retroarch",
+            "libretro_name": "pcsx_rearmed",
+            "file_name": "pcsx_rearmed_libretro.so",
+            "info_name": "pcsx_rearmed_libretro.info",
+            "config_folder": "PCSX-ReARMed",
+            "status": "packaged"
+          },
+          {
+            "id": "snes9x",
+            "display_name": "Snes9x",
+            "type": "retroarch",
+            "libretro_name": "snes9x",
+            "file_name": "snes9x_libretro.so",
+            "info_name": "snes9x_libretro.info",
+            "config_folder": "Snes9x",
+            "status": "packaged"
+          }
+        ]
+      },
+      "expected_sha256": "eed06c7e5c79020a8a3168ee3d13c07364753ec228a89e05e0637c67356db9a1"
+    }
+  ]
+}

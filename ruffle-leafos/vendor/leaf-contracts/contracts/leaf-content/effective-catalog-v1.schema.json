@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umrk.dev/contracts/leaf-content/effective-catalog-v1.schema.json",
+  "title": "effective-catalog-v1 generation stamp (CAT-1)",
+  "description": "Normative shape for catalog/gen-<digest>/stamp.json. See docs/content-paks.md in this repository. The canonical-bytes rule, the tree hash, the digest-names-the-directory rule, contributor/file ordering, the two validation levels, and the fail-closed table are business logic exercised by the fixtures in generations/, not by this schema alone.",
+  "type": "object",
+  "required": ["schema", "platform", "release_id", "base", "contributors", "output"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": 1,
+      "description": "Exactly 1. A reader that sees anything else falls back to release defaults with stamp-schema-unsupported."
+    },
+    "platform": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{1,31}$",
+      "description": "Must equal the running platform and the `platform` of the merged systems.json/cores.json."
+    },
+    "release_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "From $UMRK_INTERNAL_DATA_PATH/release.json via jw_installed_release_read. Never guessed."
+    },
+    "base": { "$ref": "#/definitions/catalog_hashes" },
+    "contributors": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/definitions/contributor" },
+      "description": "Ascending by `provider` in UTF-8 byte order. Ordering is normative because the digest is taken over canonical stamp bytes."
+    },
+    "output": { "$ref": "#/definitions/catalog_hashes" }
+  },
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "catalog_hashes": {
+      "type": "object",
+      "required": ["systems_sha256", "cores_sha256", "info_sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "systems_sha256": { "$ref": "#/definitions/sha256" },
+        "cores_sha256": { "$ref": "#/definitions/sha256" },
+        "info_sha256": {
+          "allOf": [{ "$ref": "#/definitions/sha256" }],
+          "description": "tree_sha256 over the .info directory. The release info dir is a compile input because its files are materialized into the generation; release_id alone would miss a partial manual copy."
+        }
+      }
+    },
+    "contributor": {
+      "type": "object",
+      "required": ["provider", "source_id", "pak_version", "provides_sha256", "files"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}/[A-Za-z0-9][A-Za-z0-9 _.-]{0,63}\\.pak$",
+          "description": "The install path (`mlp1/ScummVM.pak`) -- the identity pakrat_installs.install_path and apps.pak_dir key on. Never a resolved absolute root: MLP1 swaps /mnt/sdcard and /media/sdcard1 across reboots."
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Card provenance only. jw_storage_source.id is \"primary\" or an index, so it names the card, not the pak, and can never identify a contributor."
+        },
+        "pak_version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})\\.(0|[1-9][0-9]{0,3})$"
+        },
+        "provides_sha256": {
+          "allOf": [{ "$ref": "#/definitions/sha256" }],
+          "description": "SHA-256(canonical_bytes(provides))."
+        },
+        "files": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "required": ["rel", "sha256"],
+            "additionalProperties": false,
+            "properties": {
+              "rel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096,
+                "not": { "pattern": "^/|(^|/)\\.\\.(/|$)" }
+              },
+              "sha256": { "$ref": "#/definitions/sha256" }
+            }
+          },
+          "description": "EVERY declared file, ascending by `rel` in UTF-8 byte order. This is what makes swapping or deleting a .so without editing `provides` invalidate the stamp."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "not-executable",
+  "note": "a standalone target that cannot be executed produces a tile that cannot launch"
+}

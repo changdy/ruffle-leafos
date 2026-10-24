@@ -1,0 +1,14 @@
+# Keep imported source bytes intact: SHA-256 locks include existing CRLF files.
+* -text
+
+# Scripts executed on Leaf/Linux must use LF after checkout.
+*.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ttf binary
+*.jar binary
+*.so binary
+*.so.* binary
+ruffle-leafos/runtime/leaf-12/bin/ruffle binary

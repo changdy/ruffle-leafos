@@ -1,0 +1,4 @@
+{
+  "valid": true,
+  "note": "state is optional; a service with no durable userdata may omit it entirely"
+}

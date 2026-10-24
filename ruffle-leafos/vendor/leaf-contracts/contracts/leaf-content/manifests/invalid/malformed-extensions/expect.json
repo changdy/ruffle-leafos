@@ -1,0 +1,5 @@
+{
+  "valid": false,
+  "reason": "malformed-extensions",
+  "note": "extensions are lowercase"
+}

@@ -1,0 +1,809 @@
+{
+  "base": {
+    "platform": "mlp1",
+    "systems": [
+      {
+        "id": "PICO8",
+        "name": "PICO-8",
+        "patterns": [
+          "PICO8"
+        ],
+        "rom_root": "Roms/PICO8",
+        "image_root": "Images/PICO8",
+        "default_core": "fake08"
+      }
+    ],
+    "cores": [
+      {
+        "id": "fake08"
+      }
+    ]
+  },
+  "paks": {
+    "owner": {
+      "provides": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name": "ScummVM",
+            "patterns": [
+              "SCUMMVM"
+            ],
+            "extensions": [
+              "scummvm"
+            ],
+            "default_core": "scummvm",
+            "rom_root": "Roms/SCUMMVM",
+            "image_root": "Images/SCUMMVM",
+            "icon_flat": "art/mark.png"
+          }
+        ],
+        "cores": [
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "native": {
+      "provides": {
+        "schema": 1,
+        "system_extensions": [
+          {
+            "system_id": "PICO8",
+            "add_alternate_cores": [
+              "pico8_native"
+            ]
+          }
+        ],
+        "cores": [
+          {
+            "id": "pico8_native",
+            "display_name": "pico8_native",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "PICO8",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "other": {
+      "provides": {
+        "schema": 1,
+        "system_extensions": [
+          {
+            "system_id": "PICO8",
+            "add_alternate_cores": [
+              "pico8_other"
+            ]
+          }
+        ],
+        "cores": [
+          {
+            "id": "pico8_other",
+            "display_name": "pico8_other",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "PICO8",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "arbitrary": {
+      "provides": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name": "ScummVM",
+            "patterns": [
+              "SCUMMVM"
+            ],
+            "extensions": [
+              "scummvm"
+            ],
+            "default_core": "scummvm",
+            "rom_root": "Roms/SCUMMVM",
+            "image_root": "Images/SCUMMVM",
+            "icon_flat": "art/mark.png"
+          }
+        ],
+        "cores": [
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "PICO8",
+            "wordmark": "art/mark.png"
+          },
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "foreign": {
+      "provides": {
+        "schema": 1,
+        "system_extensions": [
+          {
+            "system_id": "SCUMMVM",
+            "add_alternate_cores": [
+              "foreign_core"
+            ]
+          }
+        ],
+        "cores": [
+          {
+            "id": "foreign_core",
+            "display_name": "foreign_core",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "base_core": {
+      "provides": {
+        "schema": 1,
+        "system_extensions": [
+          {
+            "system_id": "PICO8",
+            "add_alternate_cores": [
+              "fake08"
+            ]
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "PICO8",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "foreign_core": {
+      "provides": {
+        "schema": 1,
+        "system_extensions": [
+          {
+            "system_id": "PICO8",
+            "add_alternate_cores": [
+              "pico8_native"
+            ]
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "PICO8",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "collision": {
+      "provides": {
+        "schema": 1,
+        "system_extensions": [
+          {
+            "system_id": "PICO8",
+            "add_alternate_cores": [
+              "pico8_native"
+            ]
+          }
+        ],
+        "cores": [
+          {
+            "id": "pico8_native",
+            "display_name": "pico8_native",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "PICO8",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "refused_owner": {
+      "provides": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name": "ScummVM",
+            "patterns": [
+              "SCUMMVM"
+            ],
+            "extensions": [
+              "scummvm"
+            ],
+            "default_core": "absent_core",
+            "rom_root": "Roms/SCUMMVM",
+            "image_root": "Images/SCUMMVM",
+            "icon_flat": "art/mark.png"
+          }
+        ],
+        "cores": [
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "invalid_block": {
+      "provides": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name": "ScummVM",
+            "patterns": [
+              "SCUMMVM"
+            ],
+            "extensions": [
+              "scummvm"
+            ],
+            "default_core": "scummvm",
+            "rom_root": "Roms/SCUMMVM",
+            "image_root": "Images/SCUMMVM",
+            "icon_flat": "art/mark.png"
+          }
+        ],
+        "cores": [
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "PICO8",
+            "wordmark": "art/missing.png"
+          },
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    },
+    "mixed": {
+      "provides": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name": "ScummVM",
+            "patterns": [
+              "SCUMMVM"
+            ],
+            "extensions": [
+              "scummvm"
+            ],
+            "default_core": "scummvm",
+            "rom_root": "Roms/SCUMMVM",
+            "image_root": "Images/SCUMMVM",
+            "icon_flat": "art/mark.png"
+          }
+        ],
+        "cores": [
+          {
+            "id": "scummvm",
+            "display_name": "ScummVM",
+            "type": "path",
+            "path": "run.sh"
+          },
+          {
+            "id": "pico8_native",
+            "display_name": "pico8_native",
+            "type": "path",
+            "path": "run.sh"
+          }
+        ],
+        "system_extensions": [
+          {
+            "system_id": "PICO8",
+            "add_alternate_cores": [
+              "pico8_native"
+            ]
+          }
+        ]
+      },
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          },
+          {
+            "id": "PICO8",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "absent",
+      "valid": true
+    },
+    {
+      "name": "owned",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "malformed-content-art",
+      "content_art": null,
+      "reason": "malformed-content-art"
+    },
+    {
+      "name": "unknown-content-art-schema",
+      "content_art": {
+        "schema": 99,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      },
+      "reason": "unknown-content-art-schema"
+    },
+    {
+      "name": "malformed-content-art-systems",
+      "content_art": {
+        "schema": 1,
+        "systems": []
+      },
+      "reason": "malformed-content-art-systems"
+    },
+    {
+      "name": "unknown-content-art-field",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ],
+        "future": true
+      },
+      "reason": "unknown-content-art-field"
+    },
+    {
+      "name": "malformed-content-art-system",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          false
+        ]
+      },
+      "reason": "malformed-content-art-system"
+    },
+    {
+      "name": "malformed-content-art-system-id",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "scummvm",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      },
+      "reason": "malformed-content-art-system-id"
+    },
+    {
+      "name": "duplicate-content-art-system",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          },
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      },
+      "reason": "duplicate-content-art-system"
+    },
+    {
+      "name": "malformed-content-art-wordmark",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM"
+          }
+        ]
+      },
+      "reason": "malformed-content-art-wordmark"
+    },
+    {
+      "name": "content-art-absolute-path",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "/art/mark.png"
+          }
+        ]
+      },
+      "reason": "content-art-absolute-path",
+      "setup": null
+    },
+    {
+      "name": "content-art-path-traversal",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "../mark.png"
+          }
+        ]
+      },
+      "reason": "content-art-path-traversal",
+      "setup": null
+    },
+    {
+      "name": "content-art-escaping-symlink",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "escape/mark.png"
+          }
+        ]
+      },
+      "reason": "content-art-escaping-symlink",
+      "setup": null
+    },
+    {
+      "name": "content-art-missing-file",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/missing.png"
+          }
+        ]
+      },
+      "reason": "content-art-missing-file",
+      "setup": null
+    },
+    {
+      "name": "content-art-non-regular-file",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art"
+          }
+        ]
+      },
+      "reason": "content-art-non-regular-file",
+      "setup": null
+    },
+    {
+      "name": "unsupported-content-art-image",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/bad.png"
+          }
+        ]
+      },
+      "reason": "unsupported-content-art-image",
+      "setup": null
+    },
+    {
+      "name": "invalid-content-art-wordmark-dimensions",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/large.png"
+          }
+        ]
+      },
+      "reason": "invalid-content-art-wordmark-dimensions",
+      "setup": null
+    },
+    {
+      "name": "unreadable-content-art-image",
+      "content_art": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "wordmark": "art/mark.png"
+          }
+        ]
+      },
+      "reason": "unreadable-content-art-image",
+      "setup": "unreadable"
+    }
+  ],
+  "generation_cases": [
+    {
+      "name": "owned",
+      "contributors": [
+        "owner"
+      ],
+      "applied": {
+        "SCUMMVM": "owner"
+      },
+      "diagnostics": []
+    },
+    {
+      "name": "release-extension",
+      "contributors": [
+        "native"
+      ],
+      "applied": {
+        "PICO8": "native"
+      },
+      "diagnostics": []
+    },
+    {
+      "name": "arbitrary-target-preserves-owned",
+      "contributors": [
+        "arbitrary"
+      ],
+      "applied": {
+        "SCUMMVM": "arbitrary"
+      },
+      "diagnostics": [
+        [
+          "arbitrary",
+          "ineligible-content-art-system",
+          "PICO8"
+        ]
+      ]
+    },
+    {
+      "name": "foreign-system",
+      "contributors": [
+        "owner",
+        "foreign"
+      ],
+      "applied": {
+        "SCUMMVM": "owner"
+      },
+      "diagnostics": [
+        [
+          "foreign",
+          "ineligible-content-art-system",
+          "SCUMMVM"
+        ]
+      ]
+    },
+    {
+      "name": "base-core-insufficient",
+      "contributors": [
+        "base_core"
+      ],
+      "applied": {},
+      "diagnostics": [
+        [
+          "base_core",
+          "ineligible-content-art-system",
+          "PICO8"
+        ]
+      ]
+    },
+    {
+      "name": "foreign-core-insufficient",
+      "contributors": [
+        "native",
+        "foreign_core"
+      ],
+      "applied": {
+        "PICO8": "native"
+      },
+      "diagnostics": [
+        [
+          "foreign_core",
+          "ineligible-content-art-system",
+          "PICO8"
+        ]
+      ]
+    },
+    {
+      "name": "competing-extensions",
+      "contributors": [
+        "native",
+        "other"
+      ],
+      "applied": {},
+      "diagnostics": [
+        [
+          "native",
+          "conflicting-content-art-system",
+          "PICO8"
+        ],
+        [
+          "other",
+          "conflicting-content-art-system",
+          "PICO8"
+        ]
+      ]
+    },
+    {
+      "name": "refused-cores",
+      "contributors": [
+        "native",
+        "collision"
+      ],
+      "applied": {},
+      "diagnostics": [
+        [
+          "native",
+          "ineligible-content-art-system",
+          "PICO8"
+        ],
+        [
+          "collision",
+          "ineligible-content-art-system",
+          "PICO8"
+        ]
+      ]
+    },
+    {
+      "name": "refused-owner",
+      "contributors": [
+        "refused_owner"
+      ],
+      "applied": {},
+      "diagnostics": [
+        [
+          "refused_owner",
+          "ineligible-content-art-system",
+          "SCUMMVM"
+        ]
+      ]
+    },
+    {
+      "name": "invalid-block-unit",
+      "contributors": [
+        "invalid_block"
+      ],
+      "applied": {},
+      "diagnostics": [
+        [
+          "invalid_block",
+          "content-art-missing-file",
+          "content_art ignored"
+        ]
+      ]
+    },
+    {
+      "name": "provider-removed",
+      "contributors": [],
+      "applied": {},
+      "diagnostics": []
+    },
+    {
+      "name": "conflict-retains-unrelated",
+      "contributors": [
+        "mixed",
+        "other"
+      ],
+      "applied": {
+        "SCUMMVM": "mixed"
+      },
+      "diagnostics": [
+        [
+          "mixed",
+          "conflicting-content-art-system",
+          "PICO8"
+        ],
+        [
+          "other",
+          "conflicting-content-art-system",
+          "PICO8"
+        ]
+      ]
+    }
+  ]
+}

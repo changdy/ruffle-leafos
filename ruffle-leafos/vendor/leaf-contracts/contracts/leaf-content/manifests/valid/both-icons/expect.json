@@ -1,0 +1,4 @@
+{
+  "valid": true,
+  "note": "both art slots declared, so the launcher can honor either icon pack without falling back"
+}

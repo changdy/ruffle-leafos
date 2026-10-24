@@ -1,0 +1,304 @@
+{
+  "base_provides": {
+    "schema": 1,
+    "systems": [
+      {
+        "id": "SCUMMVM",
+        "extensions": ["scummvm", "svm"]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "absent-is-inert",
+      "valid": true
+    },
+    {
+      "name": "descriptor-policy",
+      "valid": true,
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      }
+    },
+    {
+      "name": "one-of-two-systems",
+      "valid": true,
+      "provides": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "extensions": ["scummvm", "svm"]
+          },
+          {
+            "id": "DOS",
+            "extensions": ["exe"]
+          }
+        ]
+      },
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      }
+    },
+    {
+      "name": "block-not-object",
+      "valid": false,
+      "reason": "malformed-content-scrape",
+      "content_scrape": "descriptor"
+    },
+    {
+      "name": "unknown-schema",
+      "valid": false,
+      "reason": "unknown-content-scrape-schema",
+      "content_scrape": {
+        "schema": 2,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unknown-block-field",
+      "valid": false,
+      "reason": "unknown-content-scrape-field",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ],
+        "future": true
+      }
+    },
+    {
+      "name": "empty-systems",
+      "valid": false,
+      "reason": "malformed-content-scrape-systems",
+      "content_scrape": {
+        "schema": 1,
+        "systems": []
+      }
+    },
+    {
+      "name": "system-not-object",
+      "valid": false,
+      "reason": "malformed-content-scrape-system",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [42]
+      }
+    },
+    {
+      "name": "malformed-system-id",
+      "valid": false,
+      "reason": "malformed-content-scrape-system-id",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "scummvm",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unknown-name-source",
+      "valid": false,
+      "reason": "unknown-content-scrape-name-source",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "filename",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      }
+    },
+    {
+      "name": "malformed-lookup-extension",
+      "valid": false,
+      "reason": "malformed-content-scrape-lookup-extension",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "SCUMMVM"
+          }
+        ]
+      }
+    },
+    {
+      "name": "duplicate-system",
+      "valid": false,
+      "reason": "duplicate-content-scrape-system",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          },
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unknown-system",
+      "valid": false,
+      "reason": "unknown-content-scrape-system",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "FOREIGN",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      }
+    },
+    {
+      "name": "undeclared-extension",
+      "valid": false,
+      "reason": "undeclared-content-scrape-extension",
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "zip"
+          }
+        ]
+      }
+    }
+  ],
+  "generation_cases": [
+    {
+      "name": "decorate-surviving-provider-system",
+      "provider": "mlp1/ScummVM.pak",
+      "merged_systems": [
+        {
+          "id": "SCUMMVM",
+          "provider": "mlp1/ScummVM.pak"
+        },
+        {
+          "id": "DOS"
+        }
+      ],
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      },
+      "expected_systems": [
+        {
+          "id": "SCUMMVM",
+          "provider": "mlp1/ScummVM.pak",
+          "screenscraper_name_source": "descriptor",
+          "screenscraper_lookup_extension": "scummvm"
+        },
+        {
+          "id": "DOS"
+        }
+      ],
+      "expected_fingerprinted_providers": ["mlp1/ScummVM.pak"],
+      "expected_systems_sha256": "af1fea44ab9cc6d321c42e12df65139b82a70e12724d568640d99cf5ad09144d"
+    },
+    {
+      "name": "alternate-declared-lookup-extension",
+      "provider": "mlp1/ScummVM.pak",
+      "merged_systems": [
+        {
+          "id": "SCUMMVM",
+          "provider": "mlp1/ScummVM.pak"
+        }
+      ],
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "svm"
+          }
+        ]
+      },
+      "expected_systems": [
+        {
+          "id": "SCUMMVM",
+          "provider": "mlp1/ScummVM.pak",
+          "screenscraper_name_source": "descriptor",
+          "screenscraper_lookup_extension": "svm"
+        }
+      ],
+      "expected_fingerprinted_providers": ["mlp1/ScummVM.pak"],
+      "expected_systems_sha256": "fa38c75f3a9007bed4ce56d5ddbeebdb5b22e35ee22de528d6ddca4511418fd5"
+    },
+    {
+      "name": "provider-mismatch-does-not-decorate",
+      "provider": "mlp1/ScummVM.pak",
+      "merged_systems": [
+        {
+          "id": "SCUMMVM",
+          "provider": "mlp1/Other.pak"
+        }
+      ],
+      "content_scrape": {
+        "schema": 1,
+        "systems": [
+          {
+            "id": "SCUMMVM",
+            "name_source": "descriptor",
+            "lookup_extension": "scummvm"
+          }
+        ]
+      },
+      "expected_systems": [
+        {
+          "id": "SCUMMVM",
+          "provider": "mlp1/Other.pak"
+        }
+      ],
+      "expected_fingerprinted_providers": [],
+      "expected_systems_sha256": "d42ec788903eec6231a5e43ca9d464e3cd72125a6cbf8f89c11a4f4a0b2738a4"
+    }
+  ]
+}

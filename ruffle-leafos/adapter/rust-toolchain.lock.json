@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "rust_version": "1.94.0",
+  "official_manifest": "https://static.rust-lang.org/dist/channel-rust-1.94.0.toml",
+  "official_manifest_sha256": "aaa177def36e01d539bee6bde95295230b9ce378f81057845db8d0ebe97898ee",
+  "components": [
+    {
+      "component": "rustc",
+      "target": "x86_64-pc-windows-gnu",
+      "url": "https://static.rust-lang.org/dist/2026-03-05/rustc-1.94.0-x86_64-pc-windows-gnu.tar.xz",
+      "sha256": "6badaefeafc37127dc59cde7275edd45bec6e234bf589f0bac14cabc39488f70"
+    },
+    {
+      "component": "cargo",
+      "target": "x86_64-pc-windows-gnu",
+      "url": "https://static.rust-lang.org/dist/2026-03-05/cargo-1.94.0-x86_64-pc-windows-gnu.tar.xz",
+      "sha256": "254ff0b8f3f4169d79ff622fb2b87cdd64d6f237ca05b7299b25a1196454f0e1"
+    },
+    {
+      "component": "rust-std",
+      "target": "x86_64-pc-windows-gnu",
+      "url": "https://static.rust-lang.org/dist/2026-03-05/rust-std-1.94.0-x86_64-pc-windows-gnu.tar.xz",
+      "sha256": "c9f98d62213d0559c8d2ee6d7eafbafbf5dfe04921c9e7cb15b66a770903bc33"
+    },
+    {
+      "component": "rust-std",
+      "target": "aarch64-unknown-linux-gnu",
+      "url": "https://static.rust-lang.org/dist/2026-03-05/rust-std-1.94.0-aarch64-unknown-linux-gnu.tar.xz",
+      "sha256": "c781b3ef4fefa5508fbe05820eddc95e46351d905a30921cc020febd9c596a2e"
+    }
+  ],
+  "host_c_linker": {
+    "name": "w64devkit",
+    "version": "2.1.0",
+    "url": "https://github.com/skeeto/w64devkit/releases/download/v2.1.0/w64devkit-x64-2.1.0.exe",
+    "sha256": "3839da025a192e9cacd5caa3ed5150153ab2255800d3672213a5c66e11d6e618",
+    "compiler": "GCC 14.2.0; Mingw-w64 12.0.0",
+    "reason": "Rust windows-gnu needs MSVCRT import libraries; Zig 0.14.1 defaults to UCRT"
+  }
+}

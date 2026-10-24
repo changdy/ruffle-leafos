@@ -1,0 +1,13 @@
+{
+  "description": "LIFE-1 game.abort event for a known-not-started launch.",
+  "message": {
+    "v": 1,
+    "event": "game.abort",
+    "launch_id": "launch-0001"
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"event\":\"game.abort\",\"launch_id\":\"launch-0001\"}",
+  "frame_total_bytes": 58,
+  "length_prefix_value": 54,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

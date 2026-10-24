@@ -1,0 +1,17 @@
+{
+  "description": "LIFE-1 game.check event before a mandatory verified stop.",
+  "message": {
+    "v": 1,
+    "event": "game.check",
+    "launch_id": "launch-0001",
+    "source_id": "secondary_sd",
+    "saves_path": "/media/sdcard1/Saves/nes",
+    "states_path": "/media/sdcard1/States/nes",
+    "wait_budget_ms": 15000
+  },
+  "canonical_payload_utf8": "{\"v\":1,\"event\":\"game.check\",\"launch_id\":\"launch-0001\",\"source_id\":\"secondary_sd\",\"saves_path\":\"/media/sdcard1/Saves/nes\",\"states_path\":\"/media/sdcard1/States/nes\",\"wait_budget_ms\":15000}",
+  "frame_total_bytes": 190,
+  "length_prefix_value": 186,
+  "semantic_ceiling_bytes": 65536,
+  "expect_semantic_ceiling_violation": false
+}

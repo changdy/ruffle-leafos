@@ -1,0 +1,5 @@
+libdir=C:/Users/changdy/Documents/Codex/2026-10-23/new-chat-4/ruffle-leafos/target-libs
+Name: D-Bus target ABI
+Description: Device libdbus-1.so.3; version is conservative build requirement, not package provenance
+Version: 1.6.0
+Libs: -L${libdir} -ldbus-1
