@@ -1,6 +1,6 @@
 # 当前需求与实现约定
 
-适用：**0.6.2 开发预览**，2026-10-24。本文合并原始 [v2.7](requirements-v2.7.md)、[v2.8](requirements-v2.8.md)、[v2.9](requirements-v2.9.md)、[v2.10](requirements-v2.10.md)的有效需求，供日常开发使用；原始快照保留完整验收细节。具体成果见 [实现结果](implementation-report.md)，所有剩余工作见 [TODO](todo.md)。
+适用：**0.6.3 开发预览**，2026-10-24。本文合并原始 [v2.7](requirements-v2.7.md)、[v2.8](requirements-v2.8.md)、[v2.9](requirements-v2.9.md)、[v2.10](requirements-v2.10.md)的有效需求，供日常开发使用；原始快照保留完整验收细节。具体成果见 [实现结果](implementation-report.md)，所有剩余工作见 [TODO](todo.md)。
 
 ## 产品范围
 

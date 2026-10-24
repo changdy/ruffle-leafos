@@ -1,14 +1,14 @@
 # Ruffle LeafOS 工作区
 
-面向 Miniloong Pocket 1 的 Flash 播放器，当前为 **0.6.2 开发预览**。文档已按当前代码整理，更新于 2026-10-24。
+面向 Miniloong Pocket 1 的 Flash 播放器，当前为 **0.6.3 开发预览**。文档已按当前代码整理，更新于 2026-10-24。
 
 - [项目说明与构建](ruffle-leafos/README.md)
-- [使用说明](ruffle-leafos/docs/preview-0.6.2.md)：安装、操作、按键映射、原生进度和数据管理。
+- [使用说明](ruffle-leafos/docs/preview-0.6.3.md)：安装、操作、按键映射、原生进度和数据管理。
 - [实现效果](ruffle-leafos/docs/implementation-report.md)：功能结果、代码位置、真机截图和验证范围。
 - [TODO](ruffle-leafos/docs/todo.md)：已完成事项及剩余工作。
 - [文档目录](ruffle-leafos/docs/README.md)：当前需求、格式说明及历史记录。
 
-当前交付位于 [outputs/ruffle-0.6.2/](outputs/ruffle-0.6.2/)，含安装包、源码包、校验和与真机证据。版本化交付保留发布时的文档快照；本次整理更新工作区文档。
+当前交付位于 [outputs/ruffle-0.6.3/](outputs/ruffle-0.6.3/)，含安装包、源码包、校验和与真机证据。版本化交付保留发布时的文档快照；本轮五项实现、逐项提交和设备验证见项目实施记录。
 
 ## Git 管理范围
 

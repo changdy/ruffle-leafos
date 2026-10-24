@@ -1,4 +1,4 @@
-# 当前待办（0.6.2 / 2026-10-24）
+# 当前待办（0.6.3 / 2026-10-24）
 
 当前需求见 [requirements.md](requirements.md)，功能结果与验证见 [implementation-report.md](implementation-report.md)。以下保留原有全部已完成和待办条目。
 

@@ -1,17 +1,18 @@
 # 文档目录
 
-当前代码：**0.6.2 开发预览**。更新：2026-10-24。
+当前代码：**0.6.3 开发预览**。更新：2026-10-24。
 
 ## 当前文档
 
 | 文档 | 内容 |
 | --- | --- |
-| [使用说明](preview-0.6.2.md) | 完整当前用法，无需串读旧版增量说明 |
+| [使用说明](preview-0.6.3.md) | 完整当前用法，无需串读旧版增量说明 |
 | [实现结果](implementation-report.md) | 已实现效果、代码入口、截图、验证范围及限制 |
 | [TODO](todo.md) | 已完成清单、剩余实现及人工/兼容验收 |
 | [当前需求](requirements.md) | 合并 v2.7—v2.10 的有效约定；保留未完成范围 |
 | [按键格式 v4](controls-format-v4.md) | 每游戏方案、独立全局光标及旧格式兼容 |
 | [项目构建](../README.md) | 环境、命令与目录结构 |
+| [本轮五项实现](controls-refresh-20261024.md) | 每项结果、验证和最终交付 |
 | [版本摘要](progress.md) | 各版最终结果和对应交付 |
 | [工作区索引](workspace-index.md) | 源码、交付与工具路径 |
 
@@ -19,7 +20,7 @@
 
 `iteration-*.md` 只保留该版的结果、验证和限制，入口见 [版本摘要](progress.md)。完整调试过程、改动量、安装指纹、旧包备份路径和日志保存在对应的 `../../outputs/ruffle-<版本>/`，版本化交付继续保留发布时的文档与源码快照。
 
-`requirements-v2.*.md` 是原始需求快照；`preview-0.2*.md` 至 `preview-0.6.1.md`、旧格式说明及 `completeness-audit*.json` 只适用于各自版本。旧“全局按键自动继承”、M+左右快捷键、箭头光标和 Apps 动画入口等描述已被当前需求替代。0.2.0 原始审计见 [发布副本](../../outputs/ruffle-0.2.0/implementation-report.md)。
+`requirements-v2.*.md` 是原始需求快照；`preview-0.2*.md` 至 `preview-0.6.2.md`、旧格式说明及 `completeness-audit*.json` 只适用于各自版本。旧“全局按键自动继承”、M+左右快捷键、箭头光标和 Apps 动画入口等描述已被当前需求替代。0.2.0 原始审计见 [发布副本](../../outputs/ruffle-0.2.0/implementation-report.md)。
 
 [早期来源评估](player-source-assessment.md)、[0.1.4 调试记录](device-debug-0.1.4.md)和 [工作区清理记录](workspace-cleanup-20261024.md)按需查阅。[第三方声明](THIRD_PARTY-0.2.md)保留。
 

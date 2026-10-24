@@ -1013,7 +1013,7 @@ pub async fn run() -> Result<(), String> {
         let store=&front.state.controls.store;
         let saved=store.load(&store.game_slot(1))?.0;
         let expected=cursor::Settings{style:cursor::Style::Crosshair,color:cursor::Color::Red,size:cursor::Size::Large};
-        if store.load_cursor()?.0!=expected || front.state.controls.game_slot!=1 {
+        if store.load_cursor()?.0!=expected || saved.mapping.buttons[0]!=Binding::Key(13) || saved.mapping.buttons[3].actions()!=vec![Action::Key(profiles::SHIFT),Action::Key(9)] || front.state.controls.game_slot!=1 {
             return Err(format!("Mapping persistence assertion failed: saved={saved:?}"));
         }
         println!("leaf-slots self_test=passed slot_switch=true tabs=9 grid=true editor=true save=true cursor=true idle=true");
