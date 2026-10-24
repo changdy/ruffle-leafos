@@ -13,6 +13,9 @@ struct Text {
     height: i32,
 }
 
+#[derive(Clone, Copy)]
+enum FooterNavigation { Adjust, Grid, List }
+
 pub struct PauseMenu {
     gl: Arc<glow::Context>,
     program: glow::Program,
@@ -202,7 +205,7 @@ impl PauseMenu {
         } else if state.controls.visible {
             self.draw_controls(state);
         } else {
-        self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏");
+        self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏",FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
         let rows=["继续","按键设置","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面设置","保存并退出"];
         let details=[String::new(),format!("方案 {}",slot+1),
@@ -276,7 +279,7 @@ impl PauseMenu {
         self.gl.uniform_4_f32(self.color.as_ref(),color[0],color[1],color[2],color[3]);self.gl.uniform_1_i32(self.textured.as_ref(),0);
         self.gl.draw_arrays(glow::TRIANGLES,0,(data.len()/4) as i32);
     }
-    unsafe fn leaf_background(&mut self,title:&str,subtitle:&str,back_label:&str) {
+    unsafe fn leaf_background(&mut self,title:&str,subtitle:&str,back_label:&str,navigation:FooterNavigation) {
         self.quad((0.,0.,960.,720.),[0.,0.,0.,0.59],None);
         let mut bg=self.palette[0];bg[3]=200./255.;
         self.rounded((7.,4.,946.,74.),14.,bg);
@@ -286,7 +289,7 @@ impl PauseMenu {
         self.rounded((820.,10.,120.,60.),30.,self.palette[5]);
         self.live_label_width(45,&stamp[11..16],30.,832.,25.,96.,true,self.palette[4]);
         self.live_label_width(18,subtitle,32.,23.,92.,910.,false,self.palette[4]);
-        self.leaf_footer(back_label);
+        self.leaf_footer(back_label,navigation);
     }
     unsafe fn leaf_row(&mut self,cache:usize,text:&str,y:f32,h:f32,selected:bool) {
         if selected{
@@ -296,14 +299,19 @@ impl PauseMenu {
         }
         self.live_label_width(cache,text,40.,23.,y+(h-44.)/2.,880.,false,self.palette[if selected{3}else{1}]);
     }
-    unsafe fn leaf_footer(&mut self,back_label:&str) {
+    unsafe fn leaf_footer(&mut self,back_label:&str,navigation:FooterNavigation) {
+        let (arrows,hint,key_width,label_x)=match navigation {
+            FooterNavigation::Adjust=>("↑↓","移动  ←→ 调整",60.,98.),
+            FooterNavigation::Grid=>("↑↓←→","移动焦点",112.,150.),
+            FooterNavigation::List=>("↑↓","移动",60.,98.),
+        };
         self.rounded((20.,642.,315.,58.),29.,self.palette[5]);
         self.rounded((620.,642.,320.,58.),29.,self.palette[5]);
-        self.rounded_corners((30.,650.,60.,44.),22.,self.palette[2],[false,true,false,true]);
+        self.rounded_corners((30.,650.,key_width,44.),22.,self.palette[2],[false,true,false,true]);
         self.rounded_corners((630.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
         self.rounded_corners((802.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
-        self.live_label_width(46,"↑↓",35.,30.,651.,55.,true,self.palette[3]);
-        self.live_label_width(47,"移动  ←→ 调整",28.,98.,655.,228.,false,self.palette[4]);
+        self.live_label_width(46,arrows,35.,30.,651.,key_width-5.,true,self.palette[3]);
+        self.live_label_width(47,hint,28.,label_x,655.,326.-label_x,false,self.palette[4]);
         self.live_label_width(48,"B",36.,636.,650.,36.,true,self.palette[3]);
         self.live_label_width(49,back_label,28.,678.,655.,122.,false,self.palette[4]);
         self.live_label_width(50,"A",36.,808.,650.,36.,true,self.palette[3]);
@@ -316,7 +324,8 @@ impl PauseMenu {
             Page::Saves=>if u.started{"A 读取并重启游戏；Y 将当前进度复制到选中槽"}else{"发现游戏进度，请先选择存档；空槽开始新进度"},
             Page::Settings=>"仅此游戏 · 调整后自动保存",Page::Manager=>"←→ 选择游戏 · 清理前会再次确认",Page::Confirm=>"请选择确认或取消",_=>""
         };
-        self.leaf_background(&u.heading(),subtitle,"返回");
+        let navigation=if matches!(u.page,Page::Settings|Page::Manager){FooterNavigation::Adjust}else{FooterNavigation::List};
+        self.leaf_background(&u.heading(),subtitle,"返回",navigation);
         let rows=u.rows();
         if u.page==Page::Confirm {
             let description=if u.pending>=20{format!("将当前游戏进度复制到存档 {}，覆盖该槽原有进度？",u.pending-19)}
@@ -396,7 +405,8 @@ impl PauseMenu {
             Page::Confirm=>controls.pending_detail(),
         };
         let title=if controls.page==Page::Edit {format!("按键设置 · 方案 {}",controls.game_slot+1)}else{controls.title().into()};
-        self.leaf_background(&title,&subtitle,if controls.page==Page::Confirm {"继续编辑"}else{"返回"});
+        let navigation=match controls.page {Page::Edit|Page::Picker=>FooterNavigation::Grid,Page::Cursor=>FooterNavigation::Adjust,Page::Confirm=>FooterNavigation::List};
+        self.leaf_background(&title,&subtitle,if controls.page==Page::Confirm {"继续编辑"}else{"返回"},navigation);
         if controls.page == crate::session::controls::Page::Cursor {
             self.live_label(12,"预览",21.,715.,98.,self.palette[4]);
             self.draw_cursor(controls.cursor_draft,(850.,111.));
