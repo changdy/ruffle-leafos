@@ -411,15 +411,20 @@ impl PauseMenu {
             self.live_label(52,controls.hint(),22.,45.,679.,self.palette[4]);
             return;
         }
-        if controls.page==Page::Slots {
+        if controls.page==Page::Edit {
             for (i,line) in lines.iter().enumerate() {
-                let x=50.+(i%2) as f32*440.; let y=137.+(i/2) as f32*82.;
-                self.quad((x,y,420.,71.),if i==controls.row {self.palette[2]} else {self.palette[5]},None);
-                self.live_label_width(1+i,line,28.,x+16.,y+22.,388.,true,self.palette[if i==controls.row{3}else{1}]);
+                let x=45.+(i%GRID_COLS) as f32*176.; let y=104.+(i/GRID_COLS) as f32*78.;
+                let color=self.palette[if i==controls.row{3}else{1}];
+                self.quad((x,y,166.,70.),if i==controls.row{self.palette[2]}else{self.palette[5]},None);
+                if let Some((label,value))=line.split_once('：') {
+                    self.live_label_width(1+i*2,label,21.,x+9.,y+8.,148.,true,color);
+                    self.live_label_width(2+i*2,value,24.,x+9.,y+35.,148.,true,color);
+                } else { self.live_label_width(1+i*2,line,23.,x+9.,y+23.,148.,true,color); }
             }
-            self.live_label(50,"每个游戏独立保存；M+A 上一映射，M+B 下一映射",22.,50.,598.,self.palette[4]);
-            self.live_label(51,&controls.status,21.,50.,637.,[1.,0.8,0.4,1.]);
-            self.live_label(52,"上下选择  A 切换  B 返回",22.,50.,679.,self.palette[4]); return;
+            self.live_label_width(54,&format!("槽位 {} · {}",controls.game_slot+1,controls.detail()),21.,45.,594.,870.,true,self.palette[4]);
+            self.live_label_width(55,&controls.status,21.,45.,636.,870.,true,[1.,0.8,0.4,1.]);
+            self.live_label_width(56,controls.hint(),22.,45.,679.,870.,true,self.palette[4]);
+            return;
         }
         let start = (controls.row/7)*7;
         for (i,line) in lines.iter().enumerate().skip(start).take(7) {

@@ -275,7 +275,7 @@ impl Frontend {
         match self.state.controls.nav(nav) {
             ResultAction::Apply(mapping) => {
                 self.apply_mapping(mapping);
-                if self.state.controls.page == controls::Page::Hub && self.state.controls.status.starts_with("已切换") {self.toast(self.state.controls.status.clone());}
+                if self.state.controls.page == controls::Page::Edit && self.state.controls.status.starts_with("已切换") {self.toast(self.state.controls.status.clone());}
             }
             ResultAction::Close => println!("leaf-controls editor_closed"),
             ResultAction::None => {}
@@ -714,14 +714,12 @@ pub async fn run() -> Result<(), String> {
     let mut sync_focus = false;
     let mut script=vec![vec![Button::Guide],vec![d,r,a],vec![b],
         PROFILE_BUTTONS.iter().chain(DPAD.iter()).copied().chain([Button::LeftStick]).collect(),
-        vec![Button::Guide],vec![d,d,a],vec![a],vec![r],vec![b],vec![d,a],vec![a]];
-    // Visit all nine visible tabs, including their longest labels.
+        vec![Button::Guide],vec![d,d,a],vec![a]];
     for _ in 0..9 {script.push(vec![Button::RightShoulder]);}
-    script.extend([vec![r,a],vec![d,d,d,a]]);
+    script.extend([vec![r,a],vec![r,r,r,a]]); // A=Enter, select Y
     for _ in 0..5 {script.push(vec![Button::RightShoulder]);}
-    script.extend([vec![d,d,d,d,d,r,a],vec![b],vec![d,d,d,a],
-        vec![d,a],vec![b],vec![a],vec![a],vec![d,d,a],vec![b],vec![b],
-        vec![Button::Guide],vec![d,d,d,Button::Y],
+    script.extend([vec![d,d,d,d,d,r,a],vec![d,d,d,d],vec![a],vec![b], // save slot 2
+        vec![b],vec![Button::Guide],vec![d,d,d,d,a],
         vec![r,d,r,r,d,r],vec![d,d,d,a],vec![b,b]]);
     let ui_phases=script.len();
     let mut idle_start=None;
@@ -954,7 +952,7 @@ pub async fn run() -> Result<(), String> {
                 }
                 if opt.self_test_slots {
                     if let Some(dir)=&opt.capture_dir {
-                        let label=format!("slots-{script_phase:02}-{:?}.bmp",if front.state.controls.visible {front.state.controls.page} else {controls::Page::Hub});
+                        let label=format!("slots-{script_phase:02}-{:?}.bmp",if front.state.controls.visible {front.state.controls.page} else {controls::Page::Edit});
                         if snapshots.insert(label.clone()) {menu.capture(&dir.join(label),size.0,size.1)?;}
                     }
                 }

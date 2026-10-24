@@ -287,7 +287,7 @@ impl Store {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Page { Hub, Edit, Picker, Confirm, Cursor, Slots }
+pub enum Page { Edit, Picker, Confirm, Cursor }
 #[derive(Clone, Copy, Debug)]
 pub enum Nav { Up, Down, Left, Right, A, B, X, Y, Prev, Next }
 pub fn grid_move(row: usize, count: usize, nav: Nav) -> usize {
@@ -328,8 +328,6 @@ pub struct Controls {
     pub store: Store,
     editing: usize,
     pub category: usize,
-    confirm: usize,
-    cursor_direct: bool,
 }
 impl Default for Controls {
     fn default() -> Self { Self::new(Store::new(PathBuf::new(), Path::new(""))) }
@@ -339,10 +337,10 @@ impl Controls {
     pub fn new(store: Store) -> Self {
         let (mappings,game_slot,status) = store.load_slots();
         let mapping = mappings[game_slot].clone();
-        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Hub, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键映射槽位{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, store,
-            editing: 0, category: 0, confirm: 0, cursor_direct: false }
+        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键映射槽位{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, store,
+            editing: 0, category: 0 }
     }
-    pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.cursor_direct = false; self.page = Page::Hub; self.row = 0; self.draft = actual.clone(); self.original = actual; self.status.clear(); }
+    pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.status.clear(); }
     pub fn switch_slot(&mut self, slot: usize) -> ResultAction {
         if slot >= GAME_SLOTS { return ResultAction::None; }
         if let Some(active) = &self.active { self.mappings[self.game_slot] = active.clone(); }
@@ -352,12 +350,9 @@ impl Controls {
         let action = self.apply(&format!("按键映射槽位{}",slot+1));
         self.status = format!("已切换至按键映射槽位{}{}",slot+1,if remembered {""} else {"（选择仅本次，写入失败）"}); action
     }
-    pub fn begin_cursor(&mut self, actual: Mapping) { self.begin(actual); self.cursor_direct = true; self.go(Page::Cursor); }
-    fn leave_cursor(&mut self) -> ResultAction {
-        if self.cursor_direct { self.visible = false; ResultAction::Close }
-        else { self.go(Page::Edit); self.row = 22; ResultAction::None }
-    }
-    fn save_scope(&mut self, _game: bool) -> ResultAction {
+    pub fn begin_cursor(&mut self, actual: Mapping) { self.begin(actual); self.go(Page::Cursor); }
+    fn close(&mut self) -> ResultAction { self.visible = false; ResultAction::Close }
+    fn save_scope(&mut self) -> ResultAction {
         let result = self.store.save(&self.store.game_slot(self.game_slot), &self.record(format!("按键映射槽位{}",self.game_slot+1),true));
         if self.failure(result,"保存成功") {
             let source = format!("槽位{}（已保存）",self.game_slot+1);
@@ -386,22 +381,21 @@ impl Controls {
         if self.category == 4 { return vec![None,LeftClick,RightClick,Wheel(1),Wheel(-1),DragLock,Center,Slow,Fast,Pointer(0),Pointer(1),Pointer(2),Pointer(3)]; }
         keys.into_iter().map(|k| if (5..=7).contains(&self.category) { Combo([match self.category { 5 => profiles::SHIFT, 6 => profiles::CTRL, _ => 1073742050 }, k,0,0],2) } else { Key(k) }).collect()
     }
-    pub fn title(&self) -> &str { match self.page { Page::Hub => "按键映射", Page::Edit => "编辑按键", Page::Picker => "选择虚拟动作", Page::Confirm => "确认操作", Page::Cursor => "鼠标光标", Page::Slots => "此游戏的 10 个映射槽位" } }
+    pub fn title(&self) -> &str { match self.page { Page::Edit => "编辑按键", Page::Picker => "选择虚拟动作", Page::Confirm => "恢复默认", Page::Cursor => "鼠标光标" } }
     pub fn hint(&self) -> &str { match self.page {
-        Page::Edit => "A 编辑  X 恢复此项  B 返回；Menu 始终可用",
+        Page::Edit => "十字键选择  A 修改/执行  X 恢复此项  B 返回",
         Page::Picker => "十字键移动  L1/R1 切换类型  A 确认  B 取消",
-        Page::Confirm => "A 确认  B 取消；仅执行当前所选操作",
+        Page::Confirm => "A 确认  B 取消",
         Page::Cursor => "左右调整  A 确认  X 恢复此项  B 返回",
-        _ => "上下选择  左右调整  A 确认  B 返回；仅保存后才会记忆",
     } }
     pub fn lines(&self) -> Vec<String> { match self.page {
-        Page::Hub => vec![format!("按键映射槽位{}（A 选择其他槽位）", self.game_slot+1), "编辑按键".into(), "应用到当前槽位（本次）".into(), "保存当前槽位并应用".into(), "恢复当前槽位默认".into(), "返回（丢弃未应用修改）".into()],
         Page::Edit => LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}", binding_label(self.draft.buttons[i]))).chain([
-            format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}",binding_label(self.draft.axes[i])))).chain([format!("十字键鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
-            format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }), "光标样式、颜色与大小".into(), "返回".into()]).collect(),
+            format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}",binding_label(self.draft.axes[i])))).chain([
+            format!("十字鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
+            format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }),
+            "应用：仅本次".into(), "保存：当前槽位".into(), "恢复整套默认".into(), "返回".into()]).collect(),
         Page::Cursor => vec![format!("光标样式：{}",self.draft.cursor.style.name()),format!("光标颜色：{}",self.draft.cursor.color.name()),
             format!("光标大小：{}（{}）",self.draft.cursor.size.name(),self.draft.cursor.size.pixels()),"恢复光标默认".into(),"应用到当前槽位（本次）".into(),"保存当前槽位并应用".into(),"返回".into()],
-        Page::Slots => (0..GAME_SLOTS).map(|i|format!("按键映射槽位{}{}",i+1,if i==self.game_slot {"  ● 当前"} else {""})).collect(),
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
         Page::Confirm => vec!["恢复当前槽位默认，替换编辑内容？".into(), "A 确认操作".into(), "B 取消操作".into()],
     } }
@@ -413,11 +407,17 @@ impl Controls {
     pub fn nav(&mut self, nav: Nav) -> ResultAction {
         use Nav::*;
         if matches!(nav, B) {
-            if self.page == Page::Cursor { return self.leave_cursor(); }
-            match self.page { Page::Hub => { self.visible = false; return ResultAction::Close; }, Page::Picker => { self.go(Page::Edit); self.row = self.editing; }, _ => self.go(Page::Hub) }
+            match self.page {
+                Page::Edit | Page::Cursor => return self.close(),
+                Page::Picker => { self.go(Page::Edit); self.row = self.editing; },
+                Page::Confirm => { self.go(Page::Edit); self.row = 24; },
+            }
             return ResultAction::None;
         }
-        if self.page == Page::Confirm && !matches!(nav,A) { return ResultAction::None; }
+        if self.page == Page::Confirm {
+            if matches!(nav,A) { self.draft = Mapping::group(self.game_slot); self.go(Page::Edit); self.status = "已恢复槽位默认；请应用或保存".into(); }
+            return ResultAction::None;
+        }
         let count = self.lines().len();
         if self.page == Page::Picker {
             if matches!(nav, Prev | Next) { self.category = (self.category as i32 + if matches!(nav,Prev) {-1} else {1}).rem_euclid(9) as usize; self.row = 0; }
@@ -433,7 +433,7 @@ impl Controls {
             }
             return ResultAction::None;
         }
-        if self.page == Page::Slots && matches!(nav,Up|Down|Left|Right) {self.row=grid_columns(self.row,count,nav,2);return ResultAction::None;}
+        if self.page == Page::Edit && matches!(nav,Up|Down|Left|Right) { self.row=grid_move(self.row,count,nav); return ResultAction::None; }
         if matches!(nav, Up | Down) { self.row = (self.row as i32 + if matches!(nav,Up) {-1} else {1}).rem_euclid(count as i32) as usize; return ResultAction::None; }
         let adjust = if matches!(nav,Left) {-1} else {1};
         if self.page == Page::Cursor {
@@ -448,8 +448,8 @@ impl Controls {
                 2=>self.draft.cursor.size=self.draft.cursor.size.next(adjust),
                 3 if matches!(nav,A)=>{ self.draft.cursor=cursor::Settings::default(); self.status="光标已恢复默认，请应用或保存".into(); },
                 4 if matches!(nav,A)=>return self.apply("仅本次"),
-                5 if matches!(nav,A)=>return self.save_scope(true),
-                6 if matches!(nav,A)=>return self.leave_cursor(),_=>{}
+                5 if matches!(nav,A)=>return self.save_scope(),
+                6 if matches!(nav,A)=>return self.close(),_=>{}
             } }
             return ResultAction::None;
         }
@@ -460,28 +460,18 @@ impl Controls {
                 self.status = "此项已恢复槽位默认，尚未应用".into();
                 if (10..14).contains(&self.row) && (self.draft.stick==Stick::Directions || self.draft.stick==Stick::Steering && self.row>=12) {self.draft.axes[self.row-10]=self.draft.buttons[self.row];}
             }
-            if matches!(nav, Left | Right | A) {
+            if matches!(nav, A) {
                 match self.row {
                     0..=13 | 15..=19 if matches!(nav,A) => { self.editing = self.row; self.category = 0; self.go(Page::Picker); },
                     14 => { let items = [Stick::Mouse,Stick::Directions,Stick::Steering,Stick::None,Stick::Custom]; let i = items.iter().position(|s| *s == self.draft.stick).unwrap(); self.draft.stick = items[(i as i32+adjust).rem_euclid(5) as usize]; if self.draft.stick != Stick::Custom {let press=self.draft.axes[4]; self.draft.reset_axes();self.draft.axes[4]=press;} },
                     20 => self.draft.fine = !self.draft.fine,
-                    21 => self.draft.speed = self.draft.speed.next(adjust),
-                    22 if matches!(nav,A) => { self.cursor_direct = false; self.go(Page::Cursor); },
-                    23 if matches!(nav,A) => self.go(Page::Hub), _ => {}
+                    21 => self.draft.speed = match self.draft.speed { MouseSpeed::Slow=>MouseSpeed::Normal,MouseSpeed::Normal=>MouseSpeed::Fast,MouseSpeed::Fast=>MouseSpeed::Slow },
+                    22 => return self.apply("仅本次"),
+                    23 => return self.save_scope(),
+                    24 => self.go(Page::Confirm),
+                    25 => return self.close(), _ => {}
                 }
             }
-        }
-        if !matches!(nav,A) { return ResultAction::None; }
-        match self.page {
-            Page::Hub => match self.row {
-                0 => { self.go(Page::Slots); self.row = self.game_slot; },
-                1 => self.go(Page::Edit), 2 => return self.apply("仅本次"),
-                3 => return self.save_scope(true),
-                4 => { self.confirm = 0; self.go(Page::Confirm); },
-                5 => { self.visible = false; return ResultAction::Close; }, _ => {}
-            },
-            Page::Slots => { let slot = self.row; let action = self.switch_slot(slot); self.go(Page::Hub); return action; },
-            Page::Confirm => { self.draft = Mapping::group(self.game_slot); self.go(Page::Hub); self.status = "已恢复槽位默认；请应用或保存".into(); }, _ => {}
         }
         ResultAction::None
     }
@@ -515,9 +505,9 @@ mod tests {
     #[test]
     fn completely_empty_mapping_is_rejected_but_menu_can_still_restore() {
         let mut c = Controls::default(); c.draft.buttons.fill(Binding::None); c.draft.axes.fill(Binding::None); c.draft.stick = Stick::None;
-        c.row = 2; assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none());
-        c.row = 4; c.nav(Nav::A); c.nav(Nav::A); assert_eq!(c.draft,Mapping::group(0));
-        c.row = 2; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
+        c.row = 22; assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none());
+        c.row = 24; c.nav(Nav::A); c.nav(Nav::A); assert_eq!(c.draft,Mapping::group(0));
+        c.row = 22; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
     }
     #[test]
     fn relative_game_identity_survives_mount_and_legacy_folder_case() {
@@ -543,10 +533,10 @@ mod tests {
     #[test]
     fn edit_cancel_apply_and_reset_do_not_mutate_builtin_catalog() {
         let mut c = Controls::default(); let original = Mapping::builtin(1); c.begin(original.clone());
-        c.row = 1; c.nav(Nav::A); c.nav(Nav::A); assert_eq!(c.page,Page::Picker);
+        assert_eq!(c.page,Page::Edit); c.nav(Nav::A); assert_eq!(c.page,Page::Picker);
         c.nav(Nav::Right); c.nav(Nav::A); assert_eq!(c.draft.buttons[0],Binding::Key(13)); assert!(c.active.is_none());
         c.nav(Nav::X); assert_eq!(c.draft.buttons[0],Binding::Key(106));
-        c.nav(Nav::B); c.row = 2; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
+        c.row = 22; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
         assert_eq!(Mapping::builtin(1),original);
     }
     #[test]
@@ -559,7 +549,7 @@ mod tests {
     #[test]
     fn write_failure_does_not_apply_or_claim_success() {
         let f = Fixture::new(); fs::create_dir_all(&f.0.root).unwrap(); fs::write(f.0.root.join("global.rmap"),"bad").unwrap();
-        let mut c = Controls::new(Store::new(f.0.root.join("global.rmap"),Path::new("game.swf"))); c.row = 3;
+        let mut c = Controls::new(Store::new(f.0.root.join("global.rmap"),Path::new("game.swf"))); c.row = 23;
         assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none()); assert!(c.status.contains("失败"));
     }
     #[test]
@@ -619,7 +609,7 @@ mod tests {
         let f=Fixture::new();let mut c=Controls::new(f.0.clone());
         for i in 0..GAME_SLOTS {
             c.switch_slot(i);c.draft.buttons[0]=Binding::Key(97+i as i32);
-            assert!(matches!(c.save_scope(true),ResultAction::Apply(_)));
+            assert!(matches!(c.save_scope(),ResultAction::Apply(_)));
         }
         let (bank,slot,_)=f.0.load_slots();assert_eq!(slot,9);
         for (i,m) in bank.iter().enumerate() {assert_eq!(m.buttons[0],Binding::Key(97+i as i32));}
@@ -660,6 +650,21 @@ mod tests {
             loop {let before=reached.len();for row in reached.clone() {for nav in [Nav::Up,Nav::Down,Nav::Left,Nav::Right] {let next=grid_move(row,count,nav);assert!(next<count);reached.insert(next);}}if reached.len()==before {break;}}
             assert_eq!(reached.len(),count);assert!(count<=35);
         }
+    }
+
+    #[test]
+    fn editor_opens_directly_and_grid_reaches_all_keys_and_commands() {
+        let mut c=Controls::default(); c.begin(Mapping::group(0));
+        assert_eq!(c.page,Page::Edit); assert_eq!(c.lines().len(),26);
+        let mut reached=std::collections::BTreeSet::from([0]);
+        loop { let before=reached.len(); for row in reached.clone() { for nav in [Nav::Up,Nav::Down,Nav::Left,Nav::Right] {
+            c.row=row; c.nav(nav); assert!(c.row<26); reached.insert(c.row);
+        }} if reached.len()==before {break;} }
+        assert_eq!(reached.len(),26);
+        c.row=19; c.nav(Nav::A); assert_eq!(c.page,Page::Picker);
+        c.nav(Nav::B); assert_eq!((c.page,c.row),(Page::Edit,19));
+        c.row=24; c.nav(Nav::A); c.nav(Nav::B); assert_eq!((c.page,c.row),(Page::Edit,24));
+        assert!(matches!(c.nav(Nav::B),ResultAction::Close)); assert!(!c.visible);
     }
 
 }

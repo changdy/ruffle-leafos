@@ -392,7 +392,7 @@ mod tests {
     }
 
     #[test]
-    fn editor_and_templates_have_direct_menu_entries() {
+    fn editor_and_cursor_have_direct_menu_entries() {
         let mut s=Session::new(InputMode::Hybrid);s.open_menu();s.menu_move(2);
         assert_eq!(s.accept(),MenuResult::OpenControls);s.menu_move(2);assert_eq!(s.accept(),MenuResult::OpenCursor);
     }
