@@ -204,15 +204,15 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏");
         let slot=state.controls.preview_slot;
-        let rows=["继续","按键映射","编辑当前映射","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面与声音","保存并退出"];
-        let details=[String::new(),format!("槽位 {}  ◀ ▶",slot+1),String::new(),
+        let rows=["继续","按键方案","编辑当前映射","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面与声音","保存并退出"];
+        let details=[String::new(),format!("方案 {}  ◀ ▶",slot+1),String::new(),
             format!("{} · Y 光标",match state.preview_mouse_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
             String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
             self.leaf_row(i+1,line,138.+i as f32*51.,48.,i==state.selected);
             if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,145.+i as f32*51.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
-        self.live_label_width(16,"M+A 上一映射 · M+B 下一映射 · M+十字下 左键保持",20.,23.,606.,910.,false,self.palette[4]);
+        self.live_label_width(16,"M+A 上一方案 · M+B 下一方案 · M+十字下 左键保持",20.,23.,606.,910.,false,self.palette[4]);
         }
         } else if state.drag_locked {
             self.live_chip(61,"左键保持 · M+十字下解除",22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
@@ -421,7 +421,7 @@ impl PauseMenu {
                     self.live_label_width(2+i*2,value,24.,x+9.,y+35.,148.,true,color);
                 } else { self.live_label_width(1+i*2,line,23.,x+9.,y+23.,148.,true,color); }
             }
-            self.live_label_width(54,&format!("槽位 {} · {}",controls.game_slot+1,controls.detail()),21.,45.,594.,870.,true,self.palette[4]);
+            self.live_label_width(54,&format!("方案 {} · {}",controls.game_slot+1,controls.detail()),21.,45.,594.,870.,true,self.palette[4]);
             self.live_label_width(55,&controls.status,21.,45.,636.,870.,true,[1.,0.8,0.4,1.]);
             self.live_label_width(56,controls.hint(),22.,45.,679.,870.,true,self.palette[4]);
             return;

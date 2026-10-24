@@ -261,7 +261,7 @@ impl Store {
     }
     fn selected_path(&self) -> PathBuf { self.game_dir().join("selected.rmap") }
     pub fn select_slot(&self, slot: usize, mapping: &Mapping) -> Result<(),String> {
-        if slot >= GAME_SLOTS { return Err("槽位超出范围".into()); }
+        if slot >= GAME_SLOTS { return Err("方案超出范围".into()); }
         self.save(&self.selected_path(), &Record {name:format!("Slot {}",slot+1),identity:self.identity.clone(),mapping:mapping.clone()})
     }
     pub fn load_slots(&self) -> ([Mapping;GAME_SLOTS],usize,String) {
@@ -271,11 +271,11 @@ impl Store {
             let path = self.game_slot(i);
             if path.exists() || path.with_extension("rmap.bak").exists() {
                 match self.load(&path) {
-                    Ok((r,recovered)) if r.identity == self.identity => { *mapping = r.mapping; if recovered {warnings.push(format!("槽位{}回退备份",i+1));} },
-                    _ => warnings.push(format!("槽位{}损坏，使用默认；原文件保留",i+1)),
+                    Ok((r,recovered)) if r.identity == self.identity => { *mapping = r.mapping; if recovered {warnings.push(format!("方案{}回退备份",i+1));} },
+                    _ => warnings.push(format!("方案{}损坏，使用默认；原文件保留",i+1)),
                 }
             } else if i == 0 && self.game.exists() {
-                if let Ok((r,_)) = self.load(&self.game) { if r.identity == self.identity { *mapping = r.mapping; warnings.push("旧游戏配置载入槽位1，保存后迁移".into()); } }
+                if let Ok((r,_)) = self.load(&self.game) { if r.identity == self.identity { *mapping = r.mapping; warnings.push("旧游戏配置载入方案1，保存后迁移".into()); } }
             }
         }
         let selected = match self.load(&self.selected_path()) {
@@ -363,7 +363,7 @@ impl Controls {
             Err(_) => {if store.cursor_path().exists() || store.cursor_path().with_extension("conf.bak").exists() {status.push_str("；光标配置损坏，使用默认；原文件保留");} cursor::Settings::default()},
         };
         let mapping = mappings[game_slot].clone();
-        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键映射槽位{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
+        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键方案{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
             editing: 0, category: 0 }
     }
     pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.status.clear(); }
@@ -372,18 +372,18 @@ impl Controls {
         if let Some(active) = &self.active { self.mappings[self.game_slot] = active.clone(); }
         self.game_slot = slot; self.preview_slot = slot; self.draft = self.mappings[slot].clone(); self.original = self.draft.clone();
         let result = self.store.select_slot(slot,&self.draft);
-        let remembered = self.failure(result,"槽位选择已记忆");
-        let action = self.apply(&format!("按键映射槽位{}",slot+1));
-        self.status = format!("已切换至按键映射槽位{}{}",slot+1,if remembered {""} else {"（选择仅本次，写入失败）"}); action
+        let remembered = self.failure(result,"方案选择已记忆");
+        let action = self.apply(&format!("按键方案{}",slot+1));
+        self.status = format!("已切换至按键方案{}{}",slot+1,if remembered {""} else {"（选择仅本次，写入失败）"}); action
     }
     pub fn begin_cursor(&mut self, actual: cursor::Settings) { self.visible=true; self.cursor_draft=actual; self.status.clear(); self.go(Page::Cursor); }
     fn close(&mut self) -> ResultAction { self.visible = false; ResultAction::Close }
     fn save_scope(&mut self) -> ResultAction {
-        let result = self.store.save(&self.store.game_slot(self.game_slot), &self.record(format!("按键映射槽位{}",self.game_slot+1),true));
+        let result = self.store.save(&self.store.game_slot(self.game_slot), &self.record(format!("按键方案{}",self.game_slot+1),true));
         if self.failure(result,"保存成功") {
-            let source = format!("槽位{}（已保存）",self.game_slot+1);
+            let source = format!("方案{}（已保存）",self.game_slot+1);
             let action = self.apply(&source);
-            if let Err(e) = self.store.select_slot(self.game_slot,&self.draft) { self.status = format!("槽位已保存，记忆当前选择失败：{e}"); }
+            if let Err(e) = self.store.select_slot(self.game_slot,&self.draft) { self.status = format!("方案已保存，记忆当前选择失败：{e}"); }
             action
         } else { ResultAction::None }
     }
@@ -419,11 +419,11 @@ impl Controls {
             format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}",binding_label(self.draft.axes[i])))).chain([
             format!("十字鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
             format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }),
-            "应用：仅本次".into(), "保存：当前槽位".into(), "恢复整套默认".into(), "返回".into()]).collect(),
+            "应用：仅本次".into(), "保存：当前方案".into(), "恢复整套默认".into(), "返回".into()]).collect(),
         Page::Cursor => vec![format!("光标样式：{}",self.cursor_draft.style.name()),format!("光标颜色：{}",self.cursor_draft.color.name()),
             format!("光标大小：{}（{}）",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),"恢复光标默认".into(),"保存并应用（全局）".into(),"返回".into()],
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
-        Page::Confirm => vec!["恢复当前槽位默认，替换编辑内容？".into(), "A 确认操作".into(), "B 取消操作".into()],
+        Page::Confirm => vec!["恢复当前方案默认，替换编辑内容？".into(), "A 确认操作".into(), "B 取消操作".into()],
     } }
     pub fn detail(&self) -> String {
         if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {LABELS[self.editing]} else {AXIS_LABELS[self.editing-15]}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
@@ -441,7 +441,7 @@ impl Controls {
             return ResultAction::None;
         }
         if self.page == Page::Confirm {
-            if matches!(nav,A) { self.draft = Mapping::group(self.game_slot); self.go(Page::Edit); self.status = "已恢复槽位默认；请应用或保存".into(); }
+            if matches!(nav,A) { self.draft = Mapping::group(self.game_slot); self.go(Page::Edit); self.status = "已恢复方案默认；请应用或保存".into(); }
             return ResultAction::None;
         }
         let count = self.lines().len();
@@ -485,7 +485,7 @@ impl Controls {
             if matches!(nav, X) {
                 let defaults = Mapping::group(self.game_slot);
                 match self.row { 0..=13 => self.draft.buttons[self.row] = defaults.buttons[self.row], 14 => { self.draft.stick = defaults.stick; self.draft.axes = defaults.axes; }, 15..=19 => {self.draft.axes[self.row-15] = defaults.axes[self.row-15];self.draft.stick=Stick::Custom;}, 20 => self.draft.fine = defaults.fine, 21 => self.draft.speed = defaults.speed, _ => {} }
-                self.status = "此项已恢复槽位默认，尚未应用".into();
+                self.status = "此项已恢复方案默认，尚未应用".into();
                 if (10..14).contains(&self.row) && (self.draft.stick==Stick::Directions || self.draft.stick==Stick::Steering && self.row>=12) {self.draft.axes[self.row-10]=self.draft.buttons[self.row];}
             }
             if matches!(nav, A) {
