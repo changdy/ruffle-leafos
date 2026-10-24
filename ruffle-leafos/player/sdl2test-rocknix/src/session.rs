@@ -161,6 +161,7 @@ pub enum MenuResult {
 }
 
 pub struct Session {
+    pub directions_swapped: bool,
     pub experience: experience::Ui,
     pub toast: Option<(String,std::time::Instant)>,
     pub cursor_settings: cursor::Settings,
@@ -185,6 +186,7 @@ pub struct Session {
 impl Session {
     pub fn new(mode: InputMode) -> Self {
         Self {
+            directions_swapped: false,
             experience: experience::Ui::default(),
             toast: None,
             cursor_settings: cursor::Settings::default(),
@@ -218,6 +220,13 @@ impl Session {
 
     pub fn require_neutral(&mut self) {
         self.wait_neutral = true;
+    }
+
+    pub fn toggle_directions(&mut self) -> Vec<Transition> {
+        self.directions_swapped=!self.directions_swapped;
+        self.drag_locked=false; self.wait_neutral=true;
+        self.held.retain(|source| !matches!(source,Source::Stick(_)));
+        self.ledger.release_all()
     }
 
     pub fn resync_held(&mut self, physical: impl IntoIterator<Item = Source>) -> Vec<Transition> {
@@ -346,6 +355,17 @@ pub fn move_cursor(position: (f32, f32), axes: (i16, i16), seconds: f32, speed: 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn direction_toggle_releases_inputs_and_waits_for_the_stick_to_center() {
+        let mut s=Session::new(InputMode::Hybrid);s.refresh_neutral();
+        s.game_press(Source::Stick(0),Action::Key(119));s.toggle_drag();s.stick=(32767,0);
+        let released=s.toggle_directions();assert!(s.directions_swapped);assert!(!s.drag_locked);
+        assert!(released.iter().any(|t|t.action==Action::Key(119)&&!t.down));
+        assert!(released.iter().any(|t|t.action==Action::MouseLeft&&!t.down));
+        assert!(s.ledger.release_all().is_empty());s.refresh_neutral();assert!(!s.allow_game_input());
+        s.stick=(0,0);s.refresh_neutral();assert!(s.allow_game_input());
+        s.toggle_directions();assert!(!s.directions_swapped);
+    }
 
     #[test]
     fn chords_release_in_reverse_order_and_keep_a_shared_modifier_held() {

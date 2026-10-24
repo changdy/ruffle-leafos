@@ -212,7 +212,7 @@ impl PauseMenu {
             self.leaf_row(i+1,line,138.+i as f32*51.,48.,i==state.selected);
             if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,145.+i as f32*51.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
-        self.live_label_width(16,"M+A 上一方案 · M+B 下一方案 · M+十字下 左键保持",20.,23.,606.,910.,false,self.palette[4]);
+        self.live_label_width(16,"M+A 上一方案 · M+B 下一方案 · M+X 方向互换 · M+↓ 左键保持",20.,23.,606.,910.,false,self.palette[4]);
         }
         } else if state.drag_locked {
             self.live_chip(61,"左键保持 · M+十字下解除",22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
@@ -421,7 +421,7 @@ impl PauseMenu {
                     self.live_label_width(2+i*2,value,24.,x+9.,y+35.,148.,true,color);
                 } else { self.live_label_width(1+i*2,line,23.,x+9.,y+23.,148.,true,color); }
             }
-            self.live_label_width(54,&format!("方案 {} · {}",controls.game_slot+1,controls.detail()),21.,45.,594.,870.,true,self.palette[4]);
+            self.live_label_width(54,&format!("方案 {} · {}",controls.game_slot+1,if state.directions_swapped {"本次方向已互换 · M+X 恢复".into()} else {controls.detail()}),21.,45.,594.,870.,true,self.palette[4]);
             self.live_label_width(55,&controls.status,21.,45.,636.,870.,true,[1.,0.8,0.4,1.]);
             self.live_label_width(56,controls.hint(),22.,45.,679.,870.,true,self.palette[4]);
             return;

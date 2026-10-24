@@ -1,20 +1,21 @@
 //! Read-only physical state: Leaf's tap-only Menu proxy intentionally hides
 //! Menu-down from SDL. Never grab the device or change system shortcut settings.
 #[derive(Clone,Copy,Debug,Default)]
-pub struct Snapshot { pub menu: bool, pub a: bool, pub b: bool, pub x: i32, pub y: i32 }
+pub struct Snapshot { pub menu: bool, pub a: bool, pub b: bool, pub button_x: bool, pub x: i32, pub y: i32 }
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
-pub enum Command { Previous, Next, Drag }
+pub enum Command { Previous, Next, Drag, SwapDirections }
 #[derive(Default)]
-pub struct Chords { held: [bool;3], armed: bool }
+pub struct Chords { held: [bool;4], armed: bool }
 impl Chords {
     pub fn update(&mut self, s: Snapshot) -> Vec<Command> {
-        if !s.menu { self.armed = true; self.held = [false;3]; return Vec::new(); }
+        if !s.menu { self.armed = true; self.held = [false;4]; return Vec::new(); }
         if !self.armed { return Vec::new(); }
         // Physical A = previous, B = next. Opposing buttons cancel rather
         // than switching twice; the old Menu+hat left/right is inactive.
-        let now = [s.a&&!s.b,s.b&&!s.a,s.y>0];
+        let single=[s.a,s.b,s.y>0,s.button_x].into_iter().filter(|held|*held).count()==1;
+        let now = [s.a&&single,s.b&&single,s.y>0&&single,s.button_x&&single];
         let mut commands = Vec::new();
-        for (i,command) in [Command::Previous,Command::Next,Command::Drag].into_iter().enumerate() {
+        for (i,command) in [Command::Previous,Command::Next,Command::Drag,Command::SwapDirections].into_iter().enumerate() {
             if now[i] && !self.held[i] { commands.push(command); }
         }
         self.held = now; commands
@@ -64,7 +65,8 @@ impl Device {
         // BTN_EAST is the target's physical A, BTN_SOUTH its physical B.
         // This is the same physical-label convention as leaf_input_tap.c.
         if ok {Snapshot {menu:keys[316/8] & (1 << (316%8)) != 0,
-            a:keys[305/8] & (1 << (305%8)) != 0,b:keys[304/8] & (1 << (304%8)) != 0,x:x[0],y:y[0]}} else {Snapshot::default()}
+            a:keys[305/8] & (1 << (305%8)) != 0,b:keys[304/8] & (1 << (304%8)) != 0,
+            button_x:keys[307/8] & (1 << (307%8)) != 0,x:x[0],y:y[0]}} else {Snapshot::default()}
     }
 }
 #[cfg(any(not(target_os="linux"),test))]
@@ -78,6 +80,15 @@ impl Device {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn menu_x_is_edge_triggered_and_ambiguous_chords_are_ignored() {
+        let mut c=Chords::default();let swap=Snapshot{menu:true,button_x:true,..Default::default()};
+        assert!(c.update(swap).is_empty());c.update(Snapshot::default());
+        assert_eq!(c.update(swap),vec![Command::SwapDirections]);assert!(c.update(swap).is_empty());
+        c.update(Snapshot{menu:true,..Default::default()});assert_eq!(c.update(swap),vec![Command::SwapDirections]);
+        assert!(c.update(Snapshot{a:true,..swap}).is_empty());
+        c.update(Snapshot::default());assert!(c.update(Snapshot{button_x:true,..Default::default()}).is_empty());
+    }
     #[test]
     fn combos_trigger_once_and_never_trigger_on_startup_held_menu() {
         let mut c=Chords::default();

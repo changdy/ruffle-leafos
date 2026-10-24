@@ -23,6 +23,14 @@ pub struct Mapping {
 
 
 impl Mapping {
+    pub fn directions(&self, swapped: bool) -> Self {
+        let mut mapping=self.clone();
+        if swapped {
+            for i in 0..4 { std::mem::swap(&mut mapping.buttons[10+i],&mut mapping.axes[i]); }
+            mapping.stick=Stick::Custom; mapping.fine=false;
+        }
+        mapping
+    }
     pub fn group(slot: usize) -> Self {
         let mut m = Self::builtin(1);
         m.base = if slot == 1 {14} else {13};
@@ -642,6 +650,18 @@ mod tests {
         assert_eq!(&a.buttons[8..10],&[Binding::Key(27),Binding::Key(9)]);
         assert_eq!(a.axes,[Binding::Pointer(0),Binding::Pointer(1),Binding::Pointer(2),Binding::Pointer(3),Binding::LeftClick]);
         assert_eq!(b.axes,a.axes);
+    }
+    #[test]
+    fn direction_swap_routes_both_default_schemes_and_preserves_saved_mapping() {
+        for slot in 0..GAME_SLOTS {
+            let original=Mapping::group(slot);let routed=original.directions(true);
+            assert_eq!(&routed.buttons[10..],&original.axes[..4]);
+            assert_eq!(&routed.axes[..4],&original.buttons[10..]);
+            assert_eq!(&routed.buttons[..10],&original.buttons[..10]);assert_eq!(routed.axes[4],original.axes[4]);
+            assert_eq!(routed.speed,original.speed);assert_eq!(original.directions(false),original);
+            let twice=routed.directions(true);assert_eq!(twice.buttons,original.buttons);assert_eq!(twice.axes,original.axes);
+            assert_eq!(Mapping::group(slot),original);
+        }
     }
     #[test]
     fn ten_slots_survive_restart_without_affecting_other_games_or_unsaved_draft() {

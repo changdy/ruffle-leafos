@@ -259,13 +259,17 @@ impl Frontend {
         for command in self.chords.update(snapshot) {
             if self.state.paused {continue;}
             // The buttons used for a Menu chord must not remain held in Flash.
-            for button in DPAD.into_iter().chain([Button::A,Button::B]) {
+            for button in DPAD.into_iter().chain([Button::A,Button::B,Button::X]) {
                 let released=self.state.release(Source::Controller(button as u8)); self.emit(released,false);
             }
             use session::shortcuts::Command;
             match command {
                 Command::Previous => self.switch_slot((self.state.controls.game_slot+9)%10),
                 Command::Next => self.switch_slot((self.state.controls.game_slot+1)%10),
+                Command::SwapDirections => {
+                    let released=self.state.toggle_directions();self.emit(released,false);
+                    self.toast(if self.state.directions_swapped {"十字键 ↔ 摇杆：已互换（本次）"} else {"十字键 ↔ 摇杆：已恢复"}.into());
+                },
                 Command::Drag => { if self.can_game_input() {let transitions=self.state.toggle_drag(); self.emit(transitions,false); self.toast(if self.state.drag_locked {"鼠标左键保持：开"} else {"鼠标左键保持：关"}.into());} }
             }
         }
@@ -377,7 +381,8 @@ impl Frontend {
     fn binding(&self, button: Button) -> Binding {
         if let Some(mapping) = &self.state.controls.active {
             if button == Button::LeftStick {return mapping.axes[4];}
-            return PROFILE_BUTTONS.iter().chain(DPAD.iter()).position(|b| *b == button).map(|i| mapping.buttons[i]).unwrap_or(Binding::None);
+            return PROFILE_BUTTONS.iter().chain(DPAD.iter()).position(|b| *b == button).map(|i|
+                if self.state.directions_swapped && i>=10 {mapping.axes[i-10]} else {mapping.buttons[i]}).unwrap_or(Binding::None);
         }
         binding_for(&self.keymap, self.state.profile, self.state.mode, button, self.state.use_cfg)
     }
@@ -519,7 +524,7 @@ impl Frontend {
 
     fn update_stick(&mut self, seconds: f32) {
         if !self.can_game_input() || self.menu_held {return;}
-        let mapping=self.snapshot();
+        let mapping=self.snapshot().directions(self.state.directions_swapped);
         let (x,y)=session::stick_vector(self.state.stick.0,self.state.stick.1).unwrap_or((0.,0.));
         let strengths=[(-y).max(0.),y.max(0.),(-x).max(0.),x.max(0.)];
         let mut pointer=(0f32,0f32);
@@ -687,6 +692,7 @@ pub async fn run() -> Result<(), String> {
     let mut pump = sdl.event_pump()?;
     front.state.controls = controls::Controls::new(control_store);
     front.state.cursor_settings=front.state.controls.cursor_settings;
+    println!("leaf-cursor startup global={:?}",front.state.cursor_settings);
     front.state.experience.title=front.progress.lock().unwrap().title.clone();
     front.state.experience.settings=av;front.state.experience.app=opt.app_settings;
     front.state.experience.started=!opt.app_settings&&!pick_slot;
