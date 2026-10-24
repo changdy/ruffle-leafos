@@ -90,7 +90,7 @@ impl PauseMenu {
         for lines in previews {
             for line in lines { texts.push(Self::text(&gl, &font, line, 21.0)?); } // 29+
         }
-        texts.push(Self::text(&gl, &font, "自定义按键与模板", 30.0)?);
+        texts.push(Self::text(&gl, &font, "自定义按键", 30.0)?);
         Ok(Self {
             color: gl.get_uniform_location(program, "color"),
             textured: gl.get_uniform_location(program, "textured"),
@@ -204,7 +204,7 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏");
         let slot=state.controls.preview_slot;
-        let rows=["继续","按键映射","编辑当前映射","鼠标速度","模板管理","保存游戏进度","游戏存档","画面与声音","保存并退出"];
+        let rows=["继续","按键映射","编辑当前映射","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面与声音","保存并退出"];
         let details=[String::new(),format!("槽位 {}  ◀ ▶",slot+1),String::new(),
             format!("{} · Y 光标",match state.preview_mouse_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
             String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new()];

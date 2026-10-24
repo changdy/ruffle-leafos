@@ -1,4 +1,4 @@
-//! Local control editor and strictly data-only, versioned template storage.
+//! Local control editor and strictly data-only, versioned per-game mapping storage.
 //! No SDL/GL dependencies: the same state machine is exercised on the host.
 use super::{profiles::{self, Binding, Stick}, cursor, InputMode, MouseSpeed};
 use std::{collections::BTreeMap, fs::{self, File, OpenOptions}, io::{Read, Write}, path::{Path, PathBuf}};
@@ -9,7 +9,6 @@ pub const CATEGORIES: [&str; 9] = ["常用", "字母", "数字", "功能", "鼠�
 pub const GAME_SLOTS: usize = 10;
 pub const GRID_COLS: usize = 5;
 const LIMIT: usize = 16384;
-const SLOTS: usize = 16;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Mapping {
@@ -147,27 +146,27 @@ impl Record {
     }
 
     pub fn decode(text: &str) -> Result<Self, String> {
-        if text.len() > LIMIT { return Err("模板文件过大".into()); }
+        if text.len() > LIMIT { return Err("配置文件过大".into()); }
         let mut fields = BTreeMap::new();
         for line in text.lines() {
-            let (key, value) = line.split_once('=').ok_or("模板字段格式错误")?;
-            if fields.insert(key, value).is_some() { return Err("模板字段重复".into()); }
+            let (key, value) = line.split_once('=').ok_or("配置字段格式错误")?;
+            if fields.insert(key, value).is_some() { return Err("配置字段重复".into()); }
         }
-        let get = |key: &str| fields.get(key).copied().ok_or_else(|| format!("模板缺少 {key}"));
+        let get = |key: &str| fields.get(key).copied().ok_or_else(|| format!("配置缺少 {key}"));
         let version = get("version")?;
-        let count = match version { "1"=>22,"2"=>25,"3"=>30,_=>return Err("不支持的模板版本".into()) };
-        if fields.len() != count { return Err("模板字段缺失或未知".into()); }
+        let count = match version { "1"=>22,"2"=>25,"3"=>30,_=>return Err("不支持的配置版本".into()) };
+        if fields.len() != count { return Err("配置字段缺失或未知".into()); }
         let cursor = if version == "1" { cursor::Settings::default() } else { cursor::Settings {
             style: cursor::Style::parse(get("cursor-style")?).ok_or("光标样式无效")?,
             color: cursor::Color::parse(get("cursor-color")?).ok_or("光标颜色无效")?,
             size: cursor::Size::parse(get("cursor-size")?).ok_or("光标大小无效")?,
         } };
         let name = get("name")?.to_string();
-        if name.trim().is_empty() || name.chars().count() > 32 || name.chars().any(|c| c.is_control() || c == '=') { return Err("模板名称无效".into()); }
+        if name.trim().is_empty() || name.chars().count() > 32 || name.chars().any(|c| c.is_control() || c == '=') { return Err("配置名称无效".into()); }
         let identity = get("identity")?.to_string();
         if identity.len() > 4096 || identity.bytes().any(|b| !b.is_ascii_hexdigit()) { return Err("游戏标识无效".into()); }
-        let base = get("base")?.parse::<usize>().map_err(|_| "模板基底无效")?;
-        if base > if version == "3" {14} else {12} { return Err("模板基底无效".into()); }
+        let base = get("base")?.parse::<usize>().map_err(|_| "配置基底无效")?;
+        if base > if version == "3" {14} else {12} { return Err("配置基底无效".into()); }
         let mode = match get("mode")? { "hybrid" => InputMode::Hybrid, "keyboard" => InputMode::Keyboard, "mouse" => InputMode::Mouse, _ => return Err("控制方式无效".into()) };
         let speed = match get("speed")? { "slow" => MouseSpeed::Slow, "normal" => MouseSpeed::Normal, "fast" => MouseSpeed::Fast, _ => return Err("鼠标速度无效".into()) };
         let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if version == "3" => Stick::Custom, _ => return Err("摇杆方式无效".into()) };
@@ -177,7 +176,7 @@ impl Record {
         let mut mapping = Mapping { cursor, base, mode, speed, buttons, axes: [Binding::None;5], stick, fine };
         if version == "3" { for (i,binding) in mapping.axes.iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
         else { mapping.reset_axes(); }
-        if mapping.buttons.iter().chain(mapping.axes.iter()).all(|b| *b == Binding::None) { return Err("全空模板已拒绝，请恢复默认".into()); }
+        if mapping.buttons.iter().chain(mapping.axes.iter()).all(|b| *b == Binding::None) { return Err("全空配置已拒绝，请恢复默认".into()); }
         Ok(Self { name, identity, mapping })
     }
 }
@@ -238,7 +237,6 @@ impl Store {
         let game = root.join("games").join(format!("{hash:016x}.rmap"));
         Self { root, identity, game }
     }
-    pub fn template(&self, slot: usize) -> PathBuf { self.root.join("templates").join(format!("{:02}.rmap", slot+1)) }
     fn game_dir(&self) -> PathBuf { self.root.join("slots").join(self.game.file_stem().unwrap_or_default()) }
     pub fn game_slot(&self, slot: usize) -> PathBuf { self.game_dir().join(format!("slot-{:02}.rmap",slot+1)) }
     fn selected_path(&self) -> PathBuf { self.game_dir().join("selected.rmap") }
@@ -286,38 +284,10 @@ impl Store {
             read_record(&path.with_extension("rmap.bak")).map(|r| (r,true)).map_err(|_| original)
         } }
     }
-    pub fn startup(&self) -> (Option<Record>, String) {
-        let mut warnings = Vec::new();
-        for (path, source) in [(&self.game, "此游戏默认"), (&self.root.join("global.rmap"), "全局默认")] {
-            if !path.exists() { continue; }
-            match self.load(path) {
-                Ok((r, recovered)) if path != &self.game || r.identity == self.identity => {
-                    return (Some(r), format!("{}{}{}", warnings.join("；"), source, if recovered { "（已回退备份）" } else { "" }));
-                }
-                _ => warnings.push(format!("{source}损坏，原文件保留；")),
-            }
-        }
-        (None, format!("{}内置默认", warnings.join("")))
-    }
-    pub fn archive(&self, path: &Path) -> Result<(), String> {
-        if !path.exists() { return Ok(()); }
-        regular(path)?;
-        let deleted = self.root.join("deleted"); fs::create_dir_all(&deleted).map_err(|e| e.to_string())?;
-        fs::rename(path, deleted.join(format!("{}-{}", unique(), path.file_name().unwrap().to_string_lossy()))).map_err(|e| e.to_string())?;
-        let backup = path.with_extension("rmap.bak");
-        if backup.exists() { regular(&backup)?; fs::rename(&backup, deleted.join(format!("{}-backup.rmap", unique()))).map_err(|e| e.to_string())?; }
-        Ok(())
-    }
-    pub fn imports(&self) -> Vec<PathBuf> {
-        let mut paths: Vec<_> = fs::read_dir(self.root.join("imports")).into_iter().flatten().filter_map(Result::ok)
-            .filter(|e| e.file_type().is_ok_and(|t| t.is_file() && !t.is_symlink()))
-            .map(|e| e.path()).filter(|p| p.extension().is_some_and(|s| s == "rmap")).take(32).collect();
-        paths.sort(); paths
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Page { Hub, Edit, Picker, Templates, Template, Name, Imports, Confirm, Cursor, Slots }
+pub enum Page { Hub, Edit, Picker, Confirm, Cursor, Slots }
 #[derive(Clone, Copy, Debug)]
 pub enum Nav { Up, Down, Left, Right, A, B, X, Y, Prev, Next }
 pub fn grid_move(row: usize, count: usize, nav: Nav) -> usize {
@@ -356,13 +326,9 @@ pub struct Controls {
     pub draft: Mapping,
     original: Mapping,
     pub store: Store,
-    slot: usize,
     editing: usize,
     pub category: usize,
     confirm: usize,
-    name: String,
-    rename: bool,
-    cursor: usize,
     cursor_direct: bool,
 }
 impl Default for Controls {
@@ -374,7 +340,7 @@ impl Controls {
         let (mappings,game_slot,status) = store.load_slots();
         let mapping = mappings[game_slot].clone();
         Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Hub, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键映射槽位{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, store,
-            slot: 0, editing: 0, category: 0, confirm: 0, name: String::new(), rename: false, cursor: 0, cursor_direct: false }
+            editing: 0, category: 0, confirm: 0, cursor_direct: false }
     }
     pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.cursor_direct = false; self.page = Page::Hub; self.row = 0; self.draft = actual.clone(); self.original = actual; self.status.clear(); }
     pub fn switch_slot(&mut self, slot: usize) -> ResultAction {
@@ -409,8 +375,6 @@ impl Controls {
     fn failure(&mut self, result: Result<(), String>, success: &str) -> bool {
         match result { Ok(()) => { self.status = success.into(); true }, Err(e) => { eprintln!("leaf-controls io_error={e}"); self.status = "操作失败，原配置已保留；请检查目录或空间".into(); false } }
     }
-    fn slots(&self) -> Vec<usize> { (0..SLOTS).filter(|i| self.store.template(*i).exists()).collect() }
-    fn template_name(&self, slot: usize) -> String { self.store.load(&self.store.template(slot)).map(|(r, _)| r.name).unwrap_or_else(|_| format!("损坏模板 {:02}（可删除）", slot+1)) }
     fn choices(&self) -> Vec<Binding> {
         use Binding::*;
         let keys: Vec<i32> = match self.category {
@@ -422,17 +386,16 @@ impl Controls {
         if self.category == 4 { return vec![None,LeftClick,RightClick,Wheel(1),Wheel(-1),DragLock,Center,Slow,Fast,Pointer(0),Pointer(1),Pointer(2),Pointer(3)]; }
         keys.into_iter().map(|k| if (5..=7).contains(&self.category) { Combo([match self.category { 5 => profiles::SHIFT, 6 => profiles::CTRL, _ => 1073742050 }, k,0,0],2) } else { Key(k) }).collect()
     }
-    pub fn title(&self) -> &str { match self.page { Page::Hub => "按键映射与模板", Page::Edit => "编辑按键", Page::Picker => "选择虚拟动作", Page::Templates => "模板管理", Page::Template => "用户模板", Page::Name => "模板名称", Page::Imports => "导入模板", Page::Confirm => "确认操作", Page::Cursor => "鼠标光标", Page::Slots => "此游戏的 10 个映射槽位" } }
+    pub fn title(&self) -> &str { match self.page { Page::Hub => "按键映射", Page::Edit => "编辑按键", Page::Picker => "选择虚拟动作", Page::Confirm => "确认操作", Page::Cursor => "鼠标光标", Page::Slots => "此游戏的 10 个映射槽位" } }
     pub fn hint(&self) -> &str { match self.page {
         Page::Edit => "A 编辑  X 恢复此项  B 返回；Menu 始终可用",
         Page::Picker => "十字键移动  L1/R1 切换类型  A 确认  B 取消",
-        Page::Name => "上下选字符  左右移位  X 删除  Y 加空格  A 保存  B 取消",
         Page::Confirm => "A 确认  B 取消；仅执行当前所选操作",
         Page::Cursor => "左右调整  A 确认  X 恢复此项  B 返回",
         _ => "上下选择  左右调整  A 确认  B 返回；仅保存后才会记忆",
     } }
     pub fn lines(&self) -> Vec<String> { match self.page {
-        Page::Hub => vec![format!("按键映射槽位{}（A 选择其他槽位）", self.game_slot+1), "编辑按键".into(), "应用到当前槽位（本次）".into(), "保存当前槽位并应用".into(), "另存用户模板".into(), "模板管理".into(), "恢复当前槽位默认".into(), "返回（丢弃未应用修改）".into()],
+        Page::Hub => vec![format!("按键映射槽位{}（A 选择其他槽位）", self.game_slot+1), "编辑按键".into(), "应用到当前槽位（本次）".into(), "保存当前槽位并应用".into(), "恢复当前槽位默认".into(), "返回（丢弃未应用修改）".into()],
         Page::Edit => LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}", binding_label(self.draft.buttons[i]))).chain([
             format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}：{}",binding_label(self.draft.axes[i])))).chain([format!("十字键鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
             format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }), "光标样式、颜色与大小".into(), "返回".into()]).collect(),
@@ -440,24 +403,18 @@ impl Controls {
             format!("光标大小：{}（{}）",self.draft.cursor.size.name(),self.draft.cursor.size.pixels()),"恢复光标默认".into(),"应用到当前槽位（本次）".into(),"保存当前槽位并应用".into(),"返回".into()],
         Page::Slots => (0..GAME_SLOTS).map(|i|format!("按键映射槽位{}{}",i+1,if i==self.game_slot {"  ● 当前"} else {""})).collect(),
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
-        Page::Templates => profiles::PROFILES.iter().map(|p| format!("内置：{}", p.name)).chain(self.slots().into_iter().map(|s| format!("用户：{}", self.template_name(s)))).chain(["导入本地模板".into(),"返回".into()]).collect(),
-        Page::Template => vec![format!("载入：{}", self.template_name(self.slot)), "用当前编辑内容覆盖".into(), "重命名".into(), "导出到 exports 目录".into(), "删除此用户模板".into(), "返回".into()],
-        Page::Name => vec![format!("名称：{}", self.name), format!("正在编辑第 {} 个字符", self.cursor+1), "可输入英文字母、数字、空格、横线、下划线".into()],
-        Page::Imports => self.store.imports().iter().map(|p| p.file_name().unwrap().to_string_lossy().chars().take(40).collect()).chain(["返回".into()]).collect(),
-        Page::Confirm => vec![match self.confirm { 0 => "恢复基底默认，替换当前编辑内容？", 1 => "删除所选用户模板？", 2 => "清除此游戏默认？", 3 => "用编辑内容覆盖所选用户模板？", _ => "清除全局默认？" }.into(), "A 确认操作".into(), "B 取消操作".into()],
+        Page::Confirm => vec!["恢复当前槽位默认，替换编辑内容？".into(), "A 确认操作".into(), "B 取消操作".into()],
     } }
     pub fn detail(&self) -> String {
         if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {LABELS[self.editing]} else {AXIS_LABELS[self.editing-15]}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
-        if self.page == Page::Name { return "名称不影响模板编号；导入支持中文名称".into(); }
         if self.page == Page::Cursor { return "静止 3.5 秒自动隐藏；再次移动立即显示".into(); }
         format!("当前生效来源：{}；编辑内容{}", self.source, if self.active.as_ref().unwrap_or(&self.original) == &self.draft { "已应用" } else { "尚未应用" })
     }
     pub fn nav(&mut self, nav: Nav) -> ResultAction {
         use Nav::*;
-        if self.page == Page::Name { return self.name_nav(nav); }
         if matches!(nav, B) {
             if self.page == Page::Cursor { return self.leave_cursor(); }
-            match self.page { Page::Hub => { self.visible = false; return ResultAction::Close; }, Page::Picker => { self.go(Page::Edit); self.row = self.editing; }, Page::Template => self.go(Page::Templates), Page::Confirm => self.go(if matches!(self.confirm,1|3) {Page::Template} else {Page::Hub}), Page::Imports => self.go(Page::Templates), _ => self.go(Page::Hub) }
+            match self.page { Page::Hub => { self.visible = false; return ResultAction::Close; }, Page::Picker => { self.go(Page::Edit); self.row = self.editing; }, _ => self.go(Page::Hub) }
             return ResultAction::None;
         }
         if self.page == Page::Confirm && !matches!(nav,A) { return ResultAction::None; }
@@ -520,74 +477,11 @@ impl Controls {
                 0 => { self.go(Page::Slots); self.row = self.game_slot; },
                 1 => self.go(Page::Edit), 2 => return self.apply("仅本次"),
                 3 => return self.save_scope(true),
-                4 => {
-                    if let Some(slot) = (0..SLOTS).find(|i| !self.store.template(*i).exists()) {
-                        self.slot = slot; self.name = format!("Template {:02}",slot+1); self.rename = false; self.cursor = 0; self.go(Page::Name);
-                    } else { self.status = "用户模板已满（16 个），请先删除或覆盖".into(); }
-                }
-                5 => self.go(Page::Templates), 6 => { self.confirm = 0; self.go(Page::Confirm); },
-                7 => { self.visible = false; return ResultAction::Close; }, _ => {}
+                4 => { self.confirm = 0; self.go(Page::Confirm); },
+                5 => { self.visible = false; return ResultAction::Close; }, _ => {}
             },
             Page::Slots => { let slot = self.row; let action = self.switch_slot(slot); self.go(Page::Hub); return action; },
-            Page::Templates => {
-                let slots = self.slots();
-                if self.row < 12 { self.draft = Mapping::builtin(self.row+1); self.go(Page::Hub); self.status = "内置模板已载入编辑区，尚未应用".into(); }
-                else if self.row < 12+slots.len() { self.slot = slots[self.row-12]; self.go(Page::Template); }
-                else if self.row == 12+slots.len() { self.go(Page::Imports); }
-                else { self.go(Page::Hub); }
-            }
-            Page::Template => {
-                let path = self.store.template(self.slot);
-                match self.row {
-                    0 => match self.store.load(&path) { Ok((r, recovered)) => { self.draft = r.mapping; self.go(Page::Hub); self.status = if recovered {"已载入备份模板；原损坏文件保留"} else {"用户模板已载入编辑区，尚未应用"}.into(); }, Err(_) => self.status = "模板损坏；可返回删除或载入内置模板".into() },
-                    1 => { self.confirm = 3; self.go(Page::Confirm); },
-                    2 => { self.name = self.template_name(self.slot); self.rename = true; self.cursor = 0; self.go(Page::Name); },
-                    3 => match self.store.load(&path) { Ok((r,_)) => { let result = self.store.save(&self.store.root.join("exports").join(format!("template-{:02}.rmap",self.slot+1)), &Record {identity: String::new(), ..r}); self.failure(result,"已导出到 exports 目录"); }, Err(_) => self.status = "模板损坏，无法导出".into() },
-                    4 => { self.confirm = 1; self.go(Page::Confirm); }, _ => self.go(Page::Templates),
-                }
-            }
-            Page::Imports => {
-                if let Some(path) = self.store.imports().get(self.row) {
-                    match read_record(path) { Ok(mut r) => {
-                        if let Some(slot) = (0..SLOTS).find(|i| !self.store.template(*i).exists()) {
-                            r.identity.clear(); let result = self.store.save(&self.store.template(slot), &r);
-                            if self.failure(result,"导入成功，原文件保留") { self.go(Page::Templates); }
-                        } else { self.status = "用户模板已满，请先删除或覆盖".into(); }
-                    }, Err(e) => self.status = format!("拒绝导入：{e}") }
-                } else { self.go(Page::Templates); }
-            }
-            Page::Confirm => match self.confirm {
-                0 => { self.draft = Mapping::group(self.game_slot); self.go(Page::Hub); self.status = "已恢复槽位默认；请应用或保存".into(); },
-                1 => { let result = self.store.archive(&self.store.template(self.slot)); if self.failure(result,"用户模板已删除，当前游戏映射保留") { self.go(Page::Templates); } },
-                2 | 4 => {
-                    let path = if self.confirm == 2 {self.store.game.clone()} else {self.store.root.join("global.rmap")};
-                    let result = self.store.archive(&path); if self.failure(result,"已清除默认；下次启动生效，当前映射保留") { self.go(Page::Hub); }
-                }
-                3 => { let record = self.record(self.template_name(self.slot),false); let result = self.store.save(&self.store.template(self.slot), &record); if self.failure(result,"用户模板已更新") { self.go(Page::Template); } }, _ => {}
-            }, _ => {}
-        }
-        ResultAction::None
-    }
-    fn name_nav(&mut self, nav: Nav) -> ResultAction {
-        use Nav::*;
-        let mut chars: Vec<char> = self.name.chars().collect();
-        if matches!(nav,B) { self.go(if self.rename {Page::Template} else {Page::Hub}); return ResultAction::None; }
-        if matches!(nav, Left) { self.cursor = self.cursor.saturating_sub(1); }
-        if matches!(nav, Right) { self.cursor = (self.cursor+1).min(chars.len().min(23)); }
-        if matches!(nav, X) && self.cursor < chars.len() { chars.remove(self.cursor); self.cursor = self.cursor.min(chars.len()); }
-        if matches!(nav, Y) && chars.len() < 24 { chars.insert(self.cursor.min(chars.len()),' '); self.cursor = (self.cursor+1).min(23); }
-        if matches!(nav, Up | Down) {
-            let alphabet: Vec<char> = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".chars().collect();
-            if self.cursor >= chars.len() { chars.push(' '); }
-            let pos = alphabet.iter().position(|c| *c == chars[self.cursor]).unwrap_or(0);
-            chars[self.cursor] = alphabet[(pos as i32 + if matches!(nav,Up) {1} else {-1}).rem_euclid(alphabet.len() as i32) as usize];
-        }
-        self.name = chars.into_iter().collect();
-        if matches!(nav,A) {
-            let mut record = self.record(self.name.trim().to_string(),false);
-            if self.rename { match self.store.load(&self.store.template(self.slot)) { Ok((r,_)) => record.mapping = r.mapping, Err(_) => { self.status = "损坏模板无法重命名".into(); return ResultAction::None; } } }
-            let result = self.store.save(&self.store.template(self.slot), &record);
-            if self.failure(result,"模板已保存") { self.go(if self.rename {Page::Template} else {Page::Hub}); }
+            Page::Confirm => { self.draft = Mapping::group(self.game_slot); self.go(Page::Hub); self.status = "已恢复槽位默认；请应用或保存".into(); }, _ => {}
         }
         ResultAction::None
     }
@@ -599,7 +493,7 @@ mod tests {
     struct Fixture(Store);
     impl Fixture {
         fn new() -> Self { Self(Store::new(std::env::temp_dir().join(format!("ruffle-controls-{}",unique())), Path::new("/mnt/sdcard/Roms/flash/folder/game.swf"))) }
-        fn record(&self, base: usize, game: bool) -> Record { Record { name: "测试模板".into(), identity: if game {self.0.identity.clone()} else {String::new()}, mapping: Mapping::builtin(base) } }
+        fn record(&self, base: usize, game: bool) -> Record { Record { name: "测试配置".into(), identity: if game {self.0.identity.clone()} else {String::new()}, mapping: Mapping::builtin(base) } }
     }
     impl Drop for Fixture { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0.root); } }
 
@@ -622,17 +516,8 @@ mod tests {
     fn completely_empty_mapping_is_rejected_but_menu_can_still_restore() {
         let mut c = Controls::default(); c.draft.buttons.fill(Binding::None); c.draft.axes.fill(Binding::None); c.draft.stick = Stick::None;
         c.row = 2; assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none());
-        c.row = 6; c.nav(Nav::A); c.nav(Nav::A); assert_eq!(c.draft,Mapping::group(0));
+        c.row = 4; c.nav(Nav::A); c.nav(Nav::A); assert_eq!(c.draft,Mapping::group(0));
         c.row = 2; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
-    }
-    #[test]
-    fn game_override_wins_global_and_never_affects_another_game() {
-        let f = Fixture::new(); f.0.save(&f.0.root.join("global.rmap"),&f.record(2,false)).unwrap();
-        f.0.save(&f.0.game,&f.record(3,true)).unwrap();
-        assert_eq!(f.0.startup().0.unwrap().mapping.base,3);
-        let other = Store::new(f.0.root.clone(),Path::new("/mnt/sdcard/Roms/flash/other/game.swf"));
-        assert_ne!(f.0.game,other.game); assert_eq!(other.startup().0.unwrap().mapping.base,2);
-        f.0.archive(&f.0.game).unwrap(); assert_eq!(f.0.startup().0.unwrap().mapping.base,2);
     }
     #[test]
     fn relative_game_identity_survives_mount_and_legacy_folder_case() {
@@ -643,23 +528,17 @@ mod tests {
     fn corrupt_config_recovers_last_valid_backup_and_preserves_damage() {
         let f = Fixture::new(); f.0.save(&f.0.game,&f.record(1,true)).unwrap(); f.0.save(&f.0.game,&f.record(2,true)).unwrap();
         fs::write(&f.0.game,"damaged").unwrap();
-        let (loaded,source) = f.0.startup(); assert_eq!(loaded.unwrap().mapping.base,1); assert!(source.contains("备份"));
+        let (loaded,recovered) = f.0.load(&f.0.game).unwrap(); assert_eq!(loaded.mapping.base,1); assert!(recovered);
         assert_eq!(fs::read_to_string(&f.0.game).unwrap(),"damaged");
         f.0.save(&f.0.game,&f.record(3,true)).unwrap();
         assert_eq!(read_record(&f.0.game.with_extension("rmap.bak")).unwrap().mapping.base,1);
         assert!(fs::read_dir(f.0.game.parent().unwrap()).unwrap().any(|e| e.unwrap().path().extension().unwrap().to_string_lossy().starts_with("invalid-")));
     }
     #[test]
-    fn corrupt_game_falls_through_to_global_and_no_files_are_deleted() {
-        let f = Fixture::new(); f.0.save(&f.0.root.join("global.rmap"),&f.record(6,false)).unwrap();
-        fs::create_dir_all(f.0.game.parent().unwrap()).unwrap(); fs::write(&f.0.game,"bad").unwrap();
-        assert_eq!(f.0.startup().0.unwrap().mapping.base,6); assert_eq!(fs::read_to_string(&f.0.game).unwrap(),"bad");
-    }
-    #[test]
     fn identity_mismatch_refuses_to_load_or_overwrite_other_game() {
         let f = Fixture::new(); let mut r = f.record(1,true); r.identity = "deadbeef".into();
         fs::create_dir_all(f.0.game.parent().unwrap()).unwrap(); fs::write(&f.0.game,r.encode()).unwrap();
-        assert!(f.0.startup().0.is_none()); assert!(f.0.save(&f.0.game,&f.record(3,true)).is_err()); assert_eq!(read_record(&f.0.game).unwrap(),r);
+        assert_eq!(f.0.load_slots().0[0],Mapping::group(0)); assert!(f.0.save(&f.0.game,&f.record(3,true)).is_err()); assert_eq!(read_record(&f.0.game).unwrap(),r);
     }
     #[test]
     fn edit_cancel_apply_and_reset_do_not_mutate_builtin_catalog() {
@@ -678,19 +557,6 @@ mod tests {
         ledger.press_many(source,&actions); assert_eq!(ledger.release(source).into_iter().map(|t|t.action).collect::<Vec<_>>(),vec![actions[1],actions[0]]);
     }
     #[test]
-    fn template_save_rename_export_import_and_delete_preserve_current_mapping() {
-        let f = Fixture::new(); let mut c = Controls::new(f.0.clone()); c.begin(Mapping::builtin(7));
-        c.row = 4; c.nav(Nav::A); c.nav(Nav::A); assert!(c.store.template(0).exists());
-        c.go(Page::Template); c.slot = 0; c.row = 2; c.nav(Nav::A); c.name = "Renamed".into(); c.nav(Nav::A);
-        assert_eq!(read_record(&c.store.template(0)).unwrap().name,"Renamed");
-        c.row = 3; c.nav(Nav::A); let export = c.store.root.join("exports/template-01.rmap"); assert!(export.exists());
-        fs::create_dir_all(c.store.root.join("imports")).unwrap(); fs::copy(export,c.store.root.join("imports/copy.rmap")).unwrap();
-        c.go(Page::Imports); c.nav(Nav::A); assert!(c.store.template(1).exists());
-        c.active = Some(c.draft.clone()); c.go(Page::Template); c.row = 4; c.nav(Nav::A); c.nav(Nav::B); assert!(c.store.template(0).exists());
-        c.row = 4; c.nav(Nav::A); c.nav(Nav::A); assert!(!c.store.template(0).exists()); assert!(c.active.is_some());
-        assert!(!c.store.template(0).with_extension("rmap.bak").exists());
-    }
-    #[test]
     fn write_failure_does_not_apply_or_claim_success() {
         let f = Fixture::new(); fs::create_dir_all(&f.0.root).unwrap(); fs::write(f.0.root.join("global.rmap"),"bad").unwrap();
         let mut c = Controls::new(Store::new(f.0.root.join("global.rmap"),Path::new("game.swf"))); c.row = 3;
@@ -707,7 +573,7 @@ mod tests {
         let f=Fixture::new(); let r=f.record(6,true);
         let legacy=r.encode().lines().filter(|s|!s.starts_with("cursor-") && !s.starts_with("axis.")).collect::<Vec<_>>().join("\n").replace("version=3","version=1")+"\n";
         fs::create_dir_all(f.0.game.parent().unwrap()).unwrap(); fs::write(&f.0.game,&legacy).unwrap();
-        let loaded=f.0.startup().0.unwrap(); assert_eq!(loaded.mapping.cursor,cursor::Settings::default()); assert_eq!(fs::read_to_string(&f.0.game).unwrap(),legacy);
+        let loaded=f.0.load(&f.0.game).unwrap().0; assert_eq!(loaded.mapping.cursor,cursor::Settings::default()); assert_eq!(fs::read_to_string(&f.0.game).unwrap(),legacy);
         let mut updated=loaded; updated.mapping.cursor=cursor::Settings{style:cursor::Style::Crosshair,color:cursor::Color::Cyan,size:cursor::Size::ExtraLarge};
         f.0.save(&f.0.game,&updated).unwrap(); assert_eq!(f.0.load(&f.0.game).unwrap().0,updated);
         assert_eq!(fs::read_to_string(f.0.game.with_extension("rmap.bak")).unwrap(),legacy);
@@ -736,17 +602,6 @@ mod tests {
         c.nav(Nav::X); assert_eq!(c.draft.cursor,original.cursor);
         c.nav(Nav::Down); c.nav(Nav::Right); assert!(matches!(c.nav(Nav::B),ResultAction::Close)); assert!(c.active.is_none());
     }
-    #[test]
-    fn cursor_page_saves_current_game_slot_and_template_with_same_values() {
-        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin_cursor(Mapping::group(0));
-        c.nav(Nav::Right);c.nav(Nav::Down);c.nav(Nav::Right);c.nav(Nav::Down);c.nav(Nav::Right);
-        let expected=c.draft.cursor;c.row=5;assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
-        assert_eq!(c.store.load_slots().0[0].cursor,expected);assert!(!c.store.root.join("global.rmap").exists());
-        c.go(Page::Hub);c.row=4;c.nav(Nav::A);c.nav(Nav::A);
-        assert_eq!(c.store.load(&c.store.template(0)).unwrap().0.mapping.cursor,expected);
-    }
-
-
     #[test]
     fn requested_groups_have_exact_keys_and_independent_stick_click() {
         let a=Mapping::group(0);let b=Mapping::group(1);

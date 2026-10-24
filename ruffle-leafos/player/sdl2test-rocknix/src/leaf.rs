@@ -347,7 +347,7 @@ impl Frontend {
                 println!("leaf-session profile_applied={} scope=session use_cfg={}", profiles::profile(index).map(|p| p.id).unwrap_or("legacy"), self.state.use_cfg);
             }
             MenuResult::OpenControls => { let actual = self.snapshot(); self.state.controls.begin(actual); }
-            MenuResult::OpenTemplates => { let actual=self.snapshot(); self.state.controls.begin(actual); self.state.controls.page=controls::Page::Templates; }
+            MenuResult::OpenCursor => { let actual=self.snapshot(); self.state.controls.begin_cursor(actual); }
             MenuResult::SlotChanged(slot) => self.switch_slot(slot),
             MenuResult::SaveProgress => {self.flush_progress(true);},
             MenuResult::OpenSaves => {self.flush_progress(false);self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);},
@@ -719,14 +719,10 @@ pub async fn run() -> Result<(), String> {
     for _ in 0..9 {script.push(vec![Button::RightShoulder]);}
     script.extend([vec![r,a],vec![d,d,d,a]]);
     for _ in 0..5 {script.push(vec![Button::RightShoulder]);}
-    script.extend([vec![d,d,d,d,d,r,a],vec![b],vec![d,d,d,a], // Y=Shift+Tab, save slot 2
-        vec![d,a],vec![a],vec![d,d,d,d,d,a], // save a user template, open library
-        {let mut v=vec![d;12];v.push(a);v},vec![d,d,a],vec![Button::DPadUp,a], // rename
-        vec![d,d,d,a],vec![b],vec![b], // export and return
-        vec![d,d,d,d,d,d,a],vec![b], // cancel reset
-        vec![d,d,d,d,d,d,a],vec![a],vec![d,d,a],vec![b],vec![b], // reset only session
+    script.extend([vec![d,d,d,d,d,r,a],vec![b],vec![d,d,d,a],
+        vec![d,a],vec![b],vec![a],vec![a],vec![d,d,a],vec![b],vec![b],
         vec![Button::Guide],vec![d,d,d,Button::Y],
-        vec![r,d,r,r,d,r],vec![d,d,d,a],vec![b,b]]); // cursor: crosshair/red/large, save slot 2
+        vec![r,d,r,r,d,r],vec![d,d,d,a],vec![b,b]]);
     let ui_phases=script.len();
     let mut idle_start=None;
     let mut axis_start=(0.,0.);
@@ -1007,15 +1003,11 @@ pub async fn run() -> Result<(), String> {
         if script_phase!=ui_phases+8 {return Err(format!("Slots self-test incomplete: {script_phase}/{ui_phases}"));}
         let store=&front.state.controls.store;
         let saved=store.load(&store.game_slot(1))?.0;
-        let template=store.load(&store.template(0))?.0;
-        let export=store.load(&store.root.join("exports/template-01.rmap"))?.0;
         let expected=cursor::Settings{style:cursor::Style::Crosshair,color:cursor::Color::Red,size:cursor::Size::Large};
-        if saved.mapping.cursor!=expected || template.mapping.buttons[0]!=Binding::Key(13)
-            || template.mapping.buttons[3].actions()!=vec![Action::Key(profiles::SHIFT),Action::Key(9)]
-            || template.name!="Uemplate 01" || template!=export || front.state.controls.game_slot!=1 {
-            return Err(format!("Slot/template persistence assertion failed: saved={saved:?} template={template:?}"));
+        if saved.mapping.cursor!=expected || front.state.controls.game_slot!=1 {
+            return Err(format!("Mapping persistence assertion failed: saved={saved:?}"));
         }
-        println!("leaf-slots self_test=passed slot_switch=true tabs=9 grid=true editor=true chord=true save=true template_rename_export=true reset_cancel=true reset_apply=true cursor=true idle=true");
+        println!("leaf-slots self_test=passed slot_switch=true tabs=9 grid=true editor=true save=true cursor=true idle=true");
     }
     if !saved{return Err("游戏原生进度提交失败，请检查日志和存储卡".into());}
     Ok(())

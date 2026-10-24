@@ -153,7 +153,7 @@ pub enum MenuResult {
     MouseSpeedChanged(MouseSpeed),
     ProfileChanged(usize),
     OpenControls,
-    OpenTemplates,
+    OpenCursor,
     SlotChanged(usize),
     OpenSaves,
     OpenSettings,
@@ -307,7 +307,7 @@ impl Session {
                 self.wait_neutral = true;
                 MenuResult::MouseSpeedChanged(self.mouse_speed)
             }
-            4 => MenuResult::OpenTemplates,
+            4 => MenuResult::OpenCursor,
             5 => MenuResult::SaveProgress,
             6 => MenuResult::OpenSaves,
             7 => MenuResult::OpenSettings,
@@ -394,7 +394,7 @@ mod tests {
     #[test]
     fn editor_and_templates_have_direct_menu_entries() {
         let mut s=Session::new(InputMode::Hybrid);s.open_menu();s.menu_move(2);
-        assert_eq!(s.accept(),MenuResult::OpenControls);s.menu_move(2);assert_eq!(s.accept(),MenuResult::OpenTemplates);
+        assert_eq!(s.accept(),MenuResult::OpenControls);s.menu_move(2);assert_eq!(s.accept(),MenuResult::OpenCursor);
     }
 
     #[test]

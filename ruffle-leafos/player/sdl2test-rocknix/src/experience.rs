@@ -246,7 +246,7 @@ impl Ui {
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),
         Page::Settings=>self.settings.rows(),
-        Page::Manager=>vec![format!("游戏：  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or("暂无记录")),"清空此游戏的五个存档".into(),"重置此游戏的按键配置".into(),"清空所有游戏存档".into(),"重置所有按键配置与模板".into(),"返回 Leaf".into()],
+        Page::Manager=>vec![format!("游戏：  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or("暂无记录")),"清空此游戏的五个存档".into(),"重置此游戏的按键配置".into(),"清空所有游戏存档".into(),"重置所有按键配置".into(),"返回 Leaf".into()],
         Page::Confirm=>vec!["取消".into(),"确认".into()]
     }}
     pub fn nav(&mut self,nav:super::controls::Nav)->Command{
