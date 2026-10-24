@@ -1,13 +1,32 @@
 {
   "version": "0.6.4",
-  "status": "pending-physical-device-validation",
-  "requested_device": "192.168.137.47:5555",
+  "date": "2026-10-24",
+  "status": "passed-bounded-device-validation",
+  "device": "192.168.137.120:5555",
   "host_tests_passed": 71,
   "arm64_release_build": "passed",
-  "last_confirmed_installed_version": "0.6.3",
-  "not_installed_by_this_iteration": true,
-  "earlier_candidate_physical_test": "failed: Menu event reader could not receive events under Leaf EVIOCGRAB; consequently turbo test did not run through the intended editor",
-  "correction": "Independent 4ms EVIOCGKEY/ABS sampling thread, built and host tested; physical retest pending",
-  "network": "ADB 5555 and SSH 22 timed out; computer is 192.168.137.1/24",
-  "runtime_sha256": "d3069ce4b63e985a84dfe469a4b2c29c0662b87d5ab41acaebfa771cfc18fd43"
+  "physical_input_checks": [
+    "per_button_A_turbo_10Hz=10_presses_B_normal=1_release_stops=passed",
+    "switch_while_turbo_held_releases_and_stops=passed",
+    "saved_turbo_survives_restart=passed",
+    "12_chords_then_40ms_Menu_taps_both_release_orders=passed"
+  ],
+  "formal_leaf_checks": [
+    "formal_direct_turbo_editor_preview_cancel=passed",
+    "formal_12_chords_and_40ms_Menu_taps_no_double_trigger=passed",
+    "real_game_started_with_native_progress=passed",
+    "real_game_8_chords_then_Menu_recovery=passed",
+    "hardware_volume_real_Leaf_PulseAudio_0_to_5_one_step_and_visible=passed",
+    "paused_volume_keys_and_restore_original_level=passed",
+    "formal_Apps_entry_and_exit=passed",
+    "user_mapping_and_cursor_files_preserved=passed"
+  ],
+  "installed_files_verified": 593,
+  "runtime_sha256": "d3069ce4b63e985a84dfe469a4b2c29c0662b87d5ab41acaebfa771cfc18fd43",
+  "backup": "/mnt/sdcard/.userdata/mlp1/ruffle-probe/debug-backups/20261024-input-0.6.4/pak-0.6.3",
+  "original_system_volume": 0,
+  "system_volume_restored": true,
+  "mapping_and_cursor_files_preserved": true,
+  "menu_recovery_checks": 32,
+  "scope": "Automated physical input, both release orders, 40ms Menu taps, turbo save/restart, real system-volume feedback, formal game/Apps; broader human gameplay and long-run/suspend matrices remain in TODO."
 }

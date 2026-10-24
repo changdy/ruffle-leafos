@@ -1,6 +1,6 @@
 # Ruffle Leaf Preview 0.6.4 使用说明
 
-适用 Miniloong Pocket 1 / Leaf 0.13.0。当前为待真机验收的开发候选，尚未正式安装通过。更新于 2026-10-24。本文包含当前完整用法；功能截图与验证见 [实现结果](implementation-report.md)，未完成项见 [TODO](todo.md)。
+适用 Miniloong Pocket 1 / Leaf 0.13.0。当前为开发预览，已在本机完成本轮物理按键验证并安装。更新于 2026-10-24。本文包含当前完整用法；功能截图与验证见 [实现结果](implementation-report.md)，未完成项见 [TODO](todo.md)。
 
 ## 安装与入口
 
@@ -96,4 +96,4 @@ Apps 直接进入管理界面。左右选游戏，可清空其五个进度或重
 | 清理归档 | `$SAVES_PATH/ruffle-leaf-preview/shared_objects/cleared-data/` |
 | 运行日志 | `$LOGS_PATH/ruffle-probe.log`，上次日志为 `.previous` |
 
-设备已安装 0.6.4 的记录及升级前 0.6.1 备份路径见 [installation.json](../../outputs/ruffle-0.6.4/installation.json)。升级/回滚前同时保留安装包、控制目录与存档目录；完整跨版本保留矩阵、断电/重启/休眠与人工游戏验收继续列在 [TODO](todo.md)。
+设备已安装 0.6.4 的记录及升级前 0.6.3 备份路径见 [installation.json](../../outputs/ruffle-0.6.4/installation.json)。升级/回滚前同时保留安装包、控制目录与存档目录；完整跨版本保留矩阵、断电/重启/休眠与人工游戏验收继续列在 [TODO](todo.md)。
