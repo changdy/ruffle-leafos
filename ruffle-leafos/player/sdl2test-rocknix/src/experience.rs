@@ -179,24 +179,23 @@ impl Progress {
 }
 
 #[derive(Clone,Copy,Debug,PartialEq)]
-pub struct Settings {pub volume:u8,pub mute:bool,pub scale:u8,pub quality:u8,pub fps:bool}
-impl Default for Settings {fn default()->Self{Self{volume:100,mute:false,scale:0,quality:2,fps:false}}}
+pub struct Settings {pub scale:u8,pub quality:u8,pub fps:bool}
+impl Default for Settings {fn default()->Self{Self{scale:0,quality:2,fps:false}}}
 impl Settings {
     pub fn load(path:&Path)->Self {
         let Ok(v)=fs::read(path) else{return Self::default()};
         if v.len()!=17 || &v[..4]!=b"RAV1" || hash(&v[..9])!=u64::from_le_bytes(v[9..].try_into().unwrap()) || v[4]>100 || v[5]>1 || v[6]>2 || v[7]>2 || v[8]>1 {return Self::default();}
-        Self{volume:v[4],mute:v[5]!=0,scale:v[6],quality:v[7],fps:v[8]!=0}
+        // Keep the RAV1 layout readable, but ignore obsolete game volume/mute.
+        Self{scale:v[6],quality:v[7],fps:v[8]!=0}
     }
     pub fn save(&self,path:&Path)->Result<(),String>{
-        let mut v=b"RAV1".to_vec();v.extend([self.volume,u8::from(self.mute),self.scale,self.quality,u8::from(self.fps)]);v.extend(hash(&v).to_le_bytes());atomic(path,&v)
+        let mut v=b"RAV1".to_vec();v.extend([100,0,self.scale,self.quality,u8::from(self.fps)]);v.extend(hash(&v).to_le_bytes());atomic(path,&v)
     }
     pub fn change(&mut self,row:usize,d:i32){match row {
-        0=>self.volume=(self.volume as i32+d*10).clamp(0,100) as u8,
-        1=>self.mute=!self.mute,2=>self.scale=(self.scale as i32+d).rem_euclid(3) as u8,
-        3=>self.quality=(self.quality as i32+d).rem_euclid(3) as u8,4=>self.fps=!self.fps,_=>{}
+        0=>self.scale=(self.scale as i32+d).rem_euclid(3) as u8,
+        1=>self.quality=(self.quality as i32+d).rem_euclid(3) as u8,2=>self.fps=!self.fps,_=>{}
     }}
-    pub fn rows(&self)->Vec<String>{vec![format!("游戏音量                         {}%",self.volume),format!("静音                                 {}",if self.mute{"开"}else{"关"}),
-        format!("画面缩放                         {}",["保持比例","铺满屏幕","原始大小"][self.scale as usize]),
+    pub fn rows(&self)->Vec<String>{vec![format!("画面缩放                         {}",["保持比例","铺满屏幕","原始大小"][self.scale as usize]),
         format!("画面质量                         {}",["低","中","高"][self.quality as usize]),
         format!("左上角帧率                     {}",if self.fps{"开"}else{"关"}),"恢复默认设置".into(),"返回".into()]}
 }
@@ -241,7 +240,7 @@ pub struct Ui {
 impl Ui {
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面与声音".into(),Page::Manager=>"Ruffle · 数据管理".into(),Page::Confirm=>"确认操作".into()
+        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Ruffle · 数据管理".into(),Page::Confirm=>"确认操作".into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),
@@ -259,7 +258,7 @@ impl Ui {
                 else if self.app||!self.started{return Command::Quit;}else{self.open(Page::Home);}},
             Nav::Left|Nav::Right=>{
                 let d=if matches!(nav,Nav::Left){-1}else{1};
-                if self.page==Page::Settings&&self.selected<5{self.settings.change(self.selected,d);return Command::Settings;}
+                if self.page==Page::Settings&&self.selected<3{self.settings.change(self.selected,d);return Command::Settings;}
                 if self.page==Page::Manager&&self.selected==0&&!self.games.is_empty(){self.game_index=(self.game_index as i32+d).rem_euclid(self.games.len() as i32) as usize;}
             },
             Nav::Y if self.page==Page::Saves&&self.started&&self.selected<SAVE_SLOTS=>{
@@ -272,7 +271,7 @@ impl Ui {
                     else if !self.started{return Command::Choose(self.selected);}
                     else if self.selected==self.active {self.open(Page::Home);}
                     else {self.pending=10+self.selected;self.open(Page::Confirm);}},
-                Page::Settings=>{if self.selected==6{self.open(Page::Home);}else{if self.selected==5 {self.settings=Settings::default()}else{self.settings.change(self.selected,1)}return Command::Settings;}},
+                Page::Settings=>{if self.selected==4{self.open(Page::Home);}else{if self.selected==3 {self.settings=Settings::default()}else{self.settings.change(self.selected,1)}return Command::Settings;}},
                 Page::Manager=>{if self.selected==5{return Command::Quit;}if self.selected>0{
                     if self.selected<=2&&self.games.is_empty(){self.message="暂无游戏记录".into();}else{self.pending=self.selected;self.open(Page::Confirm);}
                 }},
@@ -314,7 +313,9 @@ mod tests {
         let old=p.root.clone();p.root=p.path(0);assert!(!p.put("x",Some(b"new")));assert!(p.error.is_some());assert_eq!(p.get("x"),Some(b"old".to_vec()));fs::remove_dir_all(old).unwrap();
     }
     #[test] fn settings_roundtrip_invalid_input_and_defaults(){
-        let p=progress();let path=p.root.join("audio");let mut s=Settings::default();s.change(0,-1);s.change(2,1);s.change(4,1);s.save(&path).unwrap();assert_eq!(Settings::load(&path),s);
+        let p=progress();let path=p.root.join("audio");let mut s=Settings::default();s.change(0,1);s.change(1,1);s.change(2,1);s.save(&path).unwrap();assert_eq!(Settings::load(&path),s);
+        let mut legacy=b"RAV1".to_vec();legacy.extend([0,1,s.scale,s.quality,u8::from(s.fps)]);legacy.extend(hash(&legacy).to_le_bytes());fs::write(&path,&legacy).unwrap();
+        assert_eq!(Settings::load(&path),s);assert_eq!(fs::read(&path).unwrap(),legacy);
         fs::write(&path,b"corrupt").unwrap();assert_eq!(Settings::load(&path),Settings::default());fs::remove_dir_all(p.root).unwrap();
     }
     #[test] fn failed_clear_is_retried_before_a_successful_flush(){

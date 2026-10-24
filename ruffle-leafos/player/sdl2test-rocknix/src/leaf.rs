@@ -170,7 +170,7 @@ impl Frontend {
         use ruffle_render::quality::StageQuality;
         let s=self.state.experience.settings;
         let mut p=self.active.player.lock().unwrap();
-        p.set_volume(if s.mute{0.}else{s.volume as f32/100.});
+        p.set_volume(1.0);
         p.set_scale_mode([StageScaleMode::ShowAll,StageScaleMode::ExactFit,StageScaleMode::NoScale][s.scale as usize]);
         p.set_quality([StageQuality::Low,StageQuality::Medium,StageQuality::High][s.quality as usize]);
         p.set_letterbox(if s.scale==0{ruffle_core::config::Letterbox::On}else{ruffle_core::config::Letterbox::Off});
@@ -748,7 +748,7 @@ pub async fn run() -> Result<(), String> {
             vec![d,d,d,a],vec![d,a],vec![d,d,d,d,a],vec![d,a],vec![]]
     } else {
         vec![if pick_slot{vec![a]}else{vec![]},vec![Button::Guide],vec![d,d,d,d,d,d,d,a],
-            vec![Button::DPadLeft,d,a,d,r,d,r,d,a],vec![],vec![b,b],vec![],vec![Button::Guide],
+            vec![r,d,r,d,a],vec![],vec![b,b],vec![],vec![Button::Guide],
             vec![d,d,d,d,d,a],vec![d,a],vec![d,d,d,d,Button::Y],vec![d,a],vec![]]
     };
     let mut experience_phase=0;
@@ -1030,7 +1030,7 @@ pub async fn run() -> Result<(), String> {
         if experience_phase!=experience_script.len(){return Err("Experience UI self-test did not finish".into());}
         if !opt.app_settings {
             let settings=experience::Settings::load(&front.settings_path);
-            if !settings.fps||!settings.mute||settings.volume!=90||settings.scale!=1||settings.quality!=0 {return Err(format!("AV persistence mismatch: {settings:?}"));}
+            if !settings.fps||settings.scale!=1||settings.quality!=0 {return Err(format!("Display persistence mismatch: {settings:?}"));}
             if front.progress.lock().unwrap().slots()[4].time==0{return Err("Copy to fifth progress slot failed".into());}
         }
         println!("leaf-experience self_test=passed app={} saved={saved} fps={:.1}",opt.app_settings,front.state.experience.fps);

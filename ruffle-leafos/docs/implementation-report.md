@@ -14,7 +14,7 @@
 | 游戏快捷键 | M+A/B 循环切换映射，M+十字下切换左键保持，M+X 本次方向互换；切换释放旧输入并等待中立 | [shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs)、[session.rs](../player/sdl2test-rocknix/src/session.rs) |
 | 光标 | 所有游戏共用一份独立全局外观，映射 v5 不含光标字段；默认空心圆＋固定 1×1 中心点；四样式/七色/四尺寸，3.5 秒静止隐藏、移动恢复；旧 arrow 兼容读取 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs)、[controls.rs](../player/sdl2test-rocknix/src/controls.rs) |
 | 原生进度 | 每游戏 5 份 SharedObject 进度与北京时间；启动先选档、复制、保存后重启读另槽；内容指纹身份、校验、原子替换及有效备份回退 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) |
-| 音画与提示 | 每游戏音量/静音、保持比例/铺满/原始大小、低/中/高画质；实际 Flash FPS，提示底色随文字尺寸收缩 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[pause_menu.rs](../player/sdl2test-rocknix/src/pause_menu.rs)、[帧计数接口](../player/core/src/player.rs) |
+| 画面与音量 | 保持比例/铺满/原始大小、低/中/高画质及实际 Flash FPS；音量统一由系统按键调节，显示真实百分比 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[pause_menu.rs](../player/sdl2test-rocknix/src/pause_menu.rs)、[帧计数接口](../player/core/src/player.rs) |
 | 数据管理 | 所选游戏/全部原生进度清理、按键重置；默认取消、确认后移入本地归档；Apps 不运行演示游戏 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) |
 | 构建与发布 | 固定公开源码、依赖与工具；ARM64 播放器、主机状态测试、清单/ELF/ZIP/指纹检查及源码打包 | [来源锁](../leaf-source.lock.json)、[构建脚本](../scripts/build_player.py)、[打包脚本](../scripts/package_preview.py) |
 

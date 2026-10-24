@@ -204,7 +204,7 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏");
         let slot=state.controls.preview_slot;
-        let rows=["继续","按键方案","编辑当前映射","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面与声音","保存并退出"];
+        let rows=["继续","按键方案","编辑当前映射","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面设置","保存并退出"];
         let details=[String::new(),format!("方案 {}  ◀ ▶",slot+1),String::new(),
             format!("{} · Y 光标",match state.preview_mouse_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
             String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new()];
@@ -218,7 +218,7 @@ impl PauseMenu {
             self.live_chip(61,"左键保持 · M+十字下解除",22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
         }
         if let Some((level,_))=&state.system_volume {
-            let label=format!("系统音量 {}%{}",level,if state.experience.settings.mute||state.experience.settings.volume==0 {" · 游戏静音"}else{""});
+            let label=format!("系统音量 {}%",level);
             self.live_chip(63,&label,23.,(600.,10.),350.,false,[0.96,0.99,1.,1.]);
         }
         if let Some((message,_))=&state.toast {
