@@ -146,7 +146,7 @@ impl MouseSpeed {
     }
 }
 
-pub const MENU_ROWS: usize = 8;
+pub const MENU_ROWS: usize = 7;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MenuResult {
@@ -299,7 +299,6 @@ impl Session {
     pub fn preview(&mut self, direction: i32) -> MenuResult {
         match self.selected {
             1 => return MenuResult::SlotChanged((self.controls.game_slot as i32+direction).rem_euclid(controls::GAME_SLOTS as i32) as usize),
-            2 => self.preview_mouse_speed = self.preview_mouse_speed.next(direction),
             _ => {}
         }
         MenuResult::None
@@ -312,15 +311,10 @@ impl Session {
         match self.selected {
             0 => self.resume(),
             1 => MenuResult::OpenControls,
-            2 => {
-                self.mouse_speed = self.preview_mouse_speed;
-                self.wait_neutral = true;
-                MenuResult::MouseSpeedChanged(self.mouse_speed)
-            }
-            3 => MenuResult::OpenCursor,
-            4 => MenuResult::SaveProgress,
-            5 => MenuResult::OpenSaves,
-            6 => MenuResult::OpenSettings,
+            2 => MenuResult::OpenCursor,
+            3 => MenuResult::SaveProgress,
+            4 => MenuResult::OpenSaves,
+            5 => MenuResult::OpenSettings,
             _ => MenuResult::Quit,
         }
     }
@@ -413,7 +407,7 @@ mod tests {
     #[test]
     fn editor_and_cursor_have_direct_menu_entries() {
         let mut s=Session::new(InputMode::Hybrid);s.open_menu();s.menu_move(1);
-        assert_eq!(s.accept(),MenuResult::OpenControls);s.menu_move(2);assert_eq!(s.accept(),MenuResult::OpenCursor);
+        assert_eq!(s.accept(),MenuResult::OpenControls);s.menu_move(1);assert_eq!(s.accept(),MenuResult::OpenCursor);
     }
 
     #[test]
@@ -531,20 +525,16 @@ mod tests {
     }
 
     #[test]
-    fn speed_preview_cancel_and_apply_do_not_change_the_control_mode() {
+    fn main_cursor_row_opens_settings_without_adjusting_speed() {
         let mut s = Session::new(InputMode::Mouse);
         s.open_menu();
         s.menu_move(2);
-        s.preview(-1);
-        assert_eq!(s.preview_mouse_speed, MouseSpeed::Slow);
-        assert_eq!(s.mouse_speed, MouseSpeed::Normal);
-        s.resume();
+        assert_eq!(s.preview(-1),MenuResult::None);
         assert_eq!(s.preview_mouse_speed, MouseSpeed::Normal);
-        s.open_menu();
-        s.menu_move(2);
-        s.preview(1);
+        assert_eq!(s.mouse_speed, MouseSpeed::Normal);
+        assert_eq!(s.preview(1),MenuResult::None);
         s.mark_down(Source::Controller(0));
-        assert_eq!(s.accept(), MenuResult::MouseSpeedChanged(MouseSpeed::Fast));
+        assert_eq!(s.accept(), MenuResult::OpenCursor);
         assert!(s.paused);
         assert_eq!(s.mode, InputMode::Mouse);
         s.resume();
@@ -552,11 +542,11 @@ mod tests {
         s.release(Source::Controller(0));
         assert!(s.allow_game_input());
         s.open_menu();
-        assert_eq!(s.preview_mouse_speed, MouseSpeed::Fast);
+        assert_eq!(s.preview_mouse_speed, MouseSpeed::Normal);
     }
 
     #[test]
-    fn speed_row_does_not_quit_and_navigation_wraps_to_the_real_quit_row() {
+    fn cursor_row_does_not_quit_and_navigation_wraps_to_the_real_quit_row() {
         let mut s = Session::new(InputMode::Hybrid);
         s.open_menu();
         s.menu_move(-1);
@@ -564,7 +554,7 @@ mod tests {
         s.menu_move(1);
         assert_eq!(s.selected, 0);
         s.menu_move(2);
-        assert_eq!(s.accept(), MenuResult::MouseSpeedChanged(MouseSpeed::Normal));
+        assert_eq!(s.accept(), MenuResult::OpenCursor);
         assert_eq!(MouseSpeed::Slow.next(-1), MouseSpeed::Slow);
         assert_eq!(MouseSpeed::Fast.next(1), MouseSpeed::Fast);
     }

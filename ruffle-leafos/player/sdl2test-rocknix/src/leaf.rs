@@ -301,6 +301,7 @@ impl Frontend {
                 self.state.cursor_settings=settings; self.cursor_idle.reveal(self.started.elapsed());
                 println!("leaf-cursor global_saved settings={settings:?}");
             },
+            ResultAction::Speed(speed) => self.menu_result(MenuResult::MouseSpeedChanged(speed)),
             ResultAction::Close => println!("leaf-controls editor_closed"),
             ResultAction::None => {}
         }
@@ -360,6 +361,7 @@ impl Frontend {
             MenuResult::Quit => {if self.flush_progress(false){self.quit=true;}},
             MenuResult::ModeChanged(mode) => { self.cursor_idle.reveal(self.started.elapsed()); self.state.controls.active = None; self.state.controls.source = "仅本次".into(); println!("leaf-session mode_applied={mode:?} scope=session"); },
             MenuResult::MouseSpeedChanged(speed) => {
+                self.state.mouse_speed=speed;self.state.preview_mouse_speed=speed;
                 if let Some(mapping) = &mut self.state.controls.active { mapping.speed = speed; self.state.controls.source = "仅本次（速度已改）".into(); }
                 println!("leaf-session mouse_speed_applied={speed:?} pixels_per_second={} scope=session", speed.pixels_per_second());
             }
@@ -373,7 +375,7 @@ impl Frontend {
             }
             MenuResult::OpenControls => { let actual = self.snapshot(); self.state.controls.begin(actual); }
             MenuResult::SlotChanged(slot) => self.switch_slot(slot),
-            MenuResult::OpenCursor => { self.state.controls.begin_cursor(self.state.cursor_settings); }
+            MenuResult::OpenCursor => { self.state.controls.begin_cursor(self.state.cursor_settings,self.state.mouse_speed); }
             MenuResult::SaveProgress => {self.flush_progress(true);},
             MenuResult::OpenSaves => {self.flush_progress(false);self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);},
             MenuResult::OpenSettings => {self.state.experience.open(ExperiencePage::Settings);},
@@ -486,7 +488,6 @@ impl Frontend {
                 Button::DPadLeft => {let result=self.state.preview(-1);self.menu_result(result);},
                 Button::DPadRight => {let result=self.state.preview(1);self.menu_result(result);},
                 Button::X => self.state.toggle_cfg_preview(),
-                Button::Y if self.state.selected == 2 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Button::A | Button::Start => { let result = self.state.accept(); self.menu_result(result); }
                 Button::B | Button::Back => { let result = self.state.resume(); self.menu_result(result); }
                 _ => {}
@@ -527,7 +528,6 @@ impl Frontend {
                 Keycode::Left => {let result=self.state.preview(-1);self.menu_result(result);},
                 Keycode::Right => {let result=self.state.preview(1);self.menu_result(result);},
                 Keycode::X => self.state.toggle_cfg_preview(),
-                Keycode::Y if self.state.selected == 2 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Keycode::Return | Keycode::Space => { let result = self.state.accept(); self.menu_result(result); }
                 _ => {}
             }
@@ -749,9 +749,9 @@ pub async fn run() -> Result<(), String> {
         vec![vec![],vec![d,a],vec![b],vec![d,a],vec![d,a],vec![d,d,a],vec![d,a],
             vec![d,d,d,a],vec![d,a],vec![d,d,d,d,a],vec![d,a],vec![]]
     } else {
-        vec![if pick_slot{vec![a]}else{vec![]},vec![Button::Guide],vec![d,d,d,d,d,d,a],
+        vec![if pick_slot{vec![a]}else{vec![]},vec![Button::Guide],vec![d,d,d,d,d,a],
             vec![r,d,r,d,a],vec![],vec![b,b],vec![],vec![Button::Guide],
-            vec![d,d,d,d,a],vec![d,a],vec![d,d,d,d,Button::Y],vec![d,a],vec![]]
+            vec![d,d,d,a],vec![d,a],vec![d,d,d,d,Button::Y],vec![d,a],vec![]]
     };
     let mut experience_phase=0;
     let mut script_phase = 0;
@@ -764,8 +764,8 @@ pub async fn run() -> Result<(), String> {
     script.extend([vec![r,a],vec![r,r,r,a]]); // A=Enter, select Y
     for _ in 0..5 {script.push(vec![Button::RightShoulder]);}
     script.extend([vec![d,d,d,d,d,r,a],vec![b],vec![d,d,a], // save and leave slot 2
-        vec![b],vec![Button::Guide],vec![d,d,d,a],
-        vec![r,d,r,r,d,r],vec![d,d,a],vec![b,b]]);
+        vec![b],vec![Button::Guide],vec![d,d,a],
+        vec![r,d,r,r,d,r],vec![d,d,d,a],vec![b,b]]);
     let ui_phases=script.len();
     let mut idle_start=None;
     let mut axis_start=(0.,0.);

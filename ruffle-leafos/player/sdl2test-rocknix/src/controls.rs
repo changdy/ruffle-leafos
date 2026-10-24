@@ -353,7 +353,7 @@ fn grid_columns(row: usize, count: usize, nav: Nav, columns: usize) -> usize {
     }
 }
 #[derive(Clone, Debug)]
-pub enum ResultAction { None, Close, Apply(Mapping), Cursor(cursor::Settings) }
+pub enum ResultAction { None, Close, Apply(Mapping), Cursor(cursor::Settings), Speed(MouseSpeed) }
 #[derive(Clone, Copy, Debug)]
 enum Pending { Exit, Slot(usize) }
 
@@ -386,6 +386,7 @@ pub struct Controls {
     pub draft: Mapping,
     pub cursor_settings: cursor::Settings,
     pub cursor_draft: cursor::Settings,
+    pub pointer_speed: MouseSpeed,
     original: Mapping,
     pub store: Store,
     editing: usize,
@@ -406,7 +407,7 @@ impl Controls {
         };
         let mapping = mappings[game_slot].clone();
         Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键方案{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
-            editing: 0, category: 0, pending:None, return_row:0 }
+            editing: 0, category: 0, pending:None, return_row:0, pointer_speed:MouseSpeed::Normal }
     }
     pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.pending=None; self.status.clear(); }
     pub fn dirty(&self)->bool {self.draft!=self.original}
@@ -433,7 +434,7 @@ impl Controls {
         let action = self.apply(&format!("按键方案{}",slot+1));
         self.status = format!("已切换至按键方案{}{}",slot+1,if remembered {""} else {"（选择仅本次，写入失败）"}); action
     }
-    pub fn begin_cursor(&mut self, actual: cursor::Settings) { self.visible=true; self.cursor_draft=actual; self.status.clear(); self.go(Page::Cursor); }
+    pub fn begin_cursor(&mut self, actual: cursor::Settings, speed:MouseSpeed) { self.visible=true; self.cursor_draft=actual; self.pointer_speed=speed; self.status.clear(); self.go(Page::Cursor); }
     fn close(&mut self) -> ResultAction { self.visible = false; ResultAction::Close }
     fn save_scope(&mut self) -> ResultAction {
         let result = self.store.save(&self.store.game_slot(self.game_slot), &self.record(format!("按键方案{}",self.game_slot+1),true));
@@ -479,7 +480,9 @@ impl Controls {
             format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }),
             "保存".into(), "返回".into()]).collect(),
         Page::Cursor => vec![format!("光标样式：{}",self.cursor_draft.style.name()),format!("光标颜色：{}",self.cursor_draft.color.name()),
-            format!("光标大小：{}（{}）",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),"恢复光标默认".into(),"保存并应用（全局）".into(),"返回".into()],
+            format!("光标大小：{}（{}）",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),
+            format!("鼠标速度：{}（本次）",match self.pointer_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
+            "恢复光标默认".into(),"保存外观（全局）".into(),"返回".into()],
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
         Page::Confirm => vec!["继续编辑".into(), "舍弃修改并继续".into(), "保存并继续".into()],
     } }
@@ -488,7 +491,7 @@ impl Controls {
     }
     pub fn detail(&self) -> String {
         if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {LABELS[self.editing]} else {AXIS_LABELS[self.editing-15]}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
-        if self.page == Page::Cursor { return "所有游戏共用一份外观；静止 3.5 秒隐藏，移动显示".into(); }
+        if self.page == Page::Cursor { return "速度调整立即生效，仅本次；光标外观为全局保存".into(); }
         let repeat=if self.page==Page::Edit {self.selected_repeat().map(|(binding,rate)|if turbo::supported(binding) {format!(" · {}（Y切换）",rate.label())}else{" · 此动作无连发".into()}).unwrap_or_default()}else{String::new()};
         repeat.trim_start_matches(" · ").into()
     }
@@ -541,6 +544,12 @@ impl Controls {
         if matches!(nav, Up | Down) { self.row = (self.row as i32 + if matches!(nav,Up) {-1} else {1}).rem_euclid(count as i32) as usize; return ResultAction::None; }
         let adjust = if matches!(nav,Left) {-1} else {1};
         if self.page == Page::Cursor {
+            if self.row==3&&matches!(nav,Left|Right|A|X) {
+                self.pointer_speed=if matches!(nav,X) {MouseSpeed::Normal}
+                    else if matches!(nav,A)&&self.pointer_speed==MouseSpeed::Fast {MouseSpeed::Slow}
+                    else {self.pointer_speed.next(adjust)};
+                self.status="鼠标速度已应用（本次）".into();return ResultAction::Speed(self.pointer_speed);
+            }
             if matches!(nav,X) {
                 let defaults=cursor::Settings::default();
                 match self.row { 0=>self.cursor_draft.style=defaults.style,1=>self.cursor_draft.color=defaults.color,2=>self.cursor_draft.size=defaults.size,_=>{} }
@@ -550,12 +559,12 @@ impl Controls {
                 0=>self.cursor_draft.style=self.cursor_draft.style.next(adjust),
                 1=>self.cursor_draft.color=self.cursor_draft.color.next(adjust),
                 2=>self.cursor_draft.size=self.cursor_draft.size.next(adjust),
-                3 if matches!(nav,A)=>{ self.cursor_draft=cursor::Settings::default(); self.status="光标已恢复默认，请应用或保存".into(); },
-                4 if matches!(nav,A)=>{
+                4 if matches!(nav,A)=>{ self.cursor_draft=cursor::Settings::default(); self.status="光标已恢复默认，请保存外观".into(); },
+                5 if matches!(nav,A)=>{
                     let result=self.store.save_cursor(self.cursor_draft);
                     if self.failure(result,"全局光标已保存并应用") {self.cursor_settings=self.cursor_draft;return ResultAction::Cursor(self.cursor_settings);}
                 },
-                5 if matches!(nav,A)=>return self.close(),_=>{}
+                6 if matches!(nav,A)=>return self.close(),_=>{}
             } }
             return ResultAction::None;
         }
@@ -691,9 +700,9 @@ mod tests {
     #[test]
     fn global_cursor_save_restart_and_cancel_are_independent_of_all_mappings() {
         let f=Fixture::new();let mut c=Controls::new(f.0.clone());let original=cursor::Settings::default();
-        c.begin_cursor(original);c.nav(Nav::Right);assert_ne!(c.cursor_draft,original);c.nav(Nav::X);assert_eq!(c.cursor_draft,original);
+        c.begin_cursor(original,MouseSpeed::Normal);c.nav(Nav::Right);assert_ne!(c.cursor_draft,original);c.nav(Nav::X);assert_eq!(c.cursor_draft,original);
         c.nav(Nav::Right);assert!(matches!(c.nav(Nav::B),ResultAction::Close));assert!(!f.0.cursor_path().exists());
-        c.begin_cursor(original);c.nav(Nav::Right);let expected=c.cursor_draft;c.row=4;
+        c.begin_cursor(original,MouseSpeed::Normal);c.nav(Nav::Right);let expected=c.cursor_draft;c.row=5;
         assert!(matches!(c.nav(Nav::A),ResultAction::Cursor(s) if s==expected));assert!(c.active.is_none());
         for i in 0..GAME_SLOTS {c.switch_slot(i);assert_eq!(c.cursor_settings,expected);assert!(!c.store.game_slot(i).exists());}
         let other=Controls::new(Store::new(f.0.root.clone(),Path::new("another.swf")));
@@ -707,10 +716,23 @@ mod tests {
         f.0.save_cursor(changed).unwrap();assert_eq!(f.0.load_cursor().unwrap(),(changed,false));
         assert_eq!(fs::read_to_string(f.0.cursor_path().with_extension("conf.bak")).unwrap(),default.encode());
         fs::remove_file(f.0.cursor_path()).unwrap();fs::create_dir(f.0.cursor_path()).unwrap();
-        let mut c=Controls::new(f.0.clone());c.begin_cursor(default);c.cursor_draft=changed;c.row=4;
+        let mut c=Controls::new(f.0.clone());c.begin_cursor(default,MouseSpeed::Normal);c.cursor_draft=changed;c.row=5;
         assert!(matches!(c.nav(Nav::A),ResultAction::None));assert_eq!(c.cursor_settings,default);assert!(c.status.contains("失败"));
     }
 
+    #[test]
+    fn pointer_speed_lives_in_cursor_page_and_does_not_save_global_appearance_or_mapping() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());let original=c.draft.clone();
+        c.begin_cursor(cursor::Settings::default(),MouseSpeed::Normal);c.row=3;
+        assert!(matches!(c.nav(Nav::Left),ResultAction::Speed(MouseSpeed::Slow)));
+        assert!(matches!(c.nav(Nav::Left),ResultAction::Speed(MouseSpeed::Slow)));
+        assert!(matches!(c.nav(Nav::Right),ResultAction::Speed(MouseSpeed::Normal)));
+        assert!(matches!(c.nav(Nav::A),ResultAction::Speed(MouseSpeed::Fast)));
+        assert!(matches!(c.nav(Nav::A),ResultAction::Speed(MouseSpeed::Slow)));
+        assert!(matches!(c.nav(Nav::X),ResultAction::Speed(MouseSpeed::Normal)));
+        c.row=6;assert!(matches!(c.nav(Nav::A),ResultAction::Close));assert_eq!(c.draft,original);assert!(c.active.is_none());
+        assert!(!f.0.cursor_path().exists());assert!(!f.0.game_slot(0).exists());
+    }
     #[test]
     fn requested_groups_have_exact_keys_and_independent_stick_click() {
         let a=Mapping::group(0);let b=Mapping::group(1);

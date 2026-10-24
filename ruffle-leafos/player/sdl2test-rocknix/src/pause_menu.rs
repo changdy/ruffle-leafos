@@ -5,7 +5,7 @@ use glow::HasContext;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::session::{MouseSpeed, Session};
+use crate::session::Session;
 
 struct Text {
     texture: glow::Texture,
@@ -207,9 +207,8 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏",FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
-        let rows=["继续","按键设置","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面设置","保存并退出"];
+        let rows=["继续","按键设置","鼠标光标","保存游戏进度","游戏存档","画面设置","保存并退出"];
         let details=[String::new(),format!("◀ 方案 {} ▶",slot+1),
-            format!("{} · Y 光标",match state.preview_mouse_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
             String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
             self.leaf_row(i+1,line,138.+i as f32*51.,48.,i==state.selected);
@@ -401,7 +400,7 @@ impl PauseMenu {
         let subtitle=match controls.page {
             Page::Edit=>format!("L / R 切换方案 · Y 连发{}",if controls.dirty(){" · 未保存"}else{""}),
             Page::Picker=>"L1 / R1 切换动作类型".into(),
-            Page::Cursor=>"全局外观 · 所有游戏共用".into(),
+            Page::Cursor=>"鼠标速度与光标外观".into(),
             Page::Confirm=>controls.pending_detail(),
         };
         let title=if controls.page==Page::Edit {format!("按键设置 · 方案 {}",controls.game_slot+1)}else{controls.title().into()};
@@ -459,7 +458,7 @@ impl PauseMenu {
             return;
         }
         for (i,line) in lines.iter().enumerate() {
-            self.leaf_row(1+i,line,143.+i as f32*59.,55.,i==controls.row);
+            self.leaf_row(1+i,line,143.+i as f32*53.,49.,i==controls.row);
         }
         self.live_label_width(54,&controls.detail(),21.,23.,535.,910.,false,self.palette[4]);
         self.live_label_width(55,controls.hint(),21.,23.,570.,910.,false,self.palette[4]);
