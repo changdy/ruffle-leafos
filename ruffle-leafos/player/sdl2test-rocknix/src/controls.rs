@@ -354,6 +354,24 @@ fn grid_columns(row: usize, count: usize, nav: Nav, columns: usize) -> usize {
 }
 #[derive(Clone, Debug)]
 pub enum ResultAction { None, Close, Apply(Mapping), Cursor(cursor::Settings) }
+#[derive(Clone, Copy, Debug)]
+enum Pending { Exit, Slot(usize) }
+
+pub const EDIT_ITEMS: usize = 22;
+pub const SAVE_ROW: usize = EDIT_ITEMS;
+pub const BACK_ROW: usize = EDIT_ITEMS+1;
+
+fn edit_move(row:usize,nav:Nav)->usize {
+    use Nav::*;
+    if row>=EDIT_ITEMS {return match nav {
+        Left|Right=>if row==SAVE_ROW {BACK_ROW}else{SAVE_ROW},
+        Up=>if row==SAVE_ROW {20}else{21},
+        Down=>if row==SAVE_ROW {0}else{4},_=>row,
+    };}
+    if matches!(nav,Down)&&row>=20 {return if row==20 {SAVE_ROW}else{BACK_ROW};}
+    if matches!(nav,Up)&&row<GRID_COLS {return if row<2 {SAVE_ROW}else{BACK_ROW};}
+    grid_move(row,EDIT_ITEMS,nav)
+}
 
 pub struct Controls {
     pub game_slot: usize,
@@ -372,6 +390,8 @@ pub struct Controls {
     pub store: Store,
     editing: usize,
     pub category: usize,
+    pending: Option<Pending>,
+    return_row: usize,
 }
 impl Default for Controls {
     fn default() -> Self { Self::new(Store::new(PathBuf::new(), Path::new(""))) }
@@ -386,13 +406,28 @@ impl Controls {
         };
         let mapping = mappings[game_slot].clone();
         Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键方案{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
-            editing: 0, category: 0 }
+            editing: 0, category: 0, pending:None, return_row:0 }
     }
-    pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.status.clear(); }
+    pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.pending=None; self.status.clear(); }
+    pub fn dirty(&self)->bool {self.draft!=self.original}
+    fn request(&mut self,pending:Pending)->ResultAction {
+        if !self.dirty() {return self.finish(pending);}
+        self.pending=Some(pending);self.return_row=self.row;self.go(Page::Confirm);self.status.clear();ResultAction::None
+    }
+    fn finish(&mut self,pending:Pending)->ResultAction {
+        self.pending=None;self.draft=self.original.clone();
+        match pending {Pending::Exit=>self.close(),Pending::Slot(slot)=>self.switch_slot(slot)}
+    }
+    fn cancel_pending(&mut self) {self.pending=None;self.page=Page::Edit;self.row=self.return_row;self.status.clear();}
+    pub fn pending_detail(&self)->String {match self.pending {
+        Some(Pending::Slot(slot))=>format!("切换到方案 {} 前，请处理当前修改",slot+1),
+        _=>"返回前，请处理当前修改".into(),
+    }}
     pub fn switch_slot(&mut self, slot: usize) -> ResultAction {
         if slot >= GAME_SLOTS { return ResultAction::None; }
         if let Some(active) = &self.active { self.mappings[self.game_slot] = active.clone(); }
         self.game_slot = slot; self.preview_slot = slot; self.draft = self.mappings[slot].clone(); self.original = self.draft.clone();
+        self.page=Page::Edit;self.row=0;self.pending=None;
         let result = self.store.select_slot(slot,&self.draft);
         let remembered = self.failure(result,"方案选择已记忆");
         let action = self.apply(&format!("按键方案{}",slot+1));
@@ -405,6 +440,7 @@ impl Controls {
         if self.failure(result,"保存成功") {
             let source = format!("方案{}（已保存）",self.game_slot+1);
             let action = self.apply(&source);
+            self.original=self.draft.clone();self.status="已保存".into();
             if let Err(e) = self.store.select_slot(self.game_slot,&self.draft) { self.status = format!("方案已保存，记忆当前选择失败：{e}"); }
             action
         } else { ResultAction::None }
@@ -429,11 +465,11 @@ impl Controls {
         if self.category == 4 { return vec![None,LeftClick,RightClick,Wheel(1),Wheel(-1),DragLock,Center,Slow,Fast,Pointer(0),Pointer(1),Pointer(2),Pointer(3)]; }
         keys.into_iter().map(|k| if (5..=7).contains(&self.category) { Combo([match self.category { 5 => profiles::SHIFT, 6 => profiles::CTRL, _ => 1073742050 }, k,0,0],2) } else { Key(k) }).collect()
     }
-    pub fn title(&self) -> &str { match self.page { Page::Edit => "编辑按键", Page::Picker => "选择虚拟动作", Page::Confirm => "恢复默认", Page::Cursor => "鼠标光标" } }
+    pub fn title(&self) -> &str { match self.page { Page::Edit => "按键设置", Page::Picker => "选择虚拟动作", Page::Confirm => "未保存的修改", Page::Cursor => "鼠标光标" } }
     pub fn hint(&self) -> &str { match self.page {
-        Page::Edit => "十字选择  A 修改  Y 连发  X 恢复此项  B 返回",
+        Page::Edit => "L / R 切换方案  A 修改  Y 连发  B 返回",
         Page::Picker => "十字键移动  L1/R1 切换类型  A 确认  B 取消",
-        Page::Confirm => "A 确认  B 取消",
+        Page::Confirm => "A 确定  B 继续编辑",
         Page::Cursor => "左右调整  A 确认  X 恢复此项  B 返回",
     } }
     pub fn lines(&self) -> Vec<String> { match self.page {
@@ -441,11 +477,11 @@ impl Controls {
             format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}{}：{}",self.draft.axis_turbo[i].badge(),binding_label(self.draft.axes[i])))).chain([
             format!("十字鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
             format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }),
-            "应用：仅本次".into(), "保存：当前方案".into(), "恢复整套默认".into(), "返回".into()]).collect(),
+            "保存".into(), "返回".into()]).collect(),
         Page::Cursor => vec![format!("光标样式：{}",self.cursor_draft.style.name()),format!("光标颜色：{}",self.cursor_draft.color.name()),
             format!("光标大小：{}（{}）",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),"恢复光标默认".into(),"保存并应用（全局）".into(),"返回".into()],
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
-        Page::Confirm => vec!["恢复当前方案默认，替换编辑内容？".into(), "A 确认操作".into(), "B 取消操作".into()],
+        Page::Confirm => vec!["继续编辑".into(), "舍弃修改并继续".into(), "保存并继续".into()],
     } }
     fn selected_repeat(&self) -> Option<(Binding,Rate)> {
         match self.row {0..=13=>Some((self.draft.buttons[self.row],self.draft.turbo[self.row])),15..=19=>Some((self.draft.axes[self.row-15],self.draft.axis_turbo[self.row-15])),_=>None}
@@ -454,21 +490,37 @@ impl Controls {
         if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {LABELS[self.editing]} else {AXIS_LABELS[self.editing-15]}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
         if self.page == Page::Cursor { return "所有游戏共用一份外观；静止 3.5 秒隐藏，移动显示".into(); }
         let repeat=if self.page==Page::Edit {self.selected_repeat().map(|(binding,rate)|if turbo::supported(binding) {format!(" · {}（Y切换）",rate.label())}else{" · 此动作无连发".into()}).unwrap_or_default()}else{String::new()};
-        format!("来源：{}；{}{}", self.source, if self.active.as_ref().unwrap_or(&self.original) == &self.draft { "已应用" } else { "尚未应用" },repeat)
+        repeat.trim_start_matches(" · ").into()
     }
     pub fn nav(&mut self, nav: Nav) -> ResultAction {
         use Nav::*;
         if matches!(nav, B) {
             match self.page {
-                Page::Edit | Page::Cursor => return self.close(),
+                Page::Edit => return self.request(Pending::Exit),
+                Page::Cursor => return self.close(),
                 Page::Picker => { self.go(Page::Edit); self.row = self.editing; },
-                Page::Confirm => { self.go(Page::Edit); self.row = 24; },
+                Page::Confirm => self.cancel_pending(),
             }
             return ResultAction::None;
         }
         if self.page == Page::Confirm {
-            if matches!(nav,A) { self.draft = Mapping::group(self.game_slot); self.go(Page::Edit); self.status = "已恢复方案默认；请应用或保存".into(); }
+            if matches!(nav,Up|Down|Left|Right) {self.row=(self.row as i32+if matches!(nav,Up|Left){-1}else{1}).rem_euclid(3) as usize;}
+            if matches!(nav,A) {match self.row {
+                0=>self.cancel_pending(),
+                1=>if let Some(pending)=self.pending {return self.finish(pending);},
+                2=>if let Some(pending)=self.pending {
+                    let action=self.save_scope();
+                    if matches!(action,ResultAction::Apply(_)) {
+                        if matches!(pending,Pending::Exit) {self.pending=None;self.close();return action;}
+                        return self.finish(pending);
+                    }
+                },_=>{}
+            }}
             return ResultAction::None;
+        }
+        if self.page==Page::Edit&&matches!(nav,Prev|Next) {
+            let slot=(self.game_slot as i32+if matches!(nav,Prev){-1}else{1}).rem_euclid(GAME_SLOTS as i32) as usize;
+            return self.request(Pending::Slot(slot));
         }
         let count = self.lines().len();
         if self.page == Page::Picker {
@@ -485,7 +537,7 @@ impl Controls {
             }
             return ResultAction::None;
         }
-        if self.page == Page::Edit && matches!(nav,Up|Down|Left|Right) { self.row=grid_move(self.row,count,nav); return ResultAction::None; }
+        if self.page == Page::Edit && matches!(nav,Up|Down|Left|Right) { self.row=edit_move(self.row,nav); return ResultAction::None; }
         if matches!(nav, Up | Down) { self.row = (self.row as i32 + if matches!(nav,Up) {-1} else {1}).rem_euclid(count as i32) as usize; return ResultAction::None; }
         let adjust = if matches!(nav,Left) {-1} else {1};
         if self.page == Page::Cursor {
@@ -512,16 +564,9 @@ impl Controls {
                 if let Some((binding,rate))=self.selected_repeat() {
                     if turbo::supported(binding) {
                         let next=rate.next();if self.row<14 {self.draft.turbo[self.row]=next;}else{self.draft.axis_turbo[self.row-15]=next;}
-                        self.status=format!("{}；请应用或保存",next.label());
+                        self.status=format!("{}；请保存",next.label());
                     } else {self.status="连发支持键盘、组合键及鼠标左右键".into();}
                 }
-            }
-            if matches!(nav, X) {
-                match self.row {0..=13=>self.draft.turbo[self.row]=Rate::Off,14=>self.draft.axis_turbo.fill(Rate::Off),15..=19=>self.draft.axis_turbo[self.row-15]=Rate::Off,_=>{}}
-                let defaults = Mapping::group(self.game_slot);
-                match self.row { 0..=13 => self.draft.buttons[self.row] = defaults.buttons[self.row], 14 => { self.draft.stick = defaults.stick; self.draft.axes = defaults.axes; }, 15..=19 => {self.draft.axes[self.row-15] = defaults.axes[self.row-15];self.draft.stick=Stick::Custom;}, 20 => self.draft.fine = defaults.fine, 21 => self.draft.speed = defaults.speed, _ => {} }
-                self.status = "此项已恢复方案默认，尚未应用".into();
-                if (10..14).contains(&self.row) && (self.draft.stick==Stick::Directions || self.draft.stick==Stick::Steering && self.row>=12) {self.draft.axes[self.row-10]=self.draft.buttons[self.row];}
             }
             if matches!(nav, A) {
                 match self.row {
@@ -529,10 +574,8 @@ impl Controls {
                     14 => { let items = [Stick::Mouse,Stick::Directions,Stick::Steering,Stick::None,Stick::Custom]; let i = items.iter().position(|s| *s == self.draft.stick).unwrap(); self.draft.stick = items[(i as i32+adjust).rem_euclid(5) as usize]; if self.draft.stick != Stick::Custom {let press=self.draft.axes[4];let rate=self.draft.axis_turbo[4]; self.draft.reset_axes();self.draft.axes[4]=press;self.draft.axis_turbo[4]=rate;} },
                     20 => self.draft.fine = !self.draft.fine,
                     21 => self.draft.speed = match self.draft.speed { MouseSpeed::Slow=>MouseSpeed::Normal,MouseSpeed::Normal=>MouseSpeed::Fast,MouseSpeed::Fast=>MouseSpeed::Slow },
-                    22 => return self.apply("仅本次"),
-                    23 => return self.save_scope(),
-                    24 => self.go(Page::Confirm),
-                    25 => return self.close(), _ => {}
+                    SAVE_ROW => return self.save_scope(),
+                    BACK_ROW => return self.request(Pending::Exit), _ => {}
                 }
             }
         }
@@ -567,11 +610,11 @@ mod tests {
         assert!(Record::decode(&"x".repeat(LIMIT+1)).is_err());
     }
     #[test]
-    fn completely_empty_mapping_is_rejected_but_menu_can_still_restore() {
-        let mut c = Controls::default(); c.draft.buttons.fill(Binding::None); c.draft.axes.fill(Binding::None); c.draft.stick = Stick::None;
-        c.row = 22; assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none());
-        c.row = 24; c.nav(Nav::A); c.nav(Nav::A); assert_eq!(c.draft,Mapping::group(0));
-        c.row = 22; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
+    fn completely_empty_mapping_cannot_be_saved_and_the_draft_is_retained() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(c.draft.clone());
+        c.draft.buttons.fill(Binding::None); c.draft.axes.fill(Binding::None); c.draft.stick = Stick::None;
+        c.row = SAVE_ROW; assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none());
+        assert!(c.dirty());assert!(!f.0.game_slot(0).exists());assert_eq!(c.draft.buttons,[Binding::None;14]);
     }
     #[test]
     fn relative_game_identity_survives_mount_and_legacy_folder_case() {
@@ -595,12 +638,13 @@ mod tests {
         assert_eq!(f.0.load_slots().0[0],Mapping::group(0)); assert!(f.0.save(&f.0.game,&f.record(3,true)).is_err()); assert_eq!(read_record(&f.0.game).unwrap(),r);
     }
     #[test]
-    fn edit_cancel_apply_and_reset_do_not_mutate_builtin_catalog() {
+    fn edit_cancel_and_removed_reset_do_not_mutate_builtin_catalog() {
         let mut c = Controls::default(); let original = Mapping::builtin(1); c.begin(original.clone());
         assert_eq!(c.page,Page::Edit); c.nav(Nav::A); assert_eq!(c.page,Page::Picker);
         c.nav(Nav::Right); c.nav(Nav::A); assert_eq!(c.draft.buttons[0],Binding::Key(13)); assert!(c.active.is_none());
-        c.nav(Nav::X); assert_eq!(c.draft.buttons[0],Binding::Key(106));
-        c.row = 22; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
+        c.nav(Nav::X); assert_eq!(c.draft.buttons[0],Binding::Key(13));
+        c.nav(Nav::B);assert_eq!(c.page,Page::Confirm);c.nav(Nav::B);assert_eq!(c.draft.buttons[0],Binding::Key(13));
+        c.nav(Nav::B);c.nav(Nav::Down);assert!(matches!(c.nav(Nav::A),ResultAction::Close));assert_eq!(c.draft,original);
         assert_eq!(Mapping::builtin(1),original);
     }
     #[test]
@@ -613,7 +657,7 @@ mod tests {
     #[test]
     fn write_failure_does_not_apply_or_claim_success() {
         let f = Fixture::new(); fs::create_dir_all(&f.0.root).unwrap(); fs::write(f.0.root.join("global.rmap"),"bad").unwrap();
-        let mut c = Controls::new(Store::new(f.0.root.join("global.rmap"),Path::new("game.swf"))); c.row = 23;
+        let mut c = Controls::new(Store::new(f.0.root.join("global.rmap"),Path::new("game.swf"))); c.row = SAVE_ROW;
         assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none()); assert!(c.status.contains("失败"));
     }
     #[test]
@@ -742,15 +786,15 @@ mod tests {
     #[test]
     fn editor_opens_directly_and_grid_reaches_all_keys_and_commands() {
         let mut c=Controls::default(); c.begin(Mapping::group(0));
-        assert_eq!(c.page,Page::Edit); assert_eq!(c.lines().len(),26);
+        assert_eq!(c.page,Page::Edit); assert_eq!(c.lines().len(),24);
         let mut reached=std::collections::BTreeSet::from([0]);
         loop { let before=reached.len(); for row in reached.clone() { for nav in [Nav::Up,Nav::Down,Nav::Left,Nav::Right] {
-            c.row=row; c.nav(nav); assert!(c.row<26); reached.insert(c.row);
+            c.row=row; c.nav(nav); assert!(c.row<24); reached.insert(c.row);
         }} if reached.len()==before {break;} }
-        assert_eq!(reached.len(),26);
+        assert_eq!(reached.len(),24);
         c.row=19; c.nav(Nav::A); assert_eq!(c.page,Page::Picker);
         c.nav(Nav::B); assert_eq!((c.page,c.row),(Page::Edit,19));
-        c.row=24; c.nav(Nav::A); c.nav(Nav::B); assert_eq!((c.page,c.row),(Page::Edit,24));
+        c.row=BACK_ROW;
         assert!(matches!(c.nav(Nav::B),ResultAction::Close)); assert!(!c.visible);
     }
 
@@ -759,12 +803,51 @@ mod tests {
         let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(Mapping::group(0));
         c.nav(Nav::Y);c.nav(Nav::Y);assert_eq!(c.draft.turbo[0],Rate::Normal);
         assert!(c.draft.turbo[1..].iter().all(|rate|*rate==Rate::Off));assert_eq!(c.draft.axis_turbo,[Rate::Off;5]);
-        assert!(c.lines()[0].contains("连10"));c.row=23;c.nav(Nav::A);
+        assert!(c.lines()[0].contains("连10"));c.row=SAVE_ROW;c.nav(Nav::A);
         c.switch_slot(1);assert_eq!(c.draft.turbo,[Rate::Off;14]);
         let restarted=Controls::new(f.0.clone());assert_eq!(restarted.mappings[0].turbo[0],Rate::Normal);
         assert_eq!(restarted.mappings[1],Mapping::group(1));
         let mut c=Controls::new(f.0.clone());c.switch_slot(0);c.begin(c.draft.clone());c.row=0;c.nav(Nav::X);
-        assert_eq!(c.draft.turbo[0],Rate::Off);
+        assert_eq!(c.draft.turbo[0],Rate::Normal);c.nav(Nav::Y);c.nav(Nav::Y);assert_eq!(c.draft.turbo[0],Rate::Off);
+    }
+    #[test]
+    fn clean_shoulder_switches_wrap_all_ten_schemes_and_keep_editor_open() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(c.draft.clone());
+        assert!(matches!(c.nav(Nav::Prev),ResultAction::Apply(_)));assert_eq!(c.game_slot,9);
+        for slot in 0..GAME_SLOTS {assert!(matches!(c.nav(Nav::Next),ResultAction::Apply(_)));assert_eq!(c.game_slot,slot);assert!(c.visible);assert!(!c.dirty());assert_eq!(c.row,0);}
+        assert_eq!(Controls::new(f.0.clone()).game_slot,9);
+    }
+    #[test]
+    fn dirty_switch_can_cancel_discard_or_save_before_continuing() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(c.draft.clone());c.row=3;c.nav(Nav::Y);
+        let draft=c.draft.clone();let before=fs::read(f.0.selected_path()).ok();
+        assert!(matches!(c.nav(Nav::Next),ResultAction::None));assert_eq!(c.page,Page::Confirm);assert_eq!(c.game_slot,0);
+        assert_eq!(fs::read(f.0.selected_path()).ok(),before);c.nav(Nav::A);assert_eq!(c.row,3);assert_eq!(c.draft,draft);
+        c.nav(Nav::Next);c.nav(Nav::Down);assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));
+        assert_eq!(c.game_slot,1);assert_eq!(c.mappings[0],Mapping::group(0));assert!(!f.0.game_slot(0).exists());
+        c.nav(Nav::Y);let saved=c.draft.clone();c.nav(Nav::Next);c.nav(Nav::Down);c.nav(Nav::Down);
+        assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));assert_eq!(c.game_slot,2);assert!(c.visible);assert!(!c.dirty());
+        assert_eq!(Controls::new(f.0.clone()).mappings[1],saved);
+    }
+    #[test]
+    fn dirty_back_and_return_button_both_prompt_and_save_exit_applies() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(c.draft.clone());c.nav(Nav::Y);let saved=c.draft.clone();
+        c.nav(Nav::B);assert_eq!(c.page,Page::Confirm);c.nav(Nav::B);assert!(c.visible);assert_eq!(c.draft,saved);
+        c.row=BACK_ROW;c.nav(Nav::A);assert_eq!(c.page,Page::Confirm);c.nav(Nav::Down);c.nav(Nav::Down);
+        assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));assert!(!c.visible);assert!(!c.dirty());assert_eq!(c.active,Some(saved.clone()));
+        assert_eq!(Controls::new(f.0.clone()).mappings[0],saved);
+        c.begin(saved);c.nav(Nav::Y);c.row=SAVE_ROW;assert!(matches!(c.nav(Nav::A),ResultAction::Apply(_)));assert!(c.visible);assert!(!c.dirty());
+        assert!(matches!(c.nav(Nav::B),ResultAction::Close));
+    }
+    #[test]
+    fn failed_pending_save_never_switches_or_closes_and_keeps_the_draft() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(c.draft.clone());c.nav(Nav::Y);let draft=c.draft.clone();
+        let blocked=f.0.root.join("blocked");fs::create_dir_all(&f.0.root).unwrap();fs::write(&blocked,b"file").unwrap();c.store.root=blocked;
+        for nav in [Nav::Next,Nav::B] {
+            c.nav(nav);c.nav(Nav::Down);c.nav(Nav::Down);assert!(matches!(c.nav(Nav::A),ResultAction::None));
+            assert_eq!(c.page,Page::Confirm);assert!(c.visible);assert_eq!(c.game_slot,0);assert_eq!(c.draft,draft);assert!(c.active.is_none());assert!(c.status.contains("失败"));
+            c.nav(Nav::B);assert_eq!(c.page,Page::Edit);
+        }
     }
     #[test]
     fn old_v4_has_repeat_disabled_and_invalid_repeat_fields_are_rejected() {

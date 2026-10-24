@@ -203,9 +203,9 @@ impl PauseMenu {
             self.draw_controls(state);
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏");
-        let slot=state.controls.preview_slot;
-        let rows=["继续","按键方案","编辑当前映射","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面设置","保存并退出"];
-        let details=[String::new(),format!("方案 {}  ◀ ▶",slot+1),String::new(),
+        let slot=state.controls.game_slot;
+        let rows=["继续","按键设置","鼠标速度","鼠标光标","保存游戏进度","游戏存档","画面设置","保存并退出"];
+        let details=[String::new(),format!("方案 {}",slot+1),
             format!("{} · Y 光标",match state.preview_mouse_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
             String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
@@ -390,17 +390,25 @@ impl PauseMenu {
         let controls = &state.controls;
         use crate::session::controls::{Page,CATEGORIES,GRID_COLS};
         let subtitle=match controls.page {
-            Page::Edit=>"按键与摇杆 · A 修改 · Y 连发",
-            Page::Picker=>"L1 / R1 切换动作类型",
-            Page::Cursor=>"全局外观 · 所有游戏共用",
-            Page::Confirm=>"请选择确认或取消",
+            Page::Edit=>format!("L / R 切换方案 · Y 连发{}",if controls.dirty(){" · 未保存"}else{""}),
+            Page::Picker=>"L1 / R1 切换动作类型".into(),
+            Page::Cursor=>"全局外观 · 所有游戏共用".into(),
+            Page::Confirm=>controls.pending_detail(),
         };
-        self.leaf_background(controls.title(),subtitle,"返回");
+        let title=if controls.page==Page::Edit {format!("按键设置 · 方案 {}",controls.game_slot+1)}else{controls.title().into()};
+        self.leaf_background(&title,&subtitle,if controls.page==Page::Confirm {"继续编辑"}else{"返回"});
         if controls.page == crate::session::controls::Page::Cursor {
             self.live_label(12,"预览",21.,715.,98.,self.palette[4]);
             self.draw_cursor(controls.cursor_draft,(850.,111.));
         }
         let lines = controls.lines();
+        if controls.page==Page::Confirm {
+            self.live_label_width(19,&format!("方案 {} 有未保存的修改",controls.game_slot+1),34.,23.,185.,910.,false,self.palette[1]);
+            self.live_label_width(20,"请选择保存或舍弃，也可以返回继续编辑。",25.,23.,245.,910.,false,self.palette[4]);
+            for (i,line) in lines.iter().enumerate() {self.leaf_row(1+i,line,320.+i as f32*75.,60.,i==controls.row);}
+            self.live_label_width(55,&controls.status,22.,23.,580.,910.,false,self.palette[1]);
+            return;
+        }
         if controls.page==Page::Picker {
             self.live_label_width(1,"L1",22.,18.,149.,52.,true,self.palette[1]);
             self.live_label_width(2,"R1",22.,890.,149.,52.,true,self.palette[1]);
@@ -420,17 +428,24 @@ impl PauseMenu {
             return;
         }
         if controls.page==Page::Edit {
-            for (i,line) in lines.iter().enumerate() {
-                let x=45.+(i%GRID_COLS) as f32*176.; let y=142.+(i/GRID_COLS) as f32*67.;
+            for (i,line) in lines.iter().take(crate::session::controls::EDIT_ITEMS).enumerate() {
+                let x=45.+(i%GRID_COLS) as f32*176.; let y=142.+(i/GRID_COLS) as f32*76.;
                 let color=self.palette[if i==controls.row{3}else{1}];
-                self.leaf_tile((x,y,166.,60.),i==controls.row);
+                self.leaf_tile((x,y,166.,68.),i==controls.row);
                 if let Some((label,value))=line.split_once('：') {
-                    self.live_label_width(80+i*2,label,21.,x+9.,y+4.,148.,true,color);
-                    self.live_label_width(81+i*2,value,24.,x+9.,y+29.,148.,true,color);
-                } else { self.live_label_width(80+i*2,line,23.,x+9.,y+18.,148.,true,color); }
+                    self.live_label_width(80+i*2,label,21.,x+9.,y+6.,148.,true,color);
+                    self.live_label_width(81+i*2,value,24.,x+9.,y+34.,148.,true,color);
+                } else { self.live_label_width(80+i*2,line,23.,x+9.,y+22.,148.,true,color); }
             }
-            self.live_label_width(54,&format!("方案 {} · {}",controls.game_slot+1,if state.directions_swapped {"本次方向已互换 · M+X 恢复".into()} else {controls.detail()}),21.,45.,562.,870.,false,self.palette[4]);
-            self.live_label_width(55,&controls.status,21.,45.,595.,870.,false,self.palette[1]);
+            self.live_label_width(54,&if state.directions_swapped {"本次方向已互换 · M+X 恢复".into()}else{controls.detail()},21.,430.,465.,475.,false,self.palette[4]);
+            self.quad((45.,528.,870.,1.),self.palette[5],None);
+            for (i,label) in ["保存","返回"].iter().enumerate() {
+                let selected=controls.row==crate::session::controls::SAVE_ROW+i;
+                let x=if i==0 {45.}else{650.};
+                self.rounded((x,543.,265.,52.),26.,self.palette[if selected{2}else{5}]);
+                self.live_label_width(130+i,label,31.,x+15.,550.,235.,true,self.palette[if selected{3}else{1}]);
+            }
+            self.live_label_width(55,&controls.status,21.,45.,604.,870.,false,self.palette[1]);
             return;
         }
         for (i,line) in lines.iter().enumerate() {

@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | Leaf 接入 | Flash 分类选 SWF 启动；Apps 进入数据管理；最低 Leaf 0.13.0 | [pak.json](../pak/pak.json)、[游戏启动](../pak/emulators/ruffle-probe/launch-game.sh)、[Apps 启动](../pak/launch.sh) |
 | 暂停菜单 | 跟随 Leaf 生效主题及字体，叶片形选中条；暂停冻结 tick 与音频；恢复首帧时间重置 | [pause_menu.rs](../player/sdl2test-rocknix/src/pause_menu.rs)、[theme.sh](../pak/emulators/ruffle-probe/theme.sh)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) |
-| 按键编辑 | 每游戏 10 个独立按键方案，直接打开的五列实体键宫格及摇杆四方向/按下动作，动作宫格/九类 Tab；逐键 Y 连发、单项与整套恢复、本次应用或保存 | [controls.rs](../player/sdl2test-rocknix/src/controls.rs) |
+| 按键编辑 | “按键设置”直接打开五列宫格，L/R 切换十组方案；实体键及摇杆动作、九类动作 Tab、逐键 Y 连发；独立保存/返回操作区，未保存切换或退出可选择继续编辑、舍弃、保存 | [controls.rs](../player/sdl2test-rocknix/src/controls.rs) |
 | 游戏快捷键 | M+A/B 循环切换映射，M+十字下切换左键保持，M+X 本次方向互换；切换释放旧输入并等待中立 | [shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs)、[session.rs](../player/sdl2test-rocknix/src/session.rs) |
 | 光标 | 所有游戏共用一份独立全局外观，映射 v5 不含光标字段；默认空心圆＋固定 1×1 中心点；四样式/七色/四尺寸，3.5 秒静止隐藏、移动恢复；旧 arrow 兼容读取 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs)、[controls.rs](../player/sdl2test-rocknix/src/controls.rs) |
 | 原生进度 | 每游戏 5 份 SharedObject 进度与北京时间；启动先选档、复制、保存后重启读另槽；内容指纹身份、校验、原子替换及有效备份回退 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) |

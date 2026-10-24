@@ -373,7 +373,6 @@ impl Frontend {
             }
             MenuResult::OpenControls => { let actual = self.snapshot(); self.state.controls.begin(actual); }
             MenuResult::OpenCursor => { self.state.controls.begin_cursor(self.state.cursor_settings); }
-            MenuResult::SlotChanged(slot) => self.switch_slot(slot),
             MenuResult::SaveProgress => {self.flush_progress(true);},
             MenuResult::OpenSaves => {self.flush_progress(false);self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);},
             MenuResult::OpenSettings => {self.state.experience.open(ExperiencePage::Settings);},
@@ -388,6 +387,7 @@ impl Frontend {
             self.experience_nav(Nav::B);return;
         }
         if self.state.paused {
+            if self.state.controls.visible {self.controls_nav(Nav::B);return;}
             let result = self.state.resume();
             self.menu_result(result);
         } else {
@@ -485,7 +485,7 @@ impl Frontend {
                 Button::DPadLeft => self.state.preview(-1),
                 Button::DPadRight => self.state.preview(1),
                 Button::X => self.state.toggle_cfg_preview(),
-                Button::Y if self.state.selected == 3 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
+                Button::Y if self.state.selected == 2 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Button::A | Button::Start => { let result = self.state.accept(); self.menu_result(result); }
                 Button::B | Button::Back => { let result = self.state.resume(); self.menu_result(result); }
                 _ => {}
@@ -525,7 +525,7 @@ impl Frontend {
                 Keycode::Up => self.state.menu_move(-1), Keycode::Down => self.state.menu_move(1),
                 Keycode::Left => self.state.preview(-1), Keycode::Right => self.state.preview(1),
                 Keycode::X => self.state.toggle_cfg_preview(),
-                Keycode::Y if self.state.selected == 3 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
+                Keycode::Y if self.state.selected == 2 => { self.state.controls.begin_cursor(self.state.cursor_settings); }
                 Keycode::Return | Keycode::Space => { let result = self.state.accept(); self.menu_result(result); }
                 _ => {}
             }
@@ -747,22 +747,22 @@ pub async fn run() -> Result<(), String> {
         vec![vec![],vec![d,a],vec![b],vec![d,a],vec![d,a],vec![d,d,a],vec![d,a],
             vec![d,d,d,a],vec![d,a],vec![d,d,d,d,a],vec![d,a],vec![]]
     } else {
-        vec![if pick_slot{vec![a]}else{vec![]},vec![Button::Guide],vec![d,d,d,d,d,d,d,a],
+        vec![if pick_slot{vec![a]}else{vec![]},vec![Button::Guide],vec![d,d,d,d,d,d,a],
             vec![r,d,r,d,a],vec![],vec![b,b],vec![],vec![Button::Guide],
-            vec![d,d,d,d,d,a],vec![d,a],vec![d,d,d,d,Button::Y],vec![d,a],vec![]]
+            vec![d,d,d,d,a],vec![d,a],vec![d,d,d,d,Button::Y],vec![d,a],vec![]]
     };
     let mut experience_phase=0;
     let mut script_phase = 0;
     let mut snapshots = std::collections::BTreeSet::new();
     let mut sync_focus = false;
-    let mut script=vec![vec![Button::Guide],vec![d,r,a],vec![b],
+    let mut script=vec![vec![Button::Guide],vec![d,a,Button::RightShoulder,b],vec![b],
         PROFILE_BUTTONS.iter().chain(DPAD.iter()).copied().chain([Button::LeftStick]).collect(),
-        vec![Button::Guide],vec![d,d,a],vec![a]];
+        vec![Button::Guide],vec![d,a],vec![a]];
     for _ in 0..9 {script.push(vec![Button::RightShoulder]);}
     script.extend([vec![r,a],vec![r,r,r,a]]); // A=Enter, select Y
     for _ in 0..5 {script.push(vec![Button::RightShoulder]);}
-    script.extend([vec![d,d,d,d,d,r,a],vec![d,d,d,d],vec![a],vec![b], // save slot 2
-        vec![b],vec![Button::Guide],vec![d,d,d,d,a],
+    script.extend([vec![d,d,d,d,d,r,a],vec![b],vec![d,d,a], // save and leave slot 2
+        vec![b],vec![Button::Guide],vec![d,d,d,a],
         vec![r,d,r,r,d,r],vec![d,d,a],vec![b,b]]);
     let ui_phases=script.len();
     let mut idle_start=None;
