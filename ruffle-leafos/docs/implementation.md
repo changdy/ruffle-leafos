@@ -2,6 +2,12 @@
 
 适用 **0.6.8 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
+## 命名与兼容标识
+
+GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos)，应用名称为 **Ruffle Flash**。Leaf 的游戏分类仍为 Flash，核心列表与播放器窗口显示 Ruffle Flash；Apps 入口和管理页显示“Flash 数据管理”；关于页标题为“Ruffle Flash · LeafOS 版”，版本号与开发预览状态单独显示。
+
+安装目录 `Apps/mlp1/RuffleProbe.pak/`、核心 ID `ruffle_probe`、启动目录 `emulators/ruffle-probe/`、诊断库和环境变量沿用既有标识。控制目录 `$USERDATA_PATH/ruffle-probe/`、存档目录 `$SAVES_PATH/ruffle-leaf-preview/shared_objects/` 及内容身份算法均不因显示改名而变化，升级可继续读取原有按键与进度。早期 adapter、原始 runtime 和历史记录保留其发布时名称。
+
 ## 目录与执行链路
 
 | 路径 | 职责 |
@@ -98,6 +104,8 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 ## 打包与验证
 
 [package_preview.py](../scripts/package_preview.py) 校验清单版本与 Cargo 版本一致、锁定源码 SHA-256、AArch64 PIE、所需 GLIBC 不高于 2.38，并禁止用原始 leaf-12 播放器冒充源码构建结果。诊断库检查 AArch64 与动态依赖；清单使用固定 Leaf CONTENT-1 契约校验，Shell 文件需 LF，ZIP 内执行位和完整性需通过。
+
+新生成的安装归档名为 `ruffle-leafos-<版本>.zip`，源码归档为 `ruffle-leafos-<版本>-source.zip`；旧交付目录及历史归档保留原名。
 
 安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源及许可组成。随包 README 使用当前项目 README，支持文档一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、文档、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
 

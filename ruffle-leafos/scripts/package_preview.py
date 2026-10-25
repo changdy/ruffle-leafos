@@ -143,7 +143,7 @@ def main():
         'device_validation': 'See device-validation.json; compilation does not establish hardware acceptance',
     }
     (pak / 'build-manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
-    archive = output / f'ruffle-leaf-preview-{version}.zip'
+    archive = output / f'ruffle-leafos-{version}.zip'
     zip_tree(stage, archive)
     with zipfile.ZipFile(archive) as z:
         assert z.testzip() is None
@@ -163,7 +163,7 @@ def main():
             destination = source_stage / 'vendor/jawaka' / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / 'vendor/jawaka' / relative, destination)
-        zip_tree(source_stage, output / f'ruffle-leaf-preview-{version}-source.zip')
+        zip_tree(source_stage, output / f'ruffle-leafos-{version}-source.zip')
     (output / 'build-report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     (ROOT / 'build/package-stage-path.txt').write_text(str(stage), encoding='utf8')
     sums = ''.join(f'{sha(p)}  {p.name}\n' for p in sorted(output.glob('*.zip')))

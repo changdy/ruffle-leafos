@@ -1,6 +1,8 @@
-# Ruffle LeafOS
+# Ruffle Flash
 
-面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，当前为 **0.6.6 开发预览**。
+面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，当前为 **0.6.8 开发预览**。
+
+GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos)。掌机应用名为 **Ruffle Flash**，Apps 入口显示为 **Flash 数据管理**。
 
 | 阅读目的 | 主文档 |
 | --- | --- |

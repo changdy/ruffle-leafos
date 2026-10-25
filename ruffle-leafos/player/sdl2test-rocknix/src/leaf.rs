@@ -656,7 +656,7 @@ pub async fn run() -> Result<(), String> {
     attributes.set_depth_size(24);
     attributes.set_stencil_size(8);
     attributes.set_red_size(8); attributes.set_green_size(8); attributes.set_blue_size(8); attributes.set_alpha_size(8);
-    let mut window = video.window("Ruffle Leaf", init_width, init_height).opengl().resizable().build().map_err(|e| e.to_string())?;
+    let mut window = video.window("Ruffle Flash", init_width, init_height).opengl().resizable().build().map_err(|e| e.to_string())?;
     if opt.fullscreen { window.set_fullscreen(sdl2::video::FullscreenType::Desktop)?; }
     let mut size = window_drawable_size(&window);
     let context = window.gl_create_context()?;

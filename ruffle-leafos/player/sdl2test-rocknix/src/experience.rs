@@ -277,7 +277,7 @@ pub struct Ui {
 impl Ui {
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Ruffle · 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"关于 Ruffle Leaf".into(),Page::Shortcuts=>"快捷键说明".into()
+        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Flash 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"Ruffle Flash · LeafOS 版".into(),Page::Shortcuts=>"快捷键说明".into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),

@@ -1,8 +1,10 @@
-# Ruffle LeafOS
+# Ruffle Flash
 
 面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.6.8 开发预览**，已验证环境为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2。文档整理于 2026-10-25，验证范围见[工程进度](docs/progress.md)。
 
 从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
+
+GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos)。掌机应用名为 **Ruffle Flash**，Apps 入口显示为 **Flash 数据管理**。
 
 | 文档 | 负责内容 |
 | --- | --- |
@@ -14,9 +16,9 @@
 
 ## 安装与入口
 
-安装包见 [0.6.8 交付目录](../outputs/ruffle-0.6.8)，校验值见 [SHA256SUMS.txt](../outputs/ruffle-0.6.8/SHA256SUMS.txt)。正常退出播放器、备份现有 `RuffleProbe.pak` 和用户数据后，将安装 ZIP 解压到 SD 卡根目录，保留包内层级，目标为 `Apps/mlp1/RuffleProbe.pak/`。
+改名后的 0.6.8 构建见 [交付目录](../outputs/ruffle-leafos-0.6.8)，校验值见 [SHA256SUMS.txt](../outputs/ruffle-leafos-0.6.8/SHA256SUMS.txt)；已通过 81 项主机测试和 ARM64 release 构建，改名后的实机界面尚未验证。正常退出播放器、备份现有 `RuffleProbe.pak` 和用户数据后，将安装 ZIP 解压到 SD 卡根目录，保留包内层级，目标为 `Apps/mlp1/RuffleProbe.pak/`。该目录沿用旧包标识，以便直接覆盖升级；显示名称与数据位置分开维护。
 
-SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，Apps 中的 Ruffle Leaf Preview 用于数据管理。
+SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，模拟器列表显示为 Ruffle Flash；Apps 中的“Flash 数据管理”用于管理配置与游戏进度。
 
 ## 菜单与快捷键
 
@@ -82,7 +84,7 @@ M+十字左/右已停用。M+X 只改变本次运行的输入路由，切换按�
 暂停主菜单提供两个独立入口：
 
 - **快捷键说明**：分为“游戏中 / 菜单操作 / 按键编辑”三组，用十字键 ← → 或 L1/R1 肩键切换。每项分别写明要做的事、按法和使用场景；M+A 与 M+B、音量与亮度各自单列，方向互换和左键保持说明如何恢复，连发说明按住生效、松开停止并需保存设置。按 A/B 返回主菜单，再次进入从“游戏中”开始。
-- **关于**：单页显示版本、播放器用途、源码来源、开源许可及原生进度范围，按 A/B 返回主菜单。
+- **关于**：标题为“Ruffle Flash · LeafOS 版”，单页显示版本、播放器用途、源码来源、开源许可及原生进度范围，按 A/B 返回主菜单。
 
 ## 五份游戏原生进度
 
@@ -112,7 +114,7 @@ FPS、映射 toast 和左键保持提示的底色随文字尺寸收缩。人工�
 
 ## Apps 数据管理与数据路径
 
-Apps 直接进入管理界面。左右选游戏，可清空其五个进度或重置按键；也可清空全部新格式进度、重置全部按键配置。操作前二次确认，默认“取消”；清理数据移入本地归档。ROM、封面、旧 `.cfg`、未迁移的 `.sol` 和独立音画配置保留。
+Apps 的“Flash 数据管理”入口直接进入同名管理界面。左右选游戏，可清空其五个进度或重置按键；也可清空全部新格式进度、重置全部按键配置。操作前二次确认，默认“取消”；清理数据移入本地归档。ROM、封面、旧 `.cfg`、未迁移的 `.sol` 和独立音画配置保留。
 
 以下路径对应正式启动脚本，根目录由 Leaf 当前所选卡环境提供：
 

@@ -359,7 +359,7 @@ impl PauseMenu {
 
     unsafe fn draw_about(&mut self) {
         use crate::session::experience::BACKGROUND;
-        self.leaf_background("关于 Ruffle Leaf",&format!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS",env!("CARGO_PKG_VERSION")),"返回",FooterNavigation::Back);
+        self.leaf_background("Ruffle Flash · LeafOS 版",&format!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS",env!("CARGO_PKG_VERSION")),"返回",FooterNavigation::Back);
         for (i,(title,line1,line2)) in BACKGROUND.iter().enumerate() {
             let y=150.+i as f32*130.;let mut card=self.palette[5];card[3]=0.35;
             self.rounded((23.,y,910.,115.),12.,card);

@@ -1,5 +1,5 @@
 {
-  "name": "Ruffle Leaf Preview",
+  "name": "Flash 数据管理",
   "version": "0.6.8",
   "icon": "art/FLASH.png",
   "platform": "mlp1",
@@ -7,7 +7,7 @@
   "min_leaf_version": "0.13.0",
   "min_jawaka_version": "0.0.1",
   "type": "TOOL",
-  "description": "Per-button turbo with short release windows, contextual shortcut guide, and separate About page.",
+  "description": "Ruffle Flash：面向迷你龙 Pocket 1 / LeafOS 的 Flash 模拟器，Apps 入口管理游戏进度与按键配置。",
   "provides": {
     "schema": 1,
     "systems": [
@@ -34,7 +34,7 @@
     "cores": [
       {
         "id": "ruffle_probe",
-        "display_name": "Ruffle Leaf 0.6.8 (development preview)",
+        "display_name": "Ruffle Flash",
         "type": "path",
         "path": "emulators/ruffle-probe/launch-game.sh",
         "supports_menu": true,
