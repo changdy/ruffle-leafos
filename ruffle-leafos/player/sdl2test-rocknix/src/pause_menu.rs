@@ -214,7 +214,7 @@ impl PauseMenu {
             self.leaf_row(i+1,line,138.+i as f32*51.,48.,i==state.selected);
             if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,145.+i as f32*51.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
-        let hint=match state.selected {1=>"左右切换方案 · A 进入编辑",6=>"查看游戏组合键、菜单操作与按键编辑方法",7=>"查看版本、项目来源与开源许可",_=>"操作方法见「快捷键说明」"};
+        let hint=match state.selected {1=>"左右切换方案 · A 进入编辑",6=>"查看游戏组合键、菜单操作与按键编辑方法",7=>"认识 Ruffle Flash，查看项目主页与开源致谢",_=>"操作方法见「快捷键说明」"};
         self.live_label_width(16,hint,20.,23.,606.,910.,false,self.palette[4]);
         }
         } else if state.drag_locked {
@@ -367,7 +367,8 @@ impl PauseMenu {
             self.live_label_width(81+i*3,line1,25.,38.,y+49.,880.,false,self.palette[1]);
             self.live_label_width(82+i*3,line2,24.,38.,y+82.,880.,false,self.palette[4]);
         }
-        self.live_label_width(54,"五份游戏原生进度依赖游戏自身保存功能；即时存档尚未提供。",22.,23.,570.,910.,false,self.palette[4]);
+        self.live_label_width(54,"Ruffle：MIT / Apache-2.0；本项目及 Leaf / Jawaka 菜单参考：MIT。",22.,23.,570.,910.,false,self.palette[4]);
+        self.live_label_width(55,"完整许可与第三方声明随安装包附带。",22.,23.,601.,910.,false,self.palette[4]);
     }
 
     unsafe fn draw_shortcuts(&mut self,tab:usize) {

@@ -234,9 +234,9 @@ pub const SHORTCUT_NOTES:[&str;3]=[
     "连发：按住生效，松开停止；支持键盘、组合键和鼠标左右键。",
 ];
 pub const BACKGROUND:[(&str,&str,&str);3]=[
-    ("为掌机游玩 Flash", "面向迷你龙 Miniloong Pocket 1 / LeafOS 的 Flash 播放器。", "使用 Ruffle 播放本地 SWF，提供掌机按键、鼠标与游戏进度。"),
-    ("项目来源", "基于 aweigit/ruffle-miyooflip 进行适配，播放核心来自 Ruffle。", "菜单参考 Leaf / Jawaka，跟随系统主题；提供十组按键方案。"),
-    ("开源与许可", "Ruffle：MIT / Apache-2.0；Leaf / Jawaka 菜单参考：MIT。", "完整许可与第三方声明随安装包附带。"),
+    ("再玩一局熟悉的 Flash", "把熟悉的 Flash 小游戏装进口袋，随时打开，再玩一局。", "Ruffle Flash 基于 Ruffle，为迷你龙 Pocket 1 / LeafOS 适配。"),
+    ("项目主页 · GitHub", "https://github.com/changdy/ruffle-leafos", "源码、更新和使用说明都在这里，也欢迎反馈问题、分享建议。"),
+    ("感谢开源社区，也感谢你", "感谢 Ruffle、aweigit/ruffle-miyooflip 和 Leaf / Jawaka 的开发者。", "也感谢每一位尝试、测试和反馈的玩家。祝你玩得开心！"),
 ];
 #[derive(Clone,Debug)]
 pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,Clear(usize),Quit}

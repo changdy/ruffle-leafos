@@ -13,8 +13,10 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 | 游戏运行 | 暂停菜单 |
 | --- | --- |
 | ![Ruffle Flash 实际游戏画面](docs/images/gameplay.png) | ![Ruffle Flash 暂停菜单](docs/images/pause-menu.png) |
-| 按键设置 | 关于 |
-| ![十方案按键设置界面](docs/images/controls.png) | ![Ruffle Flash 关于页面](docs/images/about.png) |
+
+![十方案按键设置界面](docs/images/controls.png)
+
+关于页文案已更新，见[快捷键说明与关于](#快捷键说明与关于)；新版实机截图待补充。
 
 | 文档 | 负责内容 |
 | --- | --- |
@@ -100,7 +102,13 @@ M+十字左/右已停用。M+X 只改变本次运行的输入路由，切换按�
 暂停主菜单提供两个独立入口：
 
 - **快捷键说明**：分为“游戏中 / 菜单操作 / 按键编辑”三组，用十字键 ← → 或 L1/R1 肩键切换。每项分别写明要做的事、按法和使用场景；M+A 与 M+B、音量与亮度各自单列，方向互换和左键保持说明如何恢复，连发说明按住生效、松开停止并需保存设置。按 A/B 返回主菜单，再次进入从“游戏中”开始。
-- **关于**：标题为“Ruffle Flash · LeafOS 版”，单页显示版本、播放器用途、源码来源、开源许可及原生进度范围，按 A/B 返回主菜单。
+- **关于**：标题为“Ruffle Flash · LeafOS 版”，单页显示版本、项目介绍、GitHub 仓库与开源致谢，底部保留许可说明，按 A/B 返回主菜单。页面介绍如下：
+
+  **再玩一局熟悉的 Flash**：把熟悉的 Flash 小游戏装进口袋，随时打开，再玩一局。Ruffle Flash 基于 Ruffle，为迷你龙 Pocket 1 / LeafOS 适配。
+
+  **项目主页 · GitHub**：[github.com/changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos)。源码、更新和使用说明都在这里，也欢迎反馈问题、分享建议。
+
+  **感谢开源社区，也感谢你**：感谢 Ruffle、aweigit/ruffle-miyooflip 和 Leaf / Jawaka 的开发者。也感谢每一位尝试、测试和反馈的玩家。祝你玩得开心！
 
 ## 五份游戏原生进度
 
