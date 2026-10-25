@@ -39,7 +39,8 @@
 - 使用已提交源码 `04c0bcb` 的独立副本和本次发布脚本，从空编译目录重建 ARM64 release，通过 84 项主机回归、诊断 WASM 测试、安装打包内置检查及 Release 文本生成；额外检查 ZIP 顶层目录、必需启动文件、执行位和本机文件排除。工具归档复用后逐个校验 SHA-256，Cargo 下载缓存复用。验证包位于本地 `outputs/github-release-validation/`，日志与摘要位于 `work/github-release-validation/`，均不进入 Git。
 - 工作流提交 `8899e41` 已推送到 `main`；版本未变化的 [push 检测](https://github.com/changdy/ruffle-leafos/actions/runs/40162584456) 通过并跳过打包。随后手动触发的[首次完整线上构建](https://github.com/changdy/ruffle-leafos/actions/runs/40162655064) 通过，版本检查和 Windows ARM64 构建两个 job 均成功，包含主机回归、诊断测试、打包检查及实际上传。
 - 2026-10-25 12:45（北京时间）已发布 [v0.6.8 开发预览](https://github.com/changdy/ruffle-leafos/releases/tag/v0.6.8)，tag 与说明中的构建提交均核对为 `8899e41e8f22ce2646a155edc73bfa9994080f67`；commit 列表及安装说明完整。唯一附件为 `ruffle-leafos-0.6.8.zip`，16,331,712 字节，SHA-256 为 `6f3c927c6d0c6db1d54e78558b852555ae3abcede8a69651086e1feed4e542a7`。
-- 已重新下载线上附件，核对 ZIP 完整性、仅有 `Apps/`、`Roms/`、`Images/` 顶层、安装路径安全、必需启动文件/库/字体、脚本 LF 与执行位、ARM64 PIE、播放器/诊断库指纹及提交对应的源码来源锁，并确认没有 SDK、构建缓存或本机配置。下载 SHA-256 与 Release 正文、GitHub 附件 digest 三者一致。下载包、API 快照与核对摘要保存在忽略的 `outputs/github-release-first-run/`。本次线上 ZIP 尚未单独进行实机安装验证，不将上述 CI 结论作为新增实机验收。
+- 已重新下载线上附件，核对 ZIP 完整性、仅有 `Apps/`、`Roms/`、`Images/` 顶层、安装路径安全、必需启动文件/库/字体、脚本 LF 与执行位、ARM64 PIE、播放器/诊断库指纹及提交对应的源码来源锁，并确认没有 SDK、构建缓存或本机配置。下载 SHA-256 与 Release 正文、GitHub 附件 digest 三者一致。下载包、API 快照与核对摘要保存在忽略的 `outputs/github-release-first-run/`。该线上附件的独立实机安装与验证已于下述批次完成。
+- 2026-10-25 在本会话重新从 Release 下载同一附件，并从远端拉取 `v0.6.8` 标签，核对构建提交 `8899e41`、来源锁中 16 个文件的指纹及附件 SHA-256；发布源码的 84 项主机回归通过。掌机运行 Release 附件中的播放器（SHA-256 `4b9295ad769f3505959b7edc373146a0495b6325c5ea226f588336e56957478e`），通过默认方案 1/2 双向跳空、空方案编辑/保存/清空、快捷切换及重开验证，以及正式游戏与 Apps 启动、说明页和正常退出。应用目录 662 个文件及完整 ZIP 的 663 个普通文件逐一校验通过，应用文件集合与 Release 一致，用户配置和进度校验未变，旧安装已备份。详见 [Release 实机验证摘要](validation/release-device-0.6.8-20261025.json)；下载原包、日志和截图在本地 `outputs/release-device-validation-20261025/`，未重打包或修改线上附件。
 
 | 范围 | 当前结果 | 证据基线 |
 | --- | --- | --- |
