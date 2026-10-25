@@ -379,6 +379,7 @@ impl Frontend {
             MenuResult::SaveProgress => {self.flush_progress(true);},
             MenuResult::OpenSaves => {self.flush_progress(false);self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);},
             MenuResult::OpenSettings => {self.state.experience.open(ExperiencePage::Settings);},
+            MenuResult::OpenShortcuts => {self.state.experience.open(ExperiencePage::Shortcuts);},
             MenuResult::OpenAbout => {self.state.experience.open(ExperiencePage::About);},
             MenuResult::None => {}
         }

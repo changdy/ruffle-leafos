@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.6.6 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.6.7 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 目录与执行链路
 
@@ -30,11 +30,13 @@
 | 物理 Menu | 独立读取物理状态，组合键按下沿触发；短按松开唤起，组合键不附带打开菜单；系统长按逃生仍交由 Leaf | [probe_input.c](../adapter/src/probe_input.c)、[shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs) |
 | 连发 | 每键 0/5/10/15 Hz，按住触发；单调时钟调度，卡顿不集中补发；仅键盘/组合键/鼠标左右键允许连发 | [turbo.rs](../player/sdl2test-rocknix/src/turbo.rs) |
 | 全局光标 | 外观独立保存；空心圆中心点固定 1×1 屏幕像素；移动恢复显示，静止 3.5 秒隐藏；点击/按住/滚轮不延长显示 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs) |
-| 原生进度/画面/Apps | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；每游戏缩放/画质/FPS；关于双页签 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
+| 原生进度/画面/Apps/说明 | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；每游戏缩放/画质/FPS；独立关于单页与快捷键三组说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 | 系统音量 | 异步读取真实 Leaf 数值，仅显示系统硬件键反馈；旧每游戏音量/静音不再控制播放 | [system_volume.rs](../player/sdl2test-rocknix/src/system_volume.rs) |
 | Flash FPS | 统计实际 Flash 帧执行量，按秒显示当前值 | [core/src/player.rs](../player/core/src/player.rs) |
 
 M+A/B 切方案，M+十字下切左键保持，M+X 仅在本次运行互换十字/摇杆四方向，摇杆按下不变；交换状态不会写入映射文件。主菜单左右换方案和编辑页 L/R 沿用同一持久化/释放规则。光标页速度仅本次生效，方案内保存的速度仍随方案读取；外观由所有游戏共用。
+
+暂停主菜单共九行，“快捷键说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页；快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
 
 摇杆现有径向死区为 0.18，键盘/点击动作采用 0.45 按下、0.30 释放的滞回阈值。完整可调设置和坐标矩阵仍在待办，现有阈值不等于该项验收完成。
 
@@ -65,7 +67,7 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 python scripts/build_player.py build --offline --isolated-config
 python scripts/test_session.py
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-0.6.6-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-0.6.7-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。
@@ -97,7 +99,7 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源及许可组成。随包 README 使用当前项目 README，支持文档一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、文档、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
 
-主机测试与静态校验后，还需按改动执行真机隔离验证、正式 Flash/Apps 通路、用户数据前后比对、安装文件指纹核对。设备地址目前为 `192.168.5.4:5555`；开发时可使用 ADB 连接、截图和读取日志。隔离验证使用单独数据目录，完整流程与具体发布结论查对应[进度及证据](progress.md)。
+主机测试与静态校验后，还需按改动执行真机隔离验证、正式 Flash/Apps 通路、用户数据前后比对、安装文件指纹核对。开发时复用当前会话提供的 ADB 地址连接、截图和读取日志，不将临时地址视为固定配置。隔离验证使用单独数据目录，完整流程与具体发布结论查对应[进度及证据](progress.md)。
 
 ## 源码来源与仓库边界
 

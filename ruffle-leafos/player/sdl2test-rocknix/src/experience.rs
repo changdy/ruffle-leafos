@@ -201,18 +201,37 @@ impl Settings {
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
-pub enum Page {#[default] Home,Saves,Settings,Manager,Confirm,About}
+pub enum Page {#[default] Home,Saves,Settings,Manager,Confirm,About,Shortcuts}
 
-pub const ABOUT_TABS:[&str;2]=["项目背景","快捷键"];
-pub const SHORTCUTS:[(&str,&str);8]=[
-    ("M（Menu）","暂停 / 继续游戏"),
-    ("M + A / B","上一个 / 下一个按键方案"),
-    ("M + X","互换十字键与摇杆方向（本次）"),
-    ("M + 十字下","开关鼠标左键保持"),
-    ("音量键 / M + 音量键","系统音量 / 屏幕亮度"),
-    ("按键设置 · L / R","切换方案；主菜单用左右键"),
-    ("动作选择 · L / R","切换动作分类"),
-    ("编辑宫格 · Y","连发：关 / 5 / 10 / 15 次每秒"),
+pub const SHORTCUT_TABS:[&str;3]=["游戏中","菜单操作","按键编辑"];
+// Each row gives one goal, the exact input, and its context or result.
+pub const SHORTCUTS:[[(&str,&str,&str);5];3]=[
+    [
+        ("暂停或继续游戏", "短按 M（菜单键）", "单独按下再松开；在子页面按 M 会先返回上一级。"),
+        ("切到上一套按键方案", "按住 M，再按 A", "在此游戏的 10 套按键方案间循环切换。"),
+        ("切到下一套按键方案", "按住 M，再按 B", "屏幕会提示切换后的方案名称。"),
+        ("互换十字键和摇杆", "按住 M，再按 X", "交换四个方向的操作；再按一次或退出游戏后恢复。"),
+        ("保持鼠标左键按下", "按住 M，再按十字键 ↓", "用于拖拽；再按一次松开，打开暂停菜单也会松开。"),
+    ],
+    [
+        ("选择菜单项", "十字键 ↑ ↓", "按 A 进入或确认，按 B 返回；主菜单按 B 继续游戏。"),
+        ("在主菜单切换按键方案", "选中「按键设置」后按 ← →", "按 A 可编辑当前方案。"),
+        ("调整设置", "十字键 ← →", "在「画面设置」或「鼠标光标」中，先选中要调整的项目。"),
+        ("调节系统音量", "机身音量 ＋ / －", "游戏中和暂停菜单中都可以调节。"),
+        ("调节屏幕亮度", "按住 M，再按音量键", "按音量 ＋ 提高亮度，按音量 － 降低亮度。"),
+    ],
+    [
+        ("修改一个按键的作用", "十字键选中格子，再按 A", "进入动作选择后，用十字键选动作，按 A 确认。"),
+        ("编辑另一套按键方案", "按 L1 或 R1 肩键", "在按键格子页面使用；有未保存修改时会先询问。"),
+        ("切换动作分类", "按 L1 或 R1 肩键", "在动作选择页面使用，例如切到键盘、鼠标等分类。"),
+        ("给选中的按键开启连发", "在按键格子上按 Y", "每按一次切换：关闭 → 每秒 5 次 → 10 次 → 15 次 → 关闭。"),
+        ("保存修改", "选中底部「保存」，再按 A", "保存后，重新打开游戏仍会使用这套设置。"),
+    ],
+];
+pub const SHORTCUT_NOTES:[&str;3]=[
+    "组合键：先按住 M，再按另一个键，最后松开；按住不会连续切换。",
+    "这里的方向键指机身十字键；L1、R1 指左右肩键。",
+    "连发：按住生效，松开停止；支持键盘、组合键和鼠标左右键。",
 ];
 pub const BACKGROUND:[(&str,&str,&str);3]=[
     ("为掌机游玩 Flash", "面向迷你龙 Miniloong Pocket 1 / LeafOS 的 Flash 播放器。", "使用 Ruffle 播放本地 SWF，提供掌机按键、鼠标与游戏进度。"),
@@ -253,25 +272,25 @@ pub struct Ui {
     pub app:bool,pub started:bool,pub title:String,pub message:String,pub settings:Settings,
     pub games:Vec<Entry>,pub game_index:usize,pub pending:usize,
     pub fps:f64,pub target_fps:f64,
-    pub about_tab:usize,
+    pub shortcut_tab:usize,
 }
 impl Ui {
-    pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::About{self.about_tab=0;}}
+    pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Ruffle · 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"关于 Ruffle Leaf".into()
+        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Ruffle · 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"关于 Ruffle Leaf".into(),Page::Shortcuts=>"快捷键说明".into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),
         Page::Settings=>self.settings.rows(),
         Page::Manager=>vec![format!("游戏：  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or("暂无记录")),"清空此游戏的五个存档".into(),"重置此游戏的按键配置".into(),"清空所有游戏存档".into(),"重置所有按键配置".into(),"返回 Leaf".into()],
-        Page::Confirm=>vec!["取消".into(),"确认".into()],Page::About=>vec![]
+        Page::Confirm=>vec!["取消".into(),"确认".into()],Page::About|Page::Shortcuts=>vec![]
     }}
     pub fn nav(&mut self,nav:super::controls::Nav)->Command{
         use super::controls::Nav;
-        if self.page==Page::About {
+        if matches!(self.page,Page::About|Page::Shortcuts) {
             match nav {
-                Nav::Left|Nav::Prev=>self.about_tab=(self.about_tab+ABOUT_TABS.len()-1)%ABOUT_TABS.len(),
-                Nav::Right|Nav::Next=>self.about_tab=(self.about_tab+1)%ABOUT_TABS.len(),
+                Nav::Left|Nav::Prev if self.page==Page::Shortcuts=>self.shortcut_tab=(self.shortcut_tab+SHORTCUT_TABS.len()-1)%SHORTCUT_TABS.len(),
+                Nav::Right|Nav::Next if self.page==Page::Shortcuts=>self.shortcut_tab=(self.shortcut_tab+1)%SHORTCUT_TABS.len(),
                 Nav::A|Nav::B=>self.open(Page::Home),_=>{}
             }
             return Command::None;
@@ -360,15 +379,30 @@ mod tests {
         assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Saves);
         u.selected=1;u.nav(Nav::Y);assert_eq!(u.page,Page::Confirm);u.selected=1;assert!(matches!(u.nav(Nav::A),Command::Copy(1)));
     }
-    #[test] fn about_tabs_wrap_and_return_without_changing_settings_or_progress(){
+    #[test] fn shortcut_pages_wrap_reset_and_return_without_changing_settings_or_progress(){
         use super::super::controls::Nav;
         let mut u=Ui::default();u.started=true;u.active=3;u.settings.scale=2;let original=u.settings;
-        u.open(Page::About);assert_eq!(u.about_tab,0);
-        for nav in [Nav::Left,Nav::Right,Nav::Prev,Nav::Next] {assert!(matches!(u.nav(nav),Command::None));}
-        assert_eq!(u.about_tab,0);u.nav(Nav::Next);assert_eq!(u.about_tab,1);
-        u.nav(Nav::Up);u.nav(Nav::Down);assert_eq!(u.about_tab,1);
+        u.open(Page::Shortcuts);assert_eq!(u.shortcut_tab,0);
+        u.nav(Nav::Left);assert_eq!(u.shortcut_tab,2);
+        u.nav(Nav::Next);assert_eq!(u.shortcut_tab,0);
+        u.nav(Nav::Prev);assert_eq!(u.shortcut_tab,2);
+        u.nav(Nav::Right);assert_eq!(u.shortcut_tab,0);
+        for tab in [1,2,0] {assert!(matches!(u.nav(Nav::Right),Command::None));assert_eq!(u.shortcut_tab,tab);}
+        u.nav(Nav::Next);u.nav(Nav::Up);u.nav(Nav::Down);assert_eq!(u.shortcut_tab,1);
         assert!(matches!(u.nav(Nav::B),Command::None));assert_eq!(u.page,Page::Home);
-        u.open(Page::About);assert_eq!(u.about_tab,0);u.nav(Nav::A);assert_eq!(u.page,Page::Home);
+        u.open(Page::Shortcuts);assert_eq!(u.shortcut_tab,0);u.nav(Nav::A);assert_eq!(u.page,Page::Home);
+        assert_eq!(u.active,3);assert_eq!(u.settings,original);
+    }
+    #[test] fn about_is_a_single_page_and_only_confirm_or_back_leaves_it(){
+        use super::super::controls::Nav;
+        let mut u=Ui::default();u.started=true;u.active=3;u.settings.scale=2;let original=u.settings;
+        for exit in [Nav::A,Nav::B] {
+            u.open(Page::About);
+            for nav in [Nav::Left,Nav::Right,Nav::Prev,Nav::Next,Nav::Up,Nav::Down,Nav::Y] {
+                assert!(matches!(u.nav(nav),Command::None));assert_eq!(u.page,Page::About);
+            }
+            u.nav(exit);assert_eq!(u.page,Page::Home);
+        }
         assert_eq!(u.active,3);assert_eq!(u.settings,original);
     }
     #[test] fn calendar_is_explicit_china_time(){assert_eq!(date(0),"1970-01-01 08:00:00");assert_eq!(date(1709164800),"2024-02-29 08:00:00");}

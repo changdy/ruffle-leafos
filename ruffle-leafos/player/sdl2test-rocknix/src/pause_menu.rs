@@ -14,7 +14,7 @@ struct Text {
 }
 
 #[derive(Clone, Copy)]
-enum FooterNavigation { Adjust, Grid, List, Tabs }
+enum FooterNavigation { Adjust, Grid, List, Tabs, Back }
 
 pub struct PauseMenu {
     gl: Arc<glow::Context>,
@@ -207,14 +207,15 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏",FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
-        let rows=["继续","按键设置","鼠标光标","保存游戏进度","游戏存档","画面设置","关于","保存并退出"];
+        let rows=["继续","按键设置","鼠标光标","保存游戏进度","游戏存档","画面设置","快捷键说明","关于","保存并退出"];
         let details=[String::new(),format!("◀ 方案 {} ▶",slot+1),
-            String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new(),String::new()];
+            String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
             self.leaf_row(i+1,line,138.+i as f32*51.,48.,i==state.selected);
             if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,145.+i as f32*51.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
-        self.live_label_width(16,if state.selected==1{"左右切换方案 · A 进入编辑"}else{"项目背景与快捷操作说明见「关于」"},20.,23.,606.,910.,false,self.palette[4]);
+        let hint=match state.selected {1=>"左右切换方案 · A 进入编辑",6=>"查看游戏组合键、菜单操作与按键编辑方法",7=>"查看版本、项目来源与开源许可",_=>"操作方法见「快捷键说明」"};
+        self.live_label_width(16,hint,20.,23.,606.,910.,false,self.palette[4]);
         }
         } else if state.drag_locked {
             self.live_chip(61,"左键保持 · M+十字下解除",22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
@@ -299,11 +300,17 @@ impl PauseMenu {
         self.live_label_width(cache,text,40.,23.,y+(h-44.)/2.,880.,false,self.palette[if selected{3}else{1}]);
     }
     unsafe fn leaf_footer(&mut self,back_label:&str,navigation:FooterNavigation) {
+        if matches!(navigation,FooterNavigation::Back) {
+            self.rounded((620.,642.,320.,58.),29.,self.palette[5]);
+            self.live_label_width(132,"B 返回",30.,644.,653.,272.,true,self.palette[4]);
+            return;
+        }
         let (arrows,hint,key_width,label_x)=match navigation {
             FooterNavigation::Adjust=>("↑↓","移动  ←→ 调整",60.,98.),
             FooterNavigation::Grid=>("↑↓←→","移动焦点",112.,150.),
             FooterNavigation::List=>("↑↓","移动",60.,98.),
             FooterNavigation::Tabs=>("←→","切换页面",60.,98.),
+            FooterNavigation::Back=>unreachable!(),
         };
         self.rounded((20.,642.,315.,58.),29.,self.palette[5]);
         self.rounded((620.,642.,320.,58.),29.,self.palette[5]);
@@ -324,7 +331,8 @@ impl PauseMenu {
     unsafe fn draw_experience(&mut self,state:&Session) {
         use crate::session::experience::Page;
         let u=&state.experience;
-        if u.page==Page::About {self.draw_about(u.about_tab);return;}
+        if u.page==Page::About {self.draw_about();return;}
+        if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab);return;}
         let subtitle=match u.page{
             Page::Saves=>if u.started{"A 读取并重启游戏；Y 将当前进度复制到选中槽"}else{"发现游戏进度，请先选择存档；空槽开始新进度"},
             Page::Settings=>"仅此游戏 · 调整后自动保存",Page::Manager=>"←→ 选择游戏 · 清理前会再次确认",Page::Confirm=>"请选择确认或取消",_=>""
@@ -349,31 +357,34 @@ impl PauseMenu {
         if !u.message.is_empty(){self.live_label_width(23,&u.message,21.,55.,615.,850.,false,self.palette[1]);}
     }
 
-    unsafe fn draw_about(&mut self,tab:usize) {
-        use crate::session::experience::{ABOUT_TABS,BACKGROUND,SHORTCUTS};
-        self.leaf_background("关于 Ruffle Leaf",&format!("{} 开发预览 · 左右或 L / R 切换页面",env!("CARGO_PKG_VERSION")),"返回",FooterNavigation::Tabs);
-        for (i,label) in ABOUT_TABS.iter().enumerate() {
-            let x=23.+i as f32*465.;self.leaf_tile((x,140.,449.,44.),tab==i);
-            self.live_label_width(65+i,label,28.,x+12.,145.,425.,true,self.palette[if tab==i{3}else{1}]);
+    unsafe fn draw_about(&mut self) {
+        use crate::session::experience::BACKGROUND;
+        self.leaf_background("关于 Ruffle Leaf",&format!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS",env!("CARGO_PKG_VERSION")),"返回",FooterNavigation::Back);
+        for (i,(title,line1,line2)) in BACKGROUND.iter().enumerate() {
+            let y=150.+i as f32*130.;let mut card=self.palette[5];card[3]=0.35;
+            self.rounded((23.,y,910.,115.),12.,card);
+            self.live_label_width(80+i*3,title,30.,38.,y+9.,880.,false,self.palette[1]);
+            self.live_label_width(81+i*3,line1,25.,38.,y+49.,880.,false,self.palette[1]);
+            self.live_label_width(82+i*3,line2,24.,38.,y+82.,880.,false,self.palette[4]);
         }
-        if tab==0 {
-            for (i,(title,line1,line2)) in BACKGROUND.iter().enumerate() {
-                let y=201.+i as f32*116.;let mut card=self.palette[5];card[3]=0.35;
-                self.rounded((23.,y,910.,103.),12.,card);
-                self.live_label_width(80+i*3,title,28.,38.,y+7.,880.,false,self.palette[1]);
-                self.live_label_width(81+i*3,line1,24.,38.,y+43.,880.,false,self.palette[1]);
-                self.live_label_width(82+i*3,line2,23.,38.,y+73.,880.,false,self.palette[4]);
-            }
-            self.live_label_width(54,"五份游戏原生进度依赖游戏自身保存功能；即时存档尚未提供。",21.,23.,579.,910.,false,self.palette[4]);
-        } else {
-            for (i,(keys,description)) in SHORTCUTS.iter().enumerate() {
-                let y=201.+i as f32*47.;
-                self.rounded((23.,y,300.,39.),10.,self.palette[5]);
-                self.live_label_width(80+i*2,keys,24.,33.,y+5.,280.,true,self.palette[1]);
-                self.live_label_width(81+i*2,description,26.,341.,y+4.,575.,false,self.palette[1]);
-            }
-            self.live_label_width(54,"组合键按住只触发一次；编辑未保存时，切换与退出会先提示。",21.,23.,593.,910.,false,self.palette[4]);
+        self.live_label_width(54,"五份游戏原生进度依赖游戏自身保存功能；即时存档尚未提供。",22.,23.,570.,910.,false,self.palette[4]);
+    }
+
+    unsafe fn draw_shortcuts(&mut self,tab:usize) {
+        use crate::session::experience::{SHORTCUT_TABS,SHORTCUTS,SHORTCUT_NOTES};
+        self.leaf_background("快捷键说明","先看想做什么，再按右侧提示操作","返回",FooterNavigation::Tabs);
+        for (i,label) in SHORTCUT_TABS.iter().enumerate() {
+            let x=23.+i as f32*307.;self.leaf_tile((x,140.,296.,44.),tab==i);
+            self.live_label_width(65+i,label,28.,x+12.,145.,272.,true,self.palette[if tab==i{3}else{1}]);
         }
+        for (i,(action,keys,note)) in SHORTCUTS[tab].iter().enumerate() {
+            let y=199.+i as f32*75.;let mut card=self.palette[5];card[3]=0.35;
+            self.rounded((23.,y,910.,69.),10.,card);
+            self.live_label_width(80+i*3,action,28.,38.,y+3.,410.,false,self.palette[1]);
+            self.live_label_width(81+i*3,keys,27.,454.,y+4.,460.,false,self.palette[1]);
+            self.live_label_width(82+i*3,note,22.,38.,y+39.,877.,false,self.palette[4]);
+        }
+        self.live_label_width(54,SHORTCUT_NOTES[tab],22.,23.,591.,910.,false,self.palette[4]);
     }
 
     unsafe fn draw_cursor(&self, settings: crate::session::cursor::Settings, position: (f32,f32)) {
