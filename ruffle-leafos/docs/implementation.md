@@ -25,6 +25,10 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 
 启动器优先预加载 Leaf 系统 SDL2，以获得设备上的 Wayland 支持；随包 SDL2 作为后备。CPAL/ALSA 在可用时接 Leaf PulseAudio，已有用户 ALSA 配置优先。画面沿用 SDL/Wayland/GLES 路线；已经验证的设备版本见进度文档。
 
+画面设置中的“渲染接口”进入 `experience::Page::Renderer`。当前只构造 `GlRenderBackend`；Vulkan 明确标为不可用，确认该项只显示原因，不返回保存、重启或切换命令。`graphics::VulkanWindow` 独立记录窗口系统检测状态，不能把 Vulkan loader/设备存在或窗口扩展检测通过等同于播放器已支持 Vulkan。
+
+在 SDL 视频子系统初始化后、创建 GLES 窗口前，调用 `vulkan_load_library_default`；SDL 的 Wayland 实现会检查 `VK_KHR_surface` 和 `VK_KHR_wayland_surface`。成功加载后配对卸载；失败不阻止后续 GLES 初始化。`leaf-graphics` 日志同时记录实际后端、`vulkan_backend=false`、SDL 视频驱动和原始检测错误。该检查不创建 Vulkan instance/device/swapchain，不能替代完整 Vulkan 呈现实测。当前没有可持久化的 Vulkan 偏好字段，RAV1 布局不变。
+
 ## 功能实现与源码入口
 
 | 模块 | 实现约定 | 代码 |

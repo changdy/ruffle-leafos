@@ -335,7 +335,7 @@ impl PauseMenu {
         if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab);return;}
         let subtitle=match u.page{
             Page::Saves=>if u.started{"A 读取并重启游戏；Y 将当前进度复制到选中槽"}else{"发现游戏进度，请先选择存档；空槽开始新进度"},
-            Page::Settings=>"仅此游戏 · 调整后自动保存",Page::Manager=>"←→ 选择游戏 · 清理前会再次确认",Page::Confirm=>"请选择确认或取消",_=>""
+            Page::Settings=>"仅此游戏 · 调整后自动保存",Page::Renderer=>"当前使用 OpenGL ES · Vulkan 暂不可用",Page::Manager=>"←→ 选择游戏 · 清理前会再次确认",Page::Confirm=>"请选择确认或取消",_=>""
         };
         let navigation=if matches!(u.page,Page::Settings|Page::Manager){FooterNavigation::Adjust}else{FooterNavigation::List};
         self.leaf_background(&u.heading(),subtitle,"返回",navigation);
@@ -353,6 +353,11 @@ impl PauseMenu {
         if u.page==Page::Saves {
             self.live_label_width(21,"保存游戏自身支持的进度；不包含任意画面的即时快照",21.,55.,540.,850.,false,self.palette[1]);
             self.live_label_width(22,"时间为北京时间，显示最后一次进度变化的时间。",20.,55.,575.,850.,false,self.palette[1]);
+        }
+        if u.page==Page::Renderer {
+            for (i,line) in u.vulkan_window.details().iter().enumerate() {
+                self.live_label_width(21+i,line,23.,55.,400.+i as f32*42.,850.,false,self.palette[1]);
+            }
         }
         if !u.message.is_empty(){self.live_label_width(23,&u.message,21.,55.,615.,850.,false,self.palette[1]);}
     }

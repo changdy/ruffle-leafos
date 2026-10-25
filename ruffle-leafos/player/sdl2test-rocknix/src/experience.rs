@@ -197,11 +197,11 @@ impl Settings {
     }}
     pub fn rows(&self)->Vec<String>{vec![format!("画面缩放                         {}",["保持比例","铺满屏幕","原始大小"][self.scale as usize]),
         format!("画面质量                         {}",["低","中","高"][self.quality as usize]),
-        format!("左上角帧率                     {}",if self.fps{"开"}else{"关"}),"恢复默认设置".into(),"返回".into()]}
+        format!("左上角帧率                     {}",if self.fps{"开"}else{"关"}),"渲染接口                         OpenGL ES  ›".into(),"恢复默认设置".into(),"返回".into()]}
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
-pub enum Page {#[default] Home,Saves,Settings,Manager,Confirm,About,Shortcuts}
+pub enum Page {#[default] Home,Saves,Settings,Renderer,Manager,Confirm,About,Shortcuts}
 
 pub const SHORTCUT_TABS:[&str;3]=["游戏中","菜单操作","按键编辑"];
 // Each row gives one goal, the exact input, and its context or result.
@@ -273,15 +273,17 @@ pub struct Ui {
     pub games:Vec<Entry>,pub game_index:usize,pub pending:usize,
     pub fps:f64,pub target_fps:f64,
     pub shortcut_tab:usize,
+    pub vulkan_window:super::graphics::VulkanWindow,
 }
 impl Ui {
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Manager=>"Flash 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"Ruffle Flash · LeafOS 版".into(),Page::Shortcuts=>"快捷键说明".into()
+        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Renderer=>"渲染接口".into(),Page::Manager=>"Flash 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"Ruffle Flash · LeafOS 版".into(),Page::Shortcuts=>"快捷键说明".into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),
         Page::Settings=>self.settings.rows(),
+        Page::Renderer=>vec!["OpenGL ES                         使用中".into(),"Vulkan                                 暂不可用".into(),"返回".into()],
         Page::Manager=>vec![format!("游戏：  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or("暂无记录")),"清空此游戏的五个存档".into(),"重置此游戏的按键配置".into(),"清空所有游戏存档".into(),"重置所有按键配置".into(),"返回 Leaf".into()],
         Page::Confirm=>vec!["取消".into(),"确认".into()],Page::About|Page::Shortcuts=>vec![]
     }}
@@ -299,7 +301,8 @@ impl Ui {
         match nav {
             Nav::Up=>self.selected=(self.selected+count-1)%count,
             Nav::Down=>self.selected=(self.selected+1)%count,
-            Nav::B=>{if self.page==Page::Confirm{self.open(if self.app{Page::Manager}else{Page::Saves});}
+            Nav::B=>{if self.page==Page::Renderer{self.open(Page::Settings);self.selected=3;}
+                else if self.page==Page::Confirm{self.open(if self.app{Page::Manager}else{Page::Saves});}
                 else if self.app||!self.started{return Command::Quit;}else{self.open(Page::Home);}},
             Nav::Left|Nav::Right=>{
                 let d=if matches!(nav,Nav::Left){-1}else{1};
@@ -316,7 +319,12 @@ impl Ui {
                     else if !self.started{return Command::Choose(self.selected);}
                     else if self.selected==self.active {self.open(Page::Home);}
                     else {self.pending=10+self.selected;self.open(Page::Confirm);}},
-                Page::Settings=>{if self.selected==4{self.open(Page::Home);}else{if self.selected==3 {self.settings=Settings::default()}else{self.settings.change(self.selected,1)}return Command::Settings;}},
+                Page::Settings=>{if self.selected==5{self.open(Page::Home);}else if self.selected==3{self.open(Page::Renderer);}else{if self.selected==4 {self.settings=Settings::default()}else{self.settings.change(self.selected,1)}return Command::Settings;}},
+                Page::Renderer=>{match self.selected {
+                    0=>self.message="当前已使用 OpenGL ES".into(),
+                    1=>self.message=self.vulkan_window.message().into(),
+                    _=>{self.open(Page::Settings);self.selected=3;}
+                }},
                 Page::Manager=>{if self.selected==5{return Command::Quit;}if self.selected>0{
                     if self.selected<=2&&self.games.is_empty(){self.message="暂无游戏记录".into();}else{self.pending=self.selected;self.open(Page::Confirm);}
                 }},
@@ -406,4 +414,35 @@ mod tests {
         assert_eq!(u.active,3);assert_eq!(u.settings,original);
     }
     #[test] fn calendar_is_explicit_china_time(){assert_eq!(date(0),"1970-01-01 08:00:00");assert_eq!(date(1709164800),"2024-02-29 08:00:00");}
+    #[test] fn renderer_page_is_reachable_and_back_preserves_settings_and_progress() {
+        use super::super::controls::Nav;
+        let mut u=Ui::default();u.started=true;u.active=3;u.settings.scale=2;let original=u.settings;
+        u.open(Page::Settings);u.selected=3;
+        assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Renderer);
+        u.nav(Nav::A);assert_eq!(u.page,Page::Renderer);assert!(u.message.contains("OpenGL ES"));
+        u.nav(Nav::B);assert_eq!(u.page,Page::Settings);assert_eq!(u.selected,3);
+        u.nav(Nav::A);u.selected=2;u.nav(Nav::A);assert_eq!(u.page,Page::Settings);assert_eq!(u.selected,3);
+        assert_eq!(u.settings,original);assert_eq!(u.active,3);
+        u.selected=5;u.nav(Nav::A);assert_eq!(u.page,Page::Home);
+    }
+    #[test] fn unavailable_vulkan_cannot_write_settings_restart_or_claim_selection() {
+        use super::super::{controls::Nav,graphics::VulkanWindow};
+        for status in [VulkanWindow::Unchecked,VulkanWindow::Available,VulkanWindow::Unavailable("VK_KHR_wayland_surface missing".into())] {
+            let mut u=Ui::default();u.started=true;u.active=2;u.settings.fps=true;let original=u.settings;
+            u.vulkan_window=status;u.open(Page::Renderer);u.selected=1;
+            for nav in [Nav::Left,Nav::Right,Nav::A,Nav::A] {assert!(matches!(u.nav(nav),Command::None));}
+            assert_eq!(u.page,Page::Renderer);assert_eq!(u.settings,original);assert_eq!(u.active,2);
+            assert!(u.message.contains("继续使用 OpenGL ES"));assert!(u.rows()[1].contains("暂不可用"));
+            assert!(u.rows()[0].contains("使用中"));
+        }
+    }
+    #[test] fn settings_reset_and_navigation_still_work_with_renderer_entry() {
+        use super::super::controls::Nav;
+        let mut u=Ui::default();u.started=true;u.settings.scale=2;u.settings.fps=true;u.open(Page::Settings);
+        u.nav(Nav::Up);assert_eq!(u.selected,5);u.nav(Nav::Down);assert_eq!(u.selected,0);
+        u.selected=4;assert!(matches!(u.nav(Nav::A),Command::Settings));assert_eq!(u.settings,Settings::default());
+        u.selected=3;let original=u.settings;
+        for nav in [Nav::Left,Nav::Right] {assert!(matches!(u.nav(nav),Command::None));}
+        assert_eq!(u.settings,original);assert_eq!(u.page,Page::Settings);
+    }
 }

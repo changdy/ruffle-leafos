@@ -649,6 +649,16 @@ pub async fn run() -> Result<(), String> {
     // This frontend draws exactly one host pointer, including with a USB mouse.
     sdl.mouse().show_cursor(false);
     let video = sdl.video()?;
+    // SDL validates the presentation extension for the active window system.
+    // A Vulkan library/device alone does not imply Wayland presentation support.
+    let vulkan_window = match video.vulkan_load_library_default() {
+        Ok(()) => {
+            video.vulkan_unload_library();
+            session::graphics::VulkanWindow::Available
+        },
+        Err(error) => session::graphics::VulkanWindow::Unavailable(error),
+    };
+    println!("leaf-graphics active=opengl-es vulkan_backend=false window_driver={} vulkan_window={vulkan_window:?}", video.current_video_driver());
     let gamepads = sdl.game_controller()?;
     let events = sdl.event()?;
     let (init_width, init_height) = initial_window_size(&video, opt.width, opt.height);
@@ -736,6 +746,7 @@ pub async fn run() -> Result<(), String> {
     println!("leaf-cursor startup global={:?}",front.state.cursor_settings);
     front.state.experience.title=front.progress.lock().unwrap().title.clone();
     front.state.experience.settings=av;front.state.experience.app=opt.app_settings;
+    front.state.experience.vulkan_window=vulkan_window;
     front.state.experience.started=!opt.app_settings&&!pick_slot;
     front.refresh_saves();
     if opt.app_settings {
