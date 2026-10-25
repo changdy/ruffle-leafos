@@ -37,7 +37,9 @@
 - 自动发布 `v<版本>` 开发预览 Release，仅附一个安装 ZIP，顶层为 `Apps/`、`Roms/`、`Images/`，可合并复制到迷你龙系统 SD 卡根目录。说明包含构建 commit、版本间 commit 列表、比较链接及 ZIP SHA-256。
 - 本地发布与工具准备逻辑 15 项测试通过，覆盖版本不变、多提交推送、首次发布、手动重试、版本/指纹不一致、重复 tag、commit 说明、上传错误和草稿恢复、工具校验与两种归档层级。工具链自动准备及 Actions 静态检查通过。
 - 使用已提交源码 `04c0bcb` 的独立副本和本次发布脚本，从空编译目录重建 ARM64 release，通过 84 项主机回归、诊断 WASM 测试、安装打包内置检查及 Release 文本生成；额外检查 ZIP 顶层目录、必需启动文件、执行位和本机文件排除。工具归档复用后逐个校验 SHA-256，Cargo 下载缓存复用。验证包位于本地 `outputs/github-release-validation/`，日志与摘要位于 `work/github-release-validation/`，均不进入 Git。
-- 尚未推送本次工作流，未完成 GitHub 托管 runner 的首次运行与实际 Release 上传验证；本次未修改播放器功能，未新增实机验收结论。
+- 工作流提交 `8899e41` 已推送到 `main`；版本未变化的 [push 检测](https://github.com/changdy/ruffle-leafos/actions/runs/40162584456) 通过并跳过打包。随后手动触发的[首次完整线上构建](https://github.com/changdy/ruffle-leafos/actions/runs/40162655064) 通过，版本检查和 Windows ARM64 构建两个 job 均成功，包含主机回归、诊断测试、打包检查及实际上传。
+- 2026-10-25 12:45（北京时间）已发布 [v0.6.8 开发预览](https://github.com/changdy/ruffle-leafos/releases/tag/v0.6.8)，tag 与说明中的构建提交均核对为 `8899e41e8f22ce2646a155edc73bfa9994080f67`；commit 列表及安装说明完整。唯一附件为 `ruffle-leafos-0.6.8.zip`，16,331,712 字节，SHA-256 为 `6f3c927c6d0c6db1d54e78558b852555ae3abcede8a69651086e1feed4e542a7`。
+- 已重新下载线上附件，核对 ZIP 完整性、仅有 `Apps/`、`Roms/`、`Images/` 顶层、安装路径安全、必需启动文件/库/字体、脚本 LF 与执行位、ARM64 PIE、播放器/诊断库指纹及提交对应的源码来源锁，并确认没有 SDK、构建缓存或本机配置。下载 SHA-256 与 Release 正文、GitHub 附件 digest 三者一致。下载包、API 快照与核对摘要保存在忽略的 `outputs/github-release-first-run/`。本次线上 ZIP 尚未单独进行实机安装验证，不将上述 CI 结论作为新增实机验收。
 
 | 范围 | 当前结果 | 证据基线 |
 | --- | --- | --- |
