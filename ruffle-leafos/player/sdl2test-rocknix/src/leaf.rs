@@ -315,7 +315,7 @@ impl Frontend {
         if transitions.is_empty() { return; }
         let mut player = self.active.player.lock().unwrap();
         for transition in transitions {
-            if self.diagnostic { println!("leaf-input {:?} down={}", transition.action, transition.down); }
+            if self.diagnostic { println!("leaf-input {:?} down={} elapsed_us={}", transition.action, transition.down,self.started.elapsed().as_micros()); }
             match transition.action {
                 Action::Key(key) => {
                     if let Some(key) = Keycode::from_i32(key).and_then(keycodes::sdl2_keycode_to_ruffle_key_descriptor) {
@@ -1021,8 +1021,13 @@ pub async fn run() -> Result<(), String> {
             window.gl_swap_window();
             front.redraw = false;
         }
+        // Service repeat deadlines after rendering as well: the normal 16ms
+        // loop sleep must not add another frame to a short release window.
+        if !front.state.paused {front.update_repeats();}
         let cost = now.elapsed();
-        if cost < Duration::from_millis(16) { sleep(Duration::from_millis(16) - cost); }
+        let mut delay=Duration::from_millis(16).saturating_sub(cost);
+        if let Some(repeat_delay)=front.repeater.next_delay(front.started.elapsed()) {delay=delay.min(repeat_delay);}
+        if !delay.is_zero() {sleep(delay);}
     }
     let released = front.state.ledger.release_all();
     front.emit(released, false);

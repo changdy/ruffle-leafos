@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.6.7 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.6.8 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 目录与执行链路
 
@@ -28,7 +28,7 @@
 | 按键编辑 | 每游戏十方案，14 实体键及五个摇杆动作；五列动作宫格与九类 Tab；保存/返回独立；未保存切换提供继续、舍弃、保存；保存失败保留草稿 | [controls.rs](../player/sdl2test-rocknix/src/controls.rs)、[profiles.rs](../player/sdl2test-rocknix/src/profiles.rs) |
 | 输入所有权 | 最多四键组合按序按下、反序释放，共享键引用计数；切方案、暂停、失焦或断连释放旧输入，恢复等待按键松开/摇杆归中 | [session.rs](../player/sdl2test-rocknix/src/session.rs)、[shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs) |
 | 物理 Menu | 独立读取物理状态，组合键按下沿触发；短按松开唤起，组合键不附带打开菜单；系统长按逃生仍交由 Leaf | [probe_input.c](../adapter/src/probe_input.c)、[shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs) |
-| 连发 | 每键 0/5/10/15 Hz，按住触发；单调时钟调度，卡顿不集中补发；仅键盘/组合键/鼠标左右键允许连发 | [turbo.rs](../player/sdl2test-rocknix/src/turbo.rs) |
+| 连发 | 每键 0/5/10/15 Hz，按住触发；松开阶段调度不超过 10 ms，其余周期按下；单调时钟、截止时间唤醒，卡顿不集中补发；仅键盘/组合键/鼠标左右键允许连发 | [turbo.rs](../player/sdl2test-rocknix/src/turbo.rs) |
 | 全局光标 | 外观独立保存；空心圆中心点固定 1×1 屏幕像素；移动恢复显示，静止 3.5 秒隐藏；点击/按住/滚轮不延长显示 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs) |
 | 原生进度/画面/Apps/说明 | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；每游戏缩放/画质/FPS；独立关于单页与快捷键三组说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 | 系统音量 | 异步读取真实 Leaf 数值，仅显示系统硬件键反馈；旧每游戏音量/静音不再控制播放 | [system_volume.rs](../player/sdl2test-rocknix/src/system_volume.rs) |
@@ -39,6 +39,8 @@ M+A/B 切方案，M+十字下切左键保持，M+X 仅在本次运行互换十�
 暂停主菜单共九行，“快捷键说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页；快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
 
 摇杆现有径向死区为 0.18，键盘/点击动作采用 0.45 按下、0.30 释放的滞回阈值。完整可调设置和坐标矩阵仍在待办，现有阈值不等于该项验收完成。
+
+连发完整周期为 `1_000_000 / Hz` 微秒，按下阶段为周期减 8 ms，松开阶段为 8 ms，为用户要求的 10 ms 上限留出 2 ms 调度余量。小幅延迟保留原截止时间，可缩短接下来的松开阶段；错过完整阶段时从当前时间安排该阶段，单次更新最多翻转一次，不集中追赶。`Repeater::next_delay` 返回所有启用连发源的最近截止时间；主循环在 tick 前和渲染后检查，并以截止时间缩短原 16 ms 睡眠。输入事件仍在 Flash 主线程派发，脚本、GL 或系统调度阻塞可能延长实际松开间隔，不能保证任意负载下的硬实时时限。诊断输入日志附带单调时钟微秒时间，便于区分调度时序和设备实测。
 
 ## 数据身份与持久化
 
@@ -67,7 +69,7 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 python scripts/build_player.py build --offline --isolated-config
 python scripts/test_session.py
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-0.6.7-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-0.6.8-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。

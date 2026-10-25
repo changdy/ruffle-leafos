@@ -1,13 +1,13 @@
 {
   "name": "Ruffle Leaf Preview",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "icon": "art/FLASH.png",
   "platform": "mlp1",
-  "pak_version": "0.6.7",
+  "pak_version": "0.6.8",
   "min_leaf_version": "0.13.0",
   "min_jawaka_version": "0.0.1",
   "type": "TOOL",
-  "description": "Dedicated shortcut guide with clear game, menu, and control editing instructions; separate About page.",
+  "description": "Per-button turbo with short release windows, contextual shortcut guide, and separate About page.",
   "provides": {
     "schema": 1,
     "systems": [
@@ -34,7 +34,7 @@
     "cores": [
       {
         "id": "ruffle_probe",
-        "display_name": "Ruffle Leaf 0.6.7 (development preview)",
+        "display_name": "Ruffle Leaf 0.6.8 (development preview)",
         "type": "path",
         "path": "emulators/ruffle-probe/launch-game.sh",
         "supports_menu": true,
