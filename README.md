@@ -12,4 +12,6 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 
 工程位于 `ruffle-leafos/`。[格式契约、验证摘要和历史记录](ruffle-leafos/docs/README.md)作为补充资料保留。
 
+安装包从 [GitHub Releases](https://github.com/changdy/ruffle-leafos/releases) 下载 `ruffle-leafos-<版本>.zip`，解压后将 `Apps/`、`Roms/`、`Images/` 按原层级复制到迷你龙系统 SD 卡根目录即可安装。`main` 分支安装清单的版本号变更会自动编译并发布，Release 说明包含构建提交、commit 列表和 ZIP 的 SHA-256；维护方法见[自动发布](ruffle-leafos/docs/implementation.md#github-actions-自动发布)。
+
 `outputs/` 为本地交付与真机证据，`work/` 为工具缓存及工作记录，`adb-tools/`、`flash-transfer/` 为本地设备工具与传输文件；这些目录均不进入 Git。全新克隆的构建准备见[构建说明](ruffle-leafos/docs/implementation.md#构建环境与命令)。

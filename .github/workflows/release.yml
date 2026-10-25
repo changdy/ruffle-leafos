@@ -1,0 +1,90 @@
+name: Build and release Pocket 1 ZIP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pocket1-release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test release detection and notes
+        run: python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
+      - name: Detect installation version change
+        id: version
+        run: python ruffle-leafos/scripts/release.py detect
+
+  release:
+    needs: version
+    if: needs.version.outputs.changed == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: ruffle-leafos
+        shell: pwsh
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Cache pinned compilers
+        uses: actions/cache@v5
+        with:
+          path: ruffle-leafos/.tools
+          key: pocket1-tools-v1-${{ runner.os }}-${{ hashFiles('ruffle-leafos/arm-gnu.lock.json', 'ruffle-leafos/adapter/rust-toolchain.lock.json', 'ruffle-leafos/adapter/references.lock.json', 'ruffle-leafos/scripts/setup_release_tools.py') }}
+      - name: Cache Cargo downloads
+        uses: actions/cache@v5
+        with:
+          path: work/toolchains/cargo-home
+          key: pocket1-cargo-v1-${{ runner.os }}-${{ hashFiles('ruffle-leafos/player/Cargo.lock') }}
+          restore-keys: pocket1-cargo-v1-${{ runner.os }}-
+      - name: Install and verify locked build tools
+        run: python scripts/setup_release_tools.py
+      - name: Build ARM64 player from source
+        run: python scripts/build_player.py build --isolated-config --jobs 4
+      - name: Run host input and state tests
+        run: python scripts/test_session.py
+      - name: Build and test diagnostics
+        run: python scripts/build_diagnostics.py
+      - name: Package root directory installation ZIP
+        run: python scripts/package_preview.py --output ../outputs/release
+      - name: Generate commit notes and ZIP checksum
+        run: python scripts/release.py notes --output ../outputs/release
+      - name: Publish installation ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python scripts/release.py publish --output ../outputs/release

@@ -111,6 +111,33 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 主机测试与静态校验后，还需按改动执行真机隔离验证、正式 Flash/Apps 通路、用户数据前后比对、安装文件指纹核对。开发时复用当前会话提供的 ADB 地址连接、截图和读取日志，不将临时地址视为固定配置。隔离验证使用单独数据目录，完整流程与具体发布结论查对应[进度及证据](progress.md)。
 
+## GitHub Actions 自动发布
+
+仓库根目录的 [release.yml](../../.github/workflows/release.yml) 在推送到 `main` 时比较推送前后 `pak/pak.json` 的 `pak_version`，仅版本值变化才运行完整构建；普通描述修改不会打包。比较使用整次推送前的提交，支持一次推送多个 commit 和合并提交。`main` 首次创建时的推送视为首次发布。Actions 中的 **Build and release Pocket 1 ZIP → Run workflow** 可在 `main` 手动发布当前版本或重试失败流程，不需要预先创建 tag。
+
+发布版本使用 `主版本.次版本.修订号`（如 `0.6.9`）。升级时同步维护：
+
+- `pak/pak.json` 的 `version` 与 `pak_version`。
+- `player/sdl2test-rocknix/Cargo.toml` 的包版本，以及 `player/Cargo.lock` 中该包的版本。
+- `leaf-source.lock.json` 的 `frontend_version`、`leaf_cargo_lock_sha256` 和 `leaf_files_sha256` 内受影响文件的 SHA-256；其中 `Cargo.lock` 同时有逐文件指纹。
+- README、进度及其他受影响的版本说明。
+
+[release.py](../scripts/release.py) 在编译前检查版本一致性、源码锁和已有 tag。版本未变化时跳过构建；版本变化但锁未更新时明确失败。`v<版本>` 已指向其他提交时拒绝覆盖，必须升新版本。相同提交重跑时允许继续；已发布的 Release 保留原附件，上传中断留下的草稿可补传并发布。发布使用 GitHub concurrency，每次只运行一个工作流，保留正在进行的构建；多次快速推送时 GitHub 只保留最新的待运行请求。
+
+构建在 `windows-2022` 上执行，复用现有 Windows GNU → ARM64 路线。[setup_release_tools.py](../scripts/setup_release_tools.py) 按已有工具锁下载并逐个校验 Rust 1.94.0（含 GNU 主机和 ARM64 标准库）、w64devkit 2.1.0、Zig 0.14.1 和 ARM GNU 14.2 SDK，在工程 `.tools/` 中解包，并生成忽略的 `workspace.local.json`。Python 3.12、Node.js 22、JDK 17 由工作流准备，7-Zip 由 runner 提供。工具和 Cargo 下载缓存分别保存在 `.tools/` 和根目录 `work/toolchains/cargo-home/`；每次仍从源码编译播放器，不缓存成品播放器。
+
+完整流水线依次执行：发布脚本回归、ARM64 release 编译、主机输入/状态回归、诊断库编译与测试、现有打包脚本的 ELF/GLIBC/源码/清单/ZIP 校验。自动打包不加 `--include-source`，只向 Release 附加一个 `ruffle-leafos-<版本>.zip`；GitHub 自带的 Source code 下载由平台生成。ZIP 顶层直接是 `Apps/`、`Roms/`、`Images/`，不含本机配置、SDK、构建缓存或外层版本目录。
+
+流程使用仓库自带的 `GITHUB_TOKEN`，仅发布 job 申请 `contents: write`，不需要单独配置 PAT。自动创建 `v<版本>` tag，绑定实际构建的提交；当前均以开发预览（Prerelease）发布。说明中写入完整构建 SHA 及链接、上一可达 `v主.次.修订` tag 之后的 commit SHA/标题/作者、比较链接、安装方法和 ZIP SHA-256；首次发布列出全部历史。CI 说明明确标注未进行实机验证。
+
+在仓库根目录可独立验证发布逻辑：
+
+```powershell
+python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
+```
+
+线上 runner 执行和实际 Release 上传的验收状态见[工程进度](progress.md)。
+
 ## 源码来源与仓库边界
 
 | 保留内容 | 来源与保留理由 |
