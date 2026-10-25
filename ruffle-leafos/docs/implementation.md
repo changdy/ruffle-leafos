@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.6.8 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.6.9 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 命名与兼容标识
 
@@ -75,7 +75,7 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 python scripts/build_player.py build --offline --isolated-config
 python scripts/test_session.py
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-0.6.8-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.6.9-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。

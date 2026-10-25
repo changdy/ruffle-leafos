@@ -1,9 +1,9 @@
 {
   "name": "Flash 数据管理",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "icon": "art/FLASH.png",
   "platform": "mlp1",
-  "pak_version": "0.6.8",
+  "pak_version": "0.6.9",
   "min_leaf_version": "0.13.0",
   "min_jawaka_version": "0.0.1",
   "type": "TOOL",

@@ -1,6 +1,6 @@
 # Ruffle Flash
 
-面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.6.8 开发预览**，已验证环境为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2。文档整理于 2026-10-25，验证范围见[工程进度](docs/progress.md)。
+面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.6.9 开发预览**，已验证环境为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2。文档整理于 2026-10-25，验证范围见[工程进度](docs/progress.md)。
 
 从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
 
@@ -30,7 +30,7 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 
 正常退出播放器、备份现有 `RuffleProbe.pak` 和用户数据后，将安装 ZIP 解压，把其中的 **`Apps/`、`Roms/`、`Images/` 按原层级复制到迷你龙系统 SD 卡根目录并合并目录**，即可安装或覆盖升级；也可直接解压到该根目录。ZIP 没有额外的版本号外层文件夹，安装目标为 `Apps/mlp1/RuffleProbe.pak/`。该目录沿用旧包标识，以便直接覆盖升级；显示名称与数据位置分开维护。
 
-改名后的 0.6.8 本地构建见 [交付目录](../outputs/ruffle-leafos-0.6.8)，校验值见 [SHA256SUMS.txt](../outputs/ruffle-leafos-0.6.8/SHA256SUMS.txt)；已通过 81 项主机测试和 ARM64 release 构建，改名后的游戏、暂停菜单、按键设置与关于界面已通过 ADB 截图核对。GitHub Actions 的首次线上构建、Release 发布及安装 ZIP 下载核对已通过，验证范围见[工程进度](docs/progress.md)。
+0.6.9 收录新版关于介绍、GitHub 项目地址与社区致谢。相同页面代码此前已通过 84 项主机回归、ARM64 release 构建及 Pocket 1 实机排版与 A/B 返回核对；上方截图来自更新文案后的 0.6.8 构建。0.6.9 的自动构建与发布状态、各批次验证范围见[工程进度](docs/progress.md)。
 
 SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，模拟器列表显示为 Ruffle Flash；Apps 中的“Flash 数据管理”用于管理配置与游戏进度。
 
