@@ -6,13 +6,23 @@
 
 GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos)。掌机应用名为 **Ruffle Flash**，Apps 入口显示为 **Flash 数据管理**。
 
+## 实机截图
+
+以下截图于 2026-10-25 通过 ADB 从迷你龙 Pocket 1 / LeafOS 实机抓取，展示 **0.6.8 开发预览**的实际游戏与菜单界面。游戏画面来自用户安装的 SWF，不随项目分发。
+
+| 游戏运行 | 暂停菜单 |
+| --- | --- |
+| ![Ruffle Flash 实际游戏画面](docs/images/gameplay.png) | ![Ruffle Flash 暂停菜单](docs/images/pause-menu.png) |
+| 按键设置 | 关于 |
+| ![十方案按键设置界面](docs/images/controls.png) | ![Ruffle Flash 关于页面](docs/images/about.png) |
+
 | 文档 | 负责内容 |
 | --- | --- |
 | 本 README | 项目介绍、安装与完整使用方法 |
 | [工程进度](docs/progress.md) | 已完成、待办、验收边界、版本和验证证据 |
 | [工程实现细节](docs/implementation.md) | 模块、实现约定、数据格式、来源、构建与发布 |
 
-格式契约和历史资料见[文档索引](docs/README.md)。本地发布包和截图保存在工作区 `outputs/`，不随 Git 克隆；自行构建见[工程实现细节](docs/implementation.md#构建环境与命令)。
+格式契约和历史资料见[文档索引](docs/README.md)。README 使用的实机截图随仓库保存在 `docs/images/`；本地发布包和完整验证截图保存在工作区 `outputs/`，不随 Git 克隆。自行构建见[工程实现细节](docs/implementation.md#构建环境与命令)。
 
 ## 安装与入口
 
@@ -20,7 +30,7 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 
 正常退出播放器、备份现有 `RuffleProbe.pak` 和用户数据后，将安装 ZIP 解压，把其中的 **`Apps/`、`Roms/`、`Images/` 按原层级复制到迷你龙系统 SD 卡根目录并合并目录**，即可安装或覆盖升级；也可直接解压到该根目录。ZIP 没有额外的版本号外层文件夹，安装目标为 `Apps/mlp1/RuffleProbe.pak/`。该目录沿用旧包标识，以便直接覆盖升级；显示名称与数据位置分开维护。
 
-改名后的 0.6.8 本地构建见 [交付目录](../outputs/ruffle-leafos-0.6.8)，校验值见 [SHA256SUMS.txt](../outputs/ruffle-leafos-0.6.8/SHA256SUMS.txt)；已通过 81 项主机测试和 ARM64 release 构建，改名后的实机界面尚未验证。GitHub Actions 的首次线上构建、Release 发布及安装 ZIP 下载核对已通过，验证范围见[工程进度](docs/progress.md)。
+改名后的 0.6.8 本地构建见 [交付目录](../outputs/ruffle-leafos-0.6.8)，校验值见 [SHA256SUMS.txt](../outputs/ruffle-leafos-0.6.8/SHA256SUMS.txt)；已通过 81 项主机测试和 ARM64 release 构建，改名后的游戏、暂停菜单、按键设置与关于界面已通过 ADB 截图核对。GitHub Actions 的首次线上构建、Release 发布及安装 ZIP 下载核对已通过，验证范围见[工程进度](docs/progress.md)。
 
 SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，模拟器列表显示为 Ruffle Flash；Apps 中的“Flash 数据管理”用于管理配置与游戏进度。
 
