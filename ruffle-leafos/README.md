@@ -1,6 +1,6 @@
 # Ruffle Flash
 
-面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.6.9 开发预览**，已验证环境为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2。文档整理于 2026-10-25，验证范围见[工程进度](docs/progress.md)。
+面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.0 开发预览**，默认 OpenGL ES，新增可选的实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-25，验证范围见[工程进度](docs/progress.md)。
 
 从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
 
@@ -132,9 +132,11 @@ M → 画面设置，左右调整或 A 切换，即时生效并保存到此游�
 - 左上角 FPS 开关，默认关；只显示当前实际 Flash 帧执行速率，按秒更新。
 - 恢复默认：保持比例、高画质、FPS 关。
 
-“渲染接口”子页面列出 **OpenGL ES（使用中）** 和 **Vulkan（暂不可用）**。当前播放器只接入 OpenGL ES；Vulkan 项会说明不可用原因，不会实际切换后端。启动时通过 SDL 检查当前窗口系统的 Vulkan 支持，结果写入日志的 `leaf-graphics` 行。
+“渲染接口”子页面可选择 **OpenGL ES** 或 **Vulkan（实验）**，并标明当前实际使用的接口。选择另一接口后，默认先选中“取消”；确认后保存游戏原生进度、记住此游戏的选择并重启游戏。仅恢复游戏自身支持的进度，不保留当前运行画面。恢复默认画面设置只重置缩放、画质和 FPS，不更改渲染接口。
 
-2026-10-25 的 Pocket1 实测可枚举 Mali-G52 / Vulkan 1.2.218，但系统驱动没有提供 `VK_KHR_wayland_surface`，无法直接用于现有 Wayland 窗口。真正的双后端切换还需要可用的 Vulkan 窗口呈现链路和播放器 Vulkan 渲染实现；目前没有 Vulkan 性能收益的实测结论。
+Vulkan 复用固定版本的 Ruffle 官方桌面端 `wgpu` 后端。Pocket1 当前驱动缺少原生 Vulkan Wayland 窗口扩展，本版通过 GPU 共享图像呈现：**Flash 使用 Vulkan 绘制，OpenGL ES 负责最终显示和菜单**，显示链路不做逐帧 CPU 像素读回。Vulkan 初始化失败时会提示并恢复此游戏的 OpenGL ES 偏好；已捕获的运行期 GPU 错误会结束会话、尝试提交原生进度，并将后续启动偏好恢复为 GLES。
+
+Vulkan 仍属实验功能；部分游戏的画面、滤镜、稳定性或性能可能与 GLES 不同，**没有证明它一定更快**。遇到问题可切回 OpenGL ES。格式及兼容规则见[渲染设置格式](docs/formats/graphics-settings.md)，实际接口以日志 `leaf-graphics actual=` 为准，不能仅凭 `GL_VERSION` 判断 Flash 绘制后端。
 
 FPS、映射 toast 和左键保持提示的底色随文字尺寸收缩。人工听感、画质差异与各游戏性能仍待验收。
 

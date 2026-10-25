@@ -4,6 +4,7 @@ use crate::session::{Action, InputMode, MenuResult, Session, Source, Transition}
 use crate::session::profiles::{self, Binding, Stick};
 use crate::session::controls::{self, Mapping, Nav, ResultAction};
 use crate::session::cursor;
+use crate::session::graphics::{self, Backend as GraphicsBackend};
 use crate::session::turbo::{Rate,Repeater};
 use crate::session::experience::{self, Page as ExperiencePage, Command as ExperienceCommand};
 use glow::HasContext;
@@ -125,6 +126,7 @@ struct Frontend {
     movie_size: (u32,u32),
     display_size: (u32,u32),
     restart_slot: Option<usize>,
+    restart_renderer: Option<GraphicsBackend>,
     menu_device: session::shortcuts::Device,
     chords: session::shortcuts::Chords,
     menu_held: bool,
@@ -204,6 +206,11 @@ impl Frontend {
                 ExperienceCommand::Settings=>{
                     self.apply_av();self.state.experience.settings.save(&self.settings_path)?;
                     self.state.experience.message="已保存此游戏的音画设置".into();
+                },
+                ExperienceCommand::Renderer(backend)=>{
+                    if backend!=self.state.experience.actual_renderer&&self.flush_progress(false) {
+                        self.restart_renderer=Some(backend);self.quit=true;
+                    }
                 },
                 ExperienceCommand::Clear(kind)=>{
                     if !self.state.experience.app{return Err("请从应用入口管理数据".into());}
@@ -639,7 +646,7 @@ pub async fn run() -> Result<(), String> {
         control_store.game.file_stem().unwrap_or_default().to_string_lossy().into_owned(),movie_url.path().into())));
     if !opt.app_settings {progress.lock().unwrap().register()?;}
     let settings_path=control_store.root.parent().unwrap_or(&control_store.root).join("audiovisual").join(format!("{}.rav",progress.lock().unwrap().id));
-    let av=experience::Settings::load(&settings_path);
+    let mut av=experience::Settings::load(&settings_path);
     let slots=progress.lock().unwrap().slots();
     let pick_slot=!opt.app_settings&&opt.progress_slot.is_none()&&slots.iter().any(|s|s.time!=0||s.broken);
     if !opt.app_settings&&!pick_slot {progress.lock().unwrap().select(opt.progress_slot.unwrap_or(1) as usize-1)?;}
@@ -649,16 +656,8 @@ pub async fn run() -> Result<(), String> {
     // This frontend draws exactly one host pointer, including with a USB mouse.
     sdl.mouse().show_cursor(false);
     let video = sdl.video()?;
-    // SDL validates the presentation extension for the active window system.
-    // A Vulkan library/device alone does not imply Wayland presentation support.
-    let vulkan_window = match video.vulkan_load_library_default() {
-        Ok(()) => {
-            video.vulkan_unload_library();
-            session::graphics::VulkanWindow::Available
-        },
-        Err(error) => session::graphics::VulkanWindow::Unavailable(error),
-    };
-    println!("leaf-graphics active=opengl-es vulkan_backend=false window_driver={} vulkan_window={vulkan_window:?}", video.current_video_driver());
+    // Vulkan uses a shared GBM image rather than a native Wayland VkSurface.
+    println!("leaf-graphics window_driver={}", video.current_video_driver());
     let gamepads = sdl.game_controller()?;
     let events = sdl.event()?;
     let (init_width, init_height) = initial_window_size(&video, opt.width, opt.height);
@@ -681,10 +680,32 @@ pub async fn run() -> Result<(), String> {
         println!("GL_VERSION={}", gl.get_parameter_string(glow::VERSION));
         println!("GLSL_VERSION={}", gl.get_parameter_string(glow::SHADING_LANGUAGE_VERSION));
     }
-    let renderer = unsafe { GlRenderBackend::new(gl, size.0, size.1).map_err(|e| format!("Renderer: {e:?}"))? };
+    let gl=Arc::new(gl);
+    let graphics_failure=Arc::new(Mutex::new(None::<String>));
+    let requested=if opt.app_settings{GraphicsBackend::OpenGlEs}else{opt.renderer.as_deref().and_then(GraphicsBackend::from_name).unwrap_or(av.renderer)};
+    let mut actual=requested;let mut renderer_failed=false;
+    let renderer:Box<dyn RenderBackend>=if requested==GraphicsBackend::Vulkan {
+        #[cfg(target_os="linux")]
+        let attempt=unsafe{crate::vulkan_backend::create(gl.clone(),size.0,size.1,graphics_failure.clone()).await};
+        #[cfg(not(target_os="linux"))]
+        let attempt:Result<Box<dyn RenderBackend>,String>=Err("This Vulkan presentation bridge requires Linux".into());
+        match attempt {
+            Ok(renderer)=>renderer,
+            Err(error)=>{
+                if opt.renderer.is_some(){return Err(error);}
+                eprintln!("leaf-graphics vulkan_startup_failed={error} fallback=opengl-es");
+                actual=GraphicsBackend::OpenGlEs;renderer_failed=true;av.renderer=actual;
+                if let Err(error)=av.save(&settings_path){eprintln!("leaf-graphics fallback_preference_save_failed={error}");}
+                *graphics_failure.lock().unwrap()=None;
+                Box::new(unsafe{GlRenderBackend::new_shared(gl.clone(),size.0,size.1).map_err(|e|format!("Renderer: {e:?}"))?})
+            }
+        }
+    } else {Box::new(unsafe{GlRenderBackend::new_shared(gl.clone(),size.0,size.1).map_err(|e|format!("Renderer: {e:?}"))?})};
+    av.renderer=actual;
+    println!("leaf-graphics actual={} renderer={}",actual.name(),renderer.debug_info());
     let font_path = std::env::var_os("RUFFLE_MENU_FONT").map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("res/menu-font.ttf"));
-    let mut menu = unsafe { PauseMenu::new(renderer.shared_gl(), &font_path, &profile_previews(&keymap))? };
+    let mut menu = unsafe { PauseMenu::new(gl, &font_path, &profile_previews(&keymap))? };
     let (sender, receiver) = mpsc::channel::<RuffleEvent>();
     let sender = EventSender { sender };
     let id = PlayerId::new();
@@ -709,7 +730,7 @@ pub async fn run() -> Result<(), String> {
             }
         }
     }
-    let player = builder.with_renderer(renderer)
+    let player = builder.with_boxed_renderer(renderer)
         .with_storage(Box::new(NativeStorage(progress.clone())))
         .with_navigator(navigator).with_log(FileLogBackend::new(Some(Path::new("flashlog.txt"))))
         .with_video(SoftwareVideoBackend::new()).build();
@@ -734,7 +755,7 @@ pub async fn run() -> Result<(), String> {
         _ => return Err("input mode must be hybrid, keyboard or mouse".into()) };
     let swap = std::env::var("RUFFLE_SWAP_AB").map(|s| s == "1").unwrap_or(true);
     let mut front = Frontend {
-        progress,settings_path,movie_size,display_size:size,restart_slot:None,
+        progress,settings_path,movie_size,display_size:size,restart_slot:None,restart_renderer:None,
         menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), system_volume:session::system_volume::Monitor::new(), blocked:Default::default(),
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,
         quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots || opt.self_test_experience || opt.trace_input, scripted_input: opt.self_test_slots || opt.self_test_experience, ticks: 0,
@@ -746,7 +767,7 @@ pub async fn run() -> Result<(), String> {
     println!("leaf-cursor startup global={:?}",front.state.cursor_settings);
     front.state.experience.title=front.progress.lock().unwrap().title.clone();
     front.state.experience.settings=av;front.state.experience.app=opt.app_settings;
-    front.state.experience.vulkan_window=vulkan_window;
+    front.state.experience.actual_renderer=actual;front.state.experience.renderer_failed=renderer_failed;
     front.state.experience.started=!opt.app_settings&&!pick_slot;
     front.refresh_saves();
     if opt.app_settings {
@@ -754,6 +775,7 @@ pub async fn run() -> Result<(), String> {
         front.state.experience.open(ExperiencePage::Manager);front.state.paused=true;
     } else if pick_slot {front.state.experience.open(ExperiencePage::Saves);front.state.paused=true;}
     front.apply_av();
+    if renderer_failed{front.toast("Vulkan 启动失败，已恢复 OpenGL ES".into());}
     println!("leaf-progress startup picker={pick_slot} app={} active={:?}",opt.app_settings,front.progress.lock().unwrap().active);
     front.cursor_idle.rebase(front.cursor);
     let initial=front.state.controls.mappings[front.state.controls.game_slot].clone();
@@ -1042,6 +1064,9 @@ pub async fn run() -> Result<(), String> {
         let mut delay=Duration::from_millis(16).saturating_sub(cost);
         if let Some(repeat_delay)=front.repeater.next_delay(front.started.elapsed()) {delay=delay.min(repeat_delay);}
         if !delay.is_zero() {sleep(delay);}
+        if let Some(error)=graphics_failure.lock().unwrap().as_ref() {
+            eprintln!("leaf-graphics runtime_error={error}");front.quit=true;
+        }
     }
     let released = front.state.ledger.release_all();
     front.emit(released, false);
@@ -1060,14 +1085,23 @@ pub async fn run() -> Result<(), String> {
         }
         println!("leaf-experience self_test=passed app={} saved={saved} fps={:.1}",opt.app_settings,front.state.experience.fps);
     }
-    if let Some(slot)=front.restart_slot {
-        if !saved {return Err("保存失败，已取消读取其他存档".into());}
-        let mut args=Vec::new();let mut skip=false;
-        for arg in std::env::args_os().skip(1){
-            if skip{skip=false;continue;}if arg=="--progress-slot"{skip=true;continue;}
-            if arg.to_string_lossy().starts_with("--progress-slot="){continue;}args.push(arg);
+    if let Some(error)=graphics_failure.lock().unwrap().take() {
+        if actual==GraphicsBackend::Vulkan {
+            let mut settings=front.state.experience.settings;settings.renderer=GraphicsBackend::OpenGlEs;
+            if let Err(error)=settings.save(&front.settings_path){eprintln!("leaf-graphics recovery_preference_save_failed={error}");}
         }
-        args.push("--progress-slot".into());args.push((slot+1).to_string().into());
+        return Err(error);
+    }
+    if front.restart_slot.is_some()||front.restart_renderer.is_some() {
+        if !saved {return Err("保存失败，已取消重启游戏".into());}
+        if let Some(backend)=front.restart_renderer {
+            let mut settings=front.state.experience.settings;settings.renderer=backend;settings.save(&front.settings_path)?;
+            println!("leaf-graphics restart requested={} progress_flushed=true",backend.name());
+        }
+        let slot=front.restart_slot.unwrap_or_else(||front.progress.lock().unwrap().active.unwrap_or(0));
+        let args=graphics::restart_args(std::env::args_os().skip(1),front.restart_renderer.is_some(),slot);
+        // Retire GPU work and destroy image/context resources before exec.
+        drop(front);drop(menu);drop(context);drop(window);
         #[cfg(unix)] {use std::os::unix::process::CommandExt;let error=std::process::Command::new(std::env::current_exe().map_err(|e|e.to_string())?).args(args).exec();return Err(error.to_string());}
         #[cfg(not(unix))] return Err("读取存档后请重新打开游戏".into());
     }

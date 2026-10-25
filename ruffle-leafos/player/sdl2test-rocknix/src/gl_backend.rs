@@ -611,7 +611,10 @@ impl GlRenderBackend {
     pub fn shared_gl(&self) -> Arc<glow::Context> { self.gl.clone() }
 
     pub unsafe fn new(gl: glow::Context, width: u32, height: u32) -> Result<Self, BitmapError> {
-        let gl = Arc::new(gl);
+        Self::new_shared(Arc::new(gl), width, height)
+    }
+
+    pub unsafe fn new_shared(gl: Arc<glow::Context>, width: u32, height: u32) -> Result<Self, BitmapError> {
         unsafe {
             gl.enable(glow::BLEND);
             gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);

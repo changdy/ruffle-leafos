@@ -81,7 +81,7 @@ read_bounded() {
         read_bounded "$THERMAL_FILE"
     done
     section renderer
-    field evidence 'See GL_VENDOR/GL_RENDERER/GL_VERSION/GLSL_VERSION in ruffle-probe.log after starting an SWF'
+    field evidence 'See leaf-graphics actual= and leaf-vulkan in ruffle-probe.log; GL strings identify the presentation context, not necessarily the Flash renderer'
     field performance 'Present intervals and swap-call wall time only; NOT GPU execution time or power measurements'
     section source
     field runtime 'leaf-12; SHA-256 b3ecd3094f678a9be3e99602267f345191e02653a023ca6005fe3b0cf5aab342'

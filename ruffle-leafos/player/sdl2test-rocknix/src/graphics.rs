@@ -1,31 +1,108 @@
-//! Renderer availability shared by the menu and host transition tests.
-//! Driver/window support and an implemented movie backend are separate facts.
+//! Renderer preference and restart arguments; independent of SDL/GPU for host tests.
+use std::ffi::OsString;
 
-#[derive(Clone, Debug, Default, PartialEq)]
-pub enum VulkanWindow {
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(u8)]
+pub enum Backend {
     #[default]
-    Unchecked,
-    Available,
-    Unavailable(String),
+    OpenGlEs = 0,
+    Vulkan = 1,
 }
-
-impl VulkanWindow {
-    pub fn message(&self) -> &'static str {
+impl Backend {
+    pub fn name(self) -> &'static str {
         match self {
-            Self::Unchecked => "尚未检测 Vulkan，继续使用 OpenGL ES",
-            Self::Unavailable(_) => "当前系统无法显示 Vulkan 画面，继续使用 OpenGL ES",
-            Self::Available => "此版本尚未接入 Vulkan，继续使用 OpenGL ES",
+            Self::OpenGlEs => "opengl-es",
+            Self::Vulkan => "vulkan",
         }
     }
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::OpenGlEs => "OpenGL ES",
+            Self::Vulkan => "Vulkan",
+        }
+    }
+    pub fn from_byte(value: u8) -> Option<Self> {
+        match value {
+            0 => Some(Self::OpenGlEs),
+            1 => Some(Self::Vulkan),
+            _ => None,
+        }
+    }
+    pub fn from_name(value: &str) -> Option<Self> {
+        match value {
+            "opengl-es" => Some(Self::OpenGlEs),
+            "vulkan" => Some(Self::Vulkan),
+            _ => None,
+        }
+    }
+}
 
-    pub fn details(&self) -> [&'static str; 2] {
-        [
-            "此版本已接入 OpenGL ES；Vulkan 渲染尚未接入。",
-            match self {
-                Self::Unchecked => "系统 Vulkan 窗口支持：尚未检测。",
-                Self::Available => "系统 Vulkan 窗口支持：检测通过，仍需接入并验证渲染。",
-                Self::Unavailable(_) => "系统 Vulkan 窗口支持：检测未通过。",
-            },
-        ]
+pub fn restart_args(
+    args: impl IntoIterator<Item = OsString>,
+    renderer_change: bool,
+    slot: usize,
+) -> Vec<OsString> {
+    let mut result = Vec::new();
+    let mut skip = false;
+    for arg in args {
+        if skip {
+            skip = false;
+            continue;
+        }
+        if arg == "--progress-slot" || (renderer_change && arg == "--renderer") {
+            skip = true;
+            continue;
+        }
+        let text = arg.to_string_lossy();
+        if text.starts_with("--progress-slot=")
+            || (renderer_change && text.starts_with("--renderer="))
+        {
+            continue;
+        }
+        result.push(arg);
+    }
+    result.push("--progress-slot".into());
+    result.push((slot + 1).to_string().into());
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn renderer_restart_removes_cli_override_preserves_unicode_paths_and_slot() {
+        let args = [
+            "C:/游戏/含 空格.swf",
+            "--renderer",
+            "vulkan",
+            "--progress-slot=2",
+            "--storage-dir",
+            "C:/存档",
+        ];
+        let result = restart_args(args.map(OsString::from), true, 4);
+        assert_eq!(
+            result,
+            vec![
+                OsString::from("C:/游戏/含 空格.swf"),
+                "--storage-dir".into(),
+                "C:/存档".into(),
+                "--progress-slot".into(),
+                "5".into()
+            ]
+        );
+        let result = restart_args(
+            ["game.swf", "--renderer=vulkan", "--progress-slot", "3"].map(OsString::from),
+            false,
+            0,
+        );
+        assert_eq!(
+            result,
+            vec![
+                OsString::from("game.swf"),
+                "--renderer=vulkan".into(),
+                "--progress-slot".into(),
+                "1".into()
+            ]
+        );
     }
 }

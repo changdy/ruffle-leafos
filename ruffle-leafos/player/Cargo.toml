@@ -15,6 +15,8 @@ members = [
     "sdl2test-tb",
 
     "render",
+    "render/wgpu",
+    "render/naga-pixelbender",
     "render/naga-agal",
     "render/pixel_bender",
 
@@ -39,7 +41,7 @@ version = "0.3.0"
 tracing = "0.1.43"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 naga = { version = "27.0.3", features = ["wgsl-out"] }
-wgpu = "27.0.1"
+wgpu = { version = "27.0.1", default-features = false, features = ["std", "parking_lot", "vulkan", "wgsl"] }
 egui = "0.33.3"
 clap = { version = "4.5.60", features = ["derive"] }
 cpal =  { git = "https://github.com/RustAudio/cpal", rev = "33e05ec94b5670c6f02080acf3fd6d8ac21e37cd"}
@@ -130,7 +132,7 @@ panic = "unwind"
 panic = "abort" # panic时直接终止，不进行栈展开，可减小二进制体积
 opt-level = 2        # 启用2级别的代码性能优化
 lto = true           # 启用“胖”链接时优化 (LTO)，进行跨模块的全局优化
-codegen-units = 1    # 将代码生成单元设为1，允许编译器进行更深度的优化 
+codegen-units = 1    # 将代码生成单元设为1，允许编译器进行更深度的优化
 strip = true         # 剥离调试符号，进一步减小二进制文件体积
 
 [profile.dev.package.h263-rs]

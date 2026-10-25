@@ -52,6 +52,9 @@ def main():
     reference_lock = json.loads((ROOT / 'vendor/jawaka.lock.json').read_text(encoding='utf8'))
     for relative, expected in reference_lock['files_sha256'].items():
         assert sha(ROOT / 'vendor/jawaka' / relative) == expected, 'reference input changed: ' + relative
+    renderer_lock = json.loads((ROOT / 'vendor/ruffle-wgpu.lock.json').read_text(encoding='utf8'))
+    for relative, expected in renderer_lock['files_sha256'].items():
+        assert sha(ROOT / 'player' / relative) == expected, 'upstream renderer input changed: ' + relative
     stage = Path(tempfile.mkdtemp(prefix=f'preview-{version}-', dir=ROOT / 'build'))
     pak = stage / 'Apps/mlp1/RuffleProbe.pak'
     shutil.copytree(ROOT / 'pak', pak)
@@ -95,6 +98,7 @@ def main():
     shutil.copyfile(ROOT / 'arm-gnu.lock.json', provenance / 'arm-gnu.lock.json')
     shutil.copyfile(ROOT / 'adapter/runtime.lock.json', provenance / 'runtime.lock.json')
     shutil.copyfile(ROOT / 'vendor/jawaka.lock.json', provenance / 'jawaka.lock.json')
+    shutil.copyfile(ROOT / 'vendor/ruffle-wgpu.lock.json', provenance / 'ruffle-wgpu.lock.json')
     # Validate against the pinned official contract, then the new behavior.
     contracts = ROOT / 'vendor/leaf-contracts/contracts'
     sys.path[:0] = [str(contracts / 'leaf-content/scripts'), str(contracts / 'leaf-services/scripts')]
@@ -113,7 +117,8 @@ def main():
     report = {
         'version': version, 'runtime_rebuilt_from_source': True,
         'runtime_sha256': sha(binary), 'source': source_lock,
-        'target': 'Leaf 0.13.0 / AArch64 / glibc 2.38 / GLES 3',
+        'target': 'Leaf 0.13.0 / AArch64 / glibc 2.38 / GLES 3 / experimental Vulkan',
+        'upstream_wgpu_renderer': renderer_lock,
         'elf': info, 'diagnostic_shim_changed': False,
         'diagnostic_shim_sha256': sha(shim),
         'diagnostic_shim_change': f'Unchanged in {version}; retains the earlier Menu ownership log correction',
@@ -128,7 +133,8 @@ def main():
                   'Menu+A previous / Menu+B next schemes, Menu+X direction swap, and Menu+hat down left mouse hold via read-only physical state',
                   'main-menu left/right scheme switching; mouse speed within cursor settings; separate About and contextual shortcut guide',
                   'friendly About introduction, full GitHub repository URL, community credits and bundled license notices',
-                  'renderer availability page with SDL window-system Vulkan checks; OpenGL ES remains the only implemented backend',
+                  'per-game GLES/Vulkan selection, confirmed native-progress flush/restart, RAV1/RAV2 preferences and GLES startup fallback',
+                  'pinned official Ruffle wgpu Vulkan renderer with shared GBM DMA-BUF/EGL presentation and existing GLES menus; no per-frame CPU pixel readback for presentation',
                   'unified scheme editor with L/R switching, separate Save/Back actions and unsaved-change confirmation',
                   'Leaf pause theme shared across submenus, five-column action grid and nine visible category tabs',
                   'independent stick directions and click, mixed keyboard/pointer mappings and hysteresis',
@@ -141,10 +147,10 @@ def main():
                   'asynchronous real Leaf system-volume feedback without double-applying hardware keys',
                   'pause lifecycle, input ownership, neutral gate and checked SharedObject flush'],
         'pending': ['per-profile human gameplay acceptance and temporary mouse layer',
-                    'Vulkan movie backend and compatible Wayland presentation; dual-backend switching is not implemented',
+                    'broad experimental Vulkan visual/performance/power/stability matrix and further synchronization optimization',
                     'virtual keyboard (deferred by user)', 'full VM instant savestates',
                     'legacy loose .sol migration', 'power-loss/reboot storage matrix', 'suspend recovery'],
-        'device_validation': 'See device-validation.json; compilation does not establish hardware acceptance',
+        'device_validation': 'See docs/validation/vulkan-backend-0.7.0-20261025.json for this version; compilation does not establish hardware acceptance',
     }
     (pak / 'build-manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     archive = output / f'ruffle-leafos-{version}.zip'
@@ -161,7 +167,7 @@ def main():
             shutil.copyfile(ROOT / filename, source_stage / filename)
         # Keep the exact menu reference and license available in the source
         # archive; packaging must not depend on an omitted vendor checkout.
-        for filename in ['README.md', 'jawaka.lock.json']:
+        for filename in ['README.md', 'jawaka.lock.json', 'ruffle-wgpu.lock.json']:
             shutil.copyfile(ROOT / 'vendor' / filename, source_stage / 'vendor' / filename)
         for relative in reference_lock['files_sha256']:
             destination = source_stage / 'vendor/jawaka' / relative

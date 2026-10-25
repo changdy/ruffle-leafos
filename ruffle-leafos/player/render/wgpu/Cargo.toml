@@ -1,0 +1,49 @@
+[package]
+name = "ruffle_render_wgpu"
+authors = ["Nathan Adams <dinnerbone@dinnerbone.com>"]
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+wgpu = { workspace = true, features = ["naga-ir"] }
+tracing = { workspace = true }
+ruffle_render = { path = "..", features = ["tessellator", "wgpu"] }
+bytemuck = { workspace = true, features = ["derive"] }
+clap = { workspace = true, optional = true }
+enum-map = { workspace = true }
+fnv = { workspace = true }
+swf = { path = "../../swf" }
+image = { workspace = true }
+naga-agal = { path = "../naga-agal" }
+naga-pixelbender = { path = "../naga-pixelbender" }
+profiling = { version = "1.0", default-features = false, optional = true }
+lru = "0.16.2"
+naga = { workspace = true }
+indexmap = { workspace = true }
+smallvec = { workspace = true }
+
+# desktop
+[target.'cfg(not(target_family = "wasm"))'.dependencies.futures]
+workspace = true
+
+# wasm
+[target.'cfg(target_family = "wasm")'.dependencies.web-sys]
+workspace = true
+features = ["HtmlCanvasElement"]
+
+[features]
+render_debug_labels = []
+webgl = ["wgpu/webgl"]
+profile-with-tracy = ["profiling", "profiling/profile-with-tracy"]
+
+[package.metadata.cargo-machete]
+ignored = [
+    # Not used directly, declared only to enable its `profile-with-tracy` feature.
+    "profiling"
+]

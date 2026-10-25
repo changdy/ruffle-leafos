@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.6.9 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.7.0 开发预览**，整理于 2026-10-25。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 命名与兼容标识
 
@@ -23,17 +23,23 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 
 游戏由 [pak.json](../pak/pak.json) 的 `ruffle_probe` 路径核心进入 [launch-game.sh](../pak/emulators/ruffle-probe/launch-game.sh)，校验所选卡内 SWF 路径、设置包外数据目录和音视频环境，再运行源码构建的播放器。Apps 经 [launch.sh](../pak/launch.sh) 进入同一播放器的数据管理模式；不推进演示 SWF。
 
-启动器优先预加载 Leaf 系统 SDL2，以获得设备上的 Wayland 支持；随包 SDL2 作为后备。CPAL/ALSA 在可用时接 Leaf PulseAudio，已有用户 ALSA 配置优先。画面沿用 SDL/Wayland/GLES 路线；已经验证的设备版本见进度文档。
+启动器优先预加载 Leaf 系统 SDL2，以获得设备上的 Wayland 支持；随包 SDL2 作为后备。CPAL/ALSA 在可用时接 Leaf PulseAudio，已有用户 ALSA 配置优先。窗口和菜单使用 SDL/Wayland/GLES，Flash 绘制可选择现有 GLES 或实验性 Vulkan；已经验证的设备版本见进度文档。
 
-画面设置中的“渲染接口”进入 `experience::Page::Renderer`。当前只构造 `GlRenderBackend`；Vulkan 明确标为不可用，确认该项只显示原因，不返回保存、重启或切换命令。`graphics::VulkanWindow` 独立记录窗口系统检测状态，不能把 Vulkan loader/设备存在或窗口扩展检测通过等同于播放器已支持 Vulkan。
+画面设置中的“渲染接口”进入 `experience::Page::Renderer`，以 `actual_renderer` 标识实际后端。选择不同接口进入默认取消的确认页；确认后先检查原生进度提交，退出循环再次提交成功才写入 RAV2 偏好并 exec 重启。保留当前进度槽，清除旧 `--renderer` 命令行覆盖，重启前销毁播放器、菜单、GL 上下文和窗口。保存失败不进入重启，不把菜单文字当成实际切换。
 
-在 SDL 视频子系统初始化后、创建 GLES 窗口前，调用 `vulkan_load_library_default`；SDL 的 Wayland 实现会检查 `VK_KHR_surface` 和 `VK_KHR_wayland_surface`。成功加载后配对卸载；失败不阻止后续 GLES 初始化。`leaf-graphics` 日志同时记录实际后端、`vulkan_backend=false`、SDL 视频驱动和原始检测错误。该检查不创建 Vulkan instance/device/swapchain，不能替代完整 Vulkan 呈现实测。当前没有可持久化的 Vulkan 偏好字段，RAV1 布局不变。
+Vulkan 复用官方 Ruffle `nightly-2026-03-15` 的 `render/wgpu/`，提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856`；该版本 `RenderBackend` 接口与本项目基线一致，54 个原始文件及 SHA-256 固定于 [ruffle-wgpu.lock.json](../vendor/ruffle-wgpu.lock.json)，不批量升级 Ruffle core。workspace 仅启用 wgpu 的本机 Vulkan/WGSL 功能。通过公开 HAL 导入接口创建逻辑设备，在上游同等 limits/features 基础上增加 DRM format modifier 扩展，并拒绝 CPU adapter。
+
+Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 导入和 Vulkan 外部内存扩展。[vulkan_backend.rs](../player/sdl2test-rocknix/src/vulkan_backend.rs) 从 `/dev/dri/renderD128` 的 GBM 分配线性 ABGR8888 缓冲区，以明确 modifier/plane layout 导入 Vulkan，在官方 `WgpuRenderBackend` 的自定义 `RenderTarget` 中绘制，再以 EGLImage 作为 GLES 纹理完成全屏呈现；现有 `PauseMenu` 继续叠加菜单、光标和提示。显示链路没有逐帧 CPU 像素读回，不需要替换系统 GPU 驱动或 WSI layer。直接导出 Vulkan 分配再交 EGL 的方案在当前驱动上失败，因此使用共享 GBM 分配。
+
+所有队列提交在 Flash 线程串行执行。Vulkan 绘制后通过原生 barrier 将图像释放到 `QUEUE_FAMILY_EXTERNAL`/GENERAL，有限超时 fence 等待完成后交 EGL/GLES 采样；`glFinish` 确保采样完成后才允许下一帧重新获取图像。当前同步较保守，不宣称速度或功耗优于 GLES。导入用重复 FD，成功的 `vkAllocateMemory` 接管该 FD，GBM/EGL/纹理与底层分配分别保留生命周期；resize/退出先等待 GPU，再释放同步、图像和内存资源。
+
+`leaf-graphics actual=` 记录实际 Flash 绘制接口，`leaf-vulkan` 记录硬件 adapter、共享布局、首次呈现与累计帧数。`GL_*` 始终描述显示上下文，不能单独证明 Flash 使用 GLES。偏好启动的 Vulkan 初始化失败会显示提示、恢复 GLES 偏好并继续游戏；捕获的运行期 GPU 错误会终止循环、尝试提交原生进度，并将下次偏好恢复为 GLES。诊断用 `--renderer opengl-es|vulkan` 只覆盖本次选择，显式指定 Vulkan 时初始化错误直接返回，便于验证，Apps 始终使用 GLES。RAV1/RAV2 契约见[渲染设置格式](formats/graphics-settings.md)。
 
 ## 功能实现与源码入口
 
 | 模块 | 实现约定 | 代码 |
 | --- | --- | --- |
-| 前端接入 | 事件循环、渲染、存储与平台环境衔接 | [leaf.rs](../player/sdl2test-rocknix/src/leaf.rs)、[gl_backend.rs](../player/sdl2test-rocknix/src/gl_backend.rs) |
+| 前端接入 | 事件循环、GLES/Vulkan 后端选择、存储与平台环境衔接 | [leaf.rs](../player/sdl2test-rocknix/src/leaf.rs)、[gl_backend.rs](../player/sdl2test-rocknix/src/gl_backend.rs)、[vulkan_backend.rs](../player/sdl2test-rocknix/src/vulkan_backend.rs) |
 | 暂停菜单 | 冻结 tick 与音频；恢复首帧重置时间；主子页面共享 Leaf 当前字体/主题；列表和宫格按实际操作显示提示 | [pause_menu.rs](../player/sdl2test-rocknix/src/pause_menu.rs)、[theme.sh](../pak/emulators/ruffle-probe/theme.sh) |
 | 按键编辑 | 每游戏十方案，14 实体键及五个摇杆动作；五列动作宫格与九类 Tab；保存/返回独立；未保存切换提供继续、舍弃、保存；保存失败保留草稿 | [controls.rs](../player/sdl2test-rocknix/src/controls.rs)、[profiles.rs](../player/sdl2test-rocknix/src/profiles.rs) |
 | 输入所有权 | 最多四键组合按序按下、反序释放，共享键引用计数；切方案、暂停、失焦或断连释放旧输入，恢复等待按键松开/摇杆归中 | [session.rs](../player/sdl2test-rocknix/src/session.rs)、[shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs) |
@@ -62,7 +68,7 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 | 映射版本 | 新写入 v5，共 46 个唯一字段；严格拒绝重复/缺失/未知字段，连发仅接受 0/5/10/15；兼容读取 v1—v4，不在加载时改写 |
 | 全局光标 | `cursor.conf` 四字段：version/style/color/size；旧 arrow 只作为 ring-dot 读取别名，旧映射光标字段只校验、不再应用或自动迁移 |
 | 游戏进度 | SWF 内容指纹身份，改名/移动仍匹配；RLS1、每游戏五槽、单槽最多 32 MiB；同一数据重复提交不更新时间，显示北京时间 |
-| 音画 | 按内容身份保存 RAV1；旧音量/静音字段读入后不影响系统声音，当前保存使用固定中性值 |
+| 音画与渲染 | 按内容身份写 RAV2，兼容只读 RAV1 并默认 GLES；旧音量/静音字段不影响系统声音，新写固定中性值；字段见[契约](formats/graphics-settings.md) |
 | 清理 | Apps 确认默认取消；确认后将目标数据移入 `cleared-data/` 本地归档，不清 ROM、封面、旧 cfg、未迁移 sol 或独立音画配置 |
 
 格式的全部字段、路径及旧版兼容关系见 [v5](formats/controls-format-v5.md)、[v4](formats/controls-format-v4.md)、[v3](formats/controls-format-v3.md)、[v2](formats/controls-format-v2.md)、[v1](formats/controls-format-v1.md)。旧文档里的模板、恢复默认及旧快捷键只描述当时版本；当前操作以 README 为准。
@@ -79,7 +85,7 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 python scripts/build_player.py build --offline --isolated-config
 python scripts/test_session.py
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.6.9-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.7.0-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。
@@ -147,6 +153,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 | 保留内容 | 来源与保留理由 |
 | --- | --- |
 | Ruffle 与前端基线 | aweigit/ruffle-miyooflip 提交 `3bc39c5e0fdbc9fcde92681706395f6ef70f991b`，本项目变动及指纹见 [leaf-source.lock.json](../leaf-source.lock.json)。保留 Cargo workspace 成员、构建资源和测试 SWF/ZIP，不凭扩展名删除测试数据 |
+| 官方 wgpu 后端 | Ruffle 提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856` 的 54 个原始文件；[来源锁](../vendor/ruffle-wgpu.lock.json) 固定字节与双许可，打包验证并随包附带来源锁 |
 | Jawaka 参考 | 提交 `915c48595fbd20ec56a9d23b2fc1f39a4f6f8803`，仅保留七个菜单/主题/设置/许可文件；[来源与逐文件指纹](../vendor/jawaka.lock.json) |
 | Leaf 契约 | [references.lock.json](../adapter/references.lock.json) 固定的 leaf-contracts 提交；schema、校验器与测试夹具是版本化契约输入 |
 | 原始 leaf-12 | 用户提供的原始播放器、库、字体及来源清单；[runtime.lock.json](../adapter/runtime.lock.json) 固定指纹。原始播放器用于对照与早期 adapter 校验，当前安装包使用新构建播放器 |

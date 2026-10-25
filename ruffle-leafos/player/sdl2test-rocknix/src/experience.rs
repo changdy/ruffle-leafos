@@ -179,17 +179,21 @@ impl Progress {
 }
 
 #[derive(Clone,Copy,Debug,PartialEq)]
-pub struct Settings {pub scale:u8,pub quality:u8,pub fps:bool}
-impl Default for Settings {fn default()->Self{Self{scale:0,quality:2,fps:false}}}
+pub struct Settings {pub scale:u8,pub quality:u8,pub fps:bool,pub renderer:super::graphics::Backend}
+impl Default for Settings {fn default()->Self{Self{scale:0,quality:2,fps:false,renderer:super::graphics::Backend::OpenGlEs}}}
 impl Settings {
     pub fn load(path:&Path)->Self {
         let Ok(v)=fs::read(path) else{return Self::default()};
-        if v.len()!=17 || &v[..4]!=b"RAV1" || hash(&v[..9])!=u64::from_le_bytes(v[9..].try_into().unwrap()) || v[4]>100 || v[5]>1 || v[6]>2 || v[7]>2 || v[8]>1 {return Self::default();}
-        // Keep the RAV1 layout readable, but ignore obsolete game volume/mute.
-        Self{scale:v[6],quality:v[7],fps:v[8]!=0}
+        use super::graphics::Backend;
+        let (payload,renderer)=if v.len()==17&&&v[..4]==b"RAV1" {(9,Backend::OpenGlEs)}
+            else if v.len()==18&&&v[..4]==b"RAV2" {let Some(renderer)=Backend::from_byte(v[9]) else{return Self::default()};(10,renderer)}
+            else{return Self::default()};
+        if hash(&v[..payload])!=u64::from_le_bytes(v[payload..].try_into().unwrap()) || v[4]>100 || v[5]>1 || v[6]>2 || v[7]>2 || v[8]>1 {return Self::default();}
+        // RAV1 defaults to GLES. Obsolete game volume/mute remain ignored.
+        Self{scale:v[6],quality:v[7],fps:v[8]!=0,renderer}
     }
     pub fn save(&self,path:&Path)->Result<(),String>{
-        let mut v=b"RAV1".to_vec();v.extend([100,0,self.scale,self.quality,u8::from(self.fps)]);v.extend(hash(&v).to_le_bytes());atomic(path,&v)
+        let mut v=b"RAV2".to_vec();v.extend([100,0,self.scale,self.quality,u8::from(self.fps),self.renderer as u8]);v.extend(hash(&v).to_le_bytes());atomic(path,&v)
     }
     pub fn change(&mut self,row:usize,d:i32){match row {
         0=>self.scale=(self.scale as i32+d).rem_euclid(3) as u8,
@@ -197,7 +201,7 @@ impl Settings {
     }}
     pub fn rows(&self)->Vec<String>{vec![format!("画面缩放                         {}",["保持比例","铺满屏幕","原始大小"][self.scale as usize]),
         format!("画面质量                         {}",["低","中","高"][self.quality as usize]),
-        format!("左上角帧率                     {}",if self.fps{"开"}else{"关"}),"渲染接口                         OpenGL ES  ›".into(),"恢复默认设置".into(),"返回".into()]}
+        format!("左上角帧率                     {}",if self.fps{"开"}else{"关"}),format!("渲染接口                         {}  ›",self.renderer.label()),"恢复默认画面设置".into(),"返回".into()]}
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
@@ -239,7 +243,7 @@ pub const BACKGROUND:[(&str,&str,&str);3]=[
     ("感谢开源社区，也感谢你", "感谢 Ruffle、aweigit/ruffle-miyooflip 和 Leaf / Jawaka 的开发者。", "也感谢每一位尝试、测试和反馈的玩家。祝你玩得开心！"),
 ];
 #[derive(Clone,Debug)]
-pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,Clear(usize),Quit}
+pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,Renderer(super::graphics::Backend),Clear(usize),Quit}
 #[derive(Clone,Debug)]
 pub struct Entry {pub id:String,pub title:String,pub control_id:String}
 pub fn entries(root:&Path)->Vec<Entry>{
@@ -273,7 +277,8 @@ pub struct Ui {
     pub games:Vec<Entry>,pub game_index:usize,pub pending:usize,
     pub fps:f64,pub target_fps:f64,
     pub shortcut_tab:usize,
-    pub vulkan_window:super::graphics::VulkanWindow,
+    pub actual_renderer:super::graphics::Backend,
+    pub renderer_failed:bool,
 }
 impl Ui {
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}}
@@ -283,7 +288,8 @@ impl Ui {
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),
         Page::Settings=>self.settings.rows(),
-        Page::Renderer=>vec!["OpenGL ES                         使用中".into(),"Vulkan                                 暂不可用".into(),"返回".into()],
+        Page::Renderer=>vec![format!("OpenGL ES                         {}",if self.actual_renderer==super::graphics::Backend::OpenGlEs{"使用中"}else{""}),
+            format!("Vulkan（实验）                   {}",if self.actual_renderer==super::graphics::Backend::Vulkan{"使用中"}else if self.renderer_failed{"上次启动失败"}else{""}),"返回".into()],
         Page::Manager=>vec![format!("游戏：  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or("暂无记录")),"清空此游戏的五个存档".into(),"重置此游戏的按键配置".into(),"清空所有游戏存档".into(),"重置所有按键配置".into(),"返回 Leaf".into()],
         Page::Confirm=>vec!["取消".into(),"确认".into()],Page::About|Page::Shortcuts=>vec![]
     }}
@@ -302,7 +308,7 @@ impl Ui {
             Nav::Up=>self.selected=(self.selected+count-1)%count,
             Nav::Down=>self.selected=(self.selected+1)%count,
             Nav::B=>{if self.page==Page::Renderer{self.open(Page::Settings);self.selected=3;}
-                else if self.page==Page::Confirm{self.open(if self.app{Page::Manager}else{Page::Saves});}
+                else if self.page==Page::Confirm{self.open(if self.pending>=30{Page::Renderer}else if self.app{Page::Manager}else{Page::Saves});}
                 else if self.app||!self.started{return Command::Quit;}else{self.open(Page::Home);}},
             Nav::Left|Nav::Right=>{
                 let d=if matches!(nav,Nav::Left){-1}else{1};
@@ -319,20 +325,22 @@ impl Ui {
                     else if !self.started{return Command::Choose(self.selected);}
                     else if self.selected==self.active {self.open(Page::Home);}
                     else {self.pending=10+self.selected;self.open(Page::Confirm);}},
-                Page::Settings=>{if self.selected==5{self.open(Page::Home);}else if self.selected==3{self.open(Page::Renderer);}else{if self.selected==4 {self.settings=Settings::default()}else{self.settings.change(self.selected,1)}return Command::Settings;}},
+                Page::Settings=>{if self.selected==5{self.open(Page::Home);}else if self.selected==3{self.open(Page::Renderer);}else{if self.selected==4 {self.settings=Settings{renderer:self.settings.renderer,..Settings::default()}}else{self.settings.change(self.selected,1)}return Command::Settings;}},
                 Page::Renderer=>{match self.selected {
-                    0=>self.message="当前已使用 OpenGL ES".into(),
-                    1=>self.message=self.vulkan_window.message().into(),
+                    0|1=>{let choice=super::graphics::Backend::from_byte(self.selected as u8).unwrap();
+                        if choice==self.actual_renderer{self.message=format!("当前已使用 {}",choice.label());}
+                        else{self.pending=30+self.selected;self.open(Page::Confirm);}},
                     _=>{self.open(Page::Settings);self.selected=3;}
                 }},
                 Page::Manager=>{if self.selected==5{return Command::Quit;}if self.selected>0{
                     if self.selected<=2&&self.games.is_empty(){self.message="暂无游戏记录".into();}else{self.pending=self.selected;self.open(Page::Confirm);}
                 }},
                 Page::Confirm=>{if self.selected==1{
+                    if self.pending>=30{return Command::Renderer(super::graphics::Backend::from_byte((self.pending-30) as u8).unwrap_or_default());}
                     if self.pending>=20{return Command::Copy(self.pending-20);}
                     if self.pending>=10{return Command::Choose(self.pending-10);}
                     return Command::Clear(self.pending);
-                } self.open(if self.app{Page::Manager}else{Page::Saves});},
+                } self.open(if self.pending>=30{Page::Renderer}else if self.app{Page::Manager}else{Page::Saves});},
                 _=>{}
             },_=>{}
         }Command::None
@@ -425,22 +433,36 @@ mod tests {
         assert_eq!(u.settings,original);assert_eq!(u.active,3);
         u.selected=5;u.nav(Nav::A);assert_eq!(u.page,Page::Home);
     }
-    #[test] fn unavailable_vulkan_cannot_write_settings_restart_or_claim_selection() {
-        use super::super::{controls::Nav,graphics::VulkanWindow};
-        for status in [VulkanWindow::Unchecked,VulkanWindow::Available,VulkanWindow::Unavailable("VK_KHR_wayland_surface missing".into())] {
-            let mut u=Ui::default();u.started=true;u.active=2;u.settings.fps=true;let original=u.settings;
-            u.vulkan_window=status;u.open(Page::Renderer);u.selected=1;
-            for nav in [Nav::Left,Nav::Right,Nav::A,Nav::A] {assert!(matches!(u.nav(nav),Command::None));}
-            assert_eq!(u.page,Page::Renderer);assert_eq!(u.settings,original);assert_eq!(u.active,2);
-            assert!(u.message.contains("继续使用 OpenGL ES"));assert!(u.rows()[1].contains("暂不可用"));
-            assert!(u.rows()[0].contains("使用中"));
+    #[test] fn renderer_switch_in_both_directions_requires_confirmation_and_preserves_live_state() {
+        use super::super::{controls::Nav,graphics::Backend};
+        for (active,choice) in [(Backend::OpenGlEs,Backend::Vulkan),(Backend::Vulkan,Backend::OpenGlEs)] {
+            let mut u=Ui::default();u.started=true;u.active=2;u.settings.fps=true;u.settings.renderer=active;u.actual_renderer=active;let original=u.settings;
+            u.open(Page::Renderer);u.selected=choice as usize;
+            assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Confirm);assert_eq!(u.selected,0);
+            assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Renderer);
+            u.selected=choice as usize;u.nav(Nav::A);u.nav(Nav::B);assert_eq!(u.page,Page::Renderer);
+            u.selected=choice as usize;u.nav(Nav::A);u.selected=1;
+            assert!(matches!(u.nav(Nav::A),Command::Renderer(backend) if backend==choice));
+            assert_eq!(u.settings,original);assert_eq!(u.actual_renderer,active);assert_eq!(u.active,2);
         }
+    }
+    #[test] fn renderer_preference_reads_legacy_without_rewriting_and_rejects_invalid_rav2() {
+        use super::super::graphics::Backend;
+        let p=progress();let path=p.root.join("graphics");let mut s=Settings::default();s.scale=2;s.renderer=Backend::Vulkan;
+        s.save(&path).unwrap();let encoded=fs::read(&path).unwrap();assert_eq!(encoded.len(),18);assert_eq!(Settings::load(&path),s);
+        let mut invalid=encoded.clone();invalid[9]=2;let sum=hash(&invalid[..10]);invalid[10..].copy_from_slice(&sum.to_le_bytes());
+        fs::write(&path,&invalid).unwrap();assert_eq!(Settings::load(&path),Settings::default());assert_eq!(fs::read(&path).unwrap(),invalid);
+        for len in 0..encoded.len(){fs::write(&path,&encoded[..len]).unwrap();assert_eq!(Settings::load(&path),Settings::default());}
+        let mut legacy=b"RAV1".to_vec();legacy.extend([100,0,2,1,1]);legacy.extend(hash(&legacy).to_le_bytes());fs::write(&path,&legacy).unwrap();
+        let loaded=Settings::load(&path);assert_eq!((loaded.scale,loaded.quality,loaded.fps,loaded.renderer),(2,1,true,Backend::OpenGlEs));assert_eq!(fs::read(&path).unwrap(),legacy);
+        fs::remove_dir_all(p.root).unwrap();
     }
     #[test] fn settings_reset_and_navigation_still_work_with_renderer_entry() {
         use super::super::controls::Nav;
         let mut u=Ui::default();u.started=true;u.settings.scale=2;u.settings.fps=true;u.open(Page::Settings);
         u.nav(Nav::Up);assert_eq!(u.selected,5);u.nav(Nav::Down);assert_eq!(u.selected,0);
-        u.selected=4;assert!(matches!(u.nav(Nav::A),Command::Settings));assert_eq!(u.settings,Settings::default());
+        u.settings.renderer=super::super::graphics::Backend::Vulkan;
+        u.selected=4;assert!(matches!(u.nav(Nav::A),Command::Settings));assert_eq!(u.settings,Settings{renderer:super::super::graphics::Backend::Vulkan,..Settings::default()});
         u.selected=3;let original=u.settings;
         for nav in [Nav::Left,Nav::Right] {assert!(matches!(u.nav(nav),Command::None));}
         assert_eq!(u.settings,original);assert_eq!(u.page,Page::Settings);

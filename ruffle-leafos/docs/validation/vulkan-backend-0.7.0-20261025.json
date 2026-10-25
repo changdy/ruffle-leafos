@@ -1,0 +1,73 @@
+{
+  "version": "0.7.0",
+  "date": "2026-10-25",
+  "status": "experimental Vulkan implemented; final binary isolated checks and installed formal-entry checks passed",
+  "environment": {
+    "device": "Miniloong Pocket 1",
+    "os": "Leaf 0.13.0",
+    "architecture": "ARM64",
+    "gpu": "Mali-G52",
+    "vulkan_physical_device_api": "1.2.218",
+    "native_VK_KHR_wayland_surface": false
+  },
+  "source": {
+    "official_renderer_repository": "https://github.com/ruffle-rs/ruffle",
+    "official_renderer_commit": "71f18f0d0e3bd118945d5956f4ac4bb2e486e856",
+    "unmodified_files": 54,
+    "runtime_sha256": "1a604c7693a84e95c3553e1db63cc77d3fcae768d95c0b020b9bffcfc5d97cbb"
+  },
+  "implementation": {
+    "default_backend": "OpenGL ES",
+    "optional_backend": "Vulkan (experimental)",
+    "movie_rendering": "official Ruffle WgpuRenderBackend on hardware Vulkan",
+    "presentation": "GBM DMA-BUF shared between Vulkan and EGL; GLES samples final image and renders menus",
+    "presentation_per_frame_cpu_pixel_readback": false,
+    "synchronization": "Vulkan external ownership barriers and fence; glFinish before shared image reuse",
+    "per_game_preference": "RAV2; reads RAV1 as GLES without rewriting on load",
+    "switching": "confirmation defaults to cancel; native progress flush then save preference and restart in current slot",
+    "startup_failure": "fall back to GLES, reset saved preference and show failure indicator",
+    "captured_runtime_gpu_error": "attempt progress flush, restore next-start GLES preference and end session; not fault-injected on hardware"
+  },
+  "host_validation": {
+    "frontend_tests_passed": 89,
+    "release_script_tests_passed": 15,
+    "arm64_release_build": "passed",
+    "max_required_glibc": "2.35",
+    "source_fingerprints": "passed"
+  },
+  "isolated_device_validation": {
+    "game": "魔塔",
+    "launch": "Leaf launch-app; isolated configuration and saves; evdev input and KMS capture",
+    "gles_to_vulkan_to_gles": "passed",
+    "confirmation_cancel": "passed",
+    "preference_persistence": "passed",
+    "current_slot_restart_and_native_progress_flush": "passed",
+    "vulkan_presented_frames": 1043,
+    "visual_review": "full upright game, Vulkan selection menu and restored GLES menu passed",
+    "audio": "CPAL initialized on all three starts; realtime-priority promotion unavailable on this system; human listening not performed",
+    "startup_failure_fallback": "passed on final binary: missing ICD, actual GLES, RAV2 reset, normal diagnostic-timeout exit",
+    "user_config_and_saves_sha256_unchanged": true,
+    "temporary_test_app_removed": true,
+    "test_note": "ADB transport stalled during fallback menu navigation; final fallback visual capture was not repeated. Earlier candidate fallback menu passed; final logs/preferences/exit and data verified after reconnect."
+  },
+  "installed_device_validation": {
+    "installed": true,
+    "installed_files_verified": 833,
+    "backup": "/mnt/sdcard/.userdata/mlp1/ruffle-probe/debug-backups/20261025-vulkan-0.7.0/pak-before",
+    "formal_game_menu_and_exit": true,
+    "formal_apps_startup_and_exit": true,
+    "user_config_unchanged": true,
+    "user_saves_unchanged": true,
+    "original_ruffle_runtime_unchanged": true,
+    "formal_game": "闪客快打2-优化版",
+    "formal_game_renderer_page_visual_review": "passed",
+    "github_release_published": false
+  },
+  "evidence": "outputs/vulkan-port-20261025/ (local, ignored)",
+  "remaining": [
+    "Broad real-game visual matrix including filters, blending, BitmapData and Stage3D",
+    "Long-duration stability, suspend/reboot and power-loss checks",
+    "Representative frame-time, memory and power comparison; no demonstrated speedup",
+    "Human audio/gameplay acceptance"
+  ]
+}

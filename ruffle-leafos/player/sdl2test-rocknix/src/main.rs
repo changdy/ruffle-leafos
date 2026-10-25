@@ -39,6 +39,8 @@ use ruffle_video_software::backend::SoftwareVideoBackend;
 
 mod custom_event;
 mod gl_backend;
+#[cfg(target_os = "linux")]
+mod vulkan_backend;
 mod keycodes;
 mod navigator;
 mod trace;
@@ -246,6 +248,8 @@ struct Opt {
     diagnostic_seconds: Option<u64>,
     #[clap(long, value_parser = ["hybrid", "keyboard", "mouse"])]
     input_mode: Option<String>,
+    #[arg(long, value_parser = ["opengl-es", "vulkan"])]
+    renderer: Option<String>,
 }
 
 mod session;

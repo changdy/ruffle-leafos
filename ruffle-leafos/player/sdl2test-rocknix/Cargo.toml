@@ -1,11 +1,15 @@
 [package]
 name = "sdl2test-rocknix"
-version = "0.6.9"
+version = "0.7.0"
 edition = "2021"
 
 [dependencies]
 sdl2 = { version = "0.38.0", features = ["raw-window-handle"] }
 glow = "0.14"
+wgpu = { workspace = true, features = ["vulkan", "naga-ir"] }
+ash = "=0.38.0"
+libloading = "=0.8.9"
+ruffle_render_wgpu = { path = "../render/wgpu" }
 thiserror = "1.0"
 raw-window-handle = "0.6"
 clap = { workspace = true }
