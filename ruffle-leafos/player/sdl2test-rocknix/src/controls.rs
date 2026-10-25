@@ -38,6 +38,11 @@ impl Mapping {
     }
     pub fn group(slot: usize) -> Self {
         let mut m = Self::builtin(1);
+        if slot >= 2 {
+            m.base = 13; m.mode = InputMode::Hybrid; m.stick = Stick::None; m.fine = false;
+            m.buttons.fill(Binding::None); m.axes.fill(Binding::None);
+            return m;
+        }
         m.base = if slot == 1 {14} else {13};
         m.mode = InputMode::Hybrid; m.stick = Stick::Mouse; m.fine = false;
         m.buttons = [Binding::Key(106),Binding::Key(107),Binding::Key(108),Binding::Key(105),
@@ -57,6 +62,7 @@ impl Mapping {
         }; }
     }
     pub fn has_pointer(&self) -> bool { self.axes.iter().chain(self.buttons.iter()).any(|b| matches!(b,Binding::Pointer(_))) }
+    pub fn is_empty(&self) -> bool { !self.fine && self.buttons.iter().chain(self.axes.iter()).all(|b| *b == Binding::None) }
     pub fn defaults(&self) -> Self {
         if self.base >= 13 { return Self::group(if self.base == 14 {1} else {0}); }
         if self.base != 0 { return Self::builtin(self.base); }
@@ -197,7 +203,6 @@ impl Record {
                 if *rate!=Rate::Off && !turbo::supported(*binding) {return Err("此动作不支持连发".into());}
             }
         }
-        if mapping.buttons.iter().chain(mapping.axes.iter()).all(|b| *b == Binding::None) { return Err("全空配置已拒绝，请恢复默认".into()); }
         Ok(Self { name, identity, mapping })
     }
 }
@@ -424,6 +429,10 @@ impl Controls {
         Some(Pending::Slot(slot))=>format!("切换到方案 {} 前，请处理当前修改",slot+1),
         _=>"返回前，请处理当前修改".into(),
     }}
+    pub fn shortcut_slot(&self, direction: i32) -> Option<usize> {
+        (1..GAME_SLOTS).map(|step| (self.game_slot as i32 + step as i32 * direction.signum()).rem_euclid(GAME_SLOTS as i32) as usize)
+            .find(|slot| *slot != self.game_slot && !self.mappings[*slot].is_empty())
+    }
     pub fn switch_slot(&mut self, slot: usize) -> ResultAction {
         if slot >= GAME_SLOTS { return ResultAction::None; }
         if let Some(active) = &self.active { self.mappings[self.game_slot] = active.clone(); }
@@ -619,11 +628,15 @@ mod tests {
         assert!(Record::decode(&"x".repeat(LIMIT+1)).is_err());
     }
     #[test]
-    fn completely_empty_mapping_cannot_be_saved_and_the_draft_is_retained() {
+    fn completely_empty_mapping_can_be_saved_selected_and_reloaded() {
         let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(c.draft.clone());
         c.draft.buttons.fill(Binding::None); c.draft.axes.fill(Binding::None); c.draft.stick = Stick::None;
-        c.row = SAVE_ROW; assert!(matches!(c.nav(Nav::A),ResultAction::None)); assert!(c.active.is_none());
-        assert!(c.dirty());assert!(!f.0.game_slot(0).exists());assert_eq!(c.draft.buttons,[Binding::None;14]);
+        c.row = SAVE_ROW; assert!(matches!(c.nav(Nav::A),ResultAction::Apply(m) if m.is_empty()));
+        assert!(!c.dirty()); assert!(c.active.as_ref().unwrap().is_empty());
+        assert!(f.0.game_slot(0).exists()); assert!(Controls::new(f.0.clone()).mappings[0].is_empty());
+        assert!(matches!(c.switch_slot(5),ResultAction::Apply(m) if m.is_empty()));
+        assert_eq!(Controls::new(f.0.clone()).game_slot,5);
+        c.switch_slot(0); assert_eq!(c.shortcut_slot(1),Some(1)); assert_eq!(c.shortcut_slot(-1),Some(1));
     }
     #[test]
     fn relative_game_identity_survives_mount_and_legacy_folder_case() {
@@ -744,6 +757,43 @@ mod tests {
         assert_eq!(&a.buttons[8..10],&[Binding::Key(27),Binding::Key(9)]);
         assert_eq!(a.axes,[Binding::Pointer(0),Binding::Pointer(1),Binding::Pointer(2),Binding::Pointer(3),Binding::LeftClick]);
         assert_eq!(b.axes,a.axes);
+    }
+    #[test]
+    fn new_games_only_have_two_populated_schemes_without_creating_files() {
+        let f=Fixture::new();let c=Controls::new(f.0.clone());
+        assert!(!c.mappings[0].is_empty());assert!(!c.mappings[1].is_empty());
+        for m in &c.mappings[2..] {
+            assert!(m.is_empty());assert_eq!(m.buttons,[Binding::None;14]);assert_eq!(m.axes,[Binding::None;5]);
+            assert_eq!(m.turbo,[Rate::Off;14]);assert_eq!(m.axis_turbo,[Rate::Off;5]);assert_eq!(m.stick,Stick::None);
+        }
+        assert!(!f.0.root.exists());
+    }
+    #[test]
+    fn shortcuts_skip_empty_schemes_in_both_directions_and_include_saved_custom_actions() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());
+        assert_eq!(c.shortcut_slot(1),Some(1));assert_eq!(c.shortcut_slot(-1),Some(1));
+        c.switch_slot(1);assert_eq!(c.shortcut_slot(1),Some(0));assert_eq!(c.shortcut_slot(-1),Some(0));
+        c.switch_slot(6);c.draft.axes[4]=Binding::LeftClick;assert!(matches!(c.save_scope(),ResultAction::Apply(_)));
+        let saved=fs::read(f.0.game_slot(6)).unwrap();let mut c=Controls::new(f.0.clone());
+        assert_eq!(c.shortcut_slot(1),Some(0));assert_eq!(c.shortcut_slot(-1),Some(1));
+        c.switch_slot(1);assert_eq!(c.shortcut_slot(1),Some(6));assert_eq!(c.shortcut_slot(-1),Some(0));
+        c.switch_slot(0);assert_eq!(c.shortcut_slot(-1),Some(6));
+        assert_eq!(fs::read(f.0.game_slot(6)).unwrap(),saved);
+        c.switch_slot(4);assert_eq!(c.shortcut_slot(1),Some(6));assert_eq!(c.shortcut_slot(-1),Some(1));
+        c.mappings[8].fine=true;assert_eq!(c.shortcut_slot(-1),Some(1));
+        c.switch_slot(6);assert_eq!(c.shortcut_slot(1),Some(8));
+        c.mappings[8].fine=false;c.mappings[8].axes[0]=Binding::Pointer(0);assert_eq!(c.shortcut_slot(1),Some(8));
+        c.mappings[8].axes.fill(Binding::None);c.mappings[8].buttons[3]=Binding::Key(32);assert_eq!(c.shortcut_slot(1),Some(8));
+    }
+    #[test]
+    fn shortcuts_with_one_or_no_nonempty_scheme_do_not_select_or_write() {
+        let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.mappings[1]=Mapping::group(2);
+        for direction in [-1,1] {assert_eq!(c.shortcut_slot(direction),None);}
+        c.mappings[0]=Mapping::group(2);
+        for direction in [-1,1] {assert_eq!(c.shortcut_slot(direction),None);}
+        assert_eq!(c.game_slot,0);assert!(!f.0.root.exists());
+        c.mappings[7].buttons[0]=Binding::LeftClick;
+        for direction in [-1,1] {assert_eq!(c.shortcut_slot(direction),Some(7));}
     }
     #[test]
     fn direction_swap_routes_both_default_schemes_and_preserves_saved_mapping() {

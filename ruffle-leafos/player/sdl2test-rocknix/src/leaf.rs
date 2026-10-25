@@ -276,8 +276,11 @@ impl Frontend {
             }
             use session::shortcuts::Command;
             match command {
-                Command::Previous => self.switch_slot((self.state.controls.game_slot+9)%10),
-                Command::Next => self.switch_slot((self.state.controls.game_slot+1)%10),
+                Command::Previous | Command::Next => {
+                    if let Some(slot)=self.state.controls.shortcut_slot(if command==Command::Previous {-1} else {1}) {
+                        self.switch_slot(slot);
+                    } else {self.toast("没有其他非空按键方案".into());}
+                },
                 Command::SwapDirections => {
                     self.cancel_repeats();
                     let released=self.state.toggle_directions();self.emit(released,false);

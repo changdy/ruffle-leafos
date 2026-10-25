@@ -124,6 +124,7 @@ def main():
                   'compact current-only Flash FPS and text-sized toast/drag overlays',
                   'Apps data manager with confirmed scoped clears and recoverable local archives',
                   'ten independent per-game control schemes, saved selection and toast switching',
+                  'only schemes 1 and 2 have default bindings; schemes 3-10 start empty; Menu+A/B skip empty schemes',
                   'Menu+A previous / Menu+B next schemes, Menu+X direction swap, and Menu+hat down left mouse hold via read-only physical state',
                   'main-menu left/right scheme switching; mouse speed within cursor settings; separate About and contextual shortcut guide',
                   'unified scheme editor with L/R switching, separate Save/Back actions and unsaved-change confirmation',
