@@ -8,15 +8,13 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 
 ## 实机截图
 
-以下截图于 2026-10-25 通过 ADB 从迷你龙 Pocket 1 / LeafOS 实机抓取，展示 **0.6.8 开发预览**的实际游戏与菜单界面。游戏画面来自用户安装的 SWF，不随项目分发。
+以下截图于 2026-10-25 通过 ADB 从迷你龙 Pocket 1 / LeafOS 实机抓取，展示 **0.6.8 开发预览**的实际游戏与菜单界面；关于页截图已同步本次文案更新。游戏画面来自用户安装的 SWF，不随项目分发。
 
 | 游戏运行 | 暂停菜单 |
 | --- | --- |
 | ![Ruffle Flash 实际游戏画面](docs/images/gameplay.png) | ![Ruffle Flash 暂停菜单](docs/images/pause-menu.png) |
-
-![十方案按键设置界面](docs/images/controls.png)
-
-关于页文案已更新，见[快捷键说明与关于](#快捷键说明与关于)；新版实机截图待补充。
+| 按键设置 | 关于 |
+| ![十方案按键设置界面](docs/images/controls.png) | ![Ruffle Flash 关于页面：项目介绍、GitHub 地址与开源致谢](docs/images/about.png) |
 
 | 文档 | 负责内容 |
 | --- | --- |
