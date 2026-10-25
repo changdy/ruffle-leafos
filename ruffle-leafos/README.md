@@ -30,7 +30,7 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 
 正常退出播放器、备份现有 `RuffleProbe.pak` 和用户数据后，将安装 ZIP 解压，把其中的 **`Apps/`、`Roms/`、`Images/` 按原层级复制到迷你龙系统 SD 卡根目录并合并目录**，即可安装或覆盖升级；也可直接解压到该根目录。ZIP 没有额外的版本号外层文件夹，安装目标为 `Apps/mlp1/RuffleProbe.pak/`。该目录沿用旧包标识，以便直接覆盖升级；显示名称与数据位置分开维护。
 
-0.6.9 收录新版关于介绍、GitHub 项目地址与社区致谢。相同页面代码此前已通过 84 项主机回归、ARM64 release 构建及 Pocket 1 实机排版与 A/B 返回核对；上方截图来自更新文案后的 0.6.8 构建。0.6.9 的自动构建与发布状态、各批次验证范围见[工程进度](docs/progress.md)。
+0.6.9 收录新版关于介绍、GitHub 项目地址与社区致谢，已通过自动构建并发布 [v0.6.9 安装包](https://github.com/changdy/ruffle-leafos/releases/tag/v0.6.9)，线上 ZIP 的版本、校验值和内容核对通过。相同页面代码此前已通过 84 项主机回归、ARM64 release 构建及 Pocket 1 实机排版与 A/B 返回核对；上方截图来自更新文案后的 0.6.8 构建。0.6.9 安装包的独立实机安装尚未验证，各批次范围见[工程进度](docs/progress.md)。
 
 SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，模拟器列表显示为 Ruffle Flash；Apps 中的“Flash 数据管理”用于管理配置与游戏进度。
 

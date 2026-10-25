@@ -1,0 +1,33 @@
+{
+  "result": "passed",
+  "run_url": "https://github.com/changdy/ruffle-leafos/actions/runs/40169820793",
+  "release_url": "https://github.com/changdy/ruffle-leafos/releases/tag/v0.6.9",
+  "source_commit": "55239b903ade2cd48d42e46e2abdf77d894f5398",
+  "bytes": 17764918,
+  "sha256": "646e44b2f16dad0e96f8960d4e0701116497d9cc345eed0d59d242bc5574dcc0",
+  "file_count": 997,
+  "checks": [
+    "successful CI run and both jobs",
+    "release and tag commit",
+    "commit list and install notes",
+    "single ZIP asset",
+    "body and GitHub asset SHA-256",
+    "ZIP integrity and safe root paths",
+    "required payload",
+    "executable modes and LF scripts",
+    "AArch64 PIE and binary hashes",
+    "source provenance lock",
+    "no local build files",
+    "packaged README declares 0.6.9",
+    "packaged About screenshot matches repository image"
+  ],
+  "version": "0.6.9",
+  "tag": "v0.6.9",
+  "date": "2026-10-25",
+  "prerelease": true,
+  "asset_name": "ruffle-leafos-0.6.9.zip",
+  "published_at": "2026-10-25T06:46:10Z",
+  "asset_url": "https://github.com/changdy/ruffle-leafos/releases/download/v0.6.9/ruffle-leafos-0.6.9.zip",
+  "local_evidence": "outputs/release-0.6.9/",
+  "device_validation": "This downloaded 0.6.9 package has not been independently installed or validated on hardware. The same About page code was validated in the preceding 0.6.8 build."
+}
