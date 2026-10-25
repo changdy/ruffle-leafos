@@ -11,8 +11,15 @@
 **/__pycache__/
 *.py[cod]
 *.rs.bk
+*.o
+*.obj
+*.pdb
+*.exe
 *.part
 *.log
+**/node_modules/
+**/.venv/
+**/.pytest_cache/
 
 # Machine-specific settings and local environment files.
 workspace.local.json

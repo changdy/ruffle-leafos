@@ -1,4 +1,4 @@
-"""Package the source-built 0.2 frontend; never substitute the leaf-12 binary."""
+"""Package the source-built Leaf frontend and its current documentation."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -21,6 +21,15 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def source_ignore(directory, names):
+    ignored = shutil.ignore_patterns(
+        '.git', '.tools', 'build', 'target', '__pycache__', '.venv',
+        'node_modules', '.idea', '.vscode', '.pytest_cache', 'workspace.local.json',
+        '.env', '.env.*', '*.pyc', '*.pyo', '*.log', '*.o', '*.obj', '*.pdb',
+        '*.exe', '*.part', '*.rs.bk')(directory, names)
+    return ignored - {'.env.example', '.env.sample', '.env.template'}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', required=True, type=Path)
@@ -40,6 +49,9 @@ def main():
     assert sha(ROOT / 'player/Cargo.lock') == source_lock['leaf_cargo_lock_sha256']
     for relative, expected in source_lock.get('leaf_files_sha256', {}).items():
         assert sha(ROOT / 'player' / relative) == expected, 'source input changed: ' + relative
+    reference_lock = json.loads((ROOT / 'vendor/jawaka.lock.json').read_text(encoding='utf8'))
+    for relative, expected in reference_lock['files_sha256'].items():
+        assert sha(ROOT / 'vendor/jawaka' / relative) == expected, 'reference input changed: ' + relative
     stage = Path(tempfile.mkdtemp(prefix=f'preview-{version}-', dir=ROOT / 'build'))
     pak = stage / 'Apps/mlp1/RuffleProbe.pak'
     shutil.copytree(ROOT / 'pak', pak)
@@ -58,11 +70,10 @@ def main():
     make_icon(pak / 'art/FLASH.png')
     make_movie(stage / 'Roms/flash/Leaf-GPU-Probe.swf')
     (stage / 'Images/flash').mkdir(parents=True)
-    readme = ROOT / f'docs/preview-{version}.md'
-    if not readme.exists():
-        readme = ROOT / 'docs/preview-0.2.md'
-    shutil.copyfile(readme, pak / 'README.md')
-    shutil.copyfile(ROOT / 'docs/THIRD_PARTY-0.2.md', pak / 'THIRD_PARTY.md')
+    shutil.copyfile(ROOT / 'README.md', pak / 'README.md')
+    shutil.copytree(ROOT / 'docs', pak / 'docs',
+                    ignore=shutil.ignore_patterns('__pycache__'))
+    shutil.copyfile(ROOT / 'docs/THIRD_PARTY.md', pak / 'THIRD_PARTY.md')
     shutil.copyfile(ROOT / 'adapter/LICENSE', pak / 'LICENSE')
     licenses = pak / 'licenses'
     licenses.mkdir()
@@ -83,6 +94,7 @@ def main():
     shutil.copyfile(ROOT / 'leaf-source.lock.json', provenance / 'leaf-source.lock.json')
     shutil.copyfile(ROOT / 'arm-gnu.lock.json', provenance / 'arm-gnu.lock.json')
     shutil.copyfile(ROOT / 'adapter/runtime.lock.json', provenance / 'runtime.lock.json')
+    shutil.copyfile(ROOT / 'vendor/jawaka.lock.json', provenance / 'jawaka.lock.json')
     # Validate against the pinned official contract, then the new behavior.
     contracts = ROOT / 'vendor/leaf-contracts/contracts'
     sys.path[:0] = [str(contracts / 'leaf-content/scripts'), str(contracts / 'leaf-services/scripts')]
@@ -140,15 +152,14 @@ def main():
         source_stage = Path(tempfile.mkdtemp(prefix='preview-source-', dir=ROOT / 'build'))
         for folder in ['player', 'adapter', 'pak', 'scripts', 'docs', 'target-libs', 'runtime/leaf-12', 'vendor/leaf-contracts']:
             shutil.copytree(ROOT / folder, source_stage / folder,
-                ignore=shutil.ignore_patterns('.git', 'build', 'target', '__pycache__'))
-        for filename in ['README.md', 'leaf-source.lock.json', 'arm-gnu.lock.json']:
+                ignore=source_ignore)
+        for filename in ['README.md', '.gitignore', 'leaf-source.lock.json', 'arm-gnu.lock.json']:
             shutil.copyfile(ROOT / filename, source_stage / filename)
         # Keep the exact menu reference and license available in the source
         # archive; packaging must not depend on an omitted vendor checkout.
-        for relative in ['LICENSE', 'cmd/jawaka-menu/main.c',
-                         'res/themes/Jawaka-Tabs/stylesheet.json',
-                         'internal/settings/theme_resolve.c', 'internal/settings/settings.c',
-                         'internal/settings/appearance.c', 'internal/settings/appearance.h']:
+        for filename in ['README.md', 'jawaka.lock.json']:
+            shutil.copyfile(ROOT / 'vendor' / filename, source_stage / 'vendor' / filename)
+        for relative in reference_lock['files_sha256']:
             destination = source_stage / 'vendor/jawaka' / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / 'vendor/jawaka' / relative, destination)

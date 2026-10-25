@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/Utility-Muffin-Research-Kitchen/Jawaka",
+  "commit": "915c48595fbd20ec56a9d23b2fc1f39a4f6f8803",
+  "purpose": "Pinned menu, theme and settings reference; not a buildable Jawaka checkout",
+  "files_sha256": {
+    "LICENSE": "26cbf83bb3142a6afd3ce1995e24f829f1b9cd15dcb2384beed5449e7dae5bf2",
+    "cmd/jawaka-menu/main.c": "4e7722d42e6f53329f7844fbce348a11883d8de9e77945736d27ee5d5a5b156d",
+    "res/themes/Jawaka-Tabs/stylesheet.json": "dba2b53b60a906bf850181474b7ae68eb5e3ce0139c0a1839bdb1a5545647424",
+    "internal/settings/theme_resolve.c": "6a5a4e87e5bad966281d8194560bcbdee1696a2d719f031ba71372f953b3e9c9",
+    "internal/settings/settings.c": "2ee9a8bc489df8901de878fbc2d6f01b08056effbe44073dc7ce0f59002ee6b1",
+    "internal/settings/appearance.c": "31617c1bc1e9e182277be337ee7721c48e684dc8fb93e6d996fbaa0661ec8d1b",
+    "internal/settings/appearance.h": "06578d1d9475d0f08113518af700cb7a931419c6cde3a3fdec8a2fc7c39797f6"
+  }
+}
