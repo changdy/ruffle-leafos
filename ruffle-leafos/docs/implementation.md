@@ -91,6 +91,12 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 
 `shapes`、`bitmaps`、`bitmap_reloads`、`evictions` 记录静态图形创建、位图成功上传、弱缓存失效后的重载和缓存句柄释放次数；`bitmap_rgba_mib` 是宽×高×4 的等价累计尺寸，不是实际驻留内存。`shape_ms` 包含位图解码/上传，且包含于 `render_ms`；Vulkan 的 `vk_submit_ms` 包含队列提交和 fence 等待，`vk_poll_ms`、`vk_present_ms` 记录驱动轮询与最终 GLES 采样/`glFinish`，也包含于 `render_ms`。细分项不能与上层耗时重复相加，也不能将墙钟等待等同 GPU 纯执行时间。核心计数器按线程启用和取出，关闭时不读取高频计时器；不要跨线程汇总时误当全局统计。实测示例及限制见[拳皇性能报告](validation/kof-performance-20261026.md)。
 
+## 离线 SWF 位图素材优化
+
+`scripts/optimize_swf_bitmaps.py` 可为用户本地 AVM1 SWF 生成独立实验副本，使用 Python 标准库裁掉私有无损位图的零色外边并合并完全相同的内部位图，同步重写填充 ID/矩阵，不修改脚本、音频和帧调度。只支持可完整解析并安全重写的 FWS/CWS、DefineBitsLossless2 和 Shape 1—4；导出或其他引用保护、平铺填充、分数 twip 补偿及未知结构按保守规则跳过或拒绝。拒绝覆盖原文件与已有输出/报告。
+
+用 `python scripts/optimize_swf_bitmaps.py <输入.swf> --output <新输出.swf> --report <新报告.json>` 生成副本，`python -m unittest discover -s scripts -p test_optimize_swf_bitmaps.py -v` 运行格式与保护条件回归。游戏文件与完整修改明细放入忽略的 `outputs/`，不进入 Git 或应用发布包。副本内容指纹变化会建立独立原生进度，不能将素材展开尺寸减少当作实机 FPS/RSS 改善；适用范围和验证见[拳皇 SWF 优化报告](validation/kof-swf-optimization-20261026.md)。
+
 ## 构建环境与命令
 
 在本工程根目录执行：
