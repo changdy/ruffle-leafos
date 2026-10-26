@@ -83,6 +83,14 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 
 新建游戏不批量写十份方案。`Mapping::group` 仅为方案 1、2 提供默认键位；3—10 的 19 个绑定全为 `None`，摇杆为 `Stick::None`、精调与连发关闭。全空映射允许读取、保存、应用并写入 `selected.rmap`，便于清空已有方案或进入空方案编辑。已有槽位文件优先于默认值，不自动清空旧数据。缺少新方案 1 时可读旧此游戏 rmap，旧全局按键与 ROM 旁 cfg 不自动叠加。只有主动保存才升级旧映射并保留备份。按键按路径识别，进度按内容识别，两者迁移规则不同；具体限制与故障验收见[工程进度](progress.md)。
 
+## 按需性能诊断
+
+播放器接受 `--trace-performance`，默认关闭；需在已有 Leaf 启动环境中使用，可配合 `--diagnostic-seconds`、显式 `--renderer` 及独立 `--storage-dir`/`--controls-dir`。它只增加日志，不改变回收策略、帧调度或渲染接口。实现见 `sdl2test-rocknix/src/performance.rs` 和 `core/src/render_metrics.rs`。
+
+每秒的 `leaf-perf` 日志包含窗口长度、Flash 帧推进量 `frames`、非暂停绘制次数 `draws`、异步加载任务/tick/render/静态资源回收/swap 的总墙钟耗时及最长 tick/render/循环；循环耗时不含主动 sleep。暂停绘制和菜单开销不计入 `draws`/`render`，因此基准应排除暂停和恢复边界窗口。`frames / 窗口秒数` 与画面提交速率 `draws / 窗口秒数` 分别统计，逻辑补帧时二者可以不同。
+
+`shapes`、`bitmaps`、`bitmap_reloads`、`evictions` 记录静态图形创建、位图成功上传、弱缓存失效后的重载和缓存句柄释放次数；`bitmap_rgba_mib` 是宽×高×4 的等价累计尺寸，不是实际驻留内存。`shape_ms` 包含位图解码/上传，且包含于 `render_ms`；Vulkan 的 `vk_submit_ms` 包含队列提交和 fence 等待，`vk_poll_ms`、`vk_present_ms` 记录驱动轮询与最终 GLES 采样/`glFinish`，也包含于 `render_ms`。细分项不能与上层耗时重复相加，也不能将墙钟等待等同 GPU 纯执行时间。核心计数器按线程启用和取出，关闭时不读取高频计时器；不要跨线程汇总时误当全局统计。实测示例及限制见[拳皇性能报告](validation/kof-performance-20261026.md)。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

@@ -73,8 +73,14 @@ impl<'gc> BitmapCharacter<'gc> {
         if let Some(handle) = self.handle.borrow().as_ref().and_then(Weak::upgrade) {
             return Ok(BitmapHandle(handle));
         }
+        let start = crate::render_metrics::start();
         let decoded = self.compressed.decode()?;
+        let upload = crate::render_metrics::start();
         let new_handle = backend.register_bitmap(decoded)?;
+        let size = self.compressed.size();
+        crate::render_metrics::bitmap(start, upload,
+            u64::from(size.width) * u64::from(size.height) * 4,
+            self.handle.borrow().is_some());
         // Shapes and in-flight commands own the texture. The library keeps only
         // a weak reference so releasing unused shapes also releases bitmap fills.
         *self.handle.borrow_mut() = Some(Arc::downgrade(&new_handle.0));

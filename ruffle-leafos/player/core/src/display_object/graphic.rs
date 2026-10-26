@@ -125,7 +125,9 @@ impl<'gc> Graphic<'gc> {
     pub fn collect_render_resource(self) {
         let shared = self.0.shared.get();
         if !shared.rendered.replace(false) {
-            shared.render_handle.borrow_mut().take();
+            if shared.render_handle.borrow_mut().take().is_some() {
+                crate::render_metrics::evicted();
+            }
         }
     }
 }
@@ -218,10 +220,12 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
                 let Some(library) = context.library.library_for_movie(shared.movie.clone()) else {
                     return;
                 };
+                let start = crate::render_metrics::start();
                 *render_handle = Some(context.renderer.register_shape(
                     (&shared.shape).into(),
                     &MovieLibrarySource { library },
                 ));
+                crate::render_metrics::shape(start);
             }
             shared.rendered.set(true);
             if let Some(render_handle) = render_handle.as_ref() {

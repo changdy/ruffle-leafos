@@ -37,6 +37,7 @@ mod locale;
 mod net_connection;
 mod orphan_manager;
 pub mod pixel_bender;
+pub mod render_metrics;
 mod player;
 mod prelude;
 pub mod socket;

@@ -240,6 +240,9 @@ struct Opt {
     self_test_experience: bool,
     #[arg(long)]
     trace_input: bool,
+    /// Log per-second CPU wall times and static artwork rebuild counters.
+    #[arg(long)]
+    trace_performance: bool,
     #[arg(long, aliases=["self-test-controls","self-test-cursor","self-test-menu","self-test-profiles"])]
     self_test_slots: bool,
     #[clap(long)]
@@ -255,6 +258,7 @@ struct Opt {
 mod session;
 mod pause_menu;
 mod leaf;
+mod performance;
 
 #[tokio::main]
 async fn main() -> Result<(), String> { leaf::run().await }

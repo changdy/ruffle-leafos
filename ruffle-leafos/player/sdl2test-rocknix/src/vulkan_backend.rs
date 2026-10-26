@@ -815,6 +815,7 @@ impl RenderTarget for SharedTarget {
         commands: I,
         frame: Self::Frame,
     ) -> wgpu::SubmissionIndex {
+        let submit_at = crate::performance::vulkan_start();
         let index = self.inner.submit(device, queue, commands, frame);
         let result = (|| unsafe {
             self.native.device.reset_fences(&[self.fence])?;
@@ -828,15 +829,20 @@ impl RenderTarget for SharedTarget {
                 .wait_for_fences(&[self.fence], true, 2_000_000_000)?;
             Ok::<(), vk::Result>(())
         })();
+        crate::performance::vulkan_end(0, submit_at);
         if let Err(error) = result {
             self.fail(format!("Vulkan presentation sync: {error:?}"));
             return index;
         }
         self.released.set(true);
+        let poll_at = crate::performance::vulkan_start();
         let _ = device.poll(wgpu::PollType::Poll);
+        crate::performance::vulkan_end(1, poll_at);
+        let present_at = crate::performance::vulkan_start();
         unsafe {
             self.presenter.draw(self.width(), self.height());
         }
+        crate::performance::vulkan_end(2, present_at);
         if self.frames.get() == 0 {
             println!("leaf-vulkan first_frame=presented");
         }
