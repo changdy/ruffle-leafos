@@ -482,6 +482,20 @@ impl<'gc> Library<'gc> {
         self.movie_libraries.known_movies()
     }
 
+    /// Keep static resources used by this frame; allow older animation frames
+    /// to release their GPU allocations without discarding compressed SWF data.
+    pub fn collect_static_render_resources(&self) {
+        for movie in self.known_movies() {
+            if let Some(library) = self.library_for_movie(movie) {
+                for character in library.characters.values() {
+                    if let Character::Graphic(graphic) = character {
+                        graphic.collect_render_resource();
+                    }
+                }
+            }
+        }
+    }
+
     /// Returns the default Font implementations behind the built in names (ie `_sans`)
     pub fn default_font(
         &mut self,

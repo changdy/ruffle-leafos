@@ -1038,6 +1038,7 @@ pub async fn run() -> Result<(), String> {
                 } else {
                     let mut p = front.active.player.lock().unwrap();
                     p.render();
+                    p.collect_static_render_resources();
                     drop(p);
                     if front.state.experience.settings.fps || front.state.drag_locked || front.cursor_visible || front.state.toast.is_some() || front.state.system_volume.is_some() { menu.draw(size.0, size.1, &front.state, if front.cursor_visible {Some(front.cursor)} else {None}); }
                 }

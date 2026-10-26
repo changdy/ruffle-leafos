@@ -16,7 +16,11 @@ parser.add_argument('--isolated-config', action='store_true',
                     help='Use only the project Cargo config and pinned CARGO_HOME, ignoring ancestor mirror settings')
 parser.add_argument('--jobs', type=int, default=6)
 parser.add_argument('--debug', action='store_true')
+parser.add_argument('--package', choices=['sdl2test-rocknix', 'ruffle_core'], default='sdl2test-rocknix',
+                    help='Use ruffle_core with test to compile ARM64 core unit tests')
 args = parser.parse_args()
+if args.package == 'ruffle_core' and args.action != 'test':
+    parser.error('--package ruffle_core requires the test action')
 local = ROOT / 'workspace.local.json'
 settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
 cache = Path(settings.get('host_tool_cache', ROOT.parent / 'work' / 'toolchains'))
@@ -76,7 +80,10 @@ env['CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS'] = (
     '-Lnative=' + str(target_libs) + ' -Clink-arg=-Wl,--allow-shlib-undefined')
 cargo = rust / 'bin' / 'cargo.exe'
 command = [str(cargo), args.action, '--locked', '--target', 'aarch64-unknown-linux-gnu',
-           '-p', 'sdl2test-rocknix', '-j', str(args.jobs)]
+           '-p', args.package, '-j', str(args.jobs)]
+if args.package == 'ruffle_core':
+    command += ['--lib', '--release', '--features',
+                'audio,symphonia,mp3,nellymoser,lzma,default_compatibility_rules,default_font']
 if args.offline:
     command.append('--offline')
 if args.action == 'build' and not args.debug:

@@ -1,4 +1,5 @@
-use std::cell::OnceCell;
+use std::cell::RefCell;
+use std::sync::{Arc, Weak};
 
 use crate::backend::audio::SoundHandle;
 use crate::binary_data::BinaryData;
@@ -10,7 +11,7 @@ use gc_arena::barrier::unlock;
 use gc_arena::lock::Lock;
 use gc_arena::{Collect, Gc, Mutation};
 use ruffle_render::backend::RenderBackend;
-use ruffle_render::bitmap::{Bitmap as RenderBitmap, BitmapHandle, BitmapSize};
+use ruffle_render::bitmap::{Bitmap as RenderBitmap, BitmapHandle, BitmapHandleImpl, BitmapSize};
 use ruffle_render::error::Error as RenderError;
 use swf::DefineBitsLossless;
 
@@ -38,7 +39,7 @@ pub struct BitmapCharacter<'gc> {
     compressed: CompressedBitmap,
     /// A lazily constructed GPU handle, used when performing fills with this bitmap
     #[collect(require_static)]
-    handle: OnceCell<BitmapHandle>,
+    handle: RefCell<Option<Weak<dyn BitmapHandleImpl>>>,
     /// The bitmap class set by `SymbolClass` - this is used when we instantaite
     /// a `Bitmap` displayobject.
     avm2_class: Lock<BitmapClass<'gc>>,
@@ -48,7 +49,7 @@ impl<'gc> BitmapCharacter<'gc> {
     pub fn new(compressed: CompressedBitmap) -> Self {
         Self {
             compressed,
-            handle: OnceCell::default(),
+            handle: RefCell::default(),
             avm2_class: Lock::new(BitmapClass::NoSubclass),
         }
     }
@@ -69,14 +70,14 @@ impl<'gc> BitmapCharacter<'gc> {
         &self,
         backend: &mut dyn RenderBackend,
     ) -> Result<BitmapHandle, RenderError> {
-        // FIXME - use `OnceCell::get_or_try_init` when stabilized.
-        if let Some(handle) = self.handle.get() {
-            return Ok(handle.clone());
+        if let Some(handle) = self.handle.borrow().as_ref().and_then(Weak::upgrade) {
+            return Ok(BitmapHandle(handle));
         }
         let decoded = self.compressed.decode()?;
         let new_handle = backend.register_bitmap(decoded)?;
-        // FIXME - do we ever want to release this handle, to avoid taking up GPU memory?
-        self.handle.set(new_handle.clone()).unwrap();
+        // Shapes and in-flight commands own the texture. The library keeps only
+        // a weak reference so releasing unused shapes also releases bitmap fills.
+        *self.handle.borrow_mut() = Some(Arc::downgrade(&new_handle.0));
         Ok(new_handle)
     }
 }
@@ -121,5 +122,35 @@ impl CompressedBitmap {
                 ruffle_render::utils::decode_define_bits_lossless(define_bits_lossless)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use flate2::{Compression, write::ZlibEncoder};
+    use ruffle_render::backend::{ViewportDimensions, null::NullRenderer};
+    use std::{borrow::Cow, io::Write};
+
+    #[test]
+    fn static_bitmap_cache_does_not_keep_unused_textures_alive() {
+        let mut data = ZlibEncoder::new(Vec::new(), Compression::default());
+        data.write_all(&[255, 20, 30, 40]).unwrap();
+        let bitmap = BitmapCharacter::new(CompressedBitmap::Lossless(DefineBitsLossless {
+            version: 2, id: 1, format: swf::BitmapFormat::Rgb32,
+            width: 1, height: 1, data: Cow::Owned(data.finish().unwrap()),
+        }));
+        let mut renderer = NullRenderer::new(ViewportDimensions {
+            width: 16, height: 16, scale_factor: 1.0,
+        });
+        let first = bitmap.bitmap_handle(&mut renderer).unwrap();
+        let second = bitmap.bitmap_handle(&mut renderer).unwrap();
+        assert_eq!(first, second, "live fills must share a texture");
+        let weak = Arc::downgrade(&first.0);
+        drop(first);
+        assert!(weak.upgrade().is_some());
+        drop(second);
+        assert!(weak.upgrade().is_none(), "compressed assets must not pin GPU memory");
+        assert!(bitmap.bitmap_handle(&mut renderer).is_ok(), "evicted textures must reload");
     }
 }

@@ -2090,6 +2090,12 @@ impl Player {
         self.needs_render = false;
     }
 
+    /// Opt-in static GPU cache collection for devices with shared, limited RAM.
+    /// Call only after rendering a complete frame, including cached/offscreen draws.
+    pub fn collect_static_render_resources(&mut self) {
+        self.enter_arena(|_, gc_root, _| gc_root.library.collect_static_render_resources());
+    }
+
     #[instrument(level = "debug", skip_all)]
     pub fn render_mouse(&mut self, mouse_x:f32, mouse_y:f32){
         let invalidated = self.enter_arena(|_, gc_root, _| gc_root.stage.invalidated());
