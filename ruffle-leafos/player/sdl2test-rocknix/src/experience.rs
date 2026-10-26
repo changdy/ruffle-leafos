@@ -180,7 +180,7 @@ impl Progress {
 
 #[derive(Clone,Copy,Debug,PartialEq)]
 pub struct Settings {pub scale:u8,pub quality:u8,pub fps:bool,pub renderer:super::graphics::Backend}
-impl Default for Settings {fn default()->Self{Self{scale:0,quality:2,fps:false,renderer:super::graphics::Backend::OpenGlEs}}}
+impl Default for Settings {fn default()->Self{Self{scale:0,quality:2,fps:true,renderer:super::graphics::Backend::OpenGlEs}}}
 impl Settings {
     pub fn load(path:&Path)->Self {
         let Ok(v)=fs::read(path) else{return Self::default()};
@@ -374,7 +374,8 @@ mod tests {
         let old=p.root.clone();p.root=p.path(0);assert!(!p.put("x",Some(b"new")));assert!(p.error.is_some());assert_eq!(p.get("x"),Some(b"old".to_vec()));fs::remove_dir_all(old).unwrap();
     }
     #[test] fn settings_roundtrip_invalid_input_and_defaults(){
-        let p=progress();let path=p.root.join("audio");let mut s=Settings::default();s.change(0,1);s.change(1,1);s.change(2,1);s.save(&path).unwrap();assert_eq!(Settings::load(&path),s);
+        let p=progress();let path=p.root.join("audio");let mut s=Settings::default();assert!(s.fps);assert!(Settings::load(&path).fps);
+        s.change(0,1);s.change(1,1);s.change(2,1);assert!(!s.fps);s.save(&path).unwrap();assert_eq!(Settings::load(&path),s);
         let mut legacy=b"RAV1".to_vec();legacy.extend([0,1,s.scale,s.quality,u8::from(s.fps)]);legacy.extend(hash(&legacy).to_le_bytes());fs::write(&path,&legacy).unwrap();
         assert_eq!(Settings::load(&path),s);assert_eq!(fs::read(&path).unwrap(),legacy);
         fs::write(&path,b"corrupt").unwrap();assert_eq!(Settings::load(&path),Settings::default());fs::remove_dir_all(p.root).unwrap();
@@ -459,7 +460,7 @@ mod tests {
     }
     #[test] fn settings_reset_and_navigation_still_work_with_renderer_entry() {
         use super::super::controls::Nav;
-        let mut u=Ui::default();u.started=true;u.settings.scale=2;u.settings.fps=true;u.open(Page::Settings);
+        let mut u=Ui::default();u.started=true;u.settings.scale=2;u.settings.fps=false;u.open(Page::Settings);
         u.nav(Nav::Up);assert_eq!(u.selected,5);u.nav(Nav::Down);assert_eq!(u.selected,0);
         u.settings.renderer=super::super::graphics::Backend::Vulkan;
         u.selected=4;assert!(matches!(u.nav(Nav::A),Command::Settings));assert_eq!(u.settings,Settings{renderer:super::super::graphics::Backend::Vulkan,..Settings::default()});

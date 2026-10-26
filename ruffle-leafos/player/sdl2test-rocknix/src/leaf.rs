@@ -792,7 +792,7 @@ pub async fn run() -> Result<(), String> {
             vec![d,d,d,a],vec![d,a],vec![d,d,d,d,a],vec![d,a],vec![]]
     } else {
         vec![if pick_slot{vec![a]}else{vec![]},vec![Button::Guide],vec![d,d,d,d,d,a],
-            vec![r,d,r,d,a],vec![],vec![b,b],vec![],vec![Button::Guide],
+            vec![r,d,r,d,a,a],vec![],vec![b,b],vec![],vec![Button::Guide],
             vec![d,d,d,a],vec![d,a],vec![d,d,d,d,Button::Y],vec![d,a],vec![]]
     };
     let mut experience_phase=0;
