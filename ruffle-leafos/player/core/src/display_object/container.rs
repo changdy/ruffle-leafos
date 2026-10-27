@@ -1170,10 +1170,12 @@ pub struct RenderIter<'gc> {
 
 impl<'gc> RenderIter<'gc> {
     fn from_container(src: DisplayObjectContainer<'gc>) -> Self {
+        let snapshot = src.raw_container().render_list.clone();
+        let len = snapshot.len();
         Self {
-            src: src.raw_container().render_list.clone(),
+            src: snapshot,
             i: 0,
-            neg_i: src.num_children(),
+            neg_i: len,
         }
     }
 }
@@ -1214,3 +1216,44 @@ impl<'gc> DoubleEndedIterator for RenderIter<'gc> {
 }
 
 impl ExactSizeIterator for RenderIter<'_> {}
+
+#[cfg(test)]
+mod snapshot_tests {
+    use super::*;
+    use crate::player::PlayerBuilder;
+
+    #[test]
+    fn render_iterator_keeps_snapshot_across_list_replacement_and_mixed_iteration() {
+        let player = PlayerBuilder::new().with_movie(SwfMovie::empty(9, None)).build();
+        player.lock().unwrap().mutate_with_update_context(|context| {
+            let parent = MovieClip::new(context.root_swf.clone(), context.gc());
+            let mut empty = parent.iter_render_list();
+            assert_eq!(empty.len(), 0);
+            assert!(empty.next().is_none());
+            assert!(empty.next_back().is_none());
+
+            let a = MovieClip::new(context.root_swf.clone(), context.gc());
+            let b = MovieClip::new(context.root_swf.clone(), context.gc());
+            let c = MovieClip::new(context.root_swf.clone(), context.gc());
+            let replacement = MovieClip::new(context.root_swf.clone(), context.gc());
+            parent.replace_at_depth(context, a.into(), 1);
+            parent.replace_at_depth(context, b.into(), 2);
+            parent.replace_at_depth(context, c.into(), 3);
+            let mut snapshot = parent.iter_render_list();
+            assert_eq!(snapshot.size_hint(), (3, Some(3)));
+            let removed = parent.replace_at_depth(context, replacement.into(), 2).unwrap();
+            assert!(DisplayObject::ptr_eq(removed, b.into()));
+
+            assert!(DisplayObject::ptr_eq(snapshot.next().unwrap(), a.into()));
+            assert!(DisplayObject::ptr_eq(snapshot.next_back().unwrap(), c.into()));
+            assert_eq!(snapshot.len(), 1);
+            assert!(DisplayObject::ptr_eq(snapshot.next().unwrap(), b.into()));
+            assert_eq!(snapshot.len(), 0);
+            assert!(snapshot.next().is_none());
+            assert!(snapshot.next_back().is_none());
+            let current: Vec<_> = parent.iter_render_list().collect();
+            assert_eq!(current.len(), 3);
+            assert!(DisplayObject::ptr_eq(current[1], replacement.into()));
+        });
+    }
+}

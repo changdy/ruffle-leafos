@@ -25,13 +25,16 @@
     "Cargo.toml": "8d8014a6ad65088f2d4f3bdf99e58420c08da7417a8d574d1509f19c6b025a59",
     "sdl2test-rocknix/src/vulkan_backend.rs": "e5a8afdbc806ccdbfdbe05977b8043f4be4e23a03acc2889b2912aa76ef97320",
     "core/src/character.rs": "45b8bc4740fdfd41473ea9ff59ee8e8adce4621ec4475c3d57ec2a7aeb49e492",
-    "core/src/display_object/graphic.rs": "758e70ba2e51a50cc0af813fa7bcded33463b407804898866eb23845bb01c27b",
+    "core/src/display_object/graphic.rs": "74d87e56e7364d6f94328df36d49bece82e06c2021242982539d810730913978",
     "core/src/library.rs": "3f2a97a8d934790595920560808542575eaf4c3b808bd17890965a9ddfaae2a3",
     "core/src/lib.rs": "1b573566903636b5d040e020c78b6f3cff02666c17e6660c7e02d3a68fb8c4ed",
     "core/src/render_metrics.rs": "357a1b458a054ff3c3fb3818efe55efa9898dadb5ced6e5760bf6ace9bed10a2",
     "sdl2test-rocknix/src/performance.rs": "e3df9720685b7b58482d85daefcf5c97255d77afbef9b8de96bacbfcd2fba549",
     "core/src/frame_lifecycle.rs": "3a75e5888c7904542e7ca9767ea4fc52e5ab720a9bf06f06f98836872adeda35",
-    "core/src/static_render_resources.rs": "3957900ba52d3b2ad6a0f2e56885c5e919aabf839c4e1bbd121700f711f5fb41"
+    "core/src/static_render_resources.rs": "3957900ba52d3b2ad6a0f2e56885c5e919aabf839c4e1bbd121700f711f5fb41",
+    "core/src/display_object.rs": "26d0688faaf6de7398c37c9231fd81b2e725047e9feb5f44f1c9d9dc9c345ae5",
+    "core/src/display_object/container.rs": "73c9ddf94ca4e707d070d82eafaa035ff746952f05e0a015d011dd8426035355",
+    "core/src/display_object/movie_clip.rs": "adeeeedc141b2cf53875d322ce217be236a76f37192f490ce87b26828ca76723"
   },
   "verified_leaf": {
     "version": "0.13.0",

@@ -83,6 +83,8 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 
 新建游戏不批量写十份方案。`Mapping::group` 仅为方案 1、2 提供默认键位；3—10 的 19 个绑定全为 `None`，摇杆为 `Stick::None`、精调与连发关闭。全空映射允许读取、保存、应用并写入 `selected.rmap`，便于清空已有方案或进入空方案编辑。已有槽位文件优先于默认值，不自动清空旧数据。缺少新方案 1 时可读旧此游戏 rmap，旧全局按键与 ROM 旁 cfg 不自动叠加。只有主动保存才升级旧映射并保留备份。按键按路径识别，进度按内容识别，两者迁移规则不同；具体限制与故障验收见[工程进度](progress.md)。
 
+显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[显示树性能报告](validation/bvn33-traversal-20261027.md)。
+
 ## 按需性能诊断
 
 播放器接受 `--trace-performance`，默认关闭；需在已有 Leaf 启动环境中使用，可配合 `--diagnostic-seconds`、显式 `--renderer` 及独立 `--storage-dir`/`--controls-dir`。它只增加日志，不改变回收策略、帧调度或渲染接口。实现见 `sdl2test-rocknix/src/performance.rs` 和 `core/src/render_metrics.rs`。

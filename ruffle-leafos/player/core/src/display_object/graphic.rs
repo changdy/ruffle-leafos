@@ -148,7 +148,7 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
     }
 
     fn construct_frame(self, context: &mut UpdateContext<'gc>) {
-        if self.movie().is_action_script_3() && self.object2().is_none() {
+        if self.object2().is_none() && self.0.shared.get().movie.is_action_script_3() {
             let class_object = self
                 .0
                 .class

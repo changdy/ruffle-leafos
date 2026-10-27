@@ -2389,6 +2389,7 @@ pub trait TDisplayObject<'gc>:
     }
 
     /// Run any frame scripts (if they exist and this object needs to run them).
+    #[inline]
     fn run_frame_scripts(self, context: &mut UpdateContext<'gc>) {
         if let Some(container) = self.as_container() {
             for child in container.iter_render_list() {

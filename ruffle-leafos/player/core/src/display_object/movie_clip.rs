@@ -270,6 +270,11 @@ impl<'gc> MovieClipData<'gc> {
 }
 
 impl<'gc> MovieClip<'gc> {
+    /// Inspect the current shared movie without incrementing its Arc count.
+    fn is_action_script_3(self) -> bool {
+        self.0.shared.get().is_action_script_3()
+    }
+
     pub fn downgrade(self) -> MovieClipWeak<'gc> {
         MovieClipWeak(Gc::downgrade(self.0))
     }
@@ -422,7 +427,7 @@ impl<'gc> MovieClip<'gc> {
 
     /// Execute all other timeline actions on this object.
     pub fn run_frame_avm1(self, context: &mut UpdateContext<'gc>) {
-        if !self.movie().is_action_script_3() {
+        if !self.is_action_script_3() {
             // Run my load/enterFrame clip event.
             let is_load_frame = !self.0.contains_flag(MovieClipFlags::INITIALIZED);
             if is_load_frame {
@@ -905,7 +910,7 @@ impl<'gc> MovieClip<'gc> {
     ///
     /// In AVM1, no-op gotos have no effects, so this does nothing.
     fn no_op_goto(self, context: &mut UpdateContext<'gc>) {
-        if self.movie().is_action_script_3() {
+        if self.is_action_script_3() {
             // Despite not running, the goto still overwrites the currently enqueued frame.
             self.0.queued_goto_frame.set(None);
             // Pretend we actually did a goto, but don't do anything.
@@ -1181,7 +1186,7 @@ impl<'gc> MovieClip<'gc> {
     ) -> Option<FrameNumber> {
         // In AVM1, frame labels are case insensitive (ASCII).
         // They are case sensitive in AVM2.
-        if self.movie().is_action_script_3() {
+        if self.is_action_script_3() {
             self.0
                 .shared_cell()
                 .frame_labels_map
@@ -1741,7 +1746,7 @@ impl<'gc> MovieClip<'gc> {
                                 params: &GotoPlaceObject<'_>| {
             use swf::PlaceObjectAction;
             let child_entry = clip.child_by_depth(params.depth());
-            if self.movie().is_action_script_3() && is_implicit && child_entry.is_none() {
+            if self.is_action_script_3() && is_implicit && child_entry.is_none() {
                 // Looping gotos do not run their PlaceObject commands at goto
                 // time. They are instead held to frameConstructed like normal
                 // playback.
@@ -1825,7 +1830,7 @@ impl<'gc> MovieClip<'gc> {
                 context,
                 false,
                 frame != frame_before_rewind,
-                self.movie().is_action_script_3(),
+                self.is_action_script_3(),
             );
         } else {
             self.0.current_frame.set(clamped_frame);
@@ -1859,7 +1864,7 @@ impl<'gc> MovieClip<'gc> {
         // TODO [KJ] This logic is not 100% tested. It's possible it's a bit
         //    different in reality, but the spirit is there :)
 
-        let is_candidate_for_removal = if self.movie().is_action_script_3() {
+        let is_candidate_for_removal = if self.is_action_script_3() {
             old_object.place_frame() > frame || old_object.placed_by_avm2_script()
         } else {
             old_object.depth() < AVM_DEPTH_BIAS
@@ -2182,7 +2187,7 @@ impl<'gc> MovieClip<'gc> {
     }
 
     fn enabled(self, context: &mut UpdateContext<'gc>) -> bool {
-        if !self.movie().is_action_script_3() {
+        if !self.is_action_script_3() {
             self.get_avm1_boolean_property(istr!(context, "enabled"), context, |_| true)
         } else {
             self.avm2_enabled()
@@ -2198,7 +2203,7 @@ impl<'gc> MovieClip<'gc> {
     }
 
     fn use_hand_cursor(self, context: &mut UpdateContext<'gc>) -> bool {
-        if !self.movie().is_action_script_3() {
+        if !self.is_action_script_3() {
             self.get_avm1_boolean_property(istr!(context, "useHandCursor"), context, |_| true)
         } else {
             self.avm2_use_hand_cursor()
@@ -2500,7 +2505,7 @@ impl<'gc> TDisplayObject<'gc> for MovieClip<'gc> {
             return;
         }
 
-        if self.movie().is_action_script_3() {
+        if self.is_action_script_3() {
             let is_playing = self.playing();
 
             if is_playing {
@@ -2531,7 +2536,7 @@ impl<'gc> TDisplayObject<'gc> for MovieClip<'gc> {
     fn construct_frame(self, context: &mut UpdateContext<'gc>) {
         // AVM1 code expects to execute in line with timeline instructions, so
         // it's exempted from frame construction.
-        if self.movie().is_action_script_3()
+        if self.is_action_script_3()
             && (self.frames_loaded() >= 1 || self.header_frames() == 0)
         {
             let is_load_frame = !self.0.initialized();
@@ -2690,7 +2695,7 @@ impl<'gc> TDisplayObject<'gc> for MovieClip<'gc> {
 
         self.set_default_instance_name(context);
 
-        if !self.movie().is_action_script_3() {
+        if !self.is_action_script_3() {
             context.avm1.add_to_exec_list(context.gc(), self);
 
             self.construct_as_avm1_object(context, init_object, instantiated_by, run_frame);
@@ -2737,7 +2742,7 @@ impl<'gc> TDisplayObject<'gc> for MovieClip<'gc> {
     }
 
     fn on_parent_removed(self, context: &mut UpdateContext<'gc>) {
-        if self.movie().is_action_script_3() {
+        if self.is_action_script_3() {
             context.orphan_manager.add_orphan_obj(self.into())
         }
     }
@@ -2925,7 +2930,7 @@ impl<'gc> TInteractiveObject<'gc> for MovieClip<'gc> {
         require_button_mode: bool,
     ) -> Option<InteractiveObject<'gc>> {
         // Don't do anything if run in an AVM2 context.
-        if self.movie().is_action_script_3() {
+        if self.is_action_script_3() {
             return None;
         }
 
@@ -3027,7 +3032,7 @@ impl<'gc> TInteractiveObject<'gc> for MovieClip<'gc> {
         require_button_mode: bool,
     ) -> Avm2MousePick<'gc> {
         // Don't do anything if run in an AVM1 context.
-        if !self.movie().is_action_script_3() {
+        if !self.is_action_script_3() {
             return Avm2MousePick::Miss;
         }
 
@@ -3204,7 +3209,7 @@ impl<'gc> TInteractiveObject<'gc> for MovieClip<'gc> {
             return true;
         }
 
-        let is_avm1 = !self.movie().is_action_script_3();
+        let is_avm1 = !self.is_action_script_3();
         if is_avm1 && self.tab_index().is_some() {
             return true;
         }
@@ -4110,7 +4115,7 @@ impl<'gc, 'a> MovieClipShared<'gc> {
         tag_code: TagCode,
         reader: &mut SwfStream<'a>,
     ) -> Result<(), Error> {
-        if !self.movie().is_action_script_3() {
+        if !self.is_action_script_3() {
             match tag_code {
                 TagCode::DoAbc => tracing::warn!("DoABC tag in AVM1 movie"),
                 TagCode::DoAbc2 => tracing::warn!("DoABC2 tag in AVM1 movie"),
@@ -4652,6 +4657,10 @@ impl<'gc> MovieClipShared<'gc> {
             loader_info,
             importer_movie,
         }
+    }
+
+    fn is_action_script_3(&self) -> bool {
+        self.swf.movie.is_action_script_3()
     }
 
     fn movie(&self) -> Arc<SwfMovie> {
