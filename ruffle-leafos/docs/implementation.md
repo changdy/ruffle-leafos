@@ -64,7 +64,7 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 
 `core/src/display_object/graphic.rs` 在首次实际显示时创建静态 `ShapeHandle`，在所有实例间共享；屏外剔除、形状命中检测和预加载不触发 GPU 上传。`core/src/character.rs` 的位图库通过弱引用复用仍存活的纹理，压缩 SWF 素材继续保留，可重新解码。
 
-Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static_render_resources()`，遍历已知电影的静态图形。保留本帧使用的句柄，释放本帧未显示的缓存；帧命令、其他图形或正在执行的绘制仍可持有资源。动态 BitmapData、缓存位图、滤镜与游戏主动保留的数据不在此静态缓存回收范围内。回收按已显示的完整帧执行，不能在局部/离屏绘制中途调用。重新显示可能产生解码和上传成本，不能据此保证所有游戏不再 OOM。
+Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static_render_resources()`。首次调用遍历已知电影，仅将已分配句柄加入活动队列；随后新建/重载资源自行登记，逐帧只遍历活动队列，不再重复扫描全库。队列使用 `Weak<StaticRenderResource>`，每份共享资源最多登记一次；本帧未使用的句柄释放后移出队列，再次显示时可重新入队。弱引用不持有电影或 GC 对象，未启用回收的前端不建立队列。实现见 `core/src/static_render_resources.rs` 与 `core/src/library.rs`。保留本帧使用的句柄，释放本帧未显示的缓存；帧命令、其他图形或正在执行的绘制仍可持有资源。动态 BitmapData、缓存位图、滤镜与游戏主动保留的数据不在此静态缓存回收范围内。回收按已显示的完整帧执行，不能在局部/离屏绘制中途调用。重新显示可能产生解码和上传成本，不能据此保证所有游戏不再 OOM。
 
 用户可直接使用的数据路径列于[README](../README.md#apps-数据管理与数据路径)。正式启动器通过 Leaf 的 `USERDATA_PATH`、`SAVES_PATH`、`LOGS_PATH` 选择当前卡；用户配置与进度不写入可升级的 pak 目录。
 
@@ -91,6 +91,8 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 
 `shapes`、`bitmaps`、`bitmap_reloads`、`evictions` 记录静态图形创建、位图成功上传、弱缓存失效后的重载和缓存句柄释放次数；`bitmap_rgba_mib` 是宽×高×4 的等价累计尺寸，不是实际驻留内存。`shape_ms` 包含位图解码/上传，且包含于 `render_ms`；Vulkan 的 `vk_submit_ms` 包含队列提交和 fence 等待，`vk_poll_ms`、`vk_present_ms` 记录驱动轮询与最终 GLES 采样/`glFinish`，也包含于 `render_ms`。细分项不能与上层耗时重复相加，也不能将墙钟等待等同 GPU 纯执行时间。核心计数器按线程启用和取出，关闭时不读取高频计时器；不要跨线程汇总时误当全局统计。实测示例及限制见[拳皇性能报告](validation/kof-performance-20261026.md)。
 
+`preload_ms`、`enter_ms`、`construct_ms`、`scripts_ms`、`exit_ms`、`audio_ms`、`mouse_ms` 和 `gc_ms` 分别记录预加载、AVM2 主帧生命周期阶段、声音更新、鼠标更新及 GC 债务处理。Construct 包含 frameConstructed 广播，Scripts/Exit 包含各自清理；Enter 的事件处理可触发嵌套 goto/构建，因此不能把它等同纯 AVM2 字节码耗时。这些计时位于 tick/update 内，彼此可能嵌套，不能与 tick 或 render 简单求和；AVM1 帧脚本未单独计入 AVM2 Scripts。关闭追踪时跳过时钟读取。3.3 的实测与限制见[性能报告](validation/bvn33-performance-20261027.md)。
+
 ## 离线 SWF 位图素材优化
 
 `scripts/optimize_swf_bitmaps.py` 可为用户本地 AVM1 SWF 生成独立实验副本，使用 Python 标准库裁掉私有无损位图的零色外边并合并完全相同的内部位图，同步重写填充 ID/矩阵，不修改脚本、音频和帧调度。只支持可完整解析并安全重写的 FWS/CWS、DefineBitsLossless2 和 Shape 1—4；导出或其他引用保护、平铺填充、分数 twip 补偿及未知结构按保守规则跳过或拒绝。拒绝覆盖原文件与已有输出/报告。
@@ -111,7 +113,7 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.7.0-rebuil
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。
 
-`test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。两个静态资源测试可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。该 Rust 测试框架与应用 ELF 的系统要求可能不同；本轮测试框架需要 GLIBC 2.39，因此仅在隔离调试目录通过工具链自带的匹配加载器、libc/libm 执行，没有替换设备系统库。详情见[验证记录](validation/fighting-games-20261026.json)。
+`test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。五个静态资源测试可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。该 Rust 测试框架与应用 ELF 的系统要求可能不同；本轮测试框架需要 GLIBC 2.39，因此仅在隔离调试目录通过工具链自带的匹配加载器、libc/libm 执行，没有替换设备系统库。详情见[验证记录](validation/fighting-games-20261026.json)。
 
 依赖 Git、Python、Node.js、JDK 17、Rust 1.94.0（Windows GNU 主机及 `aarch64-unknown-linux-gnu` 标准库）、w64devkit 2.1.0、Zig 0.14.1、ARM GNU 14.2 SDK。版本与下载校验见 [Rust 工具锁](../adapter/rust-toolchain.lock.json)、[工具来源锁](../adapter/references.lock.json)和 [ARM SDK 锁](../arm-gnu.lock.json)。
 

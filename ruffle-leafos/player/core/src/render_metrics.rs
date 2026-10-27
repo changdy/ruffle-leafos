@@ -13,6 +13,20 @@ pub struct RenderMetrics {
     pub decode_us: u64,
     pub upload_us: u64,
     pub evictions: u64,
+    pub phases_us: [u64; 8],
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum Phase {
+    Preload, Enter, Construct, Scripts, Exit, Audio, Mouse, Gc,
+}
+
+pub(crate) fn phase(phase: Phase, start: Option<Instant>) {
+    if let Some(start) = start {
+        let mut metrics = METRICS.get();
+        metrics.phases_us[phase as usize] += start.elapsed().as_micros() as u64;
+        METRICS.set(metrics);
+    }
 }
 
 thread_local! {

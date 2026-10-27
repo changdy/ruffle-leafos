@@ -15,10 +15,11 @@ use gc_arena::barrier::unlock;
 use gc_arena::lock::Lock;
 use gc_arena::{Collect, Gc, Mutation};
 use ruffle_common::utils::HasPrefixField;
-use ruffle_render::backend::ShapeHandle;
 use ruffle_render::commands::CommandHandler;
-use std::cell::{Cell, OnceCell, RefCell, RefMut};
+use std::cell::{OnceCell, RefCell, RefMut};
+use std::rc::Rc;
 use std::sync::Arc;
+use crate::static_render_resources::{StaticRenderResource, StaticRenderResources};
 
 #[derive(Clone, Collect, Copy)]
 #[collect(no_drop)]
@@ -57,8 +58,7 @@ impl<'gc> Graphic<'gc> {
             bounds: swf_shape.shape_bounds,
             // Registering a shape also uploads its bitmap fills. Large games can
             // exhaust shared GPU/system memory before any fighter is displayed.
-            render_handle: RefCell::new(None),
-            rendered: Cell::new(false),
+            render_resource: Rc::default(),
             shape: swf_shape,
             movie,
         };
@@ -80,8 +80,7 @@ impl<'gc> Graphic<'gc> {
         let shared = GraphicShared {
             id: 0,
             bounds: Default::default(),
-            render_handle: RefCell::new(None),
-            rendered: Cell::new(false),
+            render_resource: Rc::default(),
             shape: swf::Shape {
                 version: 32,
                 id: 0,
@@ -121,14 +120,9 @@ impl<'gc> Graphic<'gc> {
         unlock!(Gc::write(mc, self.0), GraphicData, shared).set(shared);
     }
 
-    /// Called after a complete frame by memory-constrained frontends.
-    pub fn collect_render_resource(self) {
-        let shared = self.0.shared.get();
-        if !shared.rendered.replace(false) {
-            if shared.render_handle.borrow_mut().take().is_some() {
-                crate::render_metrics::evicted();
-            }
-        }
+    /// Seed collection once if a frontend enables it after the first render.
+    pub(crate) fn track_cached_render_resource(self, resources: &mut StaticRenderResources) {
+        resources.track(&self.0.shared.get().render_resource);
     }
 }
 
@@ -215,7 +209,7 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
             if shared.shape.shape.is_empty() {
                 return;
             }
-            let mut render_handle = shared.render_handle.borrow_mut();
+            let mut render_handle = shared.render_resource.handle.borrow_mut();
             if render_handle.is_none() {
                 let Some(library) = context.library.library_for_movie(shared.movie.clone()) else {
                     return;
@@ -226,8 +220,11 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
                     &MovieLibrarySource { library },
                 ));
                 crate::render_metrics::shape(start);
+                drop(render_handle);
+                context.library.track_static_render_resource(&shared.render_resource);
+                render_handle = shared.render_resource.handle.borrow_mut();
             }
-            shared.rendered.set(true);
+            shared.render_resource.mark_rendered();
             if let Some(render_handle) = render_handle.as_ref() {
                 context.commands.render_shape(
                     render_handle.clone(),
@@ -305,8 +302,7 @@ struct GraphicShared {
     id: CharacterId,
     shape: swf::Shape,
     /// Shared by every instance; only allocate GPU resources on first render.
-    render_handle: RefCell<Option<ShapeHandle>>,
-    rendered: Cell<bool>,
+    render_resource: Rc<StaticRenderResource>,
     bounds: Rectangle<Twips>,
     movie: Arc<SwfMovie>,
 }
@@ -330,9 +326,10 @@ mod tests {
             }, context.root_swf.clone());
             let instance = Graphic(Gc::new(context.gc(), graphic.0.as_ref().clone()));
             let shared = graphic.0.shared.get();
-            assert!(shared.render_handle.borrow().is_none());
+            context.library.collect_static_render_resources();
+            assert!(shared.render_resource.handle.borrow().is_none());
             graphic.hit_test_shape(context, Point::default(), HitTestOptions::empty());
-            assert!(shared.render_handle.borrow().is_none());
+            assert!(shared.render_resource.handle.borrow().is_none());
             let weak;
             {
                 let mut cache_draws = vec![];
@@ -345,14 +342,14 @@ mod tests {
                     is_offscreen: true, use_bitmap_cache: true,
                 };
                 graphic.render_self(&mut render);
-                weak = Arc::downgrade(&shared.render_handle.borrow().as_ref().unwrap().0);
+                weak = Arc::downgrade(&shared.render_resource.handle.borrow().as_ref().unwrap().0);
                 instance.render_self(&mut render);
                 assert!(Arc::ptr_eq(&weak.upgrade().unwrap(),
-                    &instance.0.shared.get().render_handle.borrow().as_ref().unwrap().0));
+                    &instance.0.shared.get().render_resource.handle.borrow().as_ref().unwrap().0));
             }
-            graphic.collect_render_resource();
+            context.library.collect_static_render_resources();
             assert!(weak.upgrade().is_some(), "current frame must retain its resources");
-            graphic.collect_render_resource();
+            context.library.collect_static_render_resources();
             assert!(weak.upgrade().is_none(), "unused animation frames must release resources");
         });
     }

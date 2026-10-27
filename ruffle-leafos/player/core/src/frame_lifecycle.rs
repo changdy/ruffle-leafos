@@ -78,26 +78,33 @@ pub fn run_all_phases_avm2(context: &mut UpdateContext<'_>) {
     }
 
     *context.frame_phase = FramePhase::Enter;
+    let phase_at = crate::render_metrics::start();
     OrphanManager::each_orphan_obj(context, |orphan, context| {
         orphan.enter_frame(context);
     });
     stage.enter_frame(context);
+    crate::render_metrics::phase(crate::render_metrics::Phase::Enter, phase_at);
 
     *context.frame_phase = FramePhase::Construct;
+    let phase_at = crate::render_metrics::start();
     OrphanManager::each_orphan_obj(context, |orphan, context| {
         orphan.construct_frame(context);
     });
     stage.construct_frame(context);
     broadcast_frame_constructed(context);
+    crate::render_metrics::phase(crate::render_metrics::Phase::Construct, phase_at);
 
     *context.frame_phase = FramePhase::FrameScripts;
+    let phase_at = crate::render_metrics::start();
     OrphanManager::each_orphan_obj(context, |orphan, context| {
         orphan.run_frame_scripts(context);
     });
     stage.run_frame_scripts(context);
     run_frame_script_cleanup(context);
+    crate::render_metrics::phase(crate::render_metrics::Phase::Scripts, phase_at);
 
     *context.frame_phase = FramePhase::Exit;
+    let phase_at = crate::render_metrics::start();
     broadcast_frame_exited(context);
 
     // We cannot easily remove dead `GcWeak` instances from the orphan list
@@ -106,6 +113,7 @@ pub fn run_all_phases_avm2(context: &mut UpdateContext<'_>) {
     // This performs special handling of clips which became orphaned as
     // a result of a RemoveObject tag - see `cleanup_dead_orphans` for details.
     context.orphan_manager.cleanup_dead_orphans(context.gc());
+    crate::render_metrics::phase(crate::render_metrics::Phase::Exit, phase_at);
 
     *context.frame_phase = FramePhase::Idle;
 }

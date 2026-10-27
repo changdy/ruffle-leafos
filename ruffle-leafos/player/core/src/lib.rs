@@ -38,6 +38,7 @@ mod net_connection;
 mod orphan_manager;
 pub mod pixel_bender;
 pub mod render_metrics;
+mod static_render_resources;
 mod player;
 mod prelude;
 pub mod socket;

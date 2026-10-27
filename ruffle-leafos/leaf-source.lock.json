@@ -6,7 +6,7 @@
   "relationship": "Leaf frontend derived from the pinned public base; does not reproduce all original leaf-12 private patches.",
   "leaf_files_sha256": {
     "Cargo.lock": "15a1725eaaa480bfc23a0aad6ed0fbe6ff895f17ffad8c5186525e3d1bf3fa46",
-    "core/src/player.rs": "e97f1303a105e06d68bfdf56ba3ad75ddc4003e2aa9e0d0b12fd2b3306a8d049",
+    "core/src/player.rs": "a54dc697caae015bbc1c8f18302139f651bee43e3a726dffc8c747fea52027eb",
     "sdl2test-rocknix/Cargo.toml": "8524769f08d3aea55f0bd99e3b5137c4b9058f9c0c351771edd1af9b1d9c8e5b",
     "sdl2test-rocknix/src/controls.rs": "851610047a5293cf897702d4930d469fdf8fa95b09f9c3e7491cfd323e43b94c",
     "sdl2test-rocknix/src/cursor.rs": "2f321787481cafb5fc1b621734995baf6163db9232e2290afbf8e1599db63666",
@@ -25,11 +25,13 @@
     "Cargo.toml": "8d8014a6ad65088f2d4f3bdf99e58420c08da7417a8d574d1509f19c6b025a59",
     "sdl2test-rocknix/src/vulkan_backend.rs": "e5a8afdbc806ccdbfdbe05977b8043f4be4e23a03acc2889b2912aa76ef97320",
     "core/src/character.rs": "45b8bc4740fdfd41473ea9ff59ee8e8adce4621ec4475c3d57ec2a7aeb49e492",
-    "core/src/display_object/graphic.rs": "f9d8d4f2fd8b12d738d8aaf222de0dc66fa420ae6ad53b3b85edad75c797d642",
-    "core/src/library.rs": "883cf26b1521404465e1b5dfc18e133361b3a954a7e514b41a71e094e724f304",
-    "core/src/lib.rs": "53d3f109e7e5ca64bc9e32e2d3eed5125ab93f1b05fc89d8081a5b9e446671e9",
-    "core/src/render_metrics.rs": "cc78ffbbb0270500a1b400ca993f9b13d04c4e5a629a631084176aa755033727",
-    "sdl2test-rocknix/src/performance.rs": "23f4f726d50c47322d7bd2d81cdb9e083b70f08fcdb9d8ab82b33cdbb741cb04"
+    "core/src/display_object/graphic.rs": "758e70ba2e51a50cc0af813fa7bcded33463b407804898866eb23845bb01c27b",
+    "core/src/library.rs": "3f2a97a8d934790595920560808542575eaf4c3b808bd17890965a9ddfaae2a3",
+    "core/src/lib.rs": "1b573566903636b5d040e020c78b6f3cff02666c17e6660c7e02d3a68fb8c4ed",
+    "core/src/render_metrics.rs": "357a1b458a054ff3c3fb3818efe55efa9898dadb5ced6e5760bf6ace9bed10a2",
+    "sdl2test-rocknix/src/performance.rs": "e3df9720685b7b58482d85daefcf5c97255d77afbef9b8de96bacbfcd2fba549",
+    "core/src/frame_lifecycle.rs": "3a75e5888c7904542e7ca9767ea4fc52e5ab720a9bf06f06f98836872adeda35",
+    "core/src/static_render_resources.rs": "3957900ba52d3b2ad6a0f2e56885c5e919aabf839c4e1bbd121700f711f5fb41"
   },
   "verified_leaf": {
     "version": "0.13.0",

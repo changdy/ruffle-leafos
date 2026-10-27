@@ -53,7 +53,8 @@ impl Performance {
             "tasks_ms={:.3} tick_ms={:.3} render_ms={:.3} collect_ms={:.3} swap_ms={:.3} ",
             "max_tick_ms={:.3} max_render_ms={:.3} max_loop_ms={:.3} ",
             "shapes={} shape_ms={:.3} bitmaps={} bitmap_reloads={} bitmap_rgba_mib={:.3} ",
-            "decode_ms={:.3} upload_ms={:.3} evictions={} vk_submit_ms={:.3} vk_poll_ms={:.3} vk_present_ms={:.3}"),
+            "decode_ms={:.3} upload_ms={:.3} evictions={} vk_submit_ms={:.3} vk_poll_ms={:.3} vk_present_ms={:.3} ",
+            "preload_ms={:.3} enter_ms={:.3} construct_ms={:.3} scripts_ms={:.3} exit_ms={:.3} audio_ms={:.3} mouse_ms={:.3} gc_ms={:.3}"),
             elapsed.as_millis(), frames, target, paused, self.draws,
             self.tasks.as_secs_f64()*1000., self.tick.as_secs_f64()*1000.,
             self.render.as_secs_f64()*1000., self.collect.as_secs_f64()*1000.,
@@ -62,7 +63,11 @@ impl Performance {
             metrics.shapes, metrics.shape_us as f64/1000., metrics.bitmaps,
             metrics.bitmap_reloads, metrics.bitmap_rgba_bytes as f64/1048576.,
             metrics.decode_us as f64/1000., metrics.upload_us as f64/1000., metrics.evictions,
-            vulkan[0].as_secs_f64()*1000., vulkan[1].as_secs_f64()*1000., vulkan[2].as_secs_f64()*1000.);
+            vulkan[0].as_secs_f64()*1000., vulkan[1].as_secs_f64()*1000., vulkan[2].as_secs_f64()*1000.,
+            metrics.phases_us[0] as f64/1000., metrics.phases_us[1] as f64/1000.,
+            metrics.phases_us[2] as f64/1000., metrics.phases_us[3] as f64/1000.,
+            metrics.phases_us[4] as f64/1000., metrics.phases_us[5] as f64/1000.,
+            metrics.phases_us[6] as f64/1000., metrics.phases_us[7] as f64/1000.);
         *self = Self::default();
     }
 }

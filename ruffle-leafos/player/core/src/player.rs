@@ -2012,7 +2012,9 @@ impl Player {
             ),
             LoadBehavior::Blocking => (ExecutionLimit::none(), false),
         };
+        let preload_at = crate::render_metrics::start();
         let preload_finished = self.preload(&mut execution_limit);
+        crate::render_metrics::phase(crate::render_metrics::Phase::Preload, preload_at);
 
         if !preload_finished && !may_execute_while_streaming {
             return;
@@ -2022,7 +2024,9 @@ impl Player {
             // TODO: Is this order correct?
             run_all_phases_avm2(context);
             Avm1::run_frame(context);
+            let audio_at = crate::render_metrics::start();
             AudioManager::update_sounds(context);
+            crate::render_metrics::phase(crate::render_metrics::Phase::Audio, audio_at);
             LocalConnections::update_connections(context);
 
             // Only run the current list of callbacks - any callbacks added during callback execution
@@ -2450,10 +2454,14 @@ impl Player {
         self.mutate_with_update_context(|context| {
             Self::update_drag(context);
         });
+        let mouse_at = crate::render_metrics::start();
         self.update_mouse_state(EnumSet::empty(), false, &mut false);
+        crate::render_metrics::phase(crate::render_metrics::Phase::Mouse, mouse_at);
 
         // GC
+        let gc_at = crate::render_metrics::start();
         self.gc_arena.borrow_mut().collect_debt();
+        crate::render_metrics::phase(crate::render_metrics::Phase::Gc, gc_at);
 
         rval
     }

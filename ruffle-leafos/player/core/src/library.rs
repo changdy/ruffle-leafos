@@ -8,6 +8,7 @@ use crate::font::{Font, FontDescriptor, FontLike, FontQuery, FontType};
 use crate::prelude::*;
 use crate::string::AvmString;
 use crate::tag_utils::SwfMovie;
+use crate::static_render_resources::{StaticRenderResource, StaticRenderResources};
 use gc_arena::collect::Trace;
 use gc_arena::{Collect, Mutation};
 use ruffle_render::backend::RenderBackend;
@@ -18,6 +19,8 @@ use crate::backend::ui::{FontDefinition, UiBackend};
 use crate::font::DefaultFont;
 use fnv::{FnvHashMap, FnvHashSet};
 use std::collections::HashMap;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::{Arc, Weak};
 use weak_table::{PtrWeakKeyHashMap, WeakValueHashMap, traits::WeakElement};
 
@@ -427,6 +430,9 @@ impl<'gc> MovieLibraries<'gc> {
 #[derive(Collect)]
 #[collect(no_drop)]
 pub struct Library<'gc> {
+    /// None until a memory-constrained frontend first requests collection.
+    #[collect(require_static)]
+    static_render_resources: RefCell<Option<StaticRenderResources>>,
     /// All the movie libraries.
     movie_libraries: MovieLibraries<'gc>,
 
@@ -459,6 +465,7 @@ pub struct Library<'gc> {
 impl<'gc> Library<'gc> {
     pub fn empty() -> Self {
         Self {
+            static_render_resources: RefCell::new(None),
             movie_libraries: MovieLibraries::new(),
             device_fonts: Default::default(),
             global_fonts: Default::default(),
@@ -485,14 +492,26 @@ impl<'gc> Library<'gc> {
     /// Keep static resources used by this frame; allow older animation frames
     /// to release their GPU allocations without discarding compressed SWF data.
     pub fn collect_static_render_resources(&self) {
-        for movie in self.known_movies() {
-            if let Some(library) = self.library_for_movie(movie) {
-                for character in library.characters.values() {
-                    if let Character::Graphic(graphic) = character {
-                        graphic.collect_render_resource();
+        let mut resources = self.static_render_resources.borrow_mut();
+        if resources.is_none() {
+            let mut initial = StaticRenderResources::default();
+            for movie in self.known_movies() {
+                if let Some(library) = self.library_for_movie(movie) {
+                    for character in library.characters.values() {
+                        if let Character::Graphic(graphic) = character {
+                            graphic.track_cached_render_resource(&mut initial);
+                        }
                     }
                 }
             }
+            *resources = Some(initial);
+        }
+        resources.as_mut().unwrap().collect();
+    }
+
+    pub(crate) fn track_static_render_resource(&self, resource: &Rc<StaticRenderResource>) {
+        if let Some(resources) = self.static_render_resources.borrow_mut().as_mut() {
+            resources.track(resource);
         }
     }
 
