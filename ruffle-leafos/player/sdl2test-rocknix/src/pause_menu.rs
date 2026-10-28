@@ -220,7 +220,7 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{t("Flash · 已暂停")}else{"Flash"},t("继续游戏"),FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
-        let rows=[t("继续"),t("按键设置"),t("鼠标光标"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("快捷键说明"),t("关于"),"语言 / Language",t("保存并退出")];
+        let rows=[t("继续"),t("按键设置"),t("鼠标光标"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("快捷键说明"),t("关于"),t("语言"),t("保存并退出")];
         let details=[String::new(),crate::tr!("◀ 方案 {} ▶", "◀ Profile {} ▶",slot+1),
             String::new(),t("原生进度").into(),crate::tr!("存档 {} / 5", "Save {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {

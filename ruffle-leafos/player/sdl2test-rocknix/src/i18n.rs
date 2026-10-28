@@ -162,12 +162,12 @@ mod tests {
         use super::super::{controls, cursor, experience};
         set(Language::English);
         let check = |text: &str| assert!(!text.chars().any(|c| ('\u{4e00}'..='\u{9fff}').contains(&c)), "Untranslated: {text}");
-        let mut ui = experience::Ui::default();
+        let mut ui = experience::Ui{language:Language::English,..Default::default()};
         for page in [experience::Page::Saves, experience::Page::Settings, experience::Page::Renderer,
-            experience::Page::Manager, experience::Page::Confirm, experience::Page::About, experience::Page::Shortcuts] {
+            experience::Page::Manager, experience::Page::Language, experience::Page::Confirm, experience::Page::About, experience::Page::Shortcuts] {
             ui.open(page);
             check(&ui.heading());
-            for row in ui.rows() { if row != "语言 / Language" { check(&row); } }
+            for row in ui.rows() { if row != Language::Chinese.label() { check(&row); } }
         }
         for page in [controls::Page::Edit, controls::Page::Picker, controls::Page::Cursor, controls::Page::Confirm] {
             let mut controls = controls::Controls::default();
@@ -180,6 +180,39 @@ mod tests {
         for slot in [experience::Slot::default(), experience::Slot{broken:true,..Default::default()},
             experience::Slot{time:1,recovered:true,..Default::default()}] { check(&slot.detail()); }
         check(cursor::Style::RingDot.name()); check(cursor::Color::White.name());
+        set(Language::Chinese);
+    }
+
+    #[test]
+    fn english_control_notifications_include_success_recovery_and_write_failures() {
+        use super::super::{controls::{Controls, Mapping, Nav, Store, SAVE_ROW}, cursor, MouseSpeed};
+        let root=std::env::temp_dir().join(format!("ruffle-english-notifications-{}",std::process::id()));
+        let mut controls=Controls::new(Store::new(root.join("controls"),Path::new("/roms/English.swf")));
+        set(Language::English);
+        controls.switch_slot(1);
+        assert_eq!(controls.status,"Switched to control profile 2");
+        controls.begin(Mapping::group(1));
+        controls.nav(Nav::Y);
+        assert_eq!(controls.status,"Slow turbo 5/sec; save to keep");
+        controls.row=SAVE_ROW;
+        controls.nav(Nav::A);
+        assert_eq!(controls.status,"Saved");
+        controls.begin_cursor(cursor::Settings::default(),MouseSpeed::Normal);
+        controls.row=3;
+        controls.nav(Nav::Right);
+        assert_eq!(controls.status,"Mouse speed applied (this session)");
+        controls.row=5;
+        controls.nav(Nav::A);
+        assert_eq!(controls.status,"Global cursor saved and applied");
+        fs::write(root.join("blocked"),b"fixture").unwrap();
+        controls.store=Store::new(root.join("blocked/controls"),Path::new("/roms/English.swf"));
+        controls.switch_slot(0);
+        assert_eq!(controls.status,"Switched to control profile 1 (this session only; save failed)");
+        controls.begin(Mapping::group(0));
+        controls.row=SAVE_ROW;
+        controls.nav(Nav::A);
+        assert_eq!(controls.status,"Operation failed; original config kept. Check storage.");
+        fs::remove_dir_all(root).unwrap();
         set(Language::Chinese);
     }
 

@@ -1,6 +1,7 @@
 //! English UI catalog. Keys are the original Simplified Chinese labels.
 pub fn english(text: &str) -> Option<&'static str> {
     Some(match text {
+        "语言" => "Language",
         "十字上" => "D-pad Up",
         "十字下" => "D-pad Down",
         "十字左" => "D-pad Left",

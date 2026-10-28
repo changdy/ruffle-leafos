@@ -295,7 +295,7 @@ pub struct Ui {
 impl Ui {
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}if page==Page::Language{self.selected=usize::from(self.language==super::i18n::Language::English);}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Language=>"语言 / Language".into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("快捷键说明").into()
+        Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("快捷键说明").into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Language=>super::i18n::Language::ALL.iter().map(|language| format!("{}{}",language.label(),if *language==self.language{"  ✓"}else{""})).chain(std::iter::once(t("返回").into())).collect(),
@@ -303,7 +303,7 @@ impl Ui {
         Page::Settings=>self.settings.rows(),
         Page::Renderer=>vec![format!("OpenGL ES                         {}",if self.actual_renderer==super::graphics::Backend::OpenGlEs{t("使用中")}else{""}),
             crate::tr!("Vulkan（实验）                   {}", "Vulkan (experimental)           {}",if self.actual_renderer==super::graphics::Backend::Vulkan{t("使用中")}else if self.renderer_failed{t("上次启动失败")}else{""}),t("返回").into()],
-        Page::Manager=>vec![crate::tr!("游戏：  ◀  {}  ▶", "Game:  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or(t("暂无记录"))),t("清空此游戏的五个存档").into(),t("重置此游戏的按键配置").into(),t("清空所有游戏存档").into(),t("重置所有按键配置").into(),"语言 / Language".into(),t("返回 Leaf").into()],
+        Page::Manager=>vec![crate::tr!("游戏：  ◀  {}  ▶", "Game:  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or(t("暂无记录"))),t("清空此游戏的五个存档").into(),t("重置此游戏的按键配置").into(),t("清空所有游戏存档").into(),t("重置所有按键配置").into(),t("语言").into(),t("返回 Leaf").into()],
         Page::Confirm=>vec![t("取消").into(),t("确认").into()],Page::About|Page::Shortcuts=>vec![]
     }}
     pub fn nav(&mut self,nav:super::controls::Nav)->Command{

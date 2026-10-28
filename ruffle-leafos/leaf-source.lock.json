@@ -10,12 +10,12 @@
     "sdl2test-rocknix/Cargo.toml": "8524769f08d3aea55f0bd99e3b5137c4b9058f9c0c351771edd1af9b1d9c8e5b",
     "sdl2test-rocknix/src/controls.rs": "6bd2df3a86013c9863e526019968a76467651f46766278ce3627695cfc3fe4ea",
     "sdl2test-rocknix/src/cursor.rs": "adf04dbe0120036013d7da64254ebd665437e3521400e56ac5f2e69cb1b01045",
-    "sdl2test-rocknix/src/experience.rs": "b12de6a17bca6b73bf261bafda62ba8a4cc66b75b9ea44015116daf8373d71d1",
+    "sdl2test-rocknix/src/experience.rs": "ed902008e5a58337f701cedd4fd4400be873004a3c907f9571e518de74768398",
     "sdl2test-rocknix/src/gl_backend.rs": "88c17ff086d30f7d770fb58ea94217849d534a47ec21a9b6a20ee523e70a954b",
     "sdl2test-rocknix/src/keycodes.rs": "10c3367cb9c9431b86c42b590163b41593a0d514e41d289ede86451a198a9705",
     "sdl2test-rocknix/src/leaf.rs": "7457c211fe8f93ee890448c0f489ec97bf29d4da2a541473e19d6a92156ffbcf",
     "sdl2test-rocknix/src/main.rs": "ea00ea18816f76e5c1c63cc0a75e8b360a8d3c52af74ddc8573b70f770a1bde3",
-    "sdl2test-rocknix/src/pause_menu.rs": "4033348b57e3d1f421404953fc1b77bc19b07202b4df99ce2773956fc2b3f263",
+    "sdl2test-rocknix/src/pause_menu.rs": "4f391cfcb7cf1b528943c7b9bcc430762e44bb575f7ad0110d9d1f73a85b5bd2",
     "sdl2test-rocknix/src/profiles.rs": "abea2df80a02d5d267fa9ac10354637a76491d7d673207a23cd2c3b227c2b1c5",
     "sdl2test-rocknix/src/session.rs": "e5e805288a7abc78ec919874953f1947ab03c640262b879825ecb563e2004643",
     "sdl2test-rocknix/src/shortcuts.rs": "670b69702e17ab5763b58b12593bf864790b4b12e3439f825f34978232253a86",
@@ -36,8 +36,8 @@
     "core/src/display_object/container.rs": "73c9ddf94ca4e707d070d82eafaa035ff746952f05e0a015d011dd8426035355",
     "core/src/display_object/movie_clip.rs": "adeeeedc141b2cf53875d322ce217be236a76f37192f490ce87b26828ca76723",
     "render/wgpu/tests/bitmap_lifetime.rs": "400069796f754d1ca8daaa517691bee28014062310c38ab53b28528de0eb9102",
-    "sdl2test-rocknix/src/i18n.rs": "c92a45b05355816a2abd5bbe7c1598d503d08c6306968e9b4520b07b0612a6df",
-    "sdl2test-rocknix/src/translations.rs": "eafed7443d7cf613dcc3fe9d19caaa6beaf57f88e48c0ddbbde16a110c1fc726"
+    "sdl2test-rocknix/src/i18n.rs": "e444dfda6957275f7ba6e0d73aadbf0ce42671d95a7af3b985f5061b16a1e654",
+    "sdl2test-rocknix/src/translations.rs": "63dd6080f31fc147915833c748caa893d055f05ef5dbe007cb18b790af8fd88e"
   },
   "verified_leaf": {
     "version": "0.13.0",

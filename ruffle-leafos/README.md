@@ -66,9 +66,9 @@ M+十字左/右已停用。M+X 只改变本次运行的输入路由，切换按�
 
 支持简体中文和英语。首次启动（包括升级后首次使用此功能）读取 leafOS 的系统语言：中文语言代码使用简体中文，英语及其他语言使用英语；无法读取时使用英语。识别结果保存为全局偏好，此后更改系统语言不会覆盖播放器的选择。
 
-游戏中按 M → **语言 / Language**，或从 Apps 的数据管理页进入同名项目，选择 **简体中文** 或 **English** 并按 A，立即切换并自动保存；所有游戏与 Apps 共用，重开仍保留。写入失败会提示错误并保留原语言。支持菜单、按键编辑、存档、快捷键说明、关于和操作提示；游戏内容及用户命名不随界面语言翻译。
+游戏中按 M → **语言（Language）**，或从 Apps 的数据管理页进入同名项目，选择 **简体中文** 或 **English** 并按 A，立即切换并自动保存；所有游戏与 Apps 共用，重开仍保留。写入失败会提示错误并保留原语言。支持菜单、按键编辑、存档、快捷键说明、关于和操作提示；游戏内容及用户命名不随界面语言翻译。
 
-On first launch, Ruffle Flash uses the LeafOS language: Chinese selects Simplified Chinese; other languages select English. Open **M → 语言 / Language** (also available in Apps Data Manager), choose **English** or **简体中文**, then press **A**. Your choice applies immediately and is saved for all games.
+On first launch, Ruffle Flash uses the LeafOS language: Chinese selects Simplified Chinese; other languages select English. Open **M → Language** (also available in Apps Data Manager), choose **English** or **简体中文**, then press **A**. Your choice applies immediately and is saved for all games.
 
 ## 按键映射
 
