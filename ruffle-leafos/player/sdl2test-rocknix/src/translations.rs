@@ -319,6 +319,17 @@ pub fn english(text: &str) -> Option<&'static str> {
         "已保存此游戏的音画设置" => "Display settings saved for this game",
         "仅此游戏 · 调整后自动保存" => "This game · Changes save automatically",
         "仅此游戏 · 切换接口会保存原生进度并重启" => "This game · Switching saves native progress and restarts",
+        "输入文字" => "Enter text",
+        "A 输入 · B 删除 · X 空格 · Select 大小写" => "A Type · B Delete · X Space · Select Case",
+        "L1 / R1 移动光标 · L2 符号 · M 帮助" => "L1 / R1 Cursor · L2 Symbols · M Help",
+        "Y 取消                         Start 确认" => "Y Cancel                         Start Confirm",
+        "十字键选择字母，A 输入，B 删除，X 空格。" => "D-pad selects keys. A types, B deletes, X adds a space.",
+        "Select 切换大小写，L2 切换符号。" => "Select changes case; L2 switches symbols.",
+        "L1 / R1 移动文字光标；多行框可用 R2 换行。" => "L1 / R1 moves the cursor. R2 adds a line in multiline fields.",
+        "Start 确认并回到游戏，Y 取消全部修改。" => "Start confirms and returns to the game. Y cancels all edits.",
+        "按 M 或 A 关闭帮助。" => "Press M or A to close help.",
+        "输入内容过长，无法打开软键盘" => "This field is too long for the on-screen keyboard",
+        "输入框已变化，本次文字未写入" => "The input field changed; text was not applied",
         _ => return None,
     })
 }

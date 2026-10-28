@@ -22,6 +22,7 @@ struct SystemFontFace {
 pub struct SdlUiBackend {
     fallback: NullUiBackend,
     fonts: OnceCell<Vec<SystemFontFace>>,
+    keyboard: crate::session::virtual_keyboard::Request,
 }
 
 impl SdlUiBackend {
@@ -29,7 +30,12 @@ impl SdlUiBackend {
         Self {
             fallback: NullUiBackend::new(),
             fonts: OnceCell::new(),
+            keyboard: Default::default(),
         }
+    }
+
+    pub fn keyboard_request(&self) -> crate::session::virtual_keyboard::Request {
+        self.keyboard.clone()
     }
 
     fn fonts(&self) -> &[SystemFontFace] {
@@ -182,11 +188,11 @@ impl UiBackend for SdlUiBackend {
     }
 
     fn open_virtual_keyboard(&self) {
-        self.fallback.open_virtual_keyboard();
+        self.keyboard.open();
     }
 
     fn close_virtual_keyboard(&self) {
-        self.fallback.close_virtual_keyboard();
+        self.keyboard.close();
     }
 
     fn language(&self) -> LanguageIdentifier {

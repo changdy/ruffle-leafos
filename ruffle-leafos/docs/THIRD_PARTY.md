@@ -1,6 +1,6 @@
 # Runtime provenance
 
-The current 0.7.0 executable is rebuilt from aweigit/ruffle-miyooflip commit 3bc39c5e0fdbc9fcde92681706395f6ef70f991b, with this project's Leaf frontend changes. It does not reproduce every private leaf-12 patch. Ruffle is MIT / Apache-2.0; see licenses/RUFFLE-LICENSE.md. Cargo.lock pins Rust dependencies.
+The current 0.7.1 executable is rebuilt from aweigit/ruffle-miyooflip commit 3bc39c5e0fdbc9fcde92681706395f6ef70f991b, with this project's Leaf frontend changes. It does not reproduce every private leaf-12 patch. Ruffle is MIT / Apache-2.0; see licenses/RUFFLE-LICENSE.md. Cargo.lock pins Rust dependencies.
 
 The experimental Vulkan renderer reuses 54 files from the official ruffle-rs/ruffle `render/wgpu/` at commit 71f18f0d0e3bd118945d5956f4ac4bb2e486e856 (nightly-2026-03-15), under the same MIT / Apache-2.0 licenses. `vendor/ruffle-wgpu.lock.json` records build-input SHA-256 values and is included in package provenance. Its `local_patches` entries retain the original upstream hashes for the bitmap-handle lifetime fix in `mesh.rs` and the test-only noop feature in `Cargo.toml`; these changes retain the upstream licenses. The bitmap ownership regression tests and their Windows host runner are local additions. The Leaf GBM/DMA-BUF/EGL presentation bridge is this project's MIT code. Vulkan, EGL and GBM driver libraries are provided by the device; no system GPU driver is replaced or redistributed.
 
@@ -9,3 +9,5 @@ SDL2, ALSA and the CJK menu font are reused unchanged from the user-provided lea
 New frontend, wrappers, diagnostics, build scripts and the original demo use this project's MIT license. Additional dependency license files are collected from the pinned build cache into licenses/dependencies. No game SWFs from the user's library are distributed.
 
 The 0.6.0 menu rendering follows the pinned Leaf/Jawaka source in `vendor/jawaka/cmd/jawaka-menu/main.c` (seven pinned reference files; see `vendor/jawaka.lock.json`) (`jw__render_ingame_menu`, underlay and focus helpers), Copyright (c) 2026 Jawaka contributors, MIT license. Its license is included as `licenses/JAWAKA-LICENSE.txt`. Theme colors are read from the device at runtime; no user's theme assets are redistributed.
+
+The on-screen keyboard layout and navigation are adapted from Catastrophe `include/catastrophe_widgets.h` at commit `1673e98ea1c4cda0cc00dba345e30433319b6c2f`, Copyright (c) 2026 Kevin Vranken, MIT license. This is a Rust/GL adaptation in the player window, not an external system keyboard service. `vendor/catastrophe.lock.json` pins the upstream file and retained reference excerpt; the package includes `licenses/CATASTROPHE-LICENSE.txt` and the provenance lock. No Catastrophe theme, font, or other device assets are redistributed.

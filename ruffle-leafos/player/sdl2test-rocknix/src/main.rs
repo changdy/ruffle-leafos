@@ -238,6 +238,9 @@ struct Opt {
     progress_slot: Option<u8>,
     #[arg(long)]
     self_test_experience: bool,
+    /// Run isolated keyboard fixture assertions; never use with a user game.
+    #[arg(long)]
+    self_test_keyboard: bool,
     #[arg(long)]
     trace_input: bool,
     /// Log per-second CPU wall times and static artwork rebuild counters.

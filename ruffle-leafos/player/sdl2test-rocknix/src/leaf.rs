@@ -11,8 +11,13 @@ use crate::session::experience::{self, Page as ExperiencePage, Command as Experi
 use glow::HasContext;
 use sdl2::keyboard::Keycode;
 use std::sync::atomic::{AtomicBool, Ordering};
+use crate::session::virtual_keyboard::{self, Input as KeyboardInput, Outcome as KeyboardOutcome};
+use ruffle_core::focus_tracker::{TDisplayObject, TextSelection};
+use ruffle_core::events::{ImeEvent, TextControlCode};
 
 static EXIT_REQUESTED: AtomicBool = AtomicBool::new(false);
+#[path = "keyboard_test.rs"]
+mod keyboard_test;
 
 struct NativeStorage(Arc<Mutex<experience::Progress>>);
 impl ruffle_core::backend::storage::StorageBackend for NativeStorage {
@@ -121,7 +126,12 @@ fn profile_previews(keymap: &keycodes::KeyMap) -> Vec<[String; 4]> {
     }).collect()
 }
 
+struct KeyboardTarget { id: usize, text: String, selection: (usize,usize), password: bool, multiline: bool }
+
 struct Frontend {
+    keyboard_request: virtual_keyboard::Request,
+    keyboard_seen: u64,
+    keyboard_target: Option<usize>,
     progress: Arc<Mutex<experience::Progress>>,
     settings_path: PathBuf,
     language_path: PathBuf,
@@ -152,6 +162,79 @@ struct Frontend {
 }
 
 impl Frontend {
+    fn focused_text(&self) -> Option<KeyboardTarget> {
+        self.active.player.lock().unwrap().mutate_with_update_context(|context| {
+            let field=context.focus_tracker.get_as_edit_text()?;
+            if !field.is_editable() {return None;}
+            let text=field.text().to_utf8_lossy().into_owned();
+            let selection=field.selection().map(|s|(s.from(),s.to())).unwrap_or((text.encode_utf16().count(),text.encode_utf16().count()));
+            Some(KeyboardTarget {id:field.as_ptr() as usize,text,selection,password:field.is_password(),multiline:field.is_multiline()})
+        })
+    }
+
+    fn sync_virtual_keyboard(&mut self) {
+        let request=self.keyboard_request.get();
+        if request==self.keyboard_seen {return;}
+        if request&1==0 {
+            self.keyboard_seen=request;
+            if self.state.virtual_keyboard.is_some() {self.finish_keyboard(false);}
+            return;
+        }
+        if self.state.virtual_keyboard.is_some() {self.keyboard_seen=request;return;}
+        if self.state.paused || !self.state.experience.started || self.state.experience.app || self.started.elapsed()<Duration::from_millis(500) {return;}
+        // Complete the activating click and release all game-owned keys before
+        // capturing the selection. UI callbacks only queue focus requests;
+        // they never re-enter the locked Player to open the keyboard.
+        self.cancel_repeats();
+        let released=self.state.open_menu();self.emit(released,false);
+        self.keyboard_seen=self.keyboard_request.get();
+        let Some(target)=self.focused_text() else {let result=self.state.resume();self.menu_result(result);return;};
+        let Some(editor)=virtual_keyboard::Editor::new(target.text,target.selection,target.password,target.multiline) else {
+            let result=self.state.resume();self.menu_result(result);self.toast(t("输入内容过长，无法打开软键盘").into());return;
+        };
+        self.keyboard_target=Some(target.id);self.state.virtual_keyboard=Some(editor);
+        self.active.player.lock().unwrap().set_is_playing(false);
+        self.redraw=true;
+        println!("leaf-keyboard opened game_paused=true inputs=released");
+    }
+
+    fn finish_keyboard(&mut self, confirm: bool) {
+        let Some(editor)=self.state.virtual_keyboard.take() else {return;};
+        let target=self.keyboard_target.take();
+        if confirm {
+            let current=self.focused_text();
+            if current.as_ref().is_some_and(|f|Some(f.id)==target&&f.text==editor.original) {
+                let mut player=self.active.player.lock().unwrap();
+                if editor.text!=editor.original {
+                    let (start,end,text)=editor.replacement();
+                    player.mutate_with_update_context(|context| {
+                        if let Some(field)=context.focus_tracker.get_as_edit_text() {field.set_selection(Some(TextSelection::for_range(start,end)));}
+                    });
+                    if text.is_empty() {player.handle_event(PlayerEvent::TextControl {code:TextControlCode::Backspace});}
+                    else {player.handle_event(PlayerEvent::Ime(ImeEvent::Commit(text)));}
+                }
+                player.mutate_with_update_context(|context| {
+                    if let Some(field)=context.focus_tracker.get_as_edit_text() {
+                        if Some(field.as_ptr() as usize)==target && field.text().to_utf8_lossy()==editor.text {
+                            field.set_selection(Some(TextSelection::for_position(editor.cursor_utf16())));
+                        }
+                    }
+                });
+            } else {self.toast(t("输入框已变化，本次文字未写入").into());}
+        }
+        // Keep the focused field so the game receives normal change/textInput
+        // events. A later click on this same field creates a fresh request.
+        let result=self.state.resume();self.menu_result(result);
+        self.cursor_idle.reveal(self.started.elapsed());
+        println!("leaf-keyboard closed confirmed={confirm} waiting_for_neutral=true");
+    }
+
+    fn keyboard_nav(&mut self, input: KeyboardInput) {
+        let outcome=self.state.virtual_keyboard.as_mut().map(|k|k.input(input));
+        match outcome {Some(KeyboardOutcome::Confirm)=>self.finish_keyboard(true),Some(KeyboardOutcome::Cancel)=>self.finish_keyboard(false),_=>{}}
+        self.redraw=true;
+    }
+
     fn refresh_saves(&mut self) {
         let p=self.progress.lock().unwrap();
         self.state.experience.slots=p.slots();
@@ -280,6 +363,10 @@ impl Frontend {
         self.menu_held=snapshot.menu;
         self.system_volume.observe(snapshot.volume_up,snapshot.volume_down,snapshot.menu,self.started.elapsed());
         for command in self.chords.update_at(snapshot,at) {
+            if self.state.virtual_keyboard.is_some() {
+                if command==session::shortcuts::Command::MenuTap {self.keyboard_nav(KeyboardInput::Help);}
+                continue;
+            }
             if command==session::shortcuts::Command::MenuTap {
                 println!("leaf-session physical_menu_tap");self.toggle_menu();continue;
             }
@@ -407,6 +494,7 @@ impl Frontend {
     }
 
     fn toggle_menu(&mut self) {
+        if self.state.virtual_keyboard.is_some() {self.keyboard_nav(KeyboardInput::Help);return;}
         if self.state.experience.app || !self.state.experience.started {return;}
         if self.state.experience.page!=ExperiencePage::Home {
             self.experience_nav(Nav::B);return;
@@ -488,6 +576,18 @@ impl Frontend {
             return;
         }
         if !self.state.mark_down(source) { return; }
+        if self.state.virtual_keyboard.is_some() {
+            let input=match button {
+                Button::DPadUp=>Some(KeyboardInput::Up),Button::DPadDown=>Some(KeyboardInput::Down),
+                Button::DPadLeft=>Some(KeyboardInput::Left),Button::DPadRight=>Some(KeyboardInput::Right),
+                Button::A=>Some(KeyboardInput::Type),Button::B=>Some(KeyboardInput::Backspace),
+                Button::X=>Some(KeyboardInput::Space),Button::Y=>Some(KeyboardInput::Cancel),
+                Button::Back=>Some(KeyboardInput::Shift),Button::Start=>Some(KeyboardInput::Confirm),
+                Button::LeftShoulder=>Some(KeyboardInput::CursorLeft),Button::RightShoulder=>Some(KeyboardInput::CursorRight),
+                Button::Paddle1=>Some(KeyboardInput::Symbols),Button::Paddle2=>Some(KeyboardInput::Newline),_=>None,
+            };
+            if let Some(input)=input {self.keyboard_nav(input);}return;
+        }
         if self.state.paused {
             if self.state.experience.page!=ExperiencePage::Home {
                 let nav=match button{
@@ -527,6 +627,17 @@ impl Frontend {
             let released = self.state.release(source);
             self.emit(released, false);
             return;
+        }
+        if self.state.virtual_keyboard.is_some() {
+            self.state.mark_down(source);
+            let input=match key {
+                Keycode::Up=>Some(KeyboardInput::Up),Keycode::Down=>Some(KeyboardInput::Down),
+                Keycode::Left=>Some(KeyboardInput::CursorLeft),Keycode::Right=>Some(KeyboardInput::CursorRight),
+                Keycode::Return|Keycode::KpEnter=>Some(KeyboardInput::Confirm),Keycode::Escape=>Some(KeyboardInput::Cancel),
+                Keycode::Backspace=>Some(KeyboardInput::Backspace),Keycode::Delete=>Some(KeyboardInput::Delete),
+                Keycode::Home=>Some(KeyboardInput::Home),Keycode::End=>Some(KeyboardInput::End),Keycode::F1=>Some(KeyboardInput::Help),_=>None,
+            };
+            if let Some(input)=input {self.keyboard_nav(input);}return;
         }
         if repeat || !self.state.mark_down(source) { return; }
         if self.state.paused&&self.state.experience.page!=ExperiencePage::Home {
@@ -731,6 +842,7 @@ pub async fn run() -> Result<(), String> {
         LinuxNavigatorInterface,
     );
     let ui = SdlUiBackend::new();
+    let keyboard_request=ui.keyboard_request();
     let cjk_fonts = ui.cjk_font_names();
     let mut builder = PlayerBuilder::new().with_ui(ui);
     if opt.no_audio {
@@ -769,11 +881,12 @@ pub async fn run() -> Result<(), String> {
         _ => return Err("input mode must be hybrid, keyboard or mouse".into()) };
     let swap = std::env::var("RUFFLE_SWAP_AB").map(|s| s == "1").unwrap_or(true);
     let mut front = Frontend {
+        keyboard_request,keyboard_seen:0,keyboard_target:None,
         progress,settings_path,movie_size,display_size:size,restart_slot:None,restart_renderer:None,
         menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), system_volume:session::system_volume::Monitor::new(), blocked:Default::default(),
         language_path,
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,
-        quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots || opt.self_test_experience || opt.trace_input, scripted_input: opt.self_test_slots || opt.self_test_experience, ticks: 0,
+        quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots || opt.self_test_experience || opt.self_test_keyboard || opt.trace_input, scripted_input: opt.self_test_slots || opt.self_test_experience || opt.self_test_keyboard, ticks: 0,
     };
     let mut controller: Option<sdl2::controller::GameController> = None;
     let mut pump = sdl.event_pump()?;
@@ -799,6 +912,7 @@ pub async fn run() -> Result<(), String> {
     front.state.controls.active=Some(initial.clone()); front.apply_mapping(initial);
     println!("leaf-controls startup active_slot={} source={}",front.state.controls.game_slot+1,front.state.controls.source);
     let mut clock = Instant::now();
+    let mut keyboard_test=keyboard_test::Test::default();
     let mut last_flush=Instant::now();
     let mut fps_at=Instant::now();let mut fps_frames=0u64;
     let d=Button::DPadDown;let a=Button::A;let b=Button::B;let r=Button::DPadRight;
@@ -907,6 +1021,7 @@ pub async fn run() -> Result<(), String> {
                 }
                 Event::ControllerDeviceRemoved { which, .. } => {
                     if controller.as_ref().is_some_and(|pad| pad.instance_id() == which) {
+                        front.finish_keyboard(false);
                         front.cancel_repeats();let released = front.state.disconnected(); front.emit(released, false);
                         front.active.player.lock().unwrap().set_is_playing(false);
                         front.redraw = true;
@@ -930,6 +1045,9 @@ pub async fn run() -> Result<(), String> {
                 }
                 Event::KeyDown { keycode: Some(key), repeat, .. } => front.keyboard(key, true, repeat),
                 Event::KeyUp { keycode: Some(key), .. } => front.keyboard(key, false, false),
+                Event::TextInput { text, .. } if front.state.virtual_keyboard.is_some() => {
+                    front.state.virtual_keyboard.as_mut().unwrap().insert(&text);front.redraw=true;
+                }
                 Event::TextInput { text, .. } if front.can_game_input() => {
                     let mut p = front.active.player.lock().unwrap();
                     for codepoint in text.chars() { p.handle_event(PlayerEvent::TextInput { codepoint }); }
@@ -940,6 +1058,15 @@ pub async fn run() -> Result<(), String> {
                     let next = front.bounds.clamp(x as f32 * size.0 as f32 / logical.0.max(1) as f32,
                                                  y as f32 * size.1 as f32 / logical.1.max(1) as f32, 1.0);
                     front.move_pointer(next);
+                }
+                Event::MouseButtonDown { mouse_btn, x, y, .. } if front.state.virtual_keyboard.is_some() => {
+                    if mouse_btn==sdl2::mouse::MouseButton::Left {
+                        let logical=window.size();let px=x as f32*960./logical.0.max(1) as f32;let py=y as f32*720./logical.1.max(1) as f32;
+                        let keyboard=front.state.virtual_keyboard.as_mut().unwrap();
+                        if let Some(key)=keyboard.keys().into_iter().find(|k|px>=k.rect.0&&px<k.rect.0+k.rect.2&&py>=k.rect.1&&py<k.rect.1+k.rect.3) {
+                            keyboard.row=key.row;keyboard.col=key.col;front.keyboard_nav(KeyboardInput::Type);
+                        }
+                    }
                 }
                 Event::MouseButtonDown { mouse_btn, x, y, .. } => {
                     let logical = window.size();
@@ -968,6 +1095,7 @@ pub async fn run() -> Result<(), String> {
                     front.redraw = true;
                 }
                 Event::Window { win_event: WindowEvent::FocusLost, .. } => {
+                    front.finish_keyboard(false);
                     if !front.state.paused { front.open_menu(); }
                     front.active.player.lock().unwrap().handle_event(PlayerEvent::FocusLost);
                 }
@@ -988,6 +1116,7 @@ pub async fn run() -> Result<(), String> {
                 Event::Window { win_event: WindowEvent::Close, .. } => front.quit = true,
                 _ => {}
             }
+            front.sync_virtual_keyboard();
         }
         if sync_focus {
             let mut physical = Vec::new();
@@ -1012,6 +1141,7 @@ pub async fn run() -> Result<(), String> {
             sync_focus = false;
         }
         if front.quit { break; }
+        front.sync_virtual_keyboard();
         let seconds = if front.resumed { 0.0 } else { elapsed.as_secs_f64() };
         if front.resumed {
             println!("leaf-session resume_first_dt_us=0");
@@ -1040,6 +1170,8 @@ pub async fn run() -> Result<(), String> {
             performance.max_tick = performance.max_tick.max(tick_cost);
             front.ticks += 1;
             front.redraw |= p.needs_render();
+            drop(p);
+            front.sync_virtual_keyboard();
         }
         if !front.state.paused&&last_flush.elapsed()>=Duration::from_secs(10){front.flush_progress(false);last_flush=Instant::now();}
         if fps_at.elapsed()>=Duration::from_secs(1) {
@@ -1050,6 +1182,7 @@ pub async fn run() -> Result<(), String> {
             drop(p);fps_frames=frames;fps_at=Instant::now();
             if front.state.paused||front.state.experience.settings.fps{front.redraw=true;}
         }
+        if opt.self_test_keyboard {keyboard_test.step(&mut front)?;}
         let cursor_visible = !front.state.paused && front.stick_kind() == Stick::Mouse && front.cursor_idle.visible(front.started.elapsed());
         if cursor_visible != front.cursor_visible {
             front.cursor_visible = cursor_visible; front.redraw = true;
@@ -1086,6 +1219,12 @@ pub async fn run() -> Result<(), String> {
                         if snapshots.insert(label.clone()){menu.capture(&dir.join(label),size.0,size.1)?;}
                     }
                 }
+                if opt.self_test_keyboard {
+                    if let Some(dir)=&opt.capture_dir {
+                        let label=format!("keyboard-{:02}.bmp",keyboard_test.phase);
+                        if snapshots.insert(label.clone()) {menu.capture(&dir.join(label),size.0,size.1)?;}
+                    }
+                }
             }
             let swap_at = crate::performance::Performance::start(opt.trace_performance);
             window.gl_swap_window();
@@ -1111,6 +1250,7 @@ pub async fn run() -> Result<(), String> {
         p.set_is_playing(false);
     }
     let saved=front.flush_progress(false);
+    if opt.self_test_keyboard && keyboard_test.phase!=12 {return Err("Keyboard self-test did not finish".into());}
     println!("leaf-session shutdown inputs=released audio=paused progress_flushed={saved}");
     if opt.self_test_experience {
         if experience_phase!=experience_script.len(){return Err("Experience UI self-test did not finish".into());}

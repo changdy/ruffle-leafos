@@ -70,6 +70,23 @@ M+十字左/右已停用。M+X 只改变本次运行的输入路由，切换按�
 
 On first launch, Ruffle Flash uses the LeafOS language: Chinese selects Simplified Chinese; other languages select English. Open **M → Language** (also available in Apps Data Manager), choose **English** or **简体中文**, then press **A**. Your choice applies immediately and is saved for all games.
 
+## 文字输入与软键盘
+
+用游戏鼠标点击 Flash 的可编辑输入框，会自动打开软键盘；游戏脚本主动聚焦可编辑输入框时也会打开。键盘布局和手柄操作沿用 Leaf 的 Wi‑Fi 密码键盘，适配为播放器内的界面，使用当前系统主题。打开期间暂停游戏并释放游戏按键，关闭后等待按键松开、摇杆归中再接收游戏操作。
+
+| 操作 | 按法 |
+| --- | --- |
+| 选择、输入字符 | 十字键选择，A 输入 |
+| 删除、空格 | B 删除光标前字符，X 输入空格 |
+| 大小写、符号 | Select 切换大小写；L2 或键盘上的 `#+=` 切换符号 |
+| 移动文字光标 | L1 / R1；多行输入框可按 R2 换行 |
+| 确认、取消 | Start 或键盘上的 OK 确认；Y 取消全部未确认修改 |
+| 帮助 | 短按 M 打开或关闭帮助 |
+
+键盘先编辑草稿，确认后通过 Ruffle 的文本输入流程回填；游戏的 `restrict`、`maxChars` 和文本事件继续生效。密码框的预览以星号显示。取消、窗口失焦和手柄断连会丢弃草稿；确认或取消后可再次点击同一输入框重新打开。只读文本不会弹出键盘。支持已有 Unicode 文本编辑和 SDL 提交的 Unicode 文字；屏幕键盘提供字母、数字与符号，**尚无中文拼音组词输入**。草稿上限为 16 KiB UTF‑8，超过该大小的原始输入框会提示并保持原内容。
+
+此功能面向 Flash 标准可编辑 TextField。游戏自行绘制并处理按键的输入界面可能无法自动识别，广泛游戏兼容性仍待验证。
+
 ## 按键映射
 
 每游戏独立保存 10 个按键方案。暂停菜单“按键设置”支持左右即时切换并记忆方案，A 直接进入五列宫格；编辑页用 L/R 循环切换方案。支持 14 个实体键、摇杆上/下/左/右及按下独立设置，可混合键盘、最多四键的组合键、鼠标移动/点击/滚轮等动作。动作选择为五列宫格，九类 Tab 同屏，L1/R1 切换类别。

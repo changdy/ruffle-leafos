@@ -48,6 +48,7 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 | 全局光标 | 外观独立保存；空心圆中心点固定 1×1 屏幕像素；移动恢复显示，静止 3.5 秒隐藏；点击/按住/滚轮不延长显示 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs) |
 | 原生进度/画面/Apps/说明 | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；全局缩放/画质/FPS/渲染接口；独立关于单页与快捷键三组说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 | 系统音量 | 异步读取真实 Leaf 数值，仅显示系统硬件键反馈；旧每游戏音量/静音不再控制播放 | [system_volume.rs](../player/sdl2test-rocknix/src/system_volume.rs) |
+| 软键盘 | Ruffle 焦点回调排队；主循环内暂停、释放输入、草稿确认/取消；Leaf Catastrophe 布局与现有 GL 主题绘制 | [virtual_keyboard.rs](../player/sdl2test-rocknix/src/virtual_keyboard.rs)、[ui_backend.rs](../player/sdl2test-rocknix/src/ui_backend.rs)、[keyboard_test.rs](../player/sdl2test-rocknix/src/keyboard_test.rs) |
 | Flash FPS | 统计实际 Flash 帧执行量，按秒显示当前值；全局默认及恢复默认时开启，已有全局画面配置优先 | [core/src/player.rs](../player/core/src/player.rs)、[experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 
 M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有其他候选时保持当前方案；主菜单左右与编辑页 L/R 仍可选择全部十个方案。`Mapping::is_empty` 统一按 14 个按键和 5 个摇杆动作均为 `None` 且 `fine=false` 判断；鼠标精调是有效动作，基底、摇杆预设和速度等元数据不单独使方案非空。切换继续使用同一持久化/释放规则。M+十字下切左键保持，M+X 仅在本次运行互换十字/摇杆四方向，摇杆按下不变；交换状态不会写入映射文件。光标页速度仅本次生效，方案内保存的速度仍随方案读取；外观由所有游戏共用。
@@ -92,6 +93,22 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 新建游戏不批量写十份方案。`Mapping::group` 仅为方案 1、2 提供默认键位；3—10 的 19 个绑定全为 `None`，摇杆为 `Stick::None`、精调与连发关闭。全空映射允许读取、保存、应用并写入 `selected.rmap`，便于清空已有方案或进入空方案编辑。已有槽位文件优先于默认值，不自动清空旧数据。缺少新方案 1 时可读旧此游戏 rmap，旧全局按键与 ROM 旁 cfg 不自动叠加。只有主动保存才升级旧映射并保留备份。按键按路径识别，进度按内容识别，两者迁移规则不同；具体限制与故障验收见[工程进度](progress.md)。
 
 显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[显示树性能报告](validation/bvn33-traversal-20261027.md)。
+
+## Flash 软键盘
+
+Leaf 的 Wi‑Fi 输入使用 Catastrophe `cat_keyboard`，所查 Jawaka 接口没有独立的通用键盘 IPC。播放器按 [catastrophe.lock.json](../vendor/catastrophe.lock.json) 固定的五行布局和导航逻辑适配为 Rust；`PauseMenu` 在同一 GLES 窗口绘制键盘，GLES/Vulkan 两种 Flash 后端共用，不启动第二个 SDL 窗口或修改 Leaf。
+
+`SdlUiBackend::open_virtual_keyboard/close_virtual_keyboard` 只更新共享原子请求序号，避免在核心焦点回调持锁时重入播放器；重复聚焦同一框也生成新序号。主循环在事件后与 tick 后处理请求，读取实际 editable TextField、UTF‑16 选区、密码/多行标志，释放游戏输入和连发，再暂停 VM/音频。键盘接管手柄、SDL 文字和鼠标点击，M 仅显示键盘帮助，游戏快捷键不在此期间触发。恢复使用既有中立门和首帧零 dt；失焦、断连丢弃草稿并进入暂停菜单。
+
+草稿使用字符边界编辑 UTF‑8，预览最多展示光标前 26 / 后 18 字符，密码遮挡；总计最多 16 KiB，超长原文拒绝打开，不截断已有内容。确认前比较输入框身份和原始文本；只将共同前后缀之间的编辑跨度换算为 UTF‑16 选区，通过 `PlayerEvent::Ime(Commit)` 或空替换的 `TextControl::Backspace` 提交，保留核心 `restrict`、`maxChars`、AVM1 绑定/变化与 AVM2 `textInput`/取消/`change` 处理。未修改内容不重复发变化事件。键盘状态不写入配置或存档；键盘自身日志只记录生命周期，不记录草稿、原文或密码。
+
+主机回归包含 UTF‑8/UTF‑16 边界、选择删除、差分提交、上限、密码预览及中立门。设备夹具与诊断命令：
+
+```powershell
+python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
+```
+
+该命令使用现有 build 内的 playerglobal 和配置 JDK 生成原创 AVM1/AVM2 SWF，只放在忽略目录。通过已有 Leaf 启动环境运行 `ruffle <Keyboard-AVM1.swf或Keyboard-AVM2.swf> --self-test-keyboard --renderer opengl-es --capture-dir <隔离截图目录>`，必须同时指定独立 `--storage-dir`、`--controls-dir`；Vulkan 使用 `--renderer vulkan`。诊断包含脚本聚焦/点击、完整编辑、同框重开、取消、密码 Unicode、多行、数字/长度限制、只读、清空、AVM2 preventDefault、VM 暂停及失焦/断连处理的模拟，不用于用户游戏。实际物理按键和正式安装的验证边界见[记录](validation/soft-keyboard-20261028.md)。
 
 ## 按需性能诊断
 

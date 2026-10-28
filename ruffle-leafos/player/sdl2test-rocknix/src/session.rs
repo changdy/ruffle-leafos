@@ -20,6 +20,8 @@ pub mod turbo;
 pub mod system_volume;
 #[path = "i18n.rs"]
 pub mod i18n;
+#[path = "virtual_keyboard.rs"]
+pub mod virtual_keyboard;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Source {
@@ -173,6 +175,7 @@ pub enum MenuResult {
 }
 
 pub struct Session {
+    pub virtual_keyboard: Option<virtual_keyboard::Editor>,
     pub system_volume: Option<(u8,std::time::Instant)>,
     pub directions_swapped: bool,
     pub experience: experience::Ui,
@@ -199,6 +202,7 @@ pub struct Session {
 impl Session {
     pub fn new(mode: InputMode) -> Self {
         Self {
+            virtual_keyboard: None,
             system_volume: None,
             directions_swapped: false,
             experience: experience::Ui::default(),
@@ -229,7 +233,7 @@ impl Session {
     }
 
     pub fn allow_game_input(&self) -> bool {
-        !self.paused && !self.wait_neutral
+        !self.paused && self.virtual_keyboard.is_none() && !self.wait_neutral
     }
 
     pub fn require_neutral(&mut self) {
@@ -360,6 +364,15 @@ pub fn move_cursor(position: (f32, f32), axes: (i16, i16), seconds: f32, speed: 
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn keyboard_blocks_game_inputs_until_closed_and_all_buttons_released() {
+        let mut s=super::Session::new(super::InputMode::Hybrid);s.refresh_neutral();
+        s.virtual_keyboard=Some(super::virtual_keyboard::Editor::new("".into(),(0,0),false,false).unwrap());
+        assert!(!s.allow_game_input());
+        assert!(s.game_press(super::Source::Controller(1),super::Action::Key(32)).is_empty());
+        s.mark_down(super::Source::Controller(1));s.virtual_keyboard=None;s.resume();
+        assert!(!s.allow_game_input());s.release(super::Source::Controller(1));assert!(s.allow_game_input());
+    }
     use super::*;
     #[test]
     fn direction_toggle_releases_inputs_and_waits_for_the_stick_to_center() {

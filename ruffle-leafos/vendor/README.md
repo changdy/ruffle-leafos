@@ -4,3 +4,5 @@
 - `leaf-contracts/` 保留固定官方契约的 schema、校验脚本、说明和测试夹具，打包会调用 CONTENT-1 校验器。固定提交见 [references.lock.json](../adapter/references.lock.json)。夹具中的 `.so`、`.png` 和 `.zip` 是契约测试输入，按用途保留。
 
 仓库的依赖边界和构建方式见[工程实现细节](../docs/implementation.md)。
+
+- `catastrophe/` 保存软键盘布局、导航和编辑逻辑所参考的固定上游片段及 MIT 许可；提交、原始完整头文件指纹、片段行号和逐文件指纹见 [catastrophe.lock.json](catastrophe.lock.json)。播放器将其适配为 Rust 和已有 GL 界面，不额外编译 Catastrophe，也不改设备启动器。

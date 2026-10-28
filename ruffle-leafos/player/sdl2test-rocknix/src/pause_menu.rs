@@ -211,7 +211,9 @@ impl PauseMenu {
         gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
         gl.blend_equation(glow::FUNC_ADD);
         gl.color_mask(true, true, true, true);
-        if state.paused {
+        if let Some(keyboard)=&state.virtual_keyboard {
+            self.draw_virtual_keyboard(keyboard);
+        } else if state.paused {
         if !state.experience.started {self.quad((0.,0.,960.,720.),self.palette[0],None);}
         if state.experience.page!=crate::session::experience::Page::Home {
             self.draw_experience(state);
@@ -240,7 +242,7 @@ impl PauseMenu {
         if let Some((message,_))=&state.toast {
                 self.live_chip(60,message,25.,(480.,658.),920.,true,[0.96,0.99,1.,1.]);
         }
-        if !state.paused {
+        if !state.paused && state.virtual_keyboard.is_none() {
             if state.experience.settings.fps {
                 self.live_chip(62,&format!("FPS {:.1}",state.experience.fps),24.,(10.,10.),180.,false,[1.,1.,1.,1.]);
             }
@@ -262,6 +264,29 @@ impl PauseMenu {
         gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, draw_framebuffer);
         gl.bind_framebuffer(glow::READ_FRAMEBUFFER, read_framebuffer);
         gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    }
+
+    unsafe fn draw_virtual_keyboard(&mut self, keyboard: &crate::session::virtual_keyboard::Editor) {
+        self.quad((0.,0.,960.,720.),self.palette[0],None);
+        self.live_label_width(150,t("输入文字"),35.,30.,18.,900.,false,self.palette[1]);
+        self.rounded((30.,77.,900.,75.),10.,self.palette[2]);
+        self.live_label_width(151,&keyboard.preview(),31.,47.,97.,866.,false,self.palette[3]);
+        self.live_label_width(152,t("A 输入 · B 删除 · X 空格 · Select 大小写"),23.,30.,164.,900.,true,self.palette[4]);
+        for (i,key) in keyboard.keys().iter().enumerate() {
+            let selected=keyboard.row==key.row&&keyboard.col==key.col;
+            self.rounded(key.rect,8.,self.palette[if selected {2}else{5}]);
+            self.live_label_width(160+i,&key.label,29.,key.rect.0+5.,key.rect.1+18.,key.rect.2-10.,true,self.palette[if selected {3}else{1}]);
+        }
+        self.live_label_width(153,t("L1 / R1 移动光标 · L2 符号 · M 帮助"),22.,30.,601.,900.,true,self.palette[4]);
+        self.live_label_width(154,t("Y 取消                         Start 确认"),27.,30.,660.,900.,true,self.palette[1]);
+        if keyboard.help {
+            self.quad((0.,0.,960.,720.),[0.,0.,0.,0.65],None);
+            self.rounded((65.,180.,830.,365.),18.,self.palette[0]);
+            let lines=[t("十字键选择字母，A 输入，B 删除，X 空格。"),
+                t("Select 切换大小写，L2 切换符号。"),t("L1 / R1 移动文字光标；多行框可用 R2 换行。"),
+                t("Start 确认并回到游戏，Y 取消全部修改。"),t("按 M 或 A 关闭帮助。")];
+            for (i,line) in lines.iter().enumerate() {self.live_label_width(205+i,line,25.,90.,215.+i as f32*60.,780.,false,self.palette[1]);}
+        }
     }
 
     // Ported from jawaka-menu/main.c: jw__draw_ingame_underlay,

@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/Utility-Muffin-Research-Kitchen/Catastrophe",
+  "commit": "1673e98ea1c4cda0cc00dba345e30433319b6c2f",
+  "purpose": "MIT keyboard layout/navigation reference adapted into Rust and the existing GL overlay; not a separately built Catastrophe runtime",
+  "upstream_file": "include/catastrophe_widgets.h",
+  "upstream_file_sha256": "63b4cfc15c2a793b9f6ba3bd073d9bd8b0969dceb103fa02d0dca9f7e1187654",
+  "reference_lines": [
+    1661,
+    2528
+  ],
+  "files_sha256": {
+    "keyboard-reference.h": "6e9eef215e0e07793248f114639f3bf68bc410ec847c2f1f442fef0680ea1ff3",
+    "LICENSE": "d158f605b5c647c4005b58828747e7c37ab32cd8b87276f4e7084397ebfa7faa"
+  }
+}

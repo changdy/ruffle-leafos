@@ -52,6 +52,9 @@ def main():
     reference_lock = json.loads((ROOT / 'vendor/jawaka.lock.json').read_text(encoding='utf8'))
     for relative, expected in reference_lock['files_sha256'].items():
         assert sha(ROOT / 'vendor/jawaka' / relative) == expected, 'reference input changed: ' + relative
+    keyboard_lock = json.loads((ROOT / 'vendor/catastrophe.lock.json').read_text(encoding='utf8'))
+    for relative, expected in keyboard_lock['files_sha256'].items():
+        assert sha(ROOT / 'vendor/catastrophe' / relative) == expected, 'keyboard reference changed: ' + relative
     renderer_lock = json.loads((ROOT / 'vendor/ruffle-wgpu.lock.json').read_text(encoding='utf8'))
     for relative, expected in renderer_lock['files_sha256'].items():
         assert sha(ROOT / 'player' / relative) == expected, 'upstream renderer input changed: ' + relative
@@ -82,6 +85,7 @@ def main():
     licenses.mkdir()
     shutil.copyfile(ROOT / 'player/LICENSE.md', licenses / 'RUFFLE-LICENSE.md')
     shutil.copyfile(ROOT / 'vendor/jawaka/LICENSE', licenses / 'JAWAKA-LICENSE.txt')
+    shutil.copyfile(ROOT / 'vendor/catastrophe/LICENSE', licenses / 'CATASTROPHE-LICENSE.txt')
     local = ROOT / 'workspace.local.json'
     settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
     cache = Path(settings.get('host_tool_cache', ROOT.parent / 'work/toolchains')) / 'cargo-home'
@@ -98,6 +102,7 @@ def main():
     shutil.copyfile(ROOT / 'arm-gnu.lock.json', provenance / 'arm-gnu.lock.json')
     shutil.copyfile(ROOT / 'adapter/runtime.lock.json', provenance / 'runtime.lock.json')
     shutil.copyfile(ROOT / 'vendor/jawaka.lock.json', provenance / 'jawaka.lock.json')
+    shutil.copyfile(ROOT / 'vendor/catastrophe.lock.json', provenance / 'catastrophe.lock.json')
     shutil.copyfile(ROOT / 'vendor/ruffle-wgpu.lock.json', provenance / 'ruffle-wgpu.lock.json')
     # Validate against the pinned official contract, then the new behavior.
     contracts = ROOT / 'vendor/leaf-contracts/contracts'
@@ -119,6 +124,7 @@ def main():
         'runtime_sha256': sha(binary), 'source': source_lock,
         'target': 'Leaf 0.13.0 / AArch64 / glibc 2.38 / GLES 3 / experimental Vulkan',
         'upstream_wgpu_renderer': renderer_lock,
+        'keyboard_reference': keyboard_lock,
         'elf': info, 'diagnostic_shim_changed': False,
         'diagnostic_shim_sha256': sha(shim),
         'diagnostic_shim_change': f'Unchanged in {version}; retains the earlier Menu ownership log correction',
@@ -146,12 +152,13 @@ def main():
                   'queued physical Menu taps independent of virtual Guide release state',
                   'asynchronous real Leaf system-volume feedback without double-applying hardware keys',
                   'Simplified Chinese and English UI with persisted LeafOS first-launch detection, immediate language switching and CJK font fallback',
+                  'Catastrophe-derived gamepad keyboard on editable Flash focus, transactional Unicode edits, masked passwords, native text restrictions/events and neutral input resume',
                   'pause lifecycle, input ownership, neutral gate and checked SharedObject flush'],
         'pending': ['per-profile human gameplay acceptance and temporary mouse layer',
                     'broad experimental Vulkan visual/performance/power/stability matrix and further synchronization optimization',
-                    'virtual keyboard (deferred by user)', 'full VM instant savestates',
+                    'Chinese composition/IME and broad custom game text-input compatibility', 'full VM instant savestates',
                     'legacy loose .sol migration', 'power-loss/reboot storage matrix', 'suspend recovery'],
-        'device_validation': 'See docs/validation/language-ui-20261028.md for pre-release UI checks and docs/validation/vulkan-backend-0.7.0-20261025.json for Vulkan bring-up; this release archive has not been installed on hardware',
+        'device_validation': 'See docs/validation/soft-keyboard-20261028.md for keyboard/runtime checks and installation scope; automated packaging alone does not verify hardware',
     }
     (pak / 'build-manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     archive = output / f'ruffle-leafos-{version}.zip'
@@ -161,14 +168,14 @@ def main():
         assert all((item.external_attr >> 16) & 0o111 for item in z.infolist() if item.filename.endswith('.sh'))
     if args.include_source:
         source_stage = Path(tempfile.mkdtemp(prefix='preview-source-', dir=ROOT / 'build'))
-        for folder in ['player', 'adapter', 'pak', 'scripts', 'docs', 'target-libs', 'runtime/leaf-12', 'vendor/leaf-contracts']:
+        for folder in ['player', 'adapter', 'pak', 'scripts', 'docs', 'target-libs', 'runtime/leaf-12', 'vendor/leaf-contracts', 'vendor/catastrophe']:
             shutil.copytree(ROOT / folder, source_stage / folder,
                 ignore=source_ignore)
         for filename in ['README.md', '.gitignore', 'leaf-source.lock.json', 'arm-gnu.lock.json']:
             shutil.copyfile(ROOT / filename, source_stage / filename)
         # Keep the exact menu reference and license available in the source
         # archive; packaging must not depend on an omitted vendor checkout.
-        for filename in ['README.md', 'jawaka.lock.json', 'ruffle-wgpu.lock.json']:
+        for filename in ['README.md', 'jawaka.lock.json', 'ruffle-wgpu.lock.json', 'catastrophe.lock.json']:
             shutil.copyfile(ROOT / 'vendor' / filename, source_stage / 'vendor' / filename)
         for relative in reference_lock['files_sha256']:
             destination = source_stage / 'vendor/jawaka' / relative
