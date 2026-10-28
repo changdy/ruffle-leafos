@@ -14,7 +14,7 @@
 - 拳皇主文件：`bb829289b03fff84aa981bcfed436a9e9ccc4100d018526a2fdeed3fd115ca19`。
 - 死神主文件：`b4fa381c0639cbe7f9b07cc0e856674a39fc38f76c3107e19ff0e486c12cc9c6`。
 
-死神首次启动默认使用游戏内部 LOW（原生战斗目标 30 FPS），用户在 OPTION → QUALITY → APPLY 保存过的画质优先。只改名不改变内容身份，因此同一份 SWF 的原生进度可继续识别；按键配置按 ROM 路径识别，新名称需要重新设置按键。本次未改掌机现有路径或用户数据，安装新包后旧名称可能仍留在列表中。
+死神该主文件虽改过 LOW 槽默认值，但本日后续实测发现启动入口又覆盖为 MEDIUM，新鲜进度实际仍为 60 FPS。需要 LOW 时可在 OPTION → QUALITY → APPLY 手动选择；原生 LOW 分支目标为 30 FPS。入口修复和本文件的设置保存重开仍待验收，见[性能复测更正](../docs/validation/bvn33-feature-profile-20261028.md)。本轮仅更正随包使用说明和对应清单，主 SWF/398 个资源保持。只改名不改变内容身份，因此同一份 SWF 的原生进度可继续识别；按键配置按 ROM 路径识别，新名称需要重新设置按键。收录阶段未改掌机现有路径或用户数据，安装新包后旧名称可能仍留在列表中。
 
 优化及实机验证范围见[拳皇素材报告](../docs/validation/kof-swf-optimization-20261026.md)、[死神素材报告](../docs/validation/bvn33-assets-20261028.md)和[默认 LOW 更新](../docs/validation/bvn33-default-low-20261028.md)。收录和打包校验不扩大此前的游戏兼容性或性能验收；全部角色、长时稳定性等仍待验证。
 
