@@ -1,6 +1,15 @@
 #!/bin/sh
 # Mirror Leaf's theme resolution; all SQLite access is read-only.
 ruffle_load_theme() {
+    # Older Leaf launches may omit the per-launch language environment.
+    # Only read settings; Ruffle's own language preference is stored separately.
+    if [ -z "${UMRK_LANGUAGE:-${JAWAKA_LANGUAGE:-}}" ] && command -v sqlite3 >/dev/null 2>&1; then
+        RUFFLE_LANGUAGE_DB="${SDCARD_PATH:-/mnt/sdcard}/.umrk/mlp1/library.db"
+        if [ -r "$RUFFLE_LANGUAGE_DB" ]; then
+            RUFFLE_SYSTEM_LANGUAGE="$(sqlite3 -readonly "$RUFFLE_LANGUAGE_DB" "SELECT value FROM settings WHERE key='language';" 2>/dev/null || :)"
+            export RUFFLE_SYSTEM_LANGUAGE
+        fi
+    fi
     command -v sqlite3 >/dev/null 2>&1 || return 0
     RUFFLE_THEME_DB="${SDCARD_PATH:-/mnt/sdcard}/.umrk/mlp1/library.db"
     RUFFLE_THEME_NAME="${JAWAKA_THEME:-}"

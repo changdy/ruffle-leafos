@@ -1,4 +1,5 @@
 //! Hold-to-repeat input with monotonic deadlines and shared input ownership.
+use crate::session::i18n::t;
 use super::{profiles::Binding, Action, InputLedger, Source, Transition};
 use std::{collections::BTreeMap, time::Duration};
 
@@ -11,8 +12,8 @@ impl Rate {
     pub fn hz(self) -> u8 {match self {Self::Off=>0,Self::Slow=>5,Self::Normal=>10,Self::Fast=>15}}
     pub fn parse(text: &str) -> Option<Self> {match text {"0"=>Some(Self::Off),"5"=>Some(Self::Slow),"10"=>Some(Self::Normal),"15"=>Some(Self::Fast),_=>None}}
     pub fn next(self) -> Self {match self {Self::Off=>Self::Slow,Self::Slow=>Self::Normal,Self::Normal=>Self::Fast,Self::Fast=>Self::Off}}
-    pub fn label(self) -> &'static str {match self {Self::Off=>"连发关闭",Self::Slow=>"慢速连发 5次/秒",Self::Normal=>"标准连发 10次/秒",Self::Fast=>"快速连发 15次/秒"}}
-    pub fn badge(self) -> String {if self==Self::Off {String::new()}else{format!(" · 连{}",self.hz())}}
+    pub fn label(self) -> &'static str {match self {Self::Off=>t("连发关闭"),Self::Slow=>t("慢速连发 5次/秒"),Self::Normal=>t("标准连发 10次/秒"),Self::Fast=>t("快速连发 15次/秒")}}
+    pub fn badge(self) -> String {if self==Self::Off {String::new()}else{crate::tr!(" · 连{}", " · Turbo {}",self.hz())}}
     fn down_duration(self) -> Duration {Duration::from_micros(1_000_000/u64::from(self.hz().max(1)))-RELEASE_DURATION}
 }
 pub fn supported(binding: Binding) -> bool {!binding.actions().is_empty()}

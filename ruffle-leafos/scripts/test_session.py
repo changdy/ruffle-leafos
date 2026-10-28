@@ -17,8 +17,11 @@ if not linker.exists():
 env = os.environ.copy()
 env['PATH'] = str(mingw / 'bin') + os.pathsep + env['PATH']
 env['TEMP'] = env['TMP'] = str(build / 'tmp')
+driver = build / 'frontend-tests.rs'
+driver.write_text('#[path = ' + json.dumps(str(ROOT / 'player/sdl2test-rocknix/src/session.rs')) +
+                  ']\nmod session;\n', encoding='utf8')
 subprocess.run([str(rust / 'bin/rustc.exe'), '--edition', '2021', '--test',
-    str(ROOT / 'player/sdl2test-rocknix/src/session.rs'), '-C', 'linker=' + str(linker),
+    str(driver), '-C', 'linker=' + str(linker),
     '-o', str(build / 'session-tests.exe')], env=env, check=True)
 result = subprocess.run([str(build / 'session-tests.exe')], env=env, text=True, capture_output=True)
 print(result.stdout, end='')

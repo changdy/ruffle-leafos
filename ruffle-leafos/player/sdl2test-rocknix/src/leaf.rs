@@ -1,3 +1,4 @@
+use crate::session::i18n::t;
 use super::*;
 use crate::pause_menu::PauseMenu;
 use crate::session::{Action, InputMode, MenuResult, Session, Source, Transition};
@@ -87,14 +88,14 @@ fn binding_label(binding: Binding) -> String {
     let key_name = |code| match code {
         profiles::UP => "↑".into(), profiles::DOWN => "↓".into(), profiles::LEFT => "←".into(), profiles::RIGHT => "→".into(),
         profiles::SHIFT => "Shift".into(), profiles::CTRL => "Ctrl".into(), 13 => "Enter".into(), 27 => "Esc".into(),
-        _ => Keycode::from_i32(code).map(|k| k.name()).unwrap_or_else(|| "无".into()),
+        _ => Keycode::from_i32(code).map(|k| k.name()).unwrap_or_else(|| t("无").into()),
     };
     match binding {
         Binding::Key(code) => key_name(code), Binding::Chord(keys) => keys.iter().map(|k| key_name(*k)).collect::<Vec<_>>().join("+"),
         Binding::Combo(..) => controls::binding_label(binding),
-        Binding::None => "无".into(), Binding::LeftClick => "左键".into(), Binding::RightClick => "右键".into(),
-        Binding::Slow => "按住慢速".into(), Binding::Fast => "按住快速".into(), Binding::Wheel(1) => "滚轮上".into(),
-        Binding::Wheel(_) => "滚轮下".into(), Binding::DragLock => "拖拽锁定".into(), Binding::Center => "指针居中".into(),
+        Binding::None => t("无").into(), Binding::LeftClick => t("左键").into(), Binding::RightClick => t("右键").into(),
+        Binding::Slow => t("按住慢速").into(), Binding::Fast => t("按住快速").into(), Binding::Wheel(1) => t("滚轮上").into(),
+        Binding::Wheel(_) => t("滚轮下").into(), Binding::DragLock => t("拖拽锁定").into(), Binding::Center => t("指针居中").into(),
         Binding::Pointer(_) => controls::binding_label(binding),
     }
 }
@@ -108,21 +109,22 @@ fn profile_previews(keymap: &keycodes::KeyMap) -> Vec<[String; 4]> {
         let label = |button| binding_label(binding_for(keymap, index, mode, button, use_cfg));
         let fine = profiles::profile(index).is_some_and(|p| p.dpad.is_none()) || (index == 0 && mode == InputMode::Mouse);
         let directions = DPAD.iter().map(|b| {
-            if fine && binding_for(keymap, index, mode, *b, use_cfg) == Binding::None { "鼠标".into() } else { label(*b) }
+            if fine && binding_for(keymap, index, mode, *b, use_cfg) == Binding::None { t("鼠标").into() } else { label(*b) }
         }).collect::<Vec<_>>().join(" / ");
-        let stick = match stick_kind(index, mode) { Stick::Directions => "同十字键", Stick::Steering => "仅左右转向", Stick::Mouse => "鼠标", Stick::None => "无", Stick::Custom => "独立映射" };
+        let stick = match stick_kind(index, mode) { Stick::Directions => t("同十字键"), Stick::Steering => t("仅左右转向"), Stick::Mouse => t("鼠标"), Stick::None => t("无"), Stick::Custom => t("独立映射") };
         let overrides = PROFILE_BUTTONS.iter().chain(DPAD.iter()).filter(|b| keymap.custom_keycode(**b).is_some()).count();
-        [format!("十字键 上/下/左/右：{directions}；摇杆：{stick}"),
+        [crate::tr!("十字键 上/下/左/右：{directions}；摇杆：{stick}", "D-pad Up/Down/Left/Right: {directions}; Stick: {stick}"),
          format!("A={}   B={}   X={}   Y={}", label(Button::A), label(Button::B), label(Button::X), label(Button::Y)),
          format!("L1={}   R1={}   L2={}   R2={}", label(Button::LeftShoulder), label(Button::RightShoulder), label(Button::Paddle1), label(Button::Paddle2)),
-         format!("Start={}   Select={}；cfg {}；方案行 X 切换", label(Button::Start), label(Button::Back),
-            if use_cfg { format!("覆盖 {overrides} 项") } else { "已忽略".into() })]
+         crate::tr!("Start={}   Select={}；cfg {}；方案行 X 切换", "Start={}   Select={}; cfg {}; X toggles on profile row", label(Button::Start), label(Button::Back),
+            if use_cfg { crate::tr!("覆盖 {overrides} 项", "{overrides} overrides") } else { t("已忽略").into() })]
     }).collect()
 }
 
 struct Frontend {
     progress: Arc<Mutex<experience::Progress>>,
     settings_path: PathBuf,
+    language_path: PathBuf,
     movie_size: (u32,u32),
     display_size: (u32,u32),
     restart_slot: Option<usize>,
@@ -161,10 +163,10 @@ impl Frontend {
         self.progress.lock().unwrap().retry_deletes();
         let core_ok=self.active.player.lock().unwrap().flush_shared_objects_checked();
         let p=self.progress.lock().unwrap();
-        let error=p.error.clone().or_else(||if core_ok{None}else{Some("Flash 进度序列化或写盘失败".into())});let has_data=p.has_data();let active=p.active.unwrap_or(0);drop(p);
+        let error=p.error.clone().or_else(||if core_ok{None}else{Some(t("Flash 进度序列化或写盘失败").into())});let has_data=p.has_data();let active=p.active.unwrap_or(0);drop(p);
         self.refresh_saves();
-        if let Some(error)=error {self.state.experience.message=format!("保存失败：{error}");self.toast(format!("保存失败：{error}"));return false;}
-        if announce {self.toast(if has_data {format!("存档 {} 的原生进度已保存",active+1)}else{"游戏尚未产生原生进度，请先使用游戏内保存功能".into()});}
+        if let Some(error)=error {self.state.experience.message=crate::tr!("保存失败：{error}", "Save failed: {error}");self.toast(crate::tr!("保存失败：{error}", "Save failed: {error}"));return false;}
+        if announce {self.toast(if has_data {crate::tr!("存档 {} 的原生进度已保存", "Native progress saved to slot {}",active+1)}else{t("游戏尚未产生原生进度，请先使用游戏内保存功能").into()});}
         println!("leaf-progress flush=ok slot={} has_data={has_data}",active+1);true
     }
     fn apply_av(&mut self) {
@@ -189,6 +191,13 @@ impl Frontend {
         let result=(|| -> Result<(),String>{
             match command {
                 ExperienceCommand::None=>{},
+                ExperienceCommand::Language(language)=>{
+                    session::i18n::select(&self.language_path,language)?;
+                    self.state.experience.language=language;
+                    self.state.experience.message=if language==session::i18n::Language::English{"Language saved"}else{"语言已保存"}.into();
+                    self.state.controls.status.clear();
+                    self.state.toast=None;
+                },
                 ExperienceCommand::Quit=>self.quit=true,
                 ExperienceCommand::Save=>{self.flush_progress(true);},
                 ExperienceCommand::Choose(n)=>{
@@ -201,11 +210,11 @@ impl Frontend {
                     }
                 },
                 ExperienceCommand::Copy(n)=>{
-                    if self.flush_progress(false){self.progress.lock().unwrap().copy_to(n)?;self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);self.toast(format!("原生进度已复制到存档 {}",n+1));}
+                    if self.flush_progress(false){self.progress.lock().unwrap().copy_to(n)?;self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);self.toast(crate::tr!("原生进度已复制到存档 {}", "Native progress copied to slot {}",n+1));}
                 },
                 ExperienceCommand::Settings=>{
                     self.apply_av();self.state.experience.settings.save(&self.settings_path)?;
-                    self.state.experience.message="已保存此游戏的音画设置".into();
+                    self.state.experience.message=t("已保存此游戏的音画设置").into();
                 },
                 ExperienceCommand::Renderer(backend)=>{
                     if backend!=self.state.experience.actual_renderer&&self.flush_progress(false) {
@@ -213,24 +222,24 @@ impl Frontend {
                     }
                 },
                 ExperienceCommand::Clear(kind)=>{
-                    if !self.state.experience.app{return Err("请从应用入口管理数据".into());}
+                    if !self.state.experience.app{return Err(t("请从应用入口管理数据").into());}
                     let p=self.progress.lock().unwrap();let root=p.root.clone();drop(p);
                     let controls=&self.state.controls.store.root;
-                    let trash=root.parent().ok_or("缺少数据父目录")?.join("cleared-data");
+                    let trash=root.parent().ok_or(t("缺少数据父目录"))?.join("cleared-data");
                     let game=self.state.experience.games.get(self.state.experience.game_index).cloned();
                     let mut targets=Vec::new();
                     match kind {
-                        1=>targets.push(root.join("games").join(game.ok_or("未选择游戏")?.id)),
-                        2=>{let game=game.ok_or("未选择游戏")?;targets.push(controls.join("slots").join(&game.control_id));targets.push(controls.join("games").join(format!("{}.rmap",game.control_id)));targets.push(controls.join("games").join(format!("{}.rmap.bak",game.control_id)));},
+                        1=>targets.push(root.join("games").join(game.ok_or(t("未选择游戏"))?.id)),
+                        2=>{let game=game.ok_or(t("未选择游戏"))?;targets.push(controls.join("slots").join(&game.control_id));targets.push(controls.join("games").join(format!("{}.rmap",game.control_id)));targets.push(controls.join("games").join(format!("{}.rmap.bak",game.control_id)));},
                         3=>targets.push(root.join("games")),
                         4=>{for name in ["slots","games","global.rmap","global.rmap.bak"] {targets.push(controls.join(name));}},
-                        _=>return Err("未知清理操作".into())
+                        _=>return Err(t("未知清理操作").into())
                     }
                     let mut changed=false;for path in targets{changed|=experience::archive(&path,&trash)?;}
                     self.state.experience.games=experience::entries(&root);
                     self.state.experience.game_index=self.state.experience.game_index.min(self.state.experience.games.len().saturating_sub(1));
                     self.state.experience.open(ExperiencePage::Manager);
-                    self.state.experience.message=if changed{"已清空；旧数据已移到本地备份目录"}else{"没有需要清理的数据"}.into();
+                    self.state.experience.message=if changed{t("已清空；旧数据已移到本地备份目录")}else{t("没有需要清理的数据")}.into();
                     println!("leaf-manager clear={kind} archived={changed}");
                 }
             }Ok(())
@@ -286,14 +295,14 @@ impl Frontend {
                 Command::Previous | Command::Next => {
                     if let Some(slot)=self.state.controls.shortcut_slot(if command==Command::Previous {-1} else {1}) {
                         self.switch_slot(slot);
-                    } else {self.toast("没有其他非空按键方案".into());}
+                    } else {self.toast(t("没有其他非空按键方案").into());}
                 },
                 Command::SwapDirections => {
                     self.cancel_repeats();
                     let released=self.state.toggle_directions();self.emit(released,false);
-                    self.toast(if self.state.directions_swapped {"十字键 ↔ 摇杆：已互换（本次）"} else {"十字键 ↔ 摇杆：已恢复"}.into());
+                    self.toast(if self.state.directions_swapped {t("十字键 ↔ 摇杆：已互换（本次）")} else {t("十字键 ↔ 摇杆：已恢复")}.into());
                 },
-                Command::Drag => { if self.can_game_input() {let transitions=self.state.toggle_drag(); self.emit(transitions,false); self.toast(if self.state.drag_locked {"鼠标左键保持：开"} else {"鼠标左键保持：关"}.into());} }
+                Command::Drag => { if self.can_game_input() {let transitions=self.state.toggle_drag(); self.emit(transitions,false); self.toast(if self.state.drag_locked {t("鼠标左键保持：开")} else {t("鼠标左键保持：关")}.into());} }
                 Command::MenuTap=>{},
             }
         }
@@ -305,7 +314,7 @@ impl Frontend {
         match self.state.controls.nav(nav) {
             ResultAction::Apply(mapping) => {
                 self.apply_mapping(mapping);
-                if self.state.controls.page == controls::Page::Edit && self.state.controls.status.starts_with("已切换") {self.toast(self.state.controls.status.clone());}
+                if self.state.controls.page == controls::Page::Edit && self.state.controls.status.starts_with(t("已切换")) {self.toast(self.state.controls.status.clone());}
             }
             ResultAction::Cursor(settings) => {
                 self.state.cursor_settings=settings; self.cursor_idle.reveal(self.started.elapsed());
@@ -369,17 +378,17 @@ impl Frontend {
                 println!("leaf-session resume mode={:?} waiting_for_neutral=true ticks={} mouse_speed={:?}", self.state.mode, self.ticks, self.state.mouse_speed);
             }
             MenuResult::Quit => {if self.flush_progress(false){self.quit=true;}},
-            MenuResult::ModeChanged(mode) => { self.cursor_idle.reveal(self.started.elapsed()); self.state.controls.active = None; self.state.controls.source = "仅本次".into(); println!("leaf-session mode_applied={mode:?} scope=session"); },
+            MenuResult::ModeChanged(mode) => { self.cursor_idle.reveal(self.started.elapsed()); self.state.controls.active = None; self.state.controls.source = t("仅本次").into(); println!("leaf-session mode_applied={mode:?} scope=session"); },
             MenuResult::MouseSpeedChanged(speed) => {
                 self.state.mouse_speed=speed;self.state.preview_mouse_speed=speed;
-                if let Some(mapping) = &mut self.state.controls.active { mapping.speed = speed; self.state.controls.source = "仅本次（速度已改）".into(); }
+                if let Some(mapping) = &mut self.state.controls.active { mapping.speed = speed; self.state.controls.source = t("仅本次（速度已改）").into(); }
                 println!("leaf-session mouse_speed_applied={speed:?} pixels_per_second={} scope=session", speed.pixels_per_second());
             }
             MenuResult::ProfileChanged(index) => {
                 self.cursor_idle.reveal(self.started.elapsed());
                 if let Some(mapping) = self.state.controls.active.as_ref().filter(|m| m.base == index && !self.state.use_cfg) {
                     self.state.mode = mapping.mode; self.state.preview_mode = mapping.mode;
-                } else { self.state.controls.active = None; self.state.controls.source = "仅本次".into(); }
+                } else { self.state.controls.active = None; self.state.controls.source = t("仅本次").into(); }
                 let released = self.state.ledger.release_all(); self.emit(released, false);
                 println!("leaf-session profile_applied={} scope=session use_cfg={}", profiles::profile(index).map(|p| p.id).unwrap_or("legacy"), self.state.use_cfg);
             }
@@ -391,6 +400,7 @@ impl Frontend {
             MenuResult::OpenSettings => {self.state.experience.open(ExperiencePage::Settings);},
             MenuResult::OpenShortcuts => {self.state.experience.open(ExperiencePage::Shortcuts);},
             MenuResult::OpenAbout => {self.state.experience.open(ExperiencePage::About);},
+            MenuResult::OpenLanguage => {self.state.experience.open(ExperiencePage::Language);},
             MenuResult::None => {}
         }
         self.redraw = true;
@@ -642,6 +652,9 @@ pub async fn run() -> Result<(), String> {
     if opt.self_test_slots && controls_root.exists() && std::fs::read_dir(&controls_root).map_err(|e| e.to_string())?.next().is_some() {
         return Err("Controls self-test requires an empty isolated controls directory".into());
     }
+    let language_path=session::i18n::path(&controls_root);
+    let language_error=session::i18n::initialize(&language_path).err();
+    if let Some(error)=&language_error{eprintln!("leaf-language initialization_save_failed={error}");}
     let control_store = controls::Store::new(controls_root, &swf_path);
     let progress=Arc::new(Mutex::new(experience::Progress::new(storage_dir.join("slots-v1"),&bytes,
         swf_path.file_stem().unwrap_or_default().to_string_lossy().into_owned(),
@@ -758,6 +771,7 @@ pub async fn run() -> Result<(), String> {
     let mut front = Frontend {
         progress,settings_path,movie_size,display_size:size,restart_slot:None,restart_renderer:None,
         menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), system_volume:session::system_volume::Monitor::new(), blocked:Default::default(),
+        language_path,
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,
         quit: false, redraw: true, resumed: false, started: Instant::now(), diagnostic: opt.self_test_slots || opt.self_test_experience || opt.trace_input, scripted_input: opt.self_test_slots || opt.self_test_experience, ticks: 0,
     };
@@ -776,7 +790,9 @@ pub async fn run() -> Result<(), String> {
         front.state.experience.open(ExperiencePage::Manager);front.state.paused=true;
     } else if pick_slot {front.state.experience.open(ExperiencePage::Saves);front.state.paused=true;}
     front.apply_av();
-    if renderer_failed{front.toast("Vulkan 启动失败，已恢复 OpenGL ES".into());}
+    front.state.experience.language=session::i18n::current();
+    if language_error.is_some(){front.toast(t("语言偏好未能保存，请检查存储卡").into());}
+    if renderer_failed{front.toast(t("Vulkan 启动失败，已恢复 OpenGL ES").into());}
     println!("leaf-progress startup picker={pick_slot} app={} active={:?}",opt.app_settings,front.progress.lock().unwrap().active);
     front.cursor_idle.rebase(front.cursor);
     let initial=front.state.controls.mappings[front.state.controls.game_slot].clone();
@@ -1113,7 +1129,7 @@ pub async fn run() -> Result<(), String> {
         return Err(error);
     }
     if front.restart_slot.is_some()||front.restart_renderer.is_some() {
-        if !saved {return Err("保存失败，已取消重启游戏".into());}
+        if !saved {return Err(t("保存失败，已取消重启游戏").into());}
         if let Some(backend)=front.restart_renderer {
             let mut settings=front.state.experience.settings;settings.renderer=backend;settings.save(&front.settings_path)?;
             println!("leaf-graphics restart requested={} progress_flushed=true",backend.name());
@@ -1123,7 +1139,7 @@ pub async fn run() -> Result<(), String> {
         // Retire GPU work and destroy image/context resources before exec.
         drop(front);drop(menu);drop(context);drop(window);
         #[cfg(unix)] {use std::os::unix::process::CommandExt;let error=std::process::Command::new(std::env::current_exe().map_err(|e|e.to_string())?).args(args).exec();return Err(error.to_string());}
-        #[cfg(not(unix))] return Err("读取存档后请重新打开游戏".into());
+        #[cfg(not(unix))] return Err(t("读取存档后请重新打开游戏").into());
     }
     if opt.self_test_slots {
         if script_phase!=ui_phases+8 {return Err(format!("Slots self-test incomplete: {script_phase}/{ui_phases}"));}
@@ -1135,6 +1151,6 @@ pub async fn run() -> Result<(), String> {
         }
         println!("leaf-slots self_test=passed slot_switch=true tabs=9 grid=true editor=true save=true cursor=true idle=true");
     }
-    if !saved{return Err("游戏原生进度提交失败，请检查日志和存储卡".into());}
+    if !saved{return Err(t("游戏原生进度提交失败，请检查日志和存储卡").into());}
     Ok(())
 }

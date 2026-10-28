@@ -62,6 +62,14 @@ M 是机身菜单键。组合键的按法是：**先按住 M，再按另一个�
 
 M+十字左/右已停用。M+X 只改变本次运行的输入路由，切换按键方案保持互换状态，不改写已保存的方案。组合键按下沿触发，按住不会连续换方案；切换释放旧输入，等待按键松开及摇杆归中。暂停菜单读取 Leaf 实际主题、字体和配色覆盖。Menu 使用独立物理事件识别，短按松开唤起菜单；组合键不附带打开菜单，系统长按逃生仍由 Leaf 处理。
 
+## 界面语言 / Language
+
+支持简体中文和英语。首次启动（包括升级后首次使用此功能）读取 leafOS 的系统语言：中文语言代码使用简体中文，英语及其他语言使用英语；无法读取时使用英语。识别结果保存为全局偏好，此后更改系统语言不会覆盖播放器的选择。
+
+游戏中按 M → **语言 / Language**，或从 Apps 的数据管理页进入同名项目，选择 **简体中文** 或 **English** 并按 A，立即切换并自动保存；所有游戏与 Apps 共用，重开仍保留。写入失败会提示错误并保留原语言。支持菜单、按键编辑、存档、快捷键说明、关于和操作提示；游戏内容及用户命名不随界面语言翻译。
+
+On first launch, Ruffle Flash uses the LeafOS language: Chinese selects Simplified Chinese; other languages select English. Open **M → 语言 / Language** (also available in Apps Data Manager), choose **English** or **简体中文**, then press **A**. Your choice applies immediately and is saved for all games.
+
 ## 按键映射
 
 每游戏独立保存 10 个按键方案。暂停菜单“按键设置”支持左右即时切换并记忆方案，A 直接进入五列宫格；编辑页用 L/R 循环切换方案。支持 14 个实体键、摇杆上/下/左/右及按下独立设置，可混合键盘、最多四键的组合键、鼠标移动/点击/滚轮等动作。动作选择为五列宫格，九类 Tab 同屏，L1/R1 切换类别。
@@ -158,6 +166,7 @@ Apps 的“Flash 数据管理”入口直接进入同名管理界面。左右选
 | --- | --- |
 | 按键映射 | `$USERDATA_PATH/ruffle-probe/config/controls/`；映射为 `slots/<路径标识>/slot-01.rmap`—`slot-10.rmap`，`selected.rmap` 记忆选择 |
 | 全局光标 | `$USERDATA_PATH/ruffle-probe/config/controls/cursor.conf` |
+| 界面语言 | `$USERDATA_PATH/ruffle-probe/config/language.conf`，游戏与 Apps 共用 |
 | 原生进度 | `$SAVES_PATH/ruffle-leaf-preview/shared_objects/slots-v1/games/<内容指纹>/slot-1.rls`—`slot-5.rls` |
 | 音画配置 | `$USERDATA_PATH/ruffle-probe/config/audiovisual/<内容指纹>.rav` |
 | 清理归档 | `$SAVES_PATH/ruffle-leaf-preview/shared_objects/cleared-data/` |

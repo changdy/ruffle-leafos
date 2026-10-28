@@ -1,5 +1,6 @@
 //! Leaf menu model, five native-progress profiles, and local audiovisual options.
 //! No VM snapshots: these files contain only Flash SharedObject data.
+use crate::session::i18n::t;
 use std::{collections::{BTreeMap,BTreeSet}, fs::{self, OpenOptions}, io::Write,
     path::{Path, PathBuf}, time::{SystemTime, UNIX_EPOCH}};
 #[cfg(unix)] use std::fs::File;
@@ -17,7 +18,7 @@ pub fn now() -> u64 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_def
 fn unique() -> u128 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos() }
 fn safe(path: &Path) -> Result<(), String> {
     for p in path.ancestors() {
-        if fs::symlink_metadata(p).is_ok_and(|m| m.file_type().is_symlink()) { return Err("数据路径不能是符号链接".into()); }
+        if fs::symlink_metadata(p).is_ok_and(|m| m.file_type().is_symlink()) { return Err(t("数据路径不能是符号链接").into()); }
     }
     Ok(())
 }
@@ -34,7 +35,7 @@ fn replace(a: &Path, b: &Path) -> std::io::Result<()> {
 }
 pub fn atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
     safe(path)?;
-    let parent=path.parent().ok_or("缺少数据目录")?;
+    let parent=path.parent().ok_or(t("缺少数据目录"))?;
     fs::create_dir_all(parent).map_err(|e|e.to_string())?;
     let temp=parent.join(format!(".write-{}-{}",std::process::id(),unique()));
     let result=(|| -> std::io::Result<()> {
@@ -60,7 +61,7 @@ impl Snapshot {
         v.extend(hash(&v).to_le_bytes());v
     }
     fn decode(v:&[u8])->Result<Self,String>{
-        let bad=||"存档格式或校验失败".to_string();
+        let bad=||t("存档格式或校验失败").to_string();
         if v.len()<24 || v.len()>LIMIT || &v[..4]!=b"RLS1" {return Err(bad());}
         let end=v.len()-8;
         if hash(&v[..end])!=u64::from_le_bytes(v[end..].try_into().unwrap()){return Err(bad());}
@@ -83,9 +84,9 @@ impl Snapshot {
 pub struct Slot { pub time:u64, pub count:usize, pub recovered:bool, pub broken:bool }
 impl Slot {
     pub fn detail(&self)->String {
-        if self.broken {"损坏：请在应用中清理；原文件保留".into()}
-        else if self.time==0 {"空存档".into()}
-        else {format!("{}{}",date(self.time),if self.recovered {" · 已回退备份"} else {""})}
+        if self.broken {t("损坏：请在应用中清理；原文件保留").into()}
+        else if self.time==0 {t("空存档").into()}
+        else {format!("{}{}",date(self.time),if self.recovered {t(" · 已回退备份")} else {""})}
     }
 }
 // Calendar conversion uses an explicit UTC+8 offset; unaffected by host TZ.
@@ -131,7 +132,7 @@ impl Progress {
         Err(_)=>Slot{broken:true,..Default::default()}
     })}
     pub fn select(&mut self,n:usize)->Result<(),String>{
-        if n>=SAVE_SLOTS{return Err("存档槽位超出范围".into());}
+        if n>=SAVE_SLOTS{return Err(t("存档槽位超出范围").into());}
         let (data,recovered)=self.read(n)?;
         self.data=data;self.active=Some(n);self.recovered=recovered;self.error=None;Ok(())
     }
@@ -149,14 +150,14 @@ impl Progress {
     }
     pub fn get(&self,name:&str)->Option<Vec<u8>>{self.data.objects.get(&self.key(name)).cloned()}
     fn commit(&self,n:usize,data:&Snapshot)->Result<(),String>{
-        let bytes=data.encode();if bytes.len()>LIMIT{return Err("存档超过32MB限制".into());}
+        let bytes=data.encode();if bytes.len()>LIMIT{return Err(t("存档超过32MB限制").into());}
         Snapshot::decode(&bytes)?;
         let path=self.path(n);
         if let Ok((old,false))=self.read(n){if old.time!=0 {atomic(&path.with_extension("rls.bak"),&old.encode())?;}}
         atomic(&path,&bytes)
     }
     pub fn put(&mut self,name:&str,value:Option<&[u8]>)->bool{
-        let Some(n)=self.active else {self.error=Some("请先选择存档".into());return false;};
+        let Some(n)=self.active else {self.error=Some(t("请先选择存档").into());return false;};
         let key=self.key(name);
         let mut next=self.data.clone();
         match value {Some(v)=>{next.objects.insert(key,v.to_vec());},None=>{next.objects.remove(&key);}}
@@ -165,8 +166,8 @@ impl Progress {
         match self.commit(n,&next){Ok(())=>{self.data=next;true},Err(e)=>{self.error=Some(e);false}}
     }
     pub fn copy_to(&mut self,n:usize)->Result<(),String>{
-        if n>=SAVE_SLOTS{return Err("存档槽位超出范围".into());}
-        if self.data.objects.is_empty(){return Err("游戏尚未产生原生进度，无法复制".into());}
+        if n>=SAVE_SLOTS{return Err(t("存档槽位超出范围").into());}
+        if self.data.objects.is_empty(){return Err(t("游戏尚未产生原生进度，无法复制").into());}
         let mut data=self.data.clone();data.time=now();self.commit(n,&data)
     }
     pub fn remove(&mut self,name:&str){
@@ -209,13 +210,13 @@ impl Settings {
         0=>self.scale=(self.scale as i32+d).rem_euclid(3) as u8,
         1=>self.quality=(self.quality as i32+d).rem_euclid(3) as u8,2=>self.fps=!self.fps,_=>{}
     }}
-    pub fn rows(&self)->Vec<String>{vec![format!("画面缩放                         {}",["保持比例","铺满屏幕","原始大小"][self.scale as usize]),
-        format!("画面质量                         {}",["低","中","高"][self.quality as usize]),
-        format!("左上角帧率                     {}",if self.fps{"开"}else{"关"}),format!("渲染接口                         {}  ›",self.renderer.label()),"恢复默认画面设置".into(),"返回".into()]}
+    pub fn rows(&self)->Vec<String>{vec![crate::tr!("画面缩放                         {}", "Scaling                         {}",[t("保持比例"),t("铺满屏幕"),t("原始大小")][self.scale as usize]),
+        crate::tr!("画面质量                         {}", "Flash quality                    {}",[t("低"),t("中"),t("高")][self.quality as usize]),
+        crate::tr!("左上角帧率                     {}", "FPS counter                     {}",if self.fps{t("开")}else{t("关")}),crate::tr!("渲染接口                         {}  ›", "Renderer                        {}  ›",self.renderer.label()),t("恢复默认画面设置").into(),t("返回").into()]}
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
-pub enum Page {#[default] Home,Saves,Settings,Renderer,Manager,Confirm,About,Shortcuts}
+pub enum Page {#[default] Home,Saves,Settings,Renderer,Manager,Confirm,About,Shortcuts,Language}
 
 pub const SHORTCUT_TABS:[&str;3]=["游戏中","菜单操作","按键编辑"];
 // Each row gives one goal, the exact input, and its context or result.
@@ -253,7 +254,7 @@ pub const BACKGROUND:[(&str,&str,&str);3]=[
     ("感谢开源社区，也感谢你", "感谢 Ruffle、aweigit/ruffle-miyooflip 和 Leaf / Jawaka 的开发者。", "也感谢每一位尝试、测试和反馈的玩家。祝你玩得开心！"),
 ];
 #[derive(Clone,Debug)]
-pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,Renderer(super::graphics::Backend),Clear(usize),Quit}
+pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,Renderer(super::graphics::Backend),Clear(usize),Language(super::i18n::Language),Quit}
 #[derive(Clone,Debug)]
 pub struct Entry {pub id:String,pub title:String,pub control_id:String}
 pub fn entries(root:&Path)->Vec<Entry>{
@@ -289,19 +290,21 @@ pub struct Ui {
     pub shortcut_tab:usize,
     pub actual_renderer:super::graphics::Backend,
     pub renderer_failed:bool,
+    pub language:super::i18n::Language,
 }
 impl Ui {
-    pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}}
+    pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}if page==Page::Language{self.selected=usize::from(self.language==super::i18n::Language::English);}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Saves=>"选择游戏存档".into(),Page::Settings=>"画面设置".into(),Page::Renderer=>"渲染接口".into(),Page::Manager=>"Flash 数据管理".into(),Page::Confirm=>"确认操作".into(),Page::About=>"Ruffle Flash · LeafOS 版".into(),Page::Shortcuts=>"快捷键说明".into()
+        Page::Home=>self.title.clone(),Page::Language=>"语言 / Language".into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("快捷键说明").into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
-        Page::Home=>vec![],Page::Saves=>(0..SAVE_SLOTS).map(|i|format!("存档 {}{}    {}",i+1,if self.started&&i==self.active {" · 当前"}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{"返回".into()}else{"返回 Leaf".into()})).collect(),
+        Page::Language=>super::i18n::Language::ALL.iter().map(|language| format!("{}{}",language.label(),if *language==self.language{"  ✓"}else{""})).chain(std::iter::once(t("返回").into())).collect(),
+        Page::Home=>vec![], Page::Saves=>(0..SAVE_SLOTS).map(|i|crate::tr!("存档 {}{}    {}", "Save {}{}    {}",i+1,if self.started&&i==self.active {t(" · 当前")}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{t("返回").into()}else{t("返回 Leaf").into()})).collect(),
         Page::Settings=>self.settings.rows(),
-        Page::Renderer=>vec![format!("OpenGL ES                         {}",if self.actual_renderer==super::graphics::Backend::OpenGlEs{"使用中"}else{""}),
-            format!("Vulkan（实验）                   {}",if self.actual_renderer==super::graphics::Backend::Vulkan{"使用中"}else if self.renderer_failed{"上次启动失败"}else{""}),"返回".into()],
-        Page::Manager=>vec![format!("游戏：  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or("暂无记录")),"清空此游戏的五个存档".into(),"重置此游戏的按键配置".into(),"清空所有游戏存档".into(),"重置所有按键配置".into(),"返回 Leaf".into()],
-        Page::Confirm=>vec!["取消".into(),"确认".into()],Page::About|Page::Shortcuts=>vec![]
+        Page::Renderer=>vec![format!("OpenGL ES                         {}",if self.actual_renderer==super::graphics::Backend::OpenGlEs{t("使用中")}else{""}),
+            crate::tr!("Vulkan（实验）                   {}", "Vulkan (experimental)           {}",if self.actual_renderer==super::graphics::Backend::Vulkan{t("使用中")}else if self.renderer_failed{t("上次启动失败")}else{""}),t("返回").into()],
+        Page::Manager=>vec![crate::tr!("游戏：  ◀  {}  ▶", "Game:  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or(t("暂无记录"))),t("清空此游戏的五个存档").into(),t("重置此游戏的按键配置").into(),t("清空所有游戏存档").into(),t("重置所有按键配置").into(),"语言 / Language".into(),t("返回 Leaf").into()],
+        Page::Confirm=>vec![t("取消").into(),t("确认").into()],Page::About|Page::Shortcuts=>vec![]
     }}
     pub fn nav(&mut self,nav:super::controls::Nav)->Command{
         use super::controls::Nav;
@@ -317,7 +320,8 @@ impl Ui {
         match nav {
             Nav::Up=>self.selected=(self.selected+count-1)%count,
             Nav::Down=>self.selected=(self.selected+1)%count,
-            Nav::B=>{if self.page==Page::Renderer{self.open(Page::Settings);self.selected=3;}
+            Nav::B=>{if self.page==Page::Language{self.open(if self.app{Page::Manager}else{Page::Home});}
+                else if self.page==Page::Renderer{self.open(Page::Settings);self.selected=3;}
                 else if self.page==Page::Confirm{self.open(if self.pending>=30{Page::Renderer}else if self.app{Page::Manager}else{Page::Saves});}
                 else if self.app||!self.started{return Command::Quit;}else{self.open(Page::Home);}},
             Nav::Left|Nav::Right=>{
@@ -330,20 +334,21 @@ impl Ui {
                 self.pending=20+self.selected;self.open(Page::Confirm);
             },
             Nav::A=>match self.page{
+                Page::Language=>{if let Some(language)=super::i18n::Language::ALL.get(self.selected){return Command::Language(*language);}self.open(if self.app{Page::Manager}else{Page::Home});},
                 Page::Saves=>{if self.selected==SAVE_SLOTS {if self.started{self.open(Page::Home)}else{return Command::Quit;}}
-                    else if self.slots[self.selected].broken {self.message="此槽位损坏；请先在应用中清理".into();}
+                    else if self.slots[self.selected].broken {self.message=t("此槽位损坏；请先在应用中清理").into();}
                     else if !self.started{return Command::Choose(self.selected);}
                     else if self.selected==self.active {self.open(Page::Home);}
                     else {self.pending=10+self.selected;self.open(Page::Confirm);}},
                 Page::Settings=>{if self.selected==5{self.open(Page::Home);}else if self.selected==3{self.open(Page::Renderer);}else{if self.selected==4 {self.settings=Settings{renderer:self.settings.renderer,..Settings::default()}}else{self.settings.change(self.selected,1)}return Command::Settings;}},
                 Page::Renderer=>{match self.selected {
                     0|1=>{let choice=super::graphics::Backend::from_byte(self.selected as u8).unwrap();
-                        if choice==self.actual_renderer{self.message=format!("当前已使用 {}",choice.label());}
+                        if choice==self.actual_renderer{self.message=crate::tr!("当前已使用 {}", "Already using {}",choice.label());}
                         else{self.pending=30+self.selected;self.open(Page::Confirm);}},
                     _=>{self.open(Page::Settings);self.selected=3;}
                 }},
-                Page::Manager=>{if self.selected==5{return Command::Quit;}if self.selected>0{
-                    if self.selected<=2&&self.games.is_empty(){self.message="暂无游戏记录".into();}else{self.pending=self.selected;self.open(Page::Confirm);}
+                Page::Manager=>{if self.selected==6{return Command::Quit;}if self.selected==5{self.open(Page::Language);return Command::None;}if self.selected>0{
+                    if self.selected<=2&&self.games.is_empty(){self.message=t("暂无游戏记录").into();}else{self.pending=self.selected;self.open(Page::Confirm);}
                 }},
                 Page::Confirm=>{if self.selected==1{
                     if self.pending>=30{return Command::Renderer(super::graphics::Backend::from_byte((self.pending-30) as u8).unwrap_or_default());}

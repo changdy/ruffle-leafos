@@ -1,5 +1,6 @@
 //! Frontend input ownership, pause state and time-based stick movement.
 //! This module has no SDL/GL dependencies so its transition tests run on the host.
+use crate::session::i18n::t;
 use std::collections::{BTreeMap, BTreeSet};
 #[path = "profiles.rs"]
 pub mod profiles;
@@ -17,6 +18,8 @@ pub mod graphics;
 pub mod turbo;
 #[path = "system_volume.rs"]
 pub mod system_volume;
+#[path = "i18n.rs"]
+pub mod i18n;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Source {
@@ -110,9 +113,9 @@ pub enum InputMode {
 impl InputMode {
     pub fn name(self) -> &'static str {
         match self {
-            Self::Hybrid => "混合",
-            Self::Keyboard => "键盘",
-            Self::Mouse => "鼠标",
+            Self::Hybrid => t("混合"),
+            Self::Keyboard => t("键盘"),
+            Self::Mouse => t("鼠标"),
         }
     }
 
@@ -148,7 +151,7 @@ impl MouseSpeed {
     }
 }
 
-pub const MENU_ROWS: usize = 9;
+pub const MENU_ROWS: usize = 10;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MenuResult {
@@ -165,6 +168,7 @@ pub enum MenuResult {
     OpenSettings,
     OpenShortcuts,
     OpenAbout,
+    OpenLanguage,
     SaveProgress,
 }
 
@@ -321,6 +325,7 @@ impl Session {
             5 => MenuResult::OpenSettings,
             6 => MenuResult::OpenShortcuts,
             7 => MenuResult::OpenAbout,
+            8 => MenuResult::OpenLanguage,
             _ => MenuResult::Quit,
         }
     }
@@ -563,6 +568,7 @@ mod tests {
         assert_eq!(s.accept(), MenuResult::OpenCursor);
         s.menu_move(4);assert_eq!(s.accept(),MenuResult::OpenShortcuts);
         s.menu_move(1);assert_eq!(s.accept(),MenuResult::OpenAbout);
+        s.menu_move(1);assert_eq!(s.accept(),MenuResult::OpenLanguage);
         s.menu_move(1);assert_eq!(s.accept(),MenuResult::Quit);
         assert_eq!(MouseSpeed::Slow.next(-1), MouseSpeed::Slow);
         assert_eq!(MouseSpeed::Fast.next(1), MouseSpeed::Fast);

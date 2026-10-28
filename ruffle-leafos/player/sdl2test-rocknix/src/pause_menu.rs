@@ -1,5 +1,6 @@
 //! Small GL overlay. All GL state changed by the menu is restored before the
 //! movie renderer runs again; changing labels use a bounded texture cache.
+use crate::session::i18n::t;
 use ab_glyph::{point, Font, FontArc, PxScale, ScaleFont};
 use glow::HasContext;
 use std::path::Path;
@@ -25,6 +26,7 @@ pub struct PauseMenu {
     textured: Option<glow::UniformLocation>,
     texts: Vec<Text>,
     font: FontArc,
+    fallback_font: Option<FontArc>,
     live: Vec<(String, Text)>,
     palette: [[f32;4];6],
     pill_shape: u8,
@@ -34,6 +36,12 @@ impl PauseMenu {
     pub unsafe fn new(gl: Arc<glow::Context>, font_path: &Path, previews: &[[String; 4]]) -> Result<Self, String> {
         let font = FontArc::try_from_vec(std::fs::read(font_path).map_err(|e| format!("menu font: {e}"))?)
             .map_err(|_| "menu font is not a supported TrueType font".to_string())?;
+        // Leaf's English theme fonts may not contain Chinese. Keep its font
+        // for supported glyphs and use the bundled CJK face for missing ones.
+        let fallback_font = std::env::var_os("RUFFLE_FONT_FILE")
+            .filter(|_| "语言简体中文".chars().any(|c| font.glyph_id(c).0 == 0))
+            .and_then(|path| std::fs::read(path).ok())
+            .and_then(|bytes| FontArc::try_from_vec(bytes).ok());
         let program = gl.create_program()?;
         for (kind, source) in [
             (glow::VERTEX_SHADER, "#version 300 es\nprecision highp float;\nin vec2 position; in vec2 texcoord; out vec2 uv; void main(){uv=texcoord;gl_Position=vec4(position,0.0,1.0);}"),
@@ -73,44 +81,49 @@ impl PauseMenu {
         gl.bind_buffer(glow::ARRAY_BUFFER, old_buffer);
         let mut texts = Vec::new();
         for (label, pixels) in [
-            ("暂停", 40.0), ("继续游戏", 32.0),
-            ("通用控制：混合", 32.0), ("通用控制：键盘", 32.0),
-            ("通用控制：鼠标", 32.0), ("返回 Leaf", 32.0),
-            ("上下选择  左右预览  A 应用  B 返回", 23.0),
-            ("混合：十字键和按钮操作游戏，摇杆移动鼠标，L 左键 R 右键", 20.0),
-            ("键盘：使用游戏按键配置；无自定义时 A 空格 B 回车", 20.0),
-            ("鼠标：摇杆或十字键移动，A 左键 B 右键，可按住拖拽", 20.0),
-            ("鼠标速度：慢   Y 光标外观", 29.0), ("鼠标速度：标准   Y 光标外观", 29.0), ("鼠标速度：快   Y 光标外观", 29.0),
-            ("仅调节摇杆和十字键鼠标；重开恢复标准。A 应用，B 取消预览", 20.0),
+            (t("暂停"), 40.0), (t("继续游戏"), 32.0),
+            (t("通用控制：混合"), 32.0), (t("通用控制：键盘"), 32.0),
+            (t("通用控制：鼠标"), 32.0), (t("返回 Leaf"), 32.0),
+            (t("上下选择  左右预览  A 应用  B 返回"), 23.0),
+            (t("混合：十字键和按钮操作游戏，摇杆移动鼠标，L 左键 R 右键"), 20.0),
+            (t("键盘：使用游戏按键配置；无自定义时 A 空格 B 回车"), 20.0),
+            (t("鼠标：摇杆或十字键移动，A 左键 B 右键，可按住拖拽"), 20.0),
+            (t("鼠标速度：慢   Y 光标外观"), 29.0), (t("鼠标速度：标准   Y 光标外观"), 29.0), (t("鼠标速度：快   Y 光标外观"), 29.0),
+            (t("仅调节摇杆和十字键鼠标；重开恢复标准。A 应用，B 取消预览"), 20.0),
         ] {
-            texts.push(Self::text(&gl, &font, label, pixels)?);
+            texts.push(Self::text(&gl, &font, fallback_font.as_ref(), label, pixels)?);
         }
-        for name in std::iter::once("通用（沿用 cfg）").chain(crate::session::profiles::PROFILES.iter().map(|p| p.name)) {
-            texts.push(Self::text(&gl, &font, &format!("按键方案：{name}"), 29.0)?);
+        for name in std::iter::once(t("通用（沿用 cfg）")).chain(crate::session::profiles::PROFILES.iter().map(|p| t(p.name))) {
+            texts.push(Self::text(&gl, &font, fallback_font.as_ref(), &crate::tr!("按键方案：{name}", "Control profile: {name}"), 29.0)?);
         }
-        texts.push(Self::text(&gl, &font, "预览尚未应用；A 应用，B 返回并取消未应用预览", 20.0)?); // 27
-        texts.push(Self::text(&gl, &font, "左键保持：M+十字下解除；暂停时释放", 21.0)?); // 28
+        texts.push(Self::text(&gl, &font, fallback_font.as_ref(), t("预览尚未应用；A 应用，B 返回并取消未应用预览"), 20.0)?); // 27
+        texts.push(Self::text(&gl, &font, fallback_font.as_ref(), t("左键保持：M+十字下解除；暂停时释放"), 21.0)?); // 28
         for lines in previews {
-            for line in lines { texts.push(Self::text(&gl, &font, line, 21.0)?); } // 29+
+            for line in lines { texts.push(Self::text(&gl, &font, fallback_font.as_ref(), line, 21.0)?); } // 29+
         }
-        texts.push(Self::text(&gl, &font, "自定义按键", 30.0)?);
+        texts.push(Self::text(&gl, &font, fallback_font.as_ref(), t("自定义按键"), 30.0)?);
         Ok(Self {
             color: gl.get_uniform_location(program, "color"),
             textured: gl.get_uniform_location(program, "textured"),
-            gl, program, vertices, vao, texts, font, live: Vec::new(),
+            gl, program, vertices, vao, texts, font, fallback_font, live: Vec::new(),
             palette: Self::palette(),
             pill_shape: std::env::var("RUFFLE_MENU_PILL").ok().and_then(|s|s.parse().ok()).filter(|n|*n<4).unwrap_or(3),
         })
     }
 
-    unsafe fn text(gl: &glow::Context, font: &FontArc, label: &str, size: f32) -> Result<Text, String> {
+    unsafe fn text(gl: &glow::Context, font: &FontArc, fallback: Option<&FontArc>, label: &str, size: f32) -> Result<Text, String> {
+        let face = |c| if font.glyph_id(c).0 == 0 { fallback.unwrap_or(font) } else { font };
         let scaled = font.as_scaled(PxScale::from(size));
-        let width = label.chars().map(|c| scaled.h_advance(font.glyph_id(c))).sum::<f32>().ceil() as i32 + 4;
-        let height = (scaled.ascent() - scaled.descent()).ceil() as i32 + 4;
+        let width = label.chars().map(|c| { let font=face(c); font.as_scaled(PxScale::from(size)).h_advance(font.glyph_id(c)) }).sum::<f32>().ceil() as i32 + 4;
+        let ascent = fallback.map(|f| f.as_scaled(PxScale::from(size)).ascent()).unwrap_or(scaled.ascent()).max(scaled.ascent());
+        let descent = fallback.map(|f| f.as_scaled(PxScale::from(size)).descent()).unwrap_or(scaled.descent()).min(scaled.descent());
+        let height = (ascent - descent).ceil() as i32 + 4;
         let mut alpha = vec![0u8; (width * height) as usize];
         let mut x = 2.0;
         for c in label.chars() {
-            let glyph = font.glyph_id(c).with_scale_and_position(size, point(x, scaled.ascent() + 2.0));
+            let font=face(c);
+            let scaled=font.as_scaled(PxScale::from(size));
+            let glyph = font.glyph_id(c).with_scale_and_position(size, point(x, ascent + 2.0));
             if let Some(outline) = font.outline_glyph(glyph) {
                 let bounds = outline.px_bounds();
                 outline.draw(|gx, gy, coverage| {
@@ -205,23 +218,23 @@ impl PauseMenu {
         } else if state.controls.visible {
             self.draw_controls(state);
         } else {
-        self.leaf_background(&state.experience.title,if state.experience.started{"Flash · 已暂停"}else{"Flash"},"继续游戏",FooterNavigation::Adjust);
+        self.leaf_background(&state.experience.title,if state.experience.started{t("Flash · 已暂停")}else{"Flash"},t("继续游戏"),FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
-        let rows=["继续","按键设置","鼠标光标","保存游戏进度","游戏存档","画面设置","快捷键说明","关于","保存并退出"];
-        let details=[String::new(),format!("◀ 方案 {} ▶",slot+1),
-            String::new(),"原生进度".into(),format!("存档 {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new()];
+        let rows=[t("继续"),t("按键设置"),t("鼠标光标"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("快捷键说明"),t("关于"),"语言 / Language",t("保存并退出")];
+        let details=[String::new(),crate::tr!("◀ 方案 {} ▶", "◀ Profile {} ▶",slot+1),
+            String::new(),t("原生进度").into(),crate::tr!("存档 {} / 5", "Save {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
-            self.leaf_row(i+1,line,138.+i as f32*51.,48.,i==state.selected);
-            if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,145.+i as f32*51.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
+            self.leaf_row(i+1,line,137.+i as f32*46.,44.,i==state.selected);
+            if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,141.+i as f32*46.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
-        let hint=match state.selected {1=>"左右切换方案 · A 进入编辑",6=>"查看游戏组合键、菜单操作与按键编辑方法",7=>"认识 Ruffle Flash，查看项目主页与开源致谢",_=>"操作方法见「快捷键说明」"};
+        let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),_=>t("操作方法见「快捷键说明」")};
         self.live_label_width(16,hint,20.,23.,606.,910.,false,self.palette[4]);
         }
         } else if state.drag_locked {
-            self.live_chip(61,"左键保持 · M+十字下解除",22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
+            self.live_chip(61,t("左键保持 · M+十字下解除"),22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
         }
         if let Some((level,_))=&state.system_volume {
-            let label=format!("系统音量 {}%",level);
+            let label=crate::tr!("系统音量 {}%", "System volume {}%",level);
             self.live_chip(63,&label,23.,(600.,10.),350.,false,[0.96,0.99,1.,1.]);
         }
         if let Some((message,_))=&state.toast {
@@ -302,14 +315,14 @@ impl PauseMenu {
     unsafe fn leaf_footer(&mut self,back_label:&str,navigation:FooterNavigation) {
         if matches!(navigation,FooterNavigation::Back) {
             self.rounded((620.,642.,320.,58.),29.,self.palette[5]);
-            self.live_label_width(132,"B 返回",30.,644.,653.,272.,true,self.palette[4]);
+            self.live_label_width(132,t("B 返回"),30.,644.,653.,272.,true,self.palette[4]);
             return;
         }
         let (arrows,hint,key_width,label_x)=match navigation {
-            FooterNavigation::Adjust=>("↑↓","移动  ←→ 调整",60.,98.),
-            FooterNavigation::Grid=>("↑↓←→","移动焦点",112.,150.),
-            FooterNavigation::List=>("↑↓","移动",60.,98.),
-            FooterNavigation::Tabs=>("←→","切换页面",60.,98.),
+            FooterNavigation::Adjust=>("↑↓",t("移动  ←→ 调整"),60.,98.),
+            FooterNavigation::Grid=>("↑↓←→",t("移动焦点"),112.,150.),
+            FooterNavigation::List=>("↑↓",t("移动"),60.,98.),
+            FooterNavigation::Tabs=>("←→",t("切换页面"),60.,98.),
             FooterNavigation::Back=>unreachable!(),
         };
         self.rounded((20.,642.,315.,58.),29.,self.palette[5]);
@@ -318,7 +331,7 @@ impl PauseMenu {
         self.live_label_width(46,arrows,35.,30.,651.,key_width-5.,true,self.palette[3]);
         self.live_label_width(47,hint,28.,label_x,655.,326.-label_x,false,self.palette[4]);
         if matches!(navigation,FooterNavigation::Tabs) {
-            self.live_label_width(132,"B 返回",30.,644.,653.,272.,true,self.palette[4]);
+            self.live_label_width(132,t("B 返回"),30.,644.,653.,272.,true,self.palette[4]);
             return;
         }
         self.rounded_corners((630.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
@@ -326,7 +339,7 @@ impl PauseMenu {
         self.live_label_width(48,"B",36.,636.,650.,36.,true,self.palette[3]);
         self.live_label_width(49,back_label,28.,678.,655.,122.,false,self.palette[4]);
         self.live_label_width(50,"A",36.,808.,650.,36.,true,self.palette[3]);
-        self.live_label_width(51,"确定",28.,854.,655.,76.,false,self.palette[4]);
+        self.live_label_width(51,t("确定"),28.,854.,655.,76.,false,self.palette[4]);
     }
     unsafe fn draw_experience(&mut self,state:&Session) {
         use crate::session::experience::Page;
@@ -334,33 +347,33 @@ impl PauseMenu {
         if u.page==Page::About {self.draw_about();return;}
         if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab);return;}
         let subtitle=match u.page{
-            Page::Saves=>if u.started{"A 读取并重启游戏；Y 将当前进度复制到选中槽"}else{"发现游戏进度，请先选择存档；空槽开始新进度"},
-            Page::Settings=>"仅此游戏 · 调整后自动保存",Page::Renderer=>"仅此游戏 · 切换接口会保存原生进度并重启",Page::Manager=>"←→ 选择游戏 · 清理前会再次确认",Page::Confirm=>"请选择确认或取消",_=>""
+            Page::Saves=>if u.started{t("A 读取并重启游戏；Y 将当前进度复制到选中槽")}else{t("发现游戏进度，请先选择存档；空槽开始新进度")},
+            Page::Settings=>t("仅此游戏 · 调整后自动保存"),Page::Renderer=>t("仅此游戏 · 切换接口会保存原生进度并重启"),Page::Manager=>t("←→ 选择游戏 · 清理前会再次确认"),Page::Language=>if crate::session::i18n::is_english(){"Choose a language · Applies immediately and saves for all games"}else{"选择语言 · 立即生效并保存，所有游戏共用"},Page::Confirm=>t("请选择确认或取消"),_=>""
         };
         let navigation=if matches!(u.page,Page::Settings|Page::Manager){FooterNavigation::Adjust}else{FooterNavigation::List};
-        self.leaf_background(&u.heading(),subtitle,"返回",navigation);
+        self.leaf_background(&u.heading(),subtitle,t("返回"),navigation);
         let rows=u.rows();
         if u.page==Page::Confirm {
-            let description=if u.pending>=30{format!("保存原生进度，切换到 {} 并重启游戏？",if u.pending==31{"Vulkan"}else{"OpenGL ES"})}
-                else if u.pending>=20{format!("将当前游戏进度复制到存档 {}，覆盖该槽原有进度？",u.pending-19)}
-                else if u.pending>=10{format!("先保存当前进度，再重启并读取存档 {}？",u.pending-9)}
-                else {match u.pending{1=>"清空所选游戏的五个存档？",2=>"恢复所选游戏的默认按键？",3=>"清空所有游戏的全部存档？",_=>"重置所有按键配置与用户模板？"}.into()};
+            let description=if u.pending>=30{crate::tr!("保存原生进度，切换到 {} 并重启游戏？", "Save native progress, switch to {} and restart?",if u.pending==31{"Vulkan"}else{"OpenGL ES"})}
+                else if u.pending>=20{crate::tr!("将当前游戏进度复制到存档 {}，覆盖该槽原有进度？", "Copy current progress to slot {}, replacing its progress?",u.pending-19)}
+                else if u.pending>=10{crate::tr!("先保存当前进度，再重启并读取存档 {}？", "Save current progress, restart and load slot {}?",u.pending-9)}
+                else {match u.pending{1=>t("清空所选游戏的五个存档？"),2=>t("恢复所选游戏的默认按键？"),3=>t("清空所有游戏的全部存档？"),_=>t("重置所有按键配置与用户模板？")}.into()};
             self.live_label_width(19,&description,32.,23.,190.,910.,false,self.palette[1]);
-            let note=if u.pending>=30 {"仅恢复游戏自身支持的进度，不保留当前运行画面。"}
-                else if u.pending>=20 {"仅复制游戏原生进度；覆盖时保留上次有效备份。"}
-                else if u.pending>=10 {"将重新启动游戏，读取所选槽位的原生进度。"}else{"清理的数据会移入本地备份目录。"};
+            let note=if u.pending>=30 {t("仅恢复游戏自身支持的进度，不保留当前运行画面。")}
+                else if u.pending>=20 {t("仅复制游戏原生进度；覆盖时保留上次有效备份。")}
+                else if u.pending>=10 {t("将重新启动游戏，读取所选槽位的原生进度。")}else{t("清理的数据会移入本地备份目录。")};
             self.live_label_width(20,note,22.,60.,250.,830.,false,self.palette[1]);
         }
         for (i,row) in rows.iter().enumerate(){self.leaf_row(i+1,row,if u.page==Page::Confirm{340.+i as f32*75.}else{143.+i as f32*59.},55.,i==u.selected);}
         if u.page==Page::Saves {
-            self.live_label_width(21,"保存游戏自身支持的进度；不包含任意画面的即时快照",21.,55.,540.,850.,false,self.palette[1]);
-            self.live_label_width(22,"时间为北京时间，显示最后一次进度变化的时间。",20.,55.,575.,850.,false,self.palette[1]);
+            self.live_label_width(21,t("保存游戏自身支持的进度；不包含任意画面的即时快照"),21.,55.,540.,850.,false,self.palette[1]);
+            self.live_label_width(22,t("时间为北京时间，显示最后一次进度变化的时间。"),20.,55.,575.,850.,false,self.palette[1]);
         }
         if u.page==Page::Renderer {
-            let details=["Vulkan 为实验选项，性能和兼容性因游戏而异。",
-                if u.renderer_failed{"上次 Vulkan 启动失败，已恢复 OpenGL ES；可重试。"}
-                else if u.actual_renderer==crate::session::graphics::Backend::Vulkan{"Flash 使用 Vulkan 绘制；OpenGL ES 负责显示和菜单。"}
-                else{"默认使用 OpenGL ES；Vulkan 启动失败时自动恢复。"}];
+            let details=[t("Vulkan 为实验选项，性能和兼容性因游戏而异。"),
+                if u.renderer_failed{t("上次 Vulkan 启动失败，已恢复 OpenGL ES；可重试。")}
+                else if u.actual_renderer==crate::session::graphics::Backend::Vulkan{t("Flash 使用 Vulkan 绘制；OpenGL ES 负责显示和菜单。")}
+                else{t("默认使用 OpenGL ES；Vulkan 启动失败时自动恢复。")}];
             for (i,line) in details.iter().enumerate() {
                 self.live_label_width(21+i,line,23.,55.,400.+i as f32*42.,850.,false,self.palette[1]);
             }
@@ -370,33 +383,33 @@ impl PauseMenu {
 
     unsafe fn draw_about(&mut self) {
         use crate::session::experience::BACKGROUND;
-        self.leaf_background("Ruffle Flash · LeafOS 版",&format!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS",env!("CARGO_PKG_VERSION")),"返回",FooterNavigation::Back);
+        self.leaf_background(t("Ruffle Flash · LeafOS 版"),&crate::tr!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS", "{} Development preview · Miniloong Pocket 1 / LeafOS",env!("CARGO_PKG_VERSION")),t("返回"),FooterNavigation::Back);
         for (i,(title,line1,line2)) in BACKGROUND.iter().enumerate() {
             let y=150.+i as f32*130.;let mut card=self.palette[5];card[3]=0.35;
             self.rounded((23.,y,910.,115.),12.,card);
-            self.live_label_width(80+i*3,title,30.,38.,y+9.,880.,false,self.palette[1]);
-            self.live_label_width(81+i*3,line1,25.,38.,y+49.,880.,false,self.palette[1]);
-            self.live_label_width(82+i*3,line2,24.,38.,y+82.,880.,false,self.palette[4]);
+            self.live_label_width(80+i*3,t(title),30.,38.,y+9.,880.,false,self.palette[1]);
+            self.live_label_width(81+i*3,t(line1),25.,38.,y+49.,880.,false,self.palette[1]);
+            self.live_label_width(82+i*3,t(line2),24.,38.,y+82.,880.,false,self.palette[4]);
         }
-        self.live_label_width(54,"Ruffle：MIT / Apache-2.0；本项目及 Leaf / Jawaka 菜单参考：MIT。",22.,23.,570.,910.,false,self.palette[4]);
-        self.live_label_width(55,"完整许可与第三方声明随安装包附带。",22.,23.,601.,910.,false,self.palette[4]);
+        self.live_label_width(54,t("Ruffle：MIT / Apache-2.0；本项目及 Leaf / Jawaka 菜单参考：MIT。"),22.,23.,570.,910.,false,self.palette[4]);
+        self.live_label_width(55,t("完整许可与第三方声明随安装包附带。"),22.,23.,601.,910.,false,self.palette[4]);
     }
 
     unsafe fn draw_shortcuts(&mut self,tab:usize) {
         use crate::session::experience::{SHORTCUT_TABS,SHORTCUTS,SHORTCUT_NOTES};
-        self.leaf_background("快捷键说明","先看想做什么，再按右侧提示操作","返回",FooterNavigation::Tabs);
+        self.leaf_background(t("快捷键说明"),t("先看想做什么，再按右侧提示操作"),t("返回"),FooterNavigation::Tabs);
         for (i,label) in SHORTCUT_TABS.iter().enumerate() {
             let x=23.+i as f32*307.;self.leaf_tile((x,140.,296.,44.),tab==i);
-            self.live_label_width(65+i,label,28.,x+12.,145.,272.,true,self.palette[if tab==i{3}else{1}]);
+            self.live_label_width(65+i,t(label),28.,x+12.,145.,272.,true,self.palette[if tab==i{3}else{1}]);
         }
         for (i,(action,keys,note)) in SHORTCUTS[tab].iter().enumerate() {
             let y=199.+i as f32*75.;let mut card=self.palette[5];card[3]=0.35;
             self.rounded((23.,y,910.,69.),10.,card);
-            self.live_label_width(80+i*3,action,28.,38.,y+3.,410.,false,self.palette[1]);
-            self.live_label_width(81+i*3,keys,27.,454.,y+4.,460.,false,self.palette[1]);
-            self.live_label_width(82+i*3,note,22.,38.,y+39.,877.,false,self.palette[4]);
+            self.live_label_width(80+i*3,t(action),28.,38.,y+3.,410.,false,self.palette[1]);
+            self.live_label_width(81+i*3,t(keys),27.,454.,y+4.,460.,false,self.palette[1]);
+            self.live_label_width(82+i*3,t(note),22.,38.,y+39.,877.,false,self.palette[4]);
         }
-        self.live_label_width(54,SHORTCUT_NOTES[tab],22.,23.,591.,910.,false,self.palette[4]);
+        self.live_label_width(54,t(SHORTCUT_NOTES[tab]),22.,23.,591.,910.,false,self.palette[4]);
     }
 
     unsafe fn draw_cursor(&self, settings: crate::session::cursor::Settings, position: (f32,f32)) {
@@ -415,10 +428,10 @@ impl PauseMenu {
     unsafe fn prepare_label(&mut self,slot:usize,label:&str,size:f32)->Option<(f32,f32)> {
         let key = format!("{size}:{label}");
         while self.live.len() <= slot {
-            if let Ok(t) = Self::text(&self.gl, &self.font, " ", size) { self.live.push((String::new(),t)); } else { return None; }
+            if let Ok(t) = Self::text(&self.gl, &self.font, self.fallback_font.as_ref(), " ", size) { self.live.push((String::new(),t)); } else { return None; }
         }
         if self.live[slot].0 != key {
-            match Self::text(&self.gl, &self.font, label, size) {
+            match Self::text(&self.gl, &self.font, self.fallback_font.as_ref(), label, size) {
                 Ok(t) => { self.gl.delete_texture(self.live[slot].1.texture); self.live[slot] = (key,t); },
                 Err(e) => { log::error!("menu text: {e}"); return None; }
             }
@@ -454,22 +467,22 @@ impl PauseMenu {
         let controls = &state.controls;
         use crate::session::controls::{Page,CATEGORIES,GRID_COLS};
         let subtitle=match controls.page {
-            Page::Edit=>format!("L / R 切换方案 · Y 连发{}",if controls.dirty(){" · 未保存"}else{""}),
-            Page::Picker=>"L1 / R1 切换动作类型".into(),
-            Page::Cursor=>"鼠标速度与光标外观".into(),
+            Page::Edit=>crate::tr!("L / R 切换方案 · Y 连发{}", "L / R Profile · Y Turbo{}",if controls.dirty(){t(" · 未保存")}else{""}),
+            Page::Picker=>t("L1 / R1 切换动作类型").into(),
+            Page::Cursor=>t("鼠标速度与光标外观").into(),
             Page::Confirm=>controls.pending_detail(),
         };
-        let title=if controls.page==Page::Edit {format!("按键设置 · 方案 {}",controls.game_slot+1)}else{controls.title().into()};
+        let title=if controls.page==Page::Edit {crate::tr!("按键设置 · 方案 {}", "Controls · Profile {}",controls.game_slot+1)}else{controls.title().into()};
         let navigation=match controls.page {Page::Edit|Page::Picker=>FooterNavigation::Grid,Page::Cursor=>FooterNavigation::Adjust,Page::Confirm=>FooterNavigation::List};
-        self.leaf_background(&title,&subtitle,if controls.page==Page::Confirm {"继续编辑"}else{"返回"},navigation);
+        self.leaf_background(&title,&subtitle,if controls.page==Page::Confirm {t("继续编辑")}else{t("返回")},navigation);
         if controls.page == crate::session::controls::Page::Cursor {
-            self.live_label(12,"预览",21.,715.,98.,self.palette[4]);
+            self.live_label(12,t("预览"),21.,715.,98.,self.palette[4]);
             self.draw_cursor(controls.cursor_draft,(850.,111.));
         }
         let lines = controls.lines();
         if controls.page==Page::Confirm {
-            self.live_label_width(19,&format!("方案 {} 有未保存的修改",controls.game_slot+1),34.,23.,185.,910.,false,self.palette[1]);
-            self.live_label_width(20,"请选择保存或舍弃，也可以返回继续编辑。",25.,23.,245.,910.,false,self.palette[4]);
+            self.live_label_width(19,&crate::tr!("方案 {} 有未保存的修改", "Profile {} has unsaved changes",controls.game_slot+1),34.,23.,185.,910.,false,self.palette[1]);
+            self.live_label_width(20,t("请选择保存或舍弃，也可以返回继续编辑。"),25.,23.,245.,910.,false,self.palette[4]);
             for (i,line) in lines.iter().enumerate() {self.leaf_row(1+i,line,320.+i as f32*75.,60.,i==controls.row);}
             self.live_label_width(55,&controls.status,22.,23.,580.,910.,false,self.palette[1]);
             return;
@@ -480,7 +493,7 @@ impl PauseMenu {
             for (i,name) in CATEGORIES.iter().enumerate() {
                 let x=77.+i as f32*90.;
                 self.leaf_tile((x,139.,84.,43.),i==controls.category);
-                self.live_label_width(65+i,name,22.,x+4.,148.,76.,true,self.palette[if i==controls.category{3}else{1}]);
+                self.live_label_width(65+i,t(name),22.,x+4.,148.,76.,true,self.palette[if i==controls.category{3}else{1}]);
             }
             let step=(375./lines.len().div_ceil(GRID_COLS) as f32).min(100.);
             for (i,line) in lines.iter().enumerate() {
@@ -497,14 +510,14 @@ impl PauseMenu {
                 let x=45.+(i%GRID_COLS) as f32*176.; let y=142.+(i/GRID_COLS) as f32*76.;
                 let color=self.palette[if i==controls.row{3}else{1}];
                 self.leaf_tile((x,y,166.,68.),i==controls.row);
-                if let Some((label,value))=line.split_once('：') {
+                if let Some((label,value))=line.split_once('：').or_else(||line.split_once(':')) {
                     self.live_label_width(80+i*2,label,21.,x+9.,y+6.,148.,true,color);
                     self.live_label_width(81+i*2,value,24.,x+9.,y+34.,148.,true,color);
                 } else { self.live_label_width(80+i*2,line,23.,x+9.,y+22.,148.,true,color); }
             }
-            self.live_label_width(54,&if state.directions_swapped {"本次方向已互换 · M+X 恢复".into()}else{controls.detail()},21.,430.,465.,475.,false,self.palette[4]);
+            self.live_label_width(54,&if state.directions_swapped {t("本次方向已互换 · M+X 恢复").into()}else{controls.detail()},21.,430.,465.,475.,false,self.palette[4]);
             self.quad((45.,528.,870.,1.),self.palette[5],None);
-            for (i,label) in ["保存","返回"].iter().enumerate() {
+            for (i,label) in [t("保存"),t("返回")].iter().enumerate() {
                 let selected=controls.row==crate::session::controls::SAVE_ROW+i;
                 let x=if i==0 {45.}else{650.};
                 self.rounded((x,543.,265.,52.),26.,self.palette[if selected{2}else{5}]);

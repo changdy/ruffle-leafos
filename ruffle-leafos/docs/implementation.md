@@ -52,11 +52,17 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 
 M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有其他候选时保持当前方案；主菜单左右与编辑页 L/R 仍可选择全部十个方案。`Mapping::is_empty` 统一按 14 个按键和 5 个摇杆动作均为 `None` 且 `fine=false` 判断；鼠标精调是有效动作，基底、摇杆预设和速度等元数据不单独使方案非空。切换继续使用同一持久化/释放规则。M+十字下切左键保持，M+X 仅在本次运行互换十字/摇杆四方向，摇杆按下不变；交换状态不会写入映射文件。光标页速度仅本次生效，方案内保存的速度仍随方案读取；外观由所有游戏共用。
 
-暂停主菜单共九行，“快捷键说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页，以三张卡片展示项目介绍、完整 GitHub 仓库地址和开源致谢，底部单独显示许可说明；文案维护在 `experience::BACKGROUND` 与 `pause_menu::draw_about`。快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
+暂停主菜单共十行，新增“语言 / Language”，与 Apps 管理页共用 `Page::Language`；“快捷键说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页，以三张卡片展示项目介绍、完整 GitHub 仓库地址和开源致谢，底部单独显示许可说明；文案维护在 `experience::BACKGROUND` 与 `pause_menu::draw_about`。快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
 
 摇杆现有径向死区为 0.18，键盘/点击动作采用 0.45 按下、0.30 释放的滞回阈值。完整可调设置和坐标矩阵仍在待办，现有阈值不等于该项验收完成。
 
 连发完整周期为 `1_000_000 / Hz` 微秒，按下阶段为周期减 8 ms，松开阶段为 8 ms，为用户要求的 10 ms 上限留出 2 ms 调度余量。小幅延迟保留原截止时间，可缩短接下来的松开阶段；错过完整阶段时从当前时间安排该阶段，单次更新最多翻转一次，不集中追赶。`Repeater::next_delay` 返回所有启用连发源的最近截止时间；主循环在 tick 前和渲染后检查，并以截止时间缩短原 16 ms 睡眠。输入事件仍在 Flash 主线程派发，脚本、GL 或系统调度阻塞可能延长实际松开间隔，不能保证任意负载下的硬实时时限。诊断输入日志附带单调时钟微秒时间，便于区分调度时序和设备实测。
+
+## 界面语言
+
+`i18n.rs` 维护简体中文/英语的识别、持久化和当前线程语言；`translations.rs` 集中保存静态文案，`tr!` 在调用点保留两份格式字面量，由 Rust 检查参数和命名捕获。菜单、按键、光标、存档、说明和提示显式取译文，用户标题/路径不进入翻译匹配。首次识别后写 `config/language.conf`，菜单保存成功才立即切换；协议、环境优先级及异常行为见[语言设置格式](formats/language-settings.md)。
+
+暂停主菜单和 Apps 管理页均提供语言入口，A 选择后自动保存，A/B 返回到对应入口。暂停列表采用十行布局；文本纹理缓存包含实际译文，切换后按需重建；已生成的临时状态提示清空。Leaf 所选主题字体继续负责有字形的文字，缺失字形使用 `paths.sh` 导出的随包 CJK 字体 `RUFFLE_FONT_FILE`，确保英语系统可显示中文选项并切回中文。
 
 ## 数据身份与持久化
 
@@ -110,6 +116,7 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 ```powershell
 python scripts/build_player.py build --offline --isolated-config
 python scripts/test_session.py
+python -m unittest discover -s scripts -p test_language.py -v
 python scripts/test_renderer.py
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py

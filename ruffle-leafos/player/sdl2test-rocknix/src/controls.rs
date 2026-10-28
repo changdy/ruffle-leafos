@@ -1,5 +1,6 @@
 //! Local control editor and strictly data-only, versioned per-game mapping storage.
 //! No SDL/GL dependencies: the same state machine is exercised on the host.
+use crate::session::i18n::t;
 use super::{profiles::{self, Binding, Stick}, cursor, turbo::{self,Rate}, InputMode, MouseSpeed};
 use std::{collections::BTreeMap, fs::{self, File, OpenOptions}, io::{Read, Write}, path::{Path, PathBuf}};
 
@@ -98,7 +99,7 @@ pub fn key_label(key: i32) -> String {
         127 => "Delete".into(), profiles::PAGE_UP => "PageUp".into(), profiles::PAGE_DOWN => "PageDown".into(),
         1073741898 => "Home".into(), 1073741901 => "End".into(), 1073741897 => "Insert".into(),
         1073741882..=1073741893 => format!("F{}", key-1073741881),
-        33..=126 => char::from_u32(key as u32).unwrap().to_string(), _ => "无效键".into(),
+        33..=126 => char::from_u32(key as u32).unwrap().to_string(), _ => t("无效键").into(),
     }
 }
 
@@ -106,15 +107,15 @@ pub fn binding_label(binding: Binding) -> String {
     match binding {
         Binding::Key(key) => key_label(key),
         Binding::Chord(_) | Binding::Combo(..) => binding.actions().iter().filter_map(|a| match a { super::Action::Key(k) => Some(key_label(*k)), _ => None }).collect::<Vec<_>>().join("+"),
-        Binding::None => "无".into(), Binding::LeftClick => "鼠标左键".into(), Binding::RightClick => "鼠标右键".into(),
-        Binding::Slow => "按住慢速".into(), Binding::Fast => "按住快速".into(), Binding::Wheel(1) => "滚轮上".into(),
-        Binding::Wheel(_) => "滚轮下".into(), Binding::DragLock => "拖拽锁定".into(), Binding::Center => "指针居中".into(),
-        Binding::Pointer(i) => format!("鼠标移{}", ["上","下","左","右"][usize::from(i).min(3)]),
+        Binding::None => t("无").into(), Binding::LeftClick => t("鼠标左键").into(), Binding::RightClick => t("鼠标右键").into(),
+        Binding::Slow => t("按住慢速").into(), Binding::Fast => t("按住快速").into(), Binding::Wheel(1) => t("滚轮上").into(),
+        Binding::Wheel(_) => t("滚轮下").into(), Binding::DragLock => t("拖拽锁定").into(), Binding::Center => t("指针居中").into(),
+        Binding::Pointer(i) => crate::tr!("鼠标移{}", "Mouse {}", [t("上"),t("下"),t("左"),t("右")][usize::from(i).min(3)]),
     }
 }
 
 pub fn stick_label(stick: Stick) -> &'static str {
-    match stick { Stick::Directions => "同十字键", Stick::Steering => "仅左右转向", Stick::Mouse => "鼠标", Stick::None => "方向禁用", Stick::Custom => "各方向独立映射" }
+    match stick { Stick::Directions => t("同十字键"), Stick::Steering => t("仅左右转向"), Stick::Mouse => t("鼠标"), Stick::None => t("方向禁用"), Stick::Custom => t("各方向独立映射") }
 }
 
 fn allowed_key(key: i32) -> bool {
@@ -138,8 +139,8 @@ fn decode_binding(text: &str) -> Result<Binding, String> {
         "drag-lock" => Binding::DragLock, "center" => Binding::Center,
         "pointer-0" => Binding::Pointer(0), "pointer-1" => Binding::Pointer(1), "pointer-2" => Binding::Pointer(2), "pointer-3" => Binding::Pointer(3),
         _ => {
-            let keys = text.split(',').map(|s| s.parse::<i32>().map_err(|_| "按键格式错误".to_string())).collect::<Result<Vec<_>, _>>()?;
-            if keys.is_empty() || keys.len() > 4 || keys.iter().any(|k| !allowed_key(*k)) || keys.iter().enumerate().any(|(i,k)| keys[..i].contains(k)) { return Err("按键或组合键无效".into()); }
+            let keys = text.split(',').map(|s| s.parse::<i32>().map_err(|_| t("按键格式错误").to_string())).collect::<Result<Vec<_>, _>>()?;
+            if keys.is_empty() || keys.len() > 4 || keys.iter().any(|k| !allowed_key(*k)) || keys.iter().enumerate().any(|(i,k)| keys[..i].contains(k)) { return Err(t("按键或组合键无效").into()); }
             if keys.len() == 1 { Binding::Key(keys[0]) } else {
                 let mut array = [0; 4]; array[..keys.len()].copy_from_slice(&keys); Binding::Combo(array, keys.len() as u8)
             }
@@ -165,42 +166,42 @@ impl Record {
     }
 
     pub fn decode(text: &str) -> Result<Self, String> {
-        if text.len() > LIMIT { return Err("配置文件过大".into()); }
+        if text.len() > LIMIT { return Err(t("配置文件过大").into()); }
         let mut fields = BTreeMap::new();
         for line in text.lines() {
-            let (key, value) = line.split_once('=').ok_or("配置字段格式错误")?;
-            if fields.insert(key, value).is_some() { return Err("配置字段重复".into()); }
+            let (key, value) = line.split_once('=').ok_or(t("配置字段格式错误"))?;
+            if fields.insert(key, value).is_some() { return Err(t("配置字段重复").into()); }
         }
-        let get = |key: &str| fields.get(key).copied().ok_or_else(|| format!("配置缺少 {key}"));
+        let get = |key: &str| fields.get(key).copied().ok_or_else(|| crate::tr!("配置缺少 {key}", "Missing config field: {key}"));
         let version = get("version")?;
-        let count = match version { "1"=>22,"2"=>25,"3"=>30,"4"=>27,"5"=>46,_=>return Err("不支持的配置版本".into()) };
-        if fields.len() != count { return Err("配置字段缺失或未知".into()); }
+        let count = match version { "1"=>22,"2"=>25,"3"=>30,"4"=>27,"5"=>46,_=>return Err(t("不支持的配置版本").into()) };
+        if fields.len() != count { return Err(t("配置字段缺失或未知").into()); }
         // Old appearance fields are validated for compatibility, never applied.
         if matches!(version,"2"|"3") {
-            cursor::Style::parse(get("cursor-style")?).ok_or("光标样式无效")?;
-            cursor::Color::parse(get("cursor-color")?).ok_or("光标颜色无效")?;
-            cursor::Size::parse(get("cursor-size")?).ok_or("光标大小无效")?;
+            cursor::Style::parse(get("cursor-style")?).ok_or(t("光标样式无效"))?;
+            cursor::Color::parse(get("cursor-color")?).ok_or(t("光标颜色无效"))?;
+            cursor::Size::parse(get("cursor-size")?).ok_or(t("光标大小无效"))?;
         }
         let name = get("name")?.to_string();
-        if name.trim().is_empty() || name.chars().count() > 32 || name.chars().any(|c| c.is_control() || c == '=') { return Err("配置名称无效".into()); }
+        if name.trim().is_empty() || name.chars().count() > 32 || name.chars().any(|c| c.is_control() || c == '=') { return Err(t("配置名称无效").into()); }
         let identity = get("identity")?.to_string();
-        if identity.len() > 4096 || identity.bytes().any(|b| !b.is_ascii_hexdigit()) { return Err("游戏标识无效".into()); }
-        let base = get("base")?.parse::<usize>().map_err(|_| "配置基底无效")?;
-        if base > if matches!(version,"3"|"4"|"5") {14} else {12} { return Err("配置基底无效".into()); }
-        let mode = match get("mode")? { "hybrid" => InputMode::Hybrid, "keyboard" => InputMode::Keyboard, "mouse" => InputMode::Mouse, _ => return Err("控制方式无效".into()) };
-        let speed = match get("speed")? { "slow" => MouseSpeed::Slow, "normal" => MouseSpeed::Normal, "fast" => MouseSpeed::Fast, _ => return Err("鼠标速度无效".into()) };
-        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if matches!(version,"3"|"4"|"5") => Stick::Custom, _ => return Err("摇杆方式无效".into()) };
-        let fine = match get("fine")? { "true" => true, "false" => false, _ => return Err("十字精调无效".into()) };
+        if identity.len() > 4096 || identity.bytes().any(|b| !b.is_ascii_hexdigit()) { return Err(t("游戏标识无效").into()); }
+        let base = get("base")?.parse::<usize>().map_err(|_| t("配置基底无效"))?;
+        if base > if matches!(version,"3"|"4"|"5") {14} else {12} { return Err(t("配置基底无效").into()); }
+        let mode = match get("mode")? { "hybrid" => InputMode::Hybrid, "keyboard" => InputMode::Keyboard, "mouse" => InputMode::Mouse, _ => return Err(t("控制方式无效").into()) };
+        let speed = match get("speed")? { "slow" => MouseSpeed::Slow, "normal" => MouseSpeed::Normal, "fast" => MouseSpeed::Fast, _ => return Err(t("鼠标速度无效").into()) };
+        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if matches!(version,"3"|"4"|"5") => Stick::Custom, _ => return Err(t("摇杆方式无效").into()) };
+        let fine = match get("fine")? { "true" => true, "false" => false, _ => return Err(t("十字精调无效").into()) };
         let mut buttons = [Binding::None; 14];
         for (i, binding) in buttons.iter_mut().enumerate() { *binding = decode_binding(get(&format!("bind.{i}"))?)?; }
         let mut mapping = Mapping { base, mode, speed, buttons, turbo:[Rate::Off;14], axis_turbo:[Rate::Off;5], axes: [Binding::None;5], stick, fine };
         if matches!(version,"3"|"4"|"5") { for (i,binding) in mapping.axes.iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
         else { mapping.reset_axes(); }
         if version=="5" {
-            for (i,rate) in mapping.turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("turbo.{i}"))?).ok_or("连发频率无效")?;}
-            for (i,rate) in mapping.axis_turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("axis-turbo.{i}"))?).ok_or("摇杆连发频率无效")?;}
+            for (i,rate) in mapping.turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("turbo.{i}"))?).ok_or(t("连发频率无效"))?;}
+            for (i,rate) in mapping.axis_turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("axis-turbo.{i}"))?).ok_or(t("摇杆连发频率无效"))?;}
             for (binding,rate) in mapping.buttons.iter().zip(mapping.turbo.iter()).chain(mapping.axes.iter().zip(mapping.axis_turbo.iter())) {
-                if *rate!=Rate::Off && !turbo::supported(*binding) {return Err("此动作不支持连发".into());}
+                if *rate!=Rate::Off && !turbo::supported(*binding) {return Err(t("此动作不支持连发").into());}
             }
         }
         Ok(Self { name, identity, mapping })
@@ -212,7 +213,7 @@ fn unique() -> String {
     format!("{}-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos(), NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
 }
 fn regular(path: &Path) -> Result<(), String> {
-    if let Ok(meta) = fs::symlink_metadata(path) { if !meta.is_file() || meta.file_type().is_symlink() { return Err("目标不是普通文件".into()); } }
+    if let Ok(meta) = fs::symlink_metadata(path) { if !meta.is_file() || meta.file_type().is_symlink() { return Err(t("目标不是普通文件").into()); } }
     Ok(())
 }
 fn read_record(path: &Path) -> Result<Record, String> {
@@ -241,7 +242,7 @@ fn replace(from: &Path, to: &Path) -> std::io::Result<()> {
 }
 fn atomic_bytes(path: &Path, bytes: &[u8]) -> Result<(), String> {
     regular(path)?;
-    let parent = path.parent().ok_or("缺少数据目录")?;
+    let parent = path.parent().ok_or(t("缺少数据目录"))?;
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     let temporary = parent.join(format!(".write-{}", unique()));
     let result = (|| -> std::io::Result<()> {
@@ -280,7 +281,7 @@ impl Store {
         let path=self.cursor_path(); regular(&path)?;
         if path.exists() {
             let mut old=Vec::new(); File::open(&path).map_err(|e|e.to_string())?.take(513).read_to_end(&mut old).map_err(|e|e.to_string())?;
-            if old.len()>512 {return Err("原光标配置过大，未覆盖".into());}
+            if old.len()>512 {return Err(t("原光标配置过大，未覆盖").into());}
             let backup=if cursor::Settings::decode(std::str::from_utf8(&old).unwrap_or("")).is_ok() {path.with_extension("conf.bak")} else {path.with_extension(format!("invalid-{}",unique()))};
             atomic_bytes(&backup,&old)?;
         }
@@ -288,7 +289,7 @@ impl Store {
     }
     fn selected_path(&self) -> PathBuf { self.game_dir().join("selected.rmap") }
     pub fn select_slot(&self, slot: usize, mapping: &Mapping) -> Result<(),String> {
-        if slot >= GAME_SLOTS { return Err("方案超出范围".into()); }
+        if slot >= GAME_SLOTS { return Err(t("方案超出范围").into()); }
         self.save(&self.selected_path(), &Record {name:format!("Slot {}",slot+1),identity:self.identity.clone(),mapping:mapping.clone()})
     }
     pub fn load_slots(&self) -> ([Mapping;GAME_SLOTS],usize,String) {
@@ -298,11 +299,11 @@ impl Store {
             let path = self.game_slot(i);
             if path.exists() || path.with_extension("rmap.bak").exists() {
                 match self.load(&path) {
-                    Ok((r,recovered)) if r.identity == self.identity => { *mapping = r.mapping; if recovered {warnings.push(format!("方案{}回退备份",i+1));} },
-                    _ => warnings.push(format!("方案{}损坏，使用默认；原文件保留",i+1)),
+                    Ok((r,recovered)) if r.identity == self.identity => { *mapping = r.mapping; if recovered {warnings.push(crate::tr!("方案{}回退备份", "Profile {} restored from backup",i+1));} },
+                    _ => warnings.push(crate::tr!("方案{}损坏，使用默认；原文件保留", "Profile {} is damaged; using defaults, original kept",i+1)),
                 }
             } else if i == 0 && self.game.exists() {
-                if let Ok((r,_)) = self.load(&self.game) { if r.identity == self.identity { *mapping = r.mapping; warnings.push("旧游戏配置载入方案1，保存后迁移".into()); } }
+                if let Ok((r,_)) = self.load(&self.game) { if r.identity == self.identity { *mapping = r.mapping; warnings.push(t("旧游戏配置载入方案1，保存后迁移").into()); } }
             }
         }
         let selected = match self.load(&self.selected_path()) {
@@ -315,12 +316,12 @@ impl Store {
         Record::decode(&record.encode())?;
         regular(path)?;
         if (path == self.game || path.starts_with(self.game_dir())) && path.exists() {
-            if let Ok(old) = read_record(path) { if old.identity != self.identity { return Err("游戏标识冲突，未覆盖原配置".into()); } }
+            if let Ok(old) = read_record(path) { if old.identity != self.identity { return Err(t("游戏标识冲突，未覆盖原配置").into()); } }
         }
         if path.exists() {
             let mut old = Vec::new();
             File::open(path).map_err(|e| e.to_string())?.take((LIMIT+1) as u64).read_to_end(&mut old).map_err(|e| e.to_string())?;
-            if old.len() > LIMIT { return Err("原配置过大，未覆盖".into()); }
+            if old.len() > LIMIT { return Err(t("原配置过大，未覆盖").into()); }
             if Record::decode(std::str::from_utf8(&old).unwrap_or("")).is_ok() { atomic_bytes(&path.with_extension("rmap.bak"), &old)?; }
             else { atomic_bytes(&path.with_extension(format!("invalid-{}", unique())), &old)?; }
         }
@@ -407,11 +408,11 @@ impl Controls {
     pub fn new(store: Store) -> Self {
         let (mappings,game_slot,mut status) = store.load_slots();
         let cursor_settings=match store.load_cursor() {
-            Ok((settings,recovered))=>{if recovered {status.push_str("；光标配置回退备份");} settings},
-            Err(_) => {if store.cursor_path().exists() || store.cursor_path().with_extension("conf.bak").exists() {status.push_str("；光标配置损坏，使用默认；原文件保留");} cursor::Settings::default()},
+            Ok((settings,recovered))=>{if recovered {status.push_str(t("；光标配置回退备份"));} settings},
+            Err(_) => {if store.cursor_path().exists() || store.cursor_path().with_extension("conf.bak").exists() {status.push_str(t("；光标配置损坏，使用默认；原文件保留"));} cursor::Settings::default()},
         };
         let mapping = mappings[game_slot].clone();
-        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {format!("按键方案{}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
+        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {crate::tr!("按键方案{}", "Control profile {}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
             editing: 0, category: 0, pending:None, return_row:0, pointer_speed:MouseSpeed::Normal }
     }
     pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.pending=None; self.status.clear(); }
@@ -426,8 +427,8 @@ impl Controls {
     }
     fn cancel_pending(&mut self) {self.pending=None;self.page=Page::Edit;self.row=self.return_row;self.status.clear();}
     pub fn pending_detail(&self)->String {match self.pending {
-        Some(Pending::Slot(slot))=>format!("切换到方案 {} 前，请处理当前修改",slot+1),
-        _=>"返回前，请处理当前修改".into(),
+        Some(Pending::Slot(slot))=>crate::tr!("切换到方案 {} 前，请处理当前修改", "Handle unsaved changes before switching to profile {}",slot+1),
+        _=>t("返回前，请处理当前修改").into(),
     }}
     pub fn shortcut_slot(&self, direction: i32) -> Option<usize> {
         (1..GAME_SLOTS).map(|step| (self.game_slot as i32 + step as i32 * direction.signum()).rem_euclid(GAME_SLOTS as i32) as usize)
@@ -439,19 +440,19 @@ impl Controls {
         self.game_slot = slot; self.preview_slot = slot; self.draft = self.mappings[slot].clone(); self.original = self.draft.clone();
         self.page=Page::Edit;self.row=0;self.pending=None;
         let result = self.store.select_slot(slot,&self.draft);
-        let remembered = self.failure(result,"方案选择已记忆");
-        let action = self.apply(&format!("按键方案{}",slot+1));
-        self.status = format!("已切换至按键方案{}{}",slot+1,if remembered {""} else {"（选择仅本次，写入失败）"}); action
+        let remembered = self.failure(result,t("方案选择已记忆"));
+        let action = self.apply(&crate::tr!("按键方案{}", "Control profile {}",slot+1));
+        self.status = crate::tr!("已切换至按键方案{}{}", "Switched to control profile {}{}",slot+1,if remembered {""} else {t("（选择仅本次，写入失败）")}); action
     }
     pub fn begin_cursor(&mut self, actual: cursor::Settings, speed:MouseSpeed) { self.visible=true; self.cursor_draft=actual; self.pointer_speed=speed; self.status.clear(); self.go(Page::Cursor); }
     fn close(&mut self) -> ResultAction { self.visible = false; ResultAction::Close }
     fn save_scope(&mut self) -> ResultAction {
-        let result = self.store.save(&self.store.game_slot(self.game_slot), &self.record(format!("按键方案{}",self.game_slot+1),true));
-        if self.failure(result,"保存成功") {
-            let source = format!("方案{}（已保存）",self.game_slot+1);
+        let result = self.store.save(&self.store.game_slot(self.game_slot), &self.record(crate::tr!("按键方案{}", "Control profile {}",self.game_slot+1),true));
+        if self.failure(result,t("保存成功")) {
+            let source = crate::tr!("方案{}（已保存）", "Profile {} (saved)",self.game_slot+1);
             let action = self.apply(&source);
-            self.original=self.draft.clone();self.status="已保存".into();
-            if let Err(e) = self.store.select_slot(self.game_slot,&self.draft) { self.status = format!("方案已保存，记忆当前选择失败：{e}"); }
+            self.original=self.draft.clone();self.status=t("已保存").into();
+            if let Err(e) = self.store.select_slot(self.game_slot,&self.draft) { self.status = crate::tr!("方案已保存，记忆当前选择失败：{e}", "Profile saved, but selection could not be saved: {e}"); }
             action
         } else { ResultAction::None }
     }
@@ -459,10 +460,10 @@ impl Controls {
     fn record(&self, name: String, game: bool) -> Record { Record { name, identity: if game { self.store.identity.clone() } else { String::new() }, mapping: self.draft.clone() } }
     fn apply(&mut self, source: &str) -> ResultAction {
         if let Err(error) = Record::decode(&self.record("Current".into(), false).encode()) { self.status = error; return ResultAction::None; }
-        self.active = Some(self.draft.clone()); self.mappings[self.game_slot] = self.draft.clone(); self.source = source.into(); self.status = format!("已应用：{source}"); ResultAction::Apply(self.draft.clone())
+        self.active = Some(self.draft.clone()); self.mappings[self.game_slot] = self.draft.clone(); self.source = source.into(); self.status = crate::tr!("已应用：{source}", "Applied: {source}"); ResultAction::Apply(self.draft.clone())
     }
     fn failure(&mut self, result: Result<(), String>, success: &str) -> bool {
-        match result { Ok(()) => { self.status = success.into(); true }, Err(e) => { eprintln!("leaf-controls io_error={e}"); self.status = "操作失败，原配置已保留；请检查目录或空间".into(); false } }
+        match result { Ok(()) => { self.status = success.into(); true }, Err(e) => { eprintln!("leaf-controls io_error={e}"); self.status = t("操作失败，原配置已保留；请检查目录或空间").into(); false } }
     }
     fn choices(&self) -> Vec<Binding> {
         use Binding::*;
@@ -475,33 +476,33 @@ impl Controls {
         if self.category == 4 { return vec![None,LeftClick,RightClick,Wheel(1),Wheel(-1),DragLock,Center,Slow,Fast,Pointer(0),Pointer(1),Pointer(2),Pointer(3)]; }
         keys.into_iter().map(|k| if (5..=7).contains(&self.category) { Combo([match self.category { 5 => profiles::SHIFT, 6 => profiles::CTRL, _ => 1073742050 }, k,0,0],2) } else { Key(k) }).collect()
     }
-    pub fn title(&self) -> &str { match self.page { Page::Edit => "按键设置", Page::Picker => "选择虚拟动作", Page::Confirm => "未保存的修改", Page::Cursor => "鼠标光标" } }
+    pub fn title(&self) -> &str { match self.page { Page::Edit => t("按键设置"), Page::Picker => t("选择虚拟动作"), Page::Confirm => t("未保存的修改"), Page::Cursor => t("鼠标光标") } }
     pub fn hint(&self) -> &str { match self.page {
-        Page::Edit => "L / R 切换方案  A 修改  Y 连发  B 返回",
-        Page::Picker => "十字键移动  L1/R1 切换类型  A 确认  B 取消",
-        Page::Confirm => "A 确定  B 继续编辑",
-        Page::Cursor => "左右调整  A 确认  X 恢复此项  B 返回",
+        Page::Edit => t("L / R 切换方案  A 修改  Y 连发  B 返回"),
+        Page::Picker => t("十字键移动  L1/R1 切换类型  A 确认  B 取消"),
+        Page::Confirm => t("A 确定  B 继续编辑"),
+        Page::Cursor => t("左右调整  A 确认  X 恢复此项  B 返回"),
     } }
     pub fn lines(&self) -> Vec<String> { match self.page {
-        Page::Edit => LABELS.iter().enumerate().map(|(i,s)| format!("{s}{}：{}",self.draft.turbo[i].badge(), binding_label(self.draft.buttons[i]))).chain([
-            format!("摇杆预设：{}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| format!("{s}{}：{}",self.draft.axis_turbo[i].badge(),binding_label(self.draft.axes[i])))).chain([
-            format!("十字鼠标精调：{}", if self.draft.fine {"开"} else {"关"}),
-            format!("鼠标速度：{}", match self.draft.speed { MouseSpeed::Slow => "慢", MouseSpeed::Normal => "标准", MouseSpeed::Fast => "快" }),
-            "保存".into(), "返回".into()]).collect(),
-        Page::Cursor => vec![format!("光标样式：{}",self.cursor_draft.style.name()),format!("光标颜色：{}",self.cursor_draft.color.name()),
-            format!("光标大小：{}（{}）",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),
-            format!("鼠标速度：{}（本次）",match self.pointer_speed {MouseSpeed::Slow=>"慢",MouseSpeed::Normal=>"标准",MouseSpeed::Fast=>"快"}),
-            "恢复光标默认".into(),"保存外观（全局）".into(),"返回".into()],
+        Page::Edit => LABELS.iter().enumerate().map(|(i,s)| {let s=t(s); crate::tr!("{s}{}：{}", "{s}{}: {}",self.draft.turbo[i].badge(), binding_label(self.draft.buttons[i]))}).chain([
+            crate::tr!("摇杆预设：{}", "Stick preset: {}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| {let s=t(s); crate::tr!("{s}{}：{}", "{s}{}: {}",self.draft.axis_turbo[i].badge(),binding_label(self.draft.axes[i]))})).chain([
+            crate::tr!("十字鼠标精调：{}", "D-pad precision: {}", if self.draft.fine {t("开")} else {t("关")}),
+            crate::tr!("鼠标速度：{}", "Mouse speed: {}", match self.draft.speed { MouseSpeed::Slow => t("慢"), MouseSpeed::Normal => t("标准"), MouseSpeed::Fast => t("快") }),
+            t("保存").into(), t("返回").into()]).collect(),
+        Page::Cursor => vec![crate::tr!("光标样式：{}", "Cursor style: {}",self.cursor_draft.style.name()),crate::tr!("光标颜色：{}", "Cursor color: {}",self.cursor_draft.color.name()),
+            crate::tr!("光标大小：{}（{}）", "Cursor size: {} ({})",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),
+            crate::tr!("鼠标速度：{}（本次）", "Mouse speed: {} (this session)",match self.pointer_speed {MouseSpeed::Slow=>t("慢"),MouseSpeed::Normal=>t("标准"),MouseSpeed::Fast=>t("快")}),
+            t("恢复光标默认").into(),t("保存外观（全局）").into(),t("返回").into()],
         Page::Picker => self.choices().into_iter().map(binding_label).collect(),
-        Page::Confirm => vec!["继续编辑".into(), "舍弃修改并继续".into(), "保存并继续".into()],
+        Page::Confirm => vec![t("继续编辑").into(), t("舍弃修改并继续").into(), t("保存并继续").into()],
     } }
     fn selected_repeat(&self) -> Option<(Binding,Rate)> {
         match self.row {0..=13=>Some((self.draft.buttons[self.row],self.draft.turbo[self.row])),15..=19=>Some((self.draft.axes[self.row-15],self.draft.axis_turbo[self.row-15])),_=>None}
     }
     pub fn detail(&self) -> String {
-        if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {LABELS[self.editing]} else {AXIS_LABELS[self.editing-15]}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
-        if self.page == Page::Cursor { return "速度调整立即生效，仅本次；光标外观为全局保存".into(); }
-        let repeat=if self.page==Page::Edit {self.selected_repeat().map(|(binding,rate)|if turbo::supported(binding) {format!(" · {}（Y切换）",rate.label())}else{" · 此动作无连发".into()}).unwrap_or_default()}else{String::new()};
+        if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {t(LABELS[self.editing])} else {t(AXIS_LABELS[self.editing-15])}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
+        if self.page == Page::Cursor { return t("速度调整立即生效，仅本次；光标外观为全局保存").into(); }
+        let repeat=if self.page==Page::Edit {self.selected_repeat().map(|(binding,rate)|if turbo::supported(binding) {crate::tr!(" · {}（Y切换）", " · {} (Y to change)",rate.label())}else{t(" · 此动作无连发").into()}).unwrap_or_default()}else{String::new()};
         repeat.trim_start_matches(" · ").into()
     }
     pub fn nav(&mut self, nav: Nav) -> ResultAction {
@@ -557,21 +558,21 @@ impl Controls {
                 self.pointer_speed=if matches!(nav,X) {MouseSpeed::Normal}
                     else if matches!(nav,A)&&self.pointer_speed==MouseSpeed::Fast {MouseSpeed::Slow}
                     else {self.pointer_speed.next(adjust)};
-                self.status="鼠标速度已应用（本次）".into();return ResultAction::Speed(self.pointer_speed);
+                self.status=t("鼠标速度已应用（本次）").into();return ResultAction::Speed(self.pointer_speed);
             }
             if matches!(nav,X) {
                 let defaults=cursor::Settings::default();
                 match self.row { 0=>self.cursor_draft.style=defaults.style,1=>self.cursor_draft.color=defaults.color,2=>self.cursor_draft.size=defaults.size,_=>{} }
-                self.status="此项已恢复默认，尚未应用".into();
+                self.status=t("此项已恢复默认，尚未应用").into();
             }
             if matches!(nav,Left|Right|A) { match self.row {
                 0=>self.cursor_draft.style=self.cursor_draft.style.next(adjust),
                 1=>self.cursor_draft.color=self.cursor_draft.color.next(adjust),
                 2=>self.cursor_draft.size=self.cursor_draft.size.next(adjust),
-                4 if matches!(nav,A)=>{ self.cursor_draft=cursor::Settings::default(); self.status="光标已恢复默认，请保存外观".into(); },
+                4 if matches!(nav,A)=>{ self.cursor_draft=cursor::Settings::default(); self.status=t("光标已恢复默认，请保存外观").into(); },
                 5 if matches!(nav,A)=>{
                     let result=self.store.save_cursor(self.cursor_draft);
-                    if self.failure(result,"全局光标已保存并应用") {self.cursor_settings=self.cursor_draft;return ResultAction::Cursor(self.cursor_settings);}
+                    if self.failure(result,t("全局光标已保存并应用")) {self.cursor_settings=self.cursor_draft;return ResultAction::Cursor(self.cursor_settings);}
                 },
                 6 if matches!(nav,A)=>return self.close(),_=>{}
             } }
@@ -582,8 +583,8 @@ impl Controls {
                 if let Some((binding,rate))=self.selected_repeat() {
                     if turbo::supported(binding) {
                         let next=rate.next();if self.row<14 {self.draft.turbo[self.row]=next;}else{self.draft.axis_turbo[self.row-15]=next;}
-                        self.status=format!("{}；请保存",next.label());
-                    } else {self.status="连发支持键盘、组合键及鼠标左右键".into();}
+                        self.status=crate::tr!("{}；请保存", "{}; save to keep",next.label());
+                    } else {self.status=t("连发支持键盘、组合键及鼠标左右键").into();}
                 }
             }
             if matches!(nav, A) {

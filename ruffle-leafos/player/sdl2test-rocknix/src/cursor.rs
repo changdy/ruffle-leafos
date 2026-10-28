@@ -1,5 +1,6 @@
 //! Host cursor appearance and a monotonic, movement-only idle deadline.
 //! Drawing uses frontend overlay triangles, independently of Flash stage scaling.
+use crate::session::i18n::t;
 use std::time::Duration;
 
 pub const HIDE_AFTER: Duration = Duration::from_millis(3500);
@@ -14,7 +15,7 @@ pub enum Size { Small, #[default] Medium, Large, ExtraLarge }
 impl Style {
     pub const ALL: [Self;4] = [Self::RingDot,Self::Crosshair,Self::Dot,Self::Square];
     pub fn id(self) -> &'static str { match self { Self::RingDot=>"ring-dot",Self::Crosshair=>"crosshair",Self::Dot=>"dot",Self::Square=>"square" } }
-    pub fn name(self) -> &'static str { match self { Self::RingDot=>"空心圆＋中心点",Self::Crosshair=>"十字",Self::Dot=>"圆点",Self::Square=>"方框" } }
+    pub fn name(self) -> &'static str { match self { Self::RingDot=>t("空心圆＋中心点"),Self::Crosshair=>t("十字"),Self::Dot=>t("圆点"),Self::Square=>t("方框") } }
     pub fn parse(s: &str) -> Option<Self> {
         // Accept saved arrow configurations without retaining an arrow model
         // or rewriting a user's file merely because it was opened.
@@ -25,7 +26,7 @@ impl Style {
 impl Color {
     pub const ALL: [Self;7] = [Self::White,Self::Black,Self::Red,Self::Yellow,Self::Green,Self::Cyan,Self::Magenta];
     pub fn id(self) -> &'static str { match self { Self::White=>"white",Self::Black=>"black",Self::Red=>"red",Self::Yellow=>"yellow",Self::Green=>"green",Self::Cyan=>"cyan",Self::Magenta=>"magenta" } }
-    pub fn name(self) -> &'static str { match self { Self::White=>"白色",Self::Black=>"黑色",Self::Red=>"红色",Self::Yellow=>"黄色",Self::Green=>"绿色",Self::Cyan=>"青色",Self::Magenta=>"紫色" } }
+    pub fn name(self) -> &'static str { match self { Self::White=>t("白色"),Self::Black=>t("黑色"),Self::Red=>t("红色"),Self::Yellow=>t("黄色"),Self::Green=>t("绿色"),Self::Cyan=>t("青色"),Self::Magenta=>t("紫色") } }
     pub fn rgba(self) -> [f32;4] { match self { Self::White=>[1.,1.,1.,1.],Self::Black=>[0.,0.,0.,1.],Self::Red=>[1.,0.15,0.15,1.],Self::Yellow=>[1.,0.9,0.,1.],Self::Green=>[0.2,1.,0.25,1.],Self::Cyan=>[0.,0.9,1.,1.],Self::Magenta=>[1.,0.25,0.9,1.] } }
     pub fn parse(s: &str) -> Option<Self> { Self::ALL.into_iter().find(|v|v.id()==s) }
     pub fn next(self, step: i32) -> Self { Self::ALL[(Self::ALL.iter().position(|v|*v==self).unwrap() as i32+step).rem_euclid(7) as usize] }
@@ -33,7 +34,7 @@ impl Color {
 impl Size {
     pub const ALL: [Self;4] = [Self::Small,Self::Medium,Self::Large,Self::ExtraLarge];
     pub fn pixels(self) -> u32 { match self { Self::Small=>16,Self::Medium=>24,Self::Large=>32,Self::ExtraLarge=>48 } }
-    pub fn name(self) -> &'static str { match self { Self::Small=>"小",Self::Medium=>"中",Self::Large=>"大",Self::ExtraLarge=>"特大" } }
+    pub fn name(self) -> &'static str { match self { Self::Small=>t("小"),Self::Medium=>t("中"),Self::Large=>t("大"),Self::ExtraLarge=>t("特大") } }
     pub fn parse(s: &str) -> Option<Self> { Self::ALL.into_iter().find(|v|v.pixels().to_string()==s) }
     pub fn next(self, step: i32) -> Self { Self::ALL[(Self::ALL.iter().position(|v|*v==self).unwrap() as i32+step).rem_euclid(4) as usize] }
 }
@@ -44,17 +45,17 @@ pub struct Settings { pub style: Style, pub color: Color, pub size: Size }
 impl Settings {
     pub fn encode(self) -> String { format!("version=1\nstyle={}\ncolor={}\nsize={}\n",self.style.id(),self.color.id(),self.size.pixels()) }
     pub fn decode(text: &str) -> Result<Self,String> {
-        if text.len()>512 {return Err("光标配置过大".into());}
+        if text.len()>512 {return Err(t("光标配置过大").into());}
         let mut fields=std::collections::BTreeMap::new();
         for line in text.lines() {
-            let (key,value)=line.split_once('=').ok_or("光标配置格式错误")?;
-            if fields.insert(key,value).is_some() {return Err("光标字段重复".into());}
+            let (key,value)=line.split_once('=').ok_or(t("光标配置格式错误"))?;
+            if fields.insert(key,value).is_some() {return Err(t("光标字段重复").into());}
         }
-        if fields.len()!=4 || fields.get("version")!=Some(&"1") {return Err("光标版本或字段无效".into());}
+        if fields.len()!=4 || fields.get("version")!=Some(&"1") {return Err(t("光标版本或字段无效").into());}
         Ok(Self {
-            style:fields.get("style").and_then(|s|Style::parse(s)).ok_or("光标样式无效")?,
-            color:fields.get("color").and_then(|s|Color::parse(s)).ok_or("光标颜色无效")?,
-            size:fields.get("size").and_then(|s|Size::parse(s)).ok_or("光标大小无效")?,
+            style:fields.get("style").and_then(|s|Style::parse(s)).ok_or(t("光标样式无效"))?,
+            color:fields.get("color").and_then(|s|Color::parse(s)).ok_or(t("光标颜色无效"))?,
+            size:fields.get("size").and_then(|s|Size::parse(s)).ok_or(t("光标大小无效"))?,
         })
     }
 }

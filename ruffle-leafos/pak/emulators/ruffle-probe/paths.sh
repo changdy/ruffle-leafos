@@ -68,6 +68,7 @@ ruffle_prepare_fonts() {
     done
     ruffle_write_check "$RUFFLE_FONT_DIR"
     RUFFLE_FONT_FILE="$RUFFLE_FONT_DIR/MiSans-Normal.ttf"
+    export RUFFLE_FONT_FILE
     [ ! -L "$RUFFLE_FONT_FILE" ] || ruffle_die '备用字体不能是符号链接'
     if [ -e "$RUFFLE_FONT_FILE" ] && [ ! -f "$RUFFLE_FONT_FILE" ]; then
         ruffle_die '备用字体路径不是普通文件'
