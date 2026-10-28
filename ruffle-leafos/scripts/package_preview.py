@@ -13,7 +13,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'adapter/scripts'))
 from elf_info import inspect
-from make_demo import make_icon, make_movie
+from make_demo import make_movie
 from build import zip_tree
 
 
@@ -73,7 +73,6 @@ def main():
     assert shim_info['machine'] == 183 and not shim_info['needed']
     shutil.copyfile(shim, frontend / 'lib/libruffle_probe.so')
     make_movie(frontend / 'res/Leaf-GPU-Probe.swf')
-    make_icon(pak / 'art/FLASH.png')
     make_movie(stage / 'Roms/flash/Leaf-GPU-Probe.swf')
     (stage / 'Images/flash').mkdir(parents=True)
     shutil.copyfile(ROOT / 'README.md', pak / 'README.md')

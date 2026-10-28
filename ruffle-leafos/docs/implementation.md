@@ -8,6 +8,8 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 
 安装目录 `Apps/mlp1/RuffleProbe.pak/`、核心 ID `ruffle_probe`、启动目录 `emulators/ruffle-probe/`、诊断库和环境变量沿用既有标识。控制目录 `$USERDATA_PATH/ruffle-probe/`、存档目录 `$SAVES_PATH/ruffle-leaf-preview/shared_objects/` 及内容身份算法均不因显示改名而变化，升级可继续读取原有按键与进度。早期 adapter、原始 runtime 和历史记录保留其发布时名称。
 
+掌机 Apps 入口的 `icon` 与 Flash 游戏分类的 `icon_flat` 共用 [pak/art/FLASH.png](../pak/art/FLASH.png)，采用项目作者提供的 512×512、8 位 RGBA 透明 PNG。正式打包从 `pak/` 原样复制该资源，不再调用早期 adapter 的演示图标生成器；单个游戏的封面仍由 `Images/flash/` 提供。
+
 ## 目录与执行链路
 
 | 路径 | 职责 |

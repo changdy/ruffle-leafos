@@ -32,7 +32,7 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 
 0.6.9 收录新版关于介绍、GitHub 项目地址与社区致谢，已通过自动构建并发布 [v0.6.9 安装包](https://github.com/changdy/ruffle-leafos/releases/tag/v0.6.9)，线上 ZIP 的版本、校验值和内容核对通过。相同页面代码此前已通过 84 项主机回归、ARM64 release 构建及 Pocket 1 实机排版与 A/B 返回核对；上方截图来自更新文案后的 0.6.8 构建。0.6.9 安装包的独立实机安装尚未验证，各批次范围见[工程进度](docs/progress.md)。
 
-SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，模拟器列表显示为 Ruffle Flash；Apps 中的“Flash 数据管理”用于管理配置与游戏进度。
+SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，模拟器列表显示为 Ruffle Flash；Apps 中的“Flash 数据管理”用于管理配置与游戏进度。Apps 入口与 Flash 游戏分类统一使用项目自定义的红色 Flash / Ruffle 图标；各游戏封面仍由 `Images/flash/` 提供。
 
 2026-10-26 已在 Pocket1 对《死神 VS 火影 2.6》和《拳皇 Wing 1.91》进行实机排查。前者需要主 SWF 旁的 `fighter/`、`fighter/fz/` 角色及援助文件，仅下载主 SWF 会卡在对战加载；后者在原 0.7.0 播放器上因内存不足被系统结束。当前源码按首次显示创建静态图形，并在完整游戏帧后回收未使用的静态 GPU 资源；优化版已在 GLES 运行死神、在 Vulkan 运行拳皇的实际对战。**拳皇的 GLES 多局测试仍触发过 OOM**；该轮安装使用当时的每游戏配置，仅为新下载的拳皇保存 Vulkan 偏好；当前源码已改用下文所述的全局画面配置。全部角色和长时稳定性尚未验收，不能视为完整兼容性保证。详见[本轮验证记录](docs/validation/fighting-games-20261026.json)。游戏文件不随应用分发。
 
