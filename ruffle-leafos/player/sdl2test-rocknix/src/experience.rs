@@ -182,6 +182,16 @@ impl Progress {
 pub struct Settings {pub scale:u8,pub quality:u8,pub fps:bool,pub renderer:super::graphics::Backend}
 impl Default for Settings {fn default()->Self{Self{scale:0,quality:2,fps:true,renderer:super::graphics::Backend::OpenGlEs}}}
 impl Settings {
+    pub fn requested_renderer(&self,app:bool,override_name:Option<&str>)->super::graphics::Backend {
+        use super::graphics::Backend;
+        if app{Backend::OpenGlEs}else{override_name.and_then(Backend::from_name).unwrap_or(self.renderer)}
+    }
+    pub fn recover_renderer(&mut self,actual:super::graphics::Backend,override_name:Option<&str>)->bool {
+        use super::graphics::Backend;
+        if actual!=Backend::Vulkan||override_name.is_some(){return false;}
+        self.renderer=Backend::OpenGlEs;
+        true
+    }
     pub fn load(path:&Path)->Self {
         let Ok(v)=fs::read(path) else{return Self::default()};
         use super::graphics::Backend;
@@ -421,6 +431,28 @@ mod tests {
             u.nav(exit);assert_eq!(u.page,Page::Home);
         }
         assert_eq!(u.active,3);assert_eq!(u.settings,original);
+    }
+    #[test] fn renderer_overrides_and_runtime_recovery_preserve_saved_settings(){
+        use super::super::graphics::Backend;
+        let p=progress();let path=p.root.join("renderer-preference");
+        for preferred in [Backend::OpenGlEs,Backend::Vulkan] {
+            for app in [false,true] {
+                for override_name in [None,Some("opengl-es"),Some("vulkan")] {
+                    let mut settings=Settings{scale:2,quality:0,fps:false,renderer:preferred};
+                    let actual=settings.requested_renderer(app,override_name);
+                    let expected=if app{Backend::OpenGlEs}else{override_name.and_then(Backend::from_name).unwrap_or(preferred)};
+                    assert_eq!(actual,expected);assert_eq!(settings.renderer,preferred);
+                    settings.change(2,1);settings.save(&path).unwrap();
+                    assert_eq!(Settings::load(&path),settings);
+                    let mut recovered=settings;
+                    let should_recover=actual==Backend::Vulkan&&override_name.is_none();
+                    assert_eq!(recovered.recover_renderer(actual,override_name),should_recover);
+                    assert_eq!(recovered,Settings{renderer:if should_recover{Backend::OpenGlEs}else{preferred},..settings});
+                    assert_eq!(Settings::load(&path),settings,"runtime selection must not write preferences");
+                }
+            }
+        }
+        fs::remove_dir_all(p.root).unwrap();
     }
     #[test] fn calendar_is_explicit_china_time(){assert_eq!(date(0),"1970-01-01 08:00:00");assert_eq!(date(1709164800),"2024-02-29 08:00:00");}
     #[test] fn renderer_page_is_reachable_and_back_preserves_settings_and_progress() {

@@ -47,3 +47,7 @@ ignored = [
     # Not used directly, declared only to enable its `profile-with-tracy` feature.
     "profiling"
 ]
+
+[dev-dependencies]
+# Exercise real wgpu resource ownership without a GPU or Vulkan driver.
+wgpu = { workspace = true, features = ["noop"] }

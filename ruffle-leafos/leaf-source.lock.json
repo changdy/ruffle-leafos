@@ -10,10 +10,10 @@
     "sdl2test-rocknix/Cargo.toml": "8524769f08d3aea55f0bd99e3b5137c4b9058f9c0c351771edd1af9b1d9c8e5b",
     "sdl2test-rocknix/src/controls.rs": "851610047a5293cf897702d4930d469fdf8fa95b09f9c3e7491cfd323e43b94c",
     "sdl2test-rocknix/src/cursor.rs": "2f321787481cafb5fc1b621734995baf6163db9232e2290afbf8e1599db63666",
-    "sdl2test-rocknix/src/experience.rs": "47821a70b2c016078a395c4b0b401e0249148e1e8044144de770b902c2a8628b",
+    "sdl2test-rocknix/src/experience.rs": "1e4069c89c01dccccb0b829d53bbf50fecec47281016f6a0f3e9a3159e3a6be2",
     "sdl2test-rocknix/src/gl_backend.rs": "88c17ff086d30f7d770fb58ea94217849d534a47ec21a9b6a20ee523e70a954b",
     "sdl2test-rocknix/src/keycodes.rs": "10c3367cb9c9431b86c42b590163b41593a0d514e41d289ede86451a198a9705",
-    "sdl2test-rocknix/src/leaf.rs": "e195dc5f2c3a7464fef03df8e480bdb78bbf144041adbdf3e62b22a218fcf1df",
+    "sdl2test-rocknix/src/leaf.rs": "f6d6cf3986a6e67d4a2eaea3a5e35e772d48a4578521b213a65606b1bb9a7bb9",
     "sdl2test-rocknix/src/main.rs": "ea00ea18816f76e5c1c63cc0a75e8b360a8d3c52af74ddc8573b70f770a1bde3",
     "sdl2test-rocknix/src/pause_menu.rs": "2d13cc2bb7255787fb15cbc61627124a795bf7b9286f4f936fc2b8fc4d334dee",
     "sdl2test-rocknix/src/profiles.rs": "abea2df80a02d5d267fa9ac10354637a76491d7d673207a23cd2c3b227c2b1c5",
@@ -34,7 +34,8 @@
     "core/src/static_render_resources.rs": "3957900ba52d3b2ad6a0f2e56885c5e919aabf839c4e1bbd121700f711f5fb41",
     "core/src/display_object.rs": "26d0688faaf6de7398c37c9231fd81b2e725047e9feb5f44f1c9d9dc9c345ae5",
     "core/src/display_object/container.rs": "73c9ddf94ca4e707d070d82eafaa035ff746952f05e0a015d011dd8426035355",
-    "core/src/display_object/movie_clip.rs": "adeeeedc141b2cf53875d322ce217be236a76f37192f490ce87b26828ca76723"
+    "core/src/display_object/movie_clip.rs": "adeeeedc141b2cf53875d322ce217be236a76f37192f490ce87b26828ca76723",
+    "render/wgpu/tests/bitmap_lifetime.rs": "400069796f754d1ca8daaa517691bee28014062310c38ab53b28528de0eb9102"
   },
   "verified_leaf": {
     "version": "0.13.0",

@@ -9,7 +9,7 @@ use wgpu::util::DeviceExt;
 
 use crate::buffer_builder::BufferBuilder;
 use ruffle_render::backend::{RenderBackend, ShapeHandle, ShapeHandleImpl};
-use ruffle_render::bitmap::BitmapSource;
+use ruffle_render::bitmap::{BitmapHandle, BitmapSource};
 use ruffle_render::tessellator::{Bitmap, Draw as LyonDraw, DrawType as TessDrawType, Gradient};
 use swf::{CharacterId, GradientInterpolation};
 
@@ -129,6 +129,7 @@ pub enum PendingDrawType {
     Bitmap {
         texture_transforms_index: wgpu::BufferAddress,
         texture_view: wgpu::TextureView,
+        handle: BitmapHandle,
         is_repeating: bool,
         is_smoothed: bool,
         bind_group_label: Option<String>,
@@ -189,6 +190,7 @@ impl PendingDrawType {
         Some(PendingDrawType::Bitmap {
             texture_transforms_index,
             texture_view,
+            handle,
             is_repeating: bitmap.is_repeating,
             is_smoothed: bitmap.is_smoothed,
             bind_group_label,
@@ -252,6 +254,7 @@ impl PendingDrawType {
             PendingDrawType::Bitmap {
                 texture_transforms_index,
                 texture_view,
+                handle,
                 is_repeating,
                 is_smoothed,
                 bind_group_label,
@@ -268,7 +271,10 @@ impl PendingDrawType {
                     bind_group_label,
                 );
 
-                DrawType::Bitmap { binds }
+                DrawType::Bitmap {
+                    binds,
+                    _handle: handle,
+                }
             }
         }
     }
@@ -278,7 +284,12 @@ impl PendingDrawType {
 pub enum DrawType {
     Color,
     Gradient { bind_group: wgpu::BindGroup },
-    Bitmap { binds: BitmapBinds },
+    Bitmap {
+        binds: BitmapBinds,
+        // A texture view keeps GPU memory alive, but not the weak-cache handle.
+        // Keep that handle with the shape so other fills reuse the same upload.
+        _handle: BitmapHandle,
+    },
 }
 
 #[derive(Debug)]

@@ -4,7 +4,7 @@
   "tag": "nightly-2026-03-15",
   "license": "MIT OR Apache-2.0",
   "files_sha256": {
-    "render/wgpu/Cargo.toml": "da2f365a0a88c32eb39aebf5dfa20c32d7eb55332ac8a99c9ed34c33b96b6f91",
+    "render/wgpu/Cargo.toml": "8d890b90da2f90e1d5df3bb1d8f01bb6a2b48db5d5aa441d34df3678bbe3f92b",
     "render/wgpu/uniforms.md": "99d9ca8be5611d0d884fc6a14f983c29d2030f8e806d8c318a8f7390f11f3bf5",
     "render/wgpu/shaders/alpha_mask.wgsl": "3db65c472b6dd4b250148c04a9cff96b946f65d52ecc7d98fd459b54ebfb9118",
     "render/wgpu/shaders/bitmap.wgsl": "bfabb5849205614833d7445c1ba7170c7cb83f524fd703137c5b9b62e620dd80",
@@ -25,7 +25,7 @@
     "render/wgpu/src/globals.rs": "5032a4555c3b12884af043f7aa9b91cae5a9eed087c6e428ae1ebcecc2278d83",
     "render/wgpu/src/layouts.rs": "ebbdb57106eba43ddeb8a2f587fd49d7287163e3432f5365bc96ef925c7c2d4c",
     "render/wgpu/src/lib.rs": "b9e63b4701af524b2f7959c50c9dcef2fdf05320d751abe74fb6cde109f61404",
-    "render/wgpu/src/mesh.rs": "7a9ca846a0e3821bf12f588cdd29c99c7a50410f2d1c5a3b425610b5c9dfd2d5",
+    "render/wgpu/src/mesh.rs": "7b69e8ecea87cd31b6f88827c6997e9ca30b0e23b896e0ced6d9d02baa0f2cad",
     "render/wgpu/src/pipelines.rs": "ab18373077c2735b9060df879dba1f005f0a2120df82198d7411ae1c9a4e16a0",
     "render/wgpu/src/pixel_bender.rs": "ea06c2a57364a7992bdad57a93ae694143f62e74e5c5e58f8dad79b511f3d6c6",
     "render/wgpu/src/shaders.rs": "7f3b59ba8284f7037c6169830e6c80f497a339968785ae12b91b293fa9d2b933",
@@ -58,5 +58,15 @@
     "render/wgpu/shaders/filter/color_matrix.wgsl": "50df3d60a229ac0a8794658b68004f5ea74c47f167b28af2a4ccec395099db8b",
     "render/wgpu/shaders/filter/displacement_map.wgsl": "c05e99e18c447620427a1d6567baecd74d383bc771b2bf7f501d68386c129c4a",
     "render/wgpu/shaders/filter/glow.wgsl": "b5ccdd4c732e35bfbc46564bd546b2fad1c77826132cb95d3dd2beca7cbe9402"
+  },
+  "local_patches": {
+    "render/wgpu/Cargo.toml": {
+      "upstream_sha256": "da2f365a0a88c32eb39aebf5dfa20c32d7eb55332ac8a99c9ed34c33b96b6f91",
+      "description": "Enable the noop backend only for host resource-ownership regression tests."
+    },
+    "render/wgpu/src/mesh.rs": {
+      "upstream_sha256": "7a9ca846a0e3821bf12f588cdd29c99c7a50410f2d1c5a3b425610b5c9dfd2d5",
+      "description": "Retain BitmapHandle through pending and completed bitmap shape draws so the weak library cache can share textures."
+    }
   }
 }

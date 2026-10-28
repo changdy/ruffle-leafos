@@ -684,7 +684,7 @@ pub async fn run() -> Result<(), String> {
     }
     let gl=Arc::new(gl);
     let graphics_failure=Arc::new(Mutex::new(None::<String>));
-    let requested=if opt.app_settings{GraphicsBackend::OpenGlEs}else{opt.renderer.as_deref().and_then(GraphicsBackend::from_name).unwrap_or(av.renderer)};
+    let requested=av.requested_renderer(opt.app_settings,opt.renderer.as_deref());
     let mut actual=requested;let mut renderer_failed=false;
     let renderer:Box<dyn RenderBackend>=if requested==GraphicsBackend::Vulkan {
         #[cfg(target_os="linux")]
@@ -703,7 +703,6 @@ pub async fn run() -> Result<(), String> {
             }
         }
     } else {Box::new(unsafe{GlRenderBackend::new_shared(gl.clone(),size.0,size.1).map_err(|e|format!("Renderer: {e:?}"))?})};
-    av.renderer=actual;
     println!("leaf-graphics actual={} renderer={}",actual.name(),renderer.debug_info());
     let font_path = std::env::var_os("RUFFLE_MENU_FONT").map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("res/menu-font.ttf"));
@@ -1107,8 +1106,8 @@ pub async fn run() -> Result<(), String> {
         println!("leaf-experience self_test=passed app={} saved={saved} fps={:.1}",opt.app_settings,front.state.experience.fps);
     }
     if let Some(error)=graphics_failure.lock().unwrap().take() {
-        if actual==GraphicsBackend::Vulkan {
-            let mut settings=front.state.experience.settings;settings.renderer=GraphicsBackend::OpenGlEs;
+        let mut settings=front.state.experience.settings;
+        if settings.recover_renderer(actual,opt.renderer.as_deref()) {
             if let Err(error)=settings.save(&front.settings_path){eprintln!("leaf-graphics recovery_preference_save_failed={error}");}
         }
         return Err(error);

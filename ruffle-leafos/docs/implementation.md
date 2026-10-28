@@ -27,7 +27,7 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 
 画面设置中的“渲染接口”进入 `experience::Page::Renderer`，以 `actual_renderer` 标识实际后端。选择不同接口进入默认取消的确认页；确认后先检查原生进度提交，退出循环再次提交成功才写入 RAV2 偏好并 exec 重启。保留当前进度槽，清除旧 `--renderer` 命令行覆盖，重启前销毁播放器、菜单、GL 上下文和窗口。保存失败不进入重启，不把菜单文字当成实际切换。
 
-Vulkan 复用官方 Ruffle `nightly-2026-03-15` 的 `render/wgpu/`，提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856`；该版本 `RenderBackend` 接口与本项目基线一致，54 个原始文件及 SHA-256 固定于 [ruffle-wgpu.lock.json](../vendor/ruffle-wgpu.lock.json)，不批量升级 Ruffle core。workspace 仅启用 wgpu 的本机 Vulkan/WGSL 功能。通过公开 HAL 导入接口创建逻辑设备，在上游同等 limits/features 基础上增加 DRM format modifier 扩展，并拒绝 CPU adapter。
+Vulkan 复用官方 Ruffle `nightly-2026-03-15` 的 `render/wgpu/`，提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856`；该版本 `RenderBackend` 接口与本项目基线一致，54 个导入文件的构建 SHA-256 固定于 [ruffle-wgpu.lock.json](../vendor/ruffle-wgpu.lock.json)，其中 `local_patches` 另存本地修改文件的原始上游 SHA-256 与用途，不批量升级 Ruffle core。workspace 仅启用 wgpu 的本机 Vulkan/WGSL 功能。通过公开 HAL 导入接口创建逻辑设备，在上游同等 limits/features 基础上增加 DRM format modifier 扩展，并拒绝 CPU adapter。
 
 Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 导入和 Vulkan 外部内存扩展。[vulkan_backend.rs](../player/sdl2test-rocknix/src/vulkan_backend.rs) 从 `/dev/dri/renderD128` 的 GBM 分配线性 ABGR8888 缓冲区，以明确 modifier/plane layout 导入 Vulkan，在官方 `WgpuRenderBackend` 的自定义 `RenderTarget` 中绘制，再以 EGLImage 作为 GLES 纹理完成全屏呈现；现有 `PauseMenu` 继续叠加菜单、光标和提示。显示链路没有逐帧 CPU 像素读回，不需要替换系统 GPU 驱动或 WSI layer。直接导出 Vulkan 分配再交 EGL 的方案在当前驱动上失败，因此使用共享 GBM 分配。
 
@@ -63,6 +63,8 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 ### 受限内存下的静态绘图资源
 
 `core/src/display_object/graphic.rs` 在首次实际显示时创建静态 `ShapeHandle`，在所有实例间共享；屏外剔除、形状命中检测和预加载不触发 GPU 上传。`core/src/character.rs` 的位图库通过弱引用复用仍存活的纹理，压缩 SWF 素材继续保留，可重新解码。
+
+Vulkan 的待完成绘制和最终形状均保留原 `BitmapHandle`，使位图库弱引用在其他形状仍使用同一位图时继续命中；只保留 `TextureView`/bind group 无法保住该句柄。最后一个形状或帧命令释放后，句柄仍可回收并重新加载。直接 BitmapData 的自有 bind-group 缓存不持有自身句柄，避免 Arc 自循环。主机回归使用 wgpu noop 后端，仅验证实际 wgpu 对象的所有权，不验收 Vulkan 像素、同步或性能。
 
 Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static_render_resources()`。首次调用遍历已知电影，仅将已分配句柄加入活动队列；随后新建/重载资源自行登记，逐帧只遍历活动队列，不再重复扫描全库。队列使用 `Weak<StaticRenderResource>`，每份共享资源最多登记一次；本帧未使用的句柄释放后移出队列，再次显示时可重新入队。弱引用不持有电影或 GC 对象，未启用回收的前端不建立队列。实现见 `core/src/static_render_resources.rs` 与 `core/src/library.rs`。保留本帧使用的句柄，释放本帧未显示的缓存；帧命令、其他图形或正在执行的绘制仍可持有资源。动态 BitmapData、缓存位图、滤镜与游戏主动保留的数据不在此静态缓存回收范围内。回收按已显示的完整帧执行，不能在局部/离屏绘制中途调用。重新显示可能产生解码和上传成本，不能据此保证所有游戏不再 OOM。
 
@@ -108,12 +110,15 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 ```powershell
 python scripts/build_player.py build --offline --isolated-config
 python scripts/test_session.py
+python scripts/test_renderer.py
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py
 python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.7.0-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。
+
+`test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
 
 `test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。五个静态资源测试可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。该 Rust 测试框架与应用 ELF 的系统要求可能不同；本轮测试框架需要 GLIBC 2.39，因此仅在隔离调试目录通过工具链自带的匹配加载器、libc/libm 执行，没有替换设备系统库。详情见[验证记录](validation/fighting-games-20261026.json)。
 
@@ -180,7 +185,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 | 保留内容 | 来源与保留理由 |
 | --- | --- |
 | Ruffle 与前端基线 | aweigit/ruffle-miyooflip 提交 `3bc39c5e0fdbc9fcde92681706395f6ef70f991b`，本项目变动及指纹见 [leaf-source.lock.json](../leaf-source.lock.json)。保留 Cargo workspace 成员、构建资源和测试 SWF/ZIP，不凭扩展名删除测试数据 |
-| 官方 wgpu 后端 | Ruffle 提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856` 的 54 个原始文件；[来源锁](../vendor/ruffle-wgpu.lock.json) 固定字节与双许可，打包验证并随包附带来源锁 |
+| 官方 wgpu 后端 | Ruffle 提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856` 的 54 个导入文件；[来源锁](../vendor/ruffle-wgpu.lock.json) 固定构建字节、本地修改的原始指纹与双许可，打包验证并随包附带来源锁 |
 | Jawaka 参考 | 提交 `915c48595fbd20ec56a9d23b2fc1f39a4f6f8803`，仅保留七个菜单/主题/设置/许可文件；[来源与逐文件指纹](../vendor/jawaka.lock.json) |
 | Leaf 契约 | [references.lock.json](../adapter/references.lock.json) 固定的 leaf-contracts 提交；schema、校验器与测试夹具是版本化契约输入 |
 | 原始 leaf-12 | 用户提供的原始播放器、库、字体及来源清单；[runtime.lock.json](../adapter/runtime.lock.json) 固定指纹。原始播放器用于对照与早期 adapter 校验，当前安装包使用新构建播放器 |
