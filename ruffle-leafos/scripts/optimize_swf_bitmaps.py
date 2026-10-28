@@ -3,6 +3,8 @@
 Uses only the Python standard library. ActionScript, geometry, timing, audio,
 exported bitmaps and unmodified tags remain byte-for-byte unchanged. See the
 project implementation documentation for the supported subset and limitations.
+AVM2 requires explicit opt-in after auditing the movie and its callers for
+graphics-data introspection; the default continues to reject AVM2 movies.
 """
 from __future__ import annotations
 
@@ -324,12 +326,20 @@ def bitmap(data: bytes):
     return ident, fmt, width, height, decoded, palette_size, stride, bounds
 
 
-def optimize(raw: bytes, *, crop: bool = True, deduplicate: bool = True):
+def optimize(raw: bytes, *, crop: bool = True, deduplicate: bool = True,
+             avm2_private_bitmaps: bool = False):
     header, roots = load(raw)
     items = list(walk(roots))
-    if any(tag.code in (72, 82) or tag.code == 69 and struct.unpack_from('<I', tag.data)[0] & 8
-           for tag in items):
-        raise ValueError('This conservative optimizer supports AVM1 movies only')
+    avm2 = any(tag.code in (72, 82) or tag.code == 69 and struct.unpack_from('<I', tag.data)[0] & 8
+               for tag in items)
+    if avm2 and not avm2_private_bitmaps:
+        raise ValueError('AVM2 requires explicit --avm2-private-bitmaps and a caller audit')
+    # Private fill bitmaps can become observable/mutable through graphics-data
+    # introspection. This local guard is deliberately conservative, but cannot
+    # inspect other movies or dynamically composed names: audit those separately.
+    if avm2 and any(token in tag.data for tag in items if tag.code in (72, 82)
+                    for token in (b'readGraphicsData', b'GraphicsBitmapFill')):
+        raise ValueError('AVM2 graphics-data introspection is not supported')
     bitmap_definitions = [tag for tag in items if tag.code == 36]
     bitmap_tags = {struct.unpack_from('<H', tag.data)[0]: tag for tag in bitmap_definitions}
     if len(bitmap_tags) != len(bitmap_definitions):
@@ -434,6 +444,7 @@ def optimize(raw: bytes, *, crop: bool = True, deduplicate: bool = True):
               'lossless_bitmap_count_after': len(bitmap_tags) - len(aliases),
               'rgba_equivalent_mib_before': before_pixels * 4 / 1048576,
               'rgba_equivalent_mib_after': after_pixels * 4 / 1048576,
+              'avm2_private_bitmaps': avm2,
               'cropped': len(changes), 'deduplicated': len(aliases),
               'rewritten_fills': rewritten_fills, 'skipped_crop': dict(skipped),
               'crop_changes': changes, 'aliases': aliases,
@@ -448,11 +459,14 @@ def main():
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--no-crop', action='store_true')
     parser.add_argument('--no-deduplicate', action='store_true')
+    parser.add_argument('--avm2-private-bitmaps', action='store_true',
+                        help='Opt into private AVM2 fill bitmaps after auditing the movie and all callers for graphics-data introspection')
     args = parser.parse_args()
     if len({args.input.resolve(), args.output.resolve(), args.report.resolve()}) != 3 or args.output.exists() or args.report.exists():
         parser.error('Output/report must be new files, separate from the original SWF')
     output, report = optimize(args.input.read_bytes(), crop=not args.no_crop,
-                              deduplicate=not args.no_deduplicate)
+                              deduplicate=not args.no_deduplicate,
+                              avm2_private_bitmaps=args.avm2_private_bitmaps)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(output)

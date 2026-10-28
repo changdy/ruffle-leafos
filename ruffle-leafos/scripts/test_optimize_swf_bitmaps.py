@@ -108,6 +108,40 @@ class BitmapOptimizationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             opt.optimize(movie([(69, struct.pack('<I', 8)), (36, image())]))
 
+    def test_avm2_opt_in_preserves_abc_symbols_and_exported_bitmap(self):
+        abc = struct.pack('<I', 0) + b'example\0opaque-abc-payload'
+        symbols = b'\x02\x00\x00\x00Document\x00\x03\x00ExportedBitmap\x00'
+        original = movie([(69, struct.pack('<I', 8)), (82, abc),
+                          (36, image()), (36, image(3)),
+                          (2, shape()), (2, shape(4, 3)), (76, symbols)])
+        output, report = opt.optimize(original, avm2_private_bitmaps=True)
+        tags = flat(output)
+        self.assertTrue(report['avm2_private_bitmaps'])
+        self.assertEqual(report['cropped'], 1)
+        self.assertEqual(report['deduplicated'], 0)
+        self.assertEqual([(t.code, t.data) for t in tags if t.code in (69, 76, 82)],
+                         [(t.code, t.data) for t in flat(original) if t.code in (69, 76, 82)])
+        self.assertEqual(next(t.data for t in tags if t.code == 36 and t.data[:2] == b'\x03\x00'), image(3))
+
+    def test_avm2_introspection_is_rejected_even_with_opt_in(self):
+        for token in (b'readGraphicsData', b'GraphicsBitmapFill'):
+            raw = movie([(82, struct.pack('<I', 0) + b'\0' + token),
+                         (36, image()), (2, shape())])
+            with self.subTest(token=token), self.assertRaisesRegex(ValueError, 'introspection'):
+                opt.optimize(raw, avm2_private_bitmaps=True)
+
+    def test_avm2_private_duplicates_remap_without_changing_timeline(self):
+        timeline = [(43, b'attack\x00'), (1, b'')]
+        abc = struct.pack('<I', 0) + b'\0unmodified-bytecode'
+        original = movie([(82, abc), (36, image()), (36, image(3)),
+                          (2, shape()), (2, shape(4, 3)), *timeline])
+        output, report = opt.optimize(original, avm2_private_bitmaps=True)
+        self.assertEqual(report['deduplicated'], 1)
+        self.assertEqual([(t.code, t.data) for t in flat(output) if t.code in (43, 1, 82)],
+                         [(t.code, t.data) for t in flat(original) if t.code in (43, 1, 82)])
+        self.assertEqual([f.bitmap for t in flat(output) if t.code == 2
+                          for f in opt.shape_fills(t.data, 1)], [1, 1])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -124,9 +124,11 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 ## 离线 SWF 位图素材优化
 
-`scripts/optimize_swf_bitmaps.py` 可为用户本地 AVM1 SWF 生成独立实验副本，使用 Python 标准库裁掉私有无损位图的零色外边并合并完全相同的内部位图，同步重写填充 ID/矩阵，不修改脚本、音频和帧调度。只支持可完整解析并安全重写的 FWS/CWS、DefineBitsLossless2 和 Shape 1—4；导出或其他引用保护、平铺填充、分数 twip 补偿及未知结构按保守规则跳过或拒绝。拒绝覆盖原文件与已有输出/报告。
+`scripts/optimize_swf_bitmaps.py` 使用 Python 标准库裁掉私有无损位图的零色外边并合并完全相同的内部位图，同步重写填充 ID/矩阵，不修改脚本、音频和帧调度。默认仅处理 AVM1；只支持可完整解析并安全重写的 FWS/CWS、DefineBitsLossless2 和 Shape 1—4。导出或其他引用保护、平铺填充、分数 twip 补偿及未知结构按保守规则跳过或拒绝。拒绝覆盖原文件与已有输出/报告。
 
 用 `python scripts/optimize_swf_bitmaps.py <输入.swf> --output <新输出.swf> --report <新报告.json>` 生成副本，`python -m unittest discover -s scripts -p test_optimize_swf_bitmaps.py -v` 运行格式与保护条件回归。游戏文件与完整修改明细放入忽略的 `outputs/`，不进入 Git 或应用发布包。副本内容指纹变化会建立独立原生进度，不能将素材展开尺寸减少当作实机 FPS/RSS 改善；适用范围和验证见[拳皇 SWF 优化报告](validation/kof-swf-optimization-20261026.md)。
+
+对已检查主电影及所有外部调用者的 AVM2 素材，可显式增加 `--avm2-private-bitmaps`，仅改写未导出、未直接放置的内部填充位图，保留 ABC、SymbolClass 和时间轴标签。工具拒绝 ABC 中含 `readGraphicsData` / `GraphicsBitmapFill` 的文件，因为这些接口可暴露或修改原本私有的位图。这个局部检查不能识别外部代码或动态拼接的名字，开关不能替代调用者审查、逐像素还原、形状补偿验证及实机检查。报告中的 `avm2_private_bitmaps` 表示输入是否为已显式允许的 AVM2；默认拒绝 AVM2 的保护保留。具体处理和范围见[3.3 素材优化记录](validation/bvn33-assets-20261028.md)。
 
 ## 构建环境与命令
 
