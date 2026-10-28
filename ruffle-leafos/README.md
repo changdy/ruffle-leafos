@@ -1,6 +1,6 @@
 # Ruffle Flash
 
-面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.0 开发预览**，默认 OpenGL ES，新增可选的实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-26，验证范围见[工程进度](docs/progress.md)。
+面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.1 开发预览**，支持中英文界面，默认 OpenGL ES，可选实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-28，验证范围见[工程进度](docs/progress.md)。
 
 从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
 

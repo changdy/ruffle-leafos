@@ -145,12 +145,13 @@ def main():
                   'per-button 5/10/15 Hz hold turbo, 8ms release target with 2ms headroom below 10ms, deadline-aware loop sleep and shared-key ownership',
                   'queued physical Menu taps independent of virtual Guide release state',
                   'asynchronous real Leaf system-volume feedback without double-applying hardware keys',
+                  'Simplified Chinese and English UI with persisted LeafOS first-launch detection, immediate language switching and CJK font fallback',
                   'pause lifecycle, input ownership, neutral gate and checked SharedObject flush'],
         'pending': ['per-profile human gameplay acceptance and temporary mouse layer',
                     'broad experimental Vulkan visual/performance/power/stability matrix and further synchronization optimization',
                     'virtual keyboard (deferred by user)', 'full VM instant savestates',
                     'legacy loose .sol migration', 'power-loss/reboot storage matrix', 'suspend recovery'],
-        'device_validation': 'See docs/validation/vulkan-backend-0.7.0-20261025.json for this version; compilation does not establish hardware acceptance',
+        'device_validation': 'See docs/validation/language-ui-20261028.md for pre-release UI checks and docs/validation/vulkan-backend-0.7.0-20261025.json for Vulkan bring-up; this release archive has not been installed on hardware',
     }
     (pak / 'build-manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     archive = output / f'ruffle-leafos-{version}.zip'
