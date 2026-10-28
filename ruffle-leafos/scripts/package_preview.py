@@ -41,6 +41,10 @@ def main():
     version = manifest['pak_version']
     assert version == tomllib.loads((ROOT / 'player/sdl2test-rocknix/Cargo.toml').read_text(encoding='utf8'))['package']['version']
     binary = ROOT / 'build/ruffle-leaf'
+    build_metadata = ROOT / 'build/player-build.json'
+    assert build_metadata.is_file(), 'missing player build metadata; rebuild with build_player.py'
+    build_info = json.loads(build_metadata.read_text(encoding='utf8'))
+    assert build_info['binary_sha256'] == sha(binary), 'build metadata does not match player; rebuild with build_player.py'
     info = inspect(binary)
     assert info['machine'] == 183 and info['type'] == 3, 'need AArch64 PIE'
     assert sha(binary) != 'b3ecd3094f678a9be3e99602267f345191e02653a023ca6005fe3b0cf5aab342', 'source runtime required'
@@ -121,6 +125,7 @@ def main():
     report = {
         'version': version, 'runtime_rebuilt_from_source': True,
         'runtime_sha256': sha(binary), 'source': source_lock,
+        'player_build': build_info,
         'target': 'Leaf 0.13.0 / AArch64 / glibc 2.38 / GLES 3 / experimental Vulkan',
         'upstream_wgpu_renderer': renderer_lock,
         'keyboard_reference': keyboard_lock,

@@ -136,6 +136,7 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 ```powershell
 python scripts/build_player.py build --offline --isolated-config
+python scripts/build_player.py build --offline --isolated-config --tuning pocket1
 python scripts/test_session.py
 python -m unittest discover -s scripts -p test_language.py -v
 python scripts/test_renderer.py
@@ -145,6 +146,10 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.7.1-rebuil
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。
+
+`build_player.py` 默认 `--tuning generic`，保留此前的通用 ARM64、release opt-level 2、关闭跨 crate LTO 与 16 个 codegen units。可显式选择实验性 `--tuning pocket1`：Rust ARM64 目标使用 `-Ctarget-cpu=cortex-a55`，release 使用 opt-level 3、ThinLTO，仍为 16 个 codegen units；本轮未证明稳定游戏提速，因此不改变默认构建或自动发布参数。该候选只针对 RK3566 的 Pocket1，不能当成通用 ARM64 发行版。切换参数会重新编译受影响的目标依赖；上面两条 build 命令是两种选择，普通构建只需第一条。debug 不启用 release 优化，但 CPU 选择仍生效。脚本只在子进程环境移除优先级更高的全局 `RUSTFLAGS` / `CARGO_ENCODED_RUSTFLAGS`，不改用户全局配置。C/汇编依赖、系统库和预编译标准库不在本轮重新定向构建范围内。
+
+成功构建同时生成 `build/player-build.json`，记录二进制 SHA-256、Rust 版本、目标 CPU、tuning、实际 profile 与 release 参数。打包要求此记录存在且 SHA-256 与 `build/ruffle-leaf` 一致，并写入包内 `build-manifest.json` 的 `player_build`；已有旧 ELF 需先重新执行构建脚本。编译优化的实测方法、结果与局限见 [Pocket1 验证记录](validation/pocket1-build-20261028.md)。
 
 `test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
 

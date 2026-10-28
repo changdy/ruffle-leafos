@@ -1,6 +1,7 @@
 """Build the pinned Ruffle player without changing global compiler settings."""
 from pathlib import Path
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -16,6 +17,8 @@ parser.add_argument('--isolated-config', action='store_true',
                     help='Use only the project Cargo config and pinned CARGO_HOME, ignoring ancestor mirror settings')
 parser.add_argument('--jobs', type=int, default=6)
 parser.add_argument('--debug', action='store_true')
+parser.add_argument('--tuning', choices=['generic', 'pocket1'], default='generic',
+                    help='generic (default): existing opt-level 2/no cross-crate LTO; pocket1: experimental Cortex-A55, release opt-level 3 and ThinLTO')
 parser.add_argument('--package', choices=['sdl2test-rocknix', 'ruffle_core'], default='sdl2test-rocknix',
                     help='Use ruffle_core with test to compile ARM64 core unit tests')
 args = parser.parse_args()
@@ -52,13 +55,21 @@ host_linker = build / 'host-link.cmd'
 host_linker.write_text('@echo off\n"' + str(mingw / 'bin/gcc.exe') +
     '" -L"' + host_compat.as_posix() + '" %*\n', encoding='utf8')
 env = os.environ.copy()
+# Cargo gives these global variables precedence over the target-specific flags.
+# Clear them only in this child environment so the recorded CPU tuning is used.
+env.pop('RUSTFLAGS', None)
+env.pop('CARGO_ENCODED_RUSTFLAGS', None)
+target_cpu = 'cortex-a55' if args.tuning == 'pocket1' else 'generic'
+release_opt_level = '3' if args.tuning == 'pocket1' else '2'
+release_lto = 'thin' if args.tuning == 'pocket1' else 'false'
 env.update(CARGO_HOME=str(cache / 'cargo-home'), CARGO_TARGET_DIR=str(build / 'cargo'),
            TEMP=str(temporary), TMP=str(temporary), TMPDIR=str(temporary),
            CARGO_NET_GIT_FETCH_WITH_CLI='true', PKG_CONFIG_ALLOW_CROSS='1',
            PKG_CONFIG_LIBDIR=str(target_libs / 'pkgconfig'),
            PKG_CONFIG=str(mingw / 'bin' / 'pkg-config.exe'),
            CARGO_PROFILE_DEV_DEBUG='0', CARGO_PROFILE_RELEASE_DEBUG='0',
-           CARGO_PROFILE_RELEASE_LTO='false', CARGO_PROFILE_RELEASE_CODEGEN_UNITS='16')
+           CARGO_PROFILE_RELEASE_OPT_LEVEL=release_opt_level,
+           CARGO_PROFILE_RELEASE_LTO=release_lto, CARGO_PROFILE_RELEASE_CODEGEN_UNITS='16')
 env['PATH'] = os.pathsep.join([str(rust / 'bin'), str(cross / 'bin'), str(mingw / 'bin'), env['PATH']])
 # Rust's GNU host library requests gcc_eh; w64devkit uses the Rust-provided
 # unwind implementation and needs the already audited compatibility archive.
@@ -77,7 +88,8 @@ env['CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER'] = str(host_linker)
 env['CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER'] = str(build / 'target-link.cmd')
 env['CXX_aarch64_unknown_linux_gnu'] = str(build / 'target-cc.cmd')
 env['CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS'] = (
-    '-Lnative=' + str(target_libs) + ' -Clink-arg=-Wl,--allow-shlib-undefined')
+    ('-Ctarget-cpu=cortex-a55 ' if args.tuning == 'pocket1' else '')
+    + '-Lnative=' + str(target_libs) + ' -Clink-arg=-Wl,--allow-shlib-undefined')
 cargo = rust / 'bin' / 'cargo.exe'
 command = [str(cargo), args.action, '--locked', '--target', 'aarch64-unknown-linux-gnu',
            '-p', args.package, '-j', str(args.jobs)]
@@ -101,6 +113,7 @@ if args.isolated_config:
                 '--config', 'target.aarch64-unknown-linux-gnu.linker=' + json.dumps((build / 'target-link.cmd').as_posix()),
                 '--config', 'target.x86_64-pc-windows-gnu.linker=' + json.dumps(host_linker.as_posix())]
     working_directory = Path(ROOT.anchor)
+print(f'Player tuning={args.tuning} target_cpu={target_cpu} release_opt_level={release_opt_level} release_lto={release_lto} release_codegen_units=16', flush=True)
 print(' '.join(command), flush=True)
 result = subprocess.run(command, cwd=working_directory, env=env)
 if result.returncode:
@@ -113,4 +126,13 @@ if args.action == 'build':
     from elf_info import inspect
     info = inspect(build / 'ruffle-leaf')
     (build / 'player-elf.json').write_text(json.dumps(info, indent=2) + '\n', encoding='utf8')
+    build_info = {
+        'binary_sha256': hashlib.sha256((build / 'ruffle-leaf').read_bytes()).hexdigest(),
+        'target': 'aarch64-unknown-linux-gnu', 'profile': profile,
+        'tuning': args.tuning, 'target_cpu': target_cpu,
+        'release_opt_level': int(release_opt_level), 'release_lto': release_lto,
+        'release_codegen_units': 16,
+        'rustc': subprocess.check_output([str(rust / 'bin/rustc.exe'), '--version'], env=env, text=True).strip(),
+    }
+    (build / 'player-build.json').write_text(json.dumps(build_info, indent=2) + '\n', encoding='utf8')
     print(json.dumps({'binary': str(build / 'ruffle-leaf'), 'elf': info}, indent=2), flush=True)
