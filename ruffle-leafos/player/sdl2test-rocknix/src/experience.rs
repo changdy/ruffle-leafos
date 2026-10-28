@@ -1,4 +1,4 @@
-//! Leaf menu model, five native-progress profiles, and local audiovisual options.
+//! Leaf menu model, five native-progress profiles, and global display options.
 //! No VM snapshots: these files contain only Flash SharedObject data.
 use crate::session::i18n::t;
 use std::{collections::{BTreeMap,BTreeSet}, fs::{self, OpenOptions}, io::Write,
@@ -183,6 +183,9 @@ impl Progress {
 pub struct Settings {pub scale:u8,pub quality:u8,pub fps:bool,pub renderer:super::graphics::Backend}
 impl Default for Settings {fn default()->Self{Self{scale:0,quality:2,fps:true,renderer:super::graphics::Backend::OpenGlEs}}}
 impl Settings {
+    pub fn global_path(controls_root:&Path)->PathBuf {
+        controls_root.parent().unwrap_or(controls_root).join("audiovisual/global.rav")
+    }
     pub fn requested_renderer(&self,app:bool,override_name:Option<&str>)->super::graphics::Backend {
         use super::graphics::Backend;
         if app{Backend::OpenGlEs}else{override_name.and_then(Backend::from_name).unwrap_or(self.renderer)}
@@ -394,6 +397,38 @@ mod tests {
         let mut legacy=b"RAV1".to_vec();legacy.extend([0,1,s.scale,s.quality,u8::from(s.fps)]);legacy.extend(hash(&legacy).to_le_bytes());fs::write(&path,&legacy).unwrap();
         assert_eq!(Settings::load(&path),s);assert_eq!(fs::read(&path).unwrap(),legacy);
         fs::write(&path,b"corrupt").unwrap();assert_eq!(Settings::load(&path),Settings::default());fs::remove_dir_all(p.root).unwrap();
+    }
+    #[test] fn display_settings_are_shared_across_games_and_ignore_old_game_files(){
+        use super::super::{controls::Store,graphics::Backend};
+        let p=progress();let root=p.root.join("config/controls");
+        let first=Store::new(root.clone(),Path::new("/mnt/sdcard/Roms/flash/first.swf"));
+        let second=Store::new(root,Path::new("/mnt/sdcard/Roms/flash/second.swf"));
+        assert_ne!(first.identity,second.identity);
+        let path=Settings::global_path(&first.root);assert_eq!(path,Settings::global_path(&second.root));
+        assert_eq!(path,p.root.join("config/audiovisual/global.rav"));
+        let old=path.parent().unwrap().join(format!("{}.rav",game_id(b"first movie")));
+        let setting=Settings{scale:2,quality:0,fps:false,renderer:Backend::Vulkan};setting.save(&old).unwrap();
+        let old_bytes=fs::read(&old).unwrap();
+        assert_eq!(Settings::load(&path),Settings::default());assert!(!path.exists());
+        setting.save(&path).unwrap();assert_eq!(Settings::load(&Settings::global_path(&second.root)),setting);
+        let mut loaded=Settings::load(&Settings::global_path(&second.root));loaded.change(0,1);loaded.save(&path).unwrap();
+        assert_eq!(Settings::load(&Settings::global_path(&first.root)),loaded);
+        assert_eq!(fs::read(&old).unwrap(),old_bytes);
+        fs::remove_dir_all(p.root).unwrap();
+    }
+    #[test] fn temporary_renderer_choices_do_not_replace_the_saved_global_preference(){
+        use super::super::graphics::Backend;
+        let p=progress();let path=Settings::global_path(&p.root.join("controls"));
+        for preferred in [Backend::OpenGlEs,Backend::Vulkan] {
+            let mut settings=Settings{renderer:preferred,..Settings::default()};
+            assert_eq!(settings.requested_renderer(false,None),preferred);
+            assert_eq!(settings.requested_renderer(true,Some("vulkan")),Backend::OpenGlEs);
+            assert_eq!(settings.requested_renderer(false,Some("opengl-es")),Backend::OpenGlEs);
+            assert_eq!(settings.requested_renderer(false,Some("vulkan")),Backend::Vulkan);
+            settings.change(0,1);settings.save(&path).unwrap();
+            assert_eq!(Settings::load(&path).renderer,preferred);
+        }
+        fs::remove_dir_all(p.root).unwrap();
     }
     #[test] fn failed_clear_is_retried_before_a_successful_flush(){
         let mut p=progress();p.select(0).unwrap();assert!(p.put("x",Some(b"old")));let root=p.root.clone();

@@ -133,7 +133,7 @@ def main():
                   'Menu+A previous / Menu+B next schemes, Menu+X direction swap, and Menu+hat down left mouse hold via read-only physical state',
                   'main-menu left/right scheme switching; mouse speed within cursor settings; separate About and contextual shortcut guide',
                   'friendly About introduction, full GitHub repository URL, community credits and bundled license notices',
-                  'per-game GLES/Vulkan selection, confirmed native-progress flush/restart, RAV1/RAV2 preferences and GLES startup fallback',
+                  'one global display configuration for scaling, Flash quality, FPS and GLES/Vulkan; confirmed progress flush/restart, RAV1/RAV2 preferences and GLES startup fallback',
                   'pinned official Ruffle wgpu Vulkan renderer with shared GBM DMA-BUF/EGL presentation and existing GLES menus; no per-frame CPU pixel readback for presentation',
                   'unified scheme editor with L/R switching, separate Save/Back actions and unsaved-change confirmation',
                   'Leaf pause theme shared across submenus, five-column action grid and nine visible category tabs',

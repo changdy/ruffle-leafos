@@ -214,7 +214,7 @@ impl Frontend {
                 },
                 ExperienceCommand::Settings=>{
                     self.apply_av();self.state.experience.settings.save(&self.settings_path)?;
-                    self.state.experience.message=t("已保存此游戏的音画设置").into();
+                    self.state.experience.message=t("已保存全局画面设置").into();
                 },
                 ExperienceCommand::Renderer(backend)=>{
                     if backend!=self.state.experience.actual_renderer&&self.flush_progress(false) {
@@ -660,7 +660,7 @@ pub async fn run() -> Result<(), String> {
         swf_path.file_stem().unwrap_or_default().to_string_lossy().into_owned(),
         control_store.game.file_stem().unwrap_or_default().to_string_lossy().into_owned(),movie_url.path().into())));
     if !opt.app_settings {progress.lock().unwrap().register()?;}
-    let settings_path=control_store.root.parent().unwrap_or(&control_store.root).join("audiovisual").join(format!("{}.rav",progress.lock().unwrap().id));
+    let settings_path=experience::Settings::global_path(&control_store.root);
     let mut av=experience::Settings::load(&settings_path);
     let slots=progress.lock().unwrap().slots();
     let pick_slot=!opt.app_settings&&opt.progress_slot.is_none()&&slots.iter().any(|s|s.time!=0||s.broken);

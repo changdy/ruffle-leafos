@@ -25,7 +25,7 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 
 启动器优先预加载 Leaf 系统 SDL2，以获得设备上的 Wayland 支持；随包 SDL2 作为后备。CPAL/ALSA 在可用时接 Leaf PulseAudio，已有用户 ALSA 配置优先。窗口和菜单使用 SDL/Wayland/GLES，Flash 绘制可选择现有 GLES 或实验性 Vulkan；已经验证的设备版本见进度文档。
 
-画面设置中的“渲染接口”进入 `experience::Page::Renderer`，以 `actual_renderer` 标识实际后端。选择不同接口进入默认取消的确认页；确认后先检查原生进度提交，退出循环再次提交成功才写入 RAV2 偏好并 exec 重启。保留当前进度槽，清除旧 `--renderer` 命令行覆盖，重启前销毁播放器、菜单、GL 上下文和窗口。保存失败不进入重启，不把菜单文字当成实际切换。
+画面设置使用 `experience::Settings::global_path` 返回的固定 `audiovisual/global.rav`，所有游戏共用缩放、画质、FPS 和渲染偏好；旧内容身份文件保留但不读取或自动迁移。没有全局配置时统一使用默认值。画面设置中的“渲染接口”进入 `experience::Page::Renderer`，以 `actual_renderer` 标识实际后端。选择不同接口进入默认取消的确认页；确认后先检查当前原生进度提交，退出循环再次提交成功才写入全局 RAV2 偏好并 exec 重启。保留当前进度槽，清除旧 `--renderer` 命令行覆盖，重启前销毁播放器、菜单、GL 上下文和窗口。保存失败不进入重启，不把菜单文字当成实际切换。
 
 Vulkan 复用官方 Ruffle `nightly-2026-03-15` 的 `render/wgpu/`，提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856`；该版本 `RenderBackend` 接口与本项目基线一致，54 个导入文件的构建 SHA-256 固定于 [ruffle-wgpu.lock.json](../vendor/ruffle-wgpu.lock.json)，其中 `local_patches` 另存本地修改文件的原始上游 SHA-256 与用途，不批量升级 Ruffle core。workspace 仅启用 wgpu 的本机 Vulkan/WGSL 功能。通过公开 HAL 导入接口创建逻辑设备，在上游同等 limits/features 基础上增加 DRM format modifier 扩展，并拒绝 CPU adapter。
 
@@ -33,7 +33,7 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 
 所有队列提交在 Flash 线程串行执行。Vulkan 绘制后通过原生 barrier 将图像释放到 `QUEUE_FAMILY_EXTERNAL`/GENERAL，有限超时 fence 等待完成后交 EGL/GLES 采样；`glFinish` 确保采样完成后才允许下一帧重新获取图像。当前同步较保守，不宣称速度或功耗优于 GLES。导入用重复 FD，成功的 `vkAllocateMemory` 接管该 FD，GBM/EGL/纹理与底层分配分别保留生命周期；resize/退出先等待 GPU，再释放同步、图像和内存资源。
 
-`leaf-graphics actual=` 记录实际 Flash 绘制接口，`leaf-vulkan` 记录硬件 adapter、共享布局、首次呈现与累计帧数。`GL_*` 始终描述显示上下文，不能单独证明 Flash 使用 GLES。偏好启动的 Vulkan 初始化失败会显示提示、恢复 GLES 偏好并继续游戏；捕获的运行期 GPU 错误会终止循环、尝试提交原生进度，并将下次偏好恢复为 GLES。诊断用 `--renderer opengl-es|vulkan` 只覆盖本次选择，显式指定 Vulkan 时初始化错误直接返回，便于验证，Apps 始终使用 GLES。RAV1/RAV2 契约见[渲染设置格式](formats/graphics-settings.md)。
+`leaf-graphics actual=` 记录实际 Flash 绘制接口，`leaf-vulkan` 记录硬件 adapter、共享布局、首次呈现与累计帧数。`GL_*` 始终描述显示上下文，不能单独证明 Flash 使用 GLES。按全局偏好启动的 Vulkan 初始化失败会显示提示、恢复全局 GLES 偏好并继续游戏；捕获的运行期 GPU 错误会终止循环、尝试提交原生进度，并将后续游戏共用的偏好恢复为 GLES。诊断用 `--renderer opengl-es|vulkan` 只覆盖本次选择，显式指定 Vulkan 时初始化错误直接返回，运行期错误也不重置全局偏好；Apps 始终使用 GLES。`Settings::requested_renderer` 选择本次实际接口，不覆盖保存的全局值，其他画面选项保存时也不会把 Apps/命令行的临时接口写回。RAV1/RAV2 契约见[渲染设置格式](formats/graphics-settings.md)。
 
 ## 功能实现与源码入口
 
@@ -46,9 +46,9 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 | 物理 Menu | 独立读取物理状态，组合键按下沿触发；短按松开唤起，组合键不附带打开菜单；系统长按逃生仍交由 Leaf | [probe_input.c](../adapter/src/probe_input.c)、[shortcuts.rs](../player/sdl2test-rocknix/src/shortcuts.rs) |
 | 连发 | 每键 0/5/10/15 Hz，按住触发；松开阶段调度不超过 10 ms，其余周期按下；单调时钟、截止时间唤醒，卡顿不集中补发；仅键盘/组合键/鼠标左右键允许连发 | [turbo.rs](../player/sdl2test-rocknix/src/turbo.rs) |
 | 全局光标 | 外观独立保存；空心圆中心点固定 1×1 屏幕像素；移动恢复显示，静止 3.5 秒隐藏；点击/按住/滚轮不延长显示 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs) |
-| 原生进度/画面/Apps/说明 | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；每游戏缩放/画质/FPS；独立关于单页与快捷键三组说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
+| 原生进度/画面/Apps/说明 | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；全局缩放/画质/FPS/渲染接口；独立关于单页与快捷键三组说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 | 系统音量 | 异步读取真实 Leaf 数值，仅显示系统硬件键反馈；旧每游戏音量/静音不再控制播放 | [system_volume.rs](../player/sdl2test-rocknix/src/system_volume.rs) |
-| Flash FPS | 统计实际 Flash 帧执行量，按秒显示当前值；新游戏及恢复默认时开启，已有画面配置优先 | [core/src/player.rs](../player/core/src/player.rs)、[experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
+| Flash FPS | 统计实际 Flash 帧执行量，按秒显示当前值；全局默认及恢复默认时开启，已有全局画面配置优先 | [core/src/player.rs](../player/core/src/player.rs)、[experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 
 M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有其他候选时保持当前方案；主菜单左右与编辑页 L/R 仍可选择全部十个方案。`Mapping::is_empty` 统一按 14 个按键和 5 个摇杆动作均为 `None` 且 `fine=false` 判断；鼠标精调是有效动作，基底、摇杆预设和速度等元数据不单独使方案非空。切换继续使用同一持久化/释放规则。M+十字下切左键保持，M+X 仅在本次运行互换十字/摇杆四方向，摇杆按下不变；交换状态不会写入映射文件。光标页速度仅本次生效，方案内保存的速度仍随方案读取；外观由所有游戏共用。
 
@@ -82,8 +82,8 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 | 映射版本 | 新写入 v5，共 46 个唯一字段；严格拒绝重复/缺失/未知字段，连发仅接受 0/5/10/15；兼容读取 v1—v4，不在加载时改写 |
 | 全局光标 | `cursor.conf` 四字段：version/style/color/size；旧 arrow 只作为 ring-dot 读取别名，旧映射光标字段只校验、不再应用或自动迁移 |
 | 游戏进度 | SWF 内容指纹身份，改名/移动仍匹配；RLS1、每游戏五槽、单槽最多 32 MiB；同一数据重复提交不更新时间，显示北京时间 |
-| 音画与渲染 | 按内容身份写 RAV2，兼容只读 RAV1 并默认 GLES；旧音量/静音字段不影响系统声音，新写固定中性值；字段见[契约](formats/graphics-settings.md) |
-| 清理 | Apps 确认默认取消；确认后将目标数据移入 `cleared-data/` 本地归档，不清 ROM、封面、旧 cfg、未迁移 sol 或独立音画配置 |
+| 全局画面与渲染 | 所有游戏共用 `audiovisual/global.rav`，写 RAV2，全局路径兼容解码 RAV1 并默认 GLES；旧的每游戏文件保留但不读取或迁移；旧音量/静音字段不影响系统声音，新写固定中性值；字段见[契约](formats/graphics-settings.md) |
+| 清理 | Apps 确认默认取消；确认后将目标数据移入 `cleared-data/` 本地归档，不清 ROM、封面、旧 cfg、未迁移 sol 或全局画面配置 |
 
 格式的全部字段、路径及旧版兼容关系见 [v5](formats/controls-format-v5.md)、[v4](formats/controls-format-v4.md)、[v3](formats/controls-format-v3.md)、[v2](formats/controls-format-v2.md)、[v1](formats/controls-format-v1.md)。旧文档里的模板、恢复默认及旧快捷键只描述当时版本；当前操作以 README 为准。
 

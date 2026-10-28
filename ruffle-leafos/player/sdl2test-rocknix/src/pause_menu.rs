@@ -348,13 +348,13 @@ impl PauseMenu {
         if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab);return;}
         let subtitle=match u.page{
             Page::Saves=>if u.started{t("A 读取并重启游戏；Y 将当前进度复制到选中槽")}else{t("发现游戏进度，请先选择存档；空槽开始新进度")},
-            Page::Settings=>t("仅此游戏 · 调整后自动保存"),Page::Renderer=>t("仅此游戏 · 切换接口会保存原生进度并重启"),Page::Manager=>t("←→ 选择游戏 · 清理前会再次确认"),Page::Language=>if crate::session::i18n::is_english(){"Choose a language · Applies immediately and saves for all games"}else{"选择语言 · 立即生效并保存，所有游戏共用"},Page::Confirm=>t("请选择确认或取消"),_=>""
+            Page::Settings=>t("全局共用 · 调整后自动保存"),Page::Renderer=>t("全局接口 · 切换会保存当前进度并重启"),Page::Manager=>t("←→ 选择游戏 · 清理前会再次确认"),Page::Language=>if crate::session::i18n::is_english(){"Choose a language · Applies immediately and saves for all games"}else{"选择语言 · 立即生效并保存，所有游戏共用"},Page::Confirm=>t("请选择确认或取消"),_=>""
         };
         let navigation=if matches!(u.page,Page::Settings|Page::Manager){FooterNavigation::Adjust}else{FooterNavigation::List};
         self.leaf_background(&u.heading(),subtitle,t("返回"),navigation);
         let rows=u.rows();
         if u.page==Page::Confirm {
-            let description=if u.pending>=30{crate::tr!("保存原生进度，切换到 {} 并重启游戏？", "Save native progress, switch to {} and restart?",if u.pending==31{"Vulkan"}else{"OpenGL ES"})}
+            let description=if u.pending>=30{crate::tr!("全局切换到 {}，保存当前进度并重启游戏？", "Switch all games to {}, save current progress and restart?",if u.pending==31{"Vulkan"}else{"OpenGL ES"})}
                 else if u.pending>=20{crate::tr!("将当前游戏进度复制到存档 {}，覆盖该槽原有进度？", "Copy current progress to slot {}, replacing its progress?",u.pending-19)}
                 else if u.pending>=10{crate::tr!("先保存当前进度，再重启并读取存档 {}？", "Save current progress, restart and load slot {}?",u.pending-9)}
                 else {match u.pending{1=>t("清空所选游戏的五个存档？"),2=>t("恢复所选游戏的默认按键？"),3=>t("清空所有游戏的全部存档？"),_=>t("重置所有按键配置与用户模板？")}.into()};

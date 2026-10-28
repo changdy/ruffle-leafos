@@ -2,7 +2,7 @@
 
 面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.1 开发预览**，支持中英文界面，默认 OpenGL ES，可选实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-28，验证范围见[工程进度](docs/progress.md)。
 
-从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
+从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、全局画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
 
 GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos)。掌机应用名为 **Ruffle Flash**，Apps 入口显示为 **Flash 数据管理**。
 
@@ -34,7 +34,7 @@ GitHub 仓库：[changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafos
 
 SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游戏保留相对目录结构。从 Leaf 的 Flash 分类打开游戏，模拟器列表显示为 Ruffle Flash；Apps 中的“Flash 数据管理”用于管理配置与游戏进度。
 
-2026-10-26 已在 Pocket1 对《死神 VS 火影 2.6》和《拳皇 Wing 1.91》进行实机排查。前者需要主 SWF 旁的 `fighter/`、`fighter/fz/` 角色及援助文件，仅下载主 SWF 会卡在对战加载；后者在原 0.7.0 播放器上因内存不足被系统结束。当前源码按首次显示创建静态图形，并在完整游戏帧后回收未使用的静态 GPU 资源；优化版已在 GLES 运行死神、在 Vulkan 运行拳皇的实际对战。**拳皇的 GLES 多局测试仍触发过 OOM**；本次安装仅为新下载的拳皇保存 Vulkan 偏好，其他游戏继续使用各自设置。全部角色和长时稳定性尚未验收，不能视为完整兼容性保证。详见[本轮验证记录](docs/validation/fighting-games-20261026.json)。游戏文件不随应用分发。
+2026-10-26 已在 Pocket1 对《死神 VS 火影 2.6》和《拳皇 Wing 1.91》进行实机排查。前者需要主 SWF 旁的 `fighter/`、`fighter/fz/` 角色及援助文件，仅下载主 SWF 会卡在对战加载；后者在原 0.7.0 播放器上因内存不足被系统结束。当前源码按首次显示创建静态图形，并在完整游戏帧后回收未使用的静态 GPU 资源；优化版已在 GLES 运行死神、在 Vulkan 运行拳皇的实际对战。**拳皇的 GLES 多局测试仍触发过 OOM**；该轮安装使用当时的每游戏配置，仅为新下载的拳皇保存 Vulkan 偏好；当前源码已改用下文所述的全局画面配置。全部角色和长时稳定性尚未验收，不能视为完整兼容性保证。详见[本轮验证记录](docs/validation/fighting-games-20261026.json)。游戏文件不随应用分发。
 
 《死神 VS 火影 3.3》的部分 4399 单文件包会显示 `WARNING / No running in a loader.`，内嵌中文实际为“不允许加壳运行”。本次本地适配副本改为直接启动原游戏、从旁边的 `assets/` 读取完整资源，已通过 Pocket1 / GLES 的标题、选人、一护对鸣人实战、暂停恢复与正常退出检查。使用时把 **`死神VS火影3.3-离线版/` 整个目录**放到 `Roms/flash/`，刷新 Leaf 游戏列表后打开目录内同名 SWF；不能只复制主文件。该副本使用独立进度身份，原文件保留，游戏不随应用分发。仍有脚本与音频解码告警，全部角色、变身、多局和长时稳定性尚未验收；详见[3.3 排查与适配记录](docs/validation/bvn33-offline-20261026.md)。
 
@@ -139,16 +139,18 @@ On first launch, Ruffle Flash uses the LeafOS language: Chinese selects Simplifi
 
 ## 画面设置
 
-M → 画面设置，左右调整或 A 切换，即时生效并保存到此游戏配置：
+M → 画面设置，缩放、画质、帧率和渲染接口由所有游戏共用一份全局配置，退出重开仍保留。缩放、画质和帧率用左右调整或 A 切换，即时生效并自动保存：
 
 - 保持比例、铺满屏幕、原始大小三种缩放；原始大小下大画面可能超出屏幕。
 - 低/中/高三档 Flash 画质，实际差异取决于内容和后端。
-- 左上角 FPS 开关，默认开；只显示当前实际 Flash 帧执行速率，按秒更新。卡顿时逻辑补帧可能使这个数高于实际画面更新速率。已有游戏配置继续沿用保存的开关，可手动关闭。
+- 左上角 FPS 开关，默认开；只显示当前实际 Flash 帧执行速率，按秒更新。卡顿时逻辑补帧可能使这个数高于实际画面更新速率。手动关闭后，所有游戏都沿用关闭状态。
 - 恢复默认：保持比例、高画质、FPS 开。
 
-“渲染接口”子页面可选择 **OpenGL ES** 或 **Vulkan（实验）**，并标明当前实际使用的接口。选择另一接口后，默认先选中“取消”；确认后保存游戏原生进度、记住此游戏的选择并重启游戏。接口选择是持久保存的游戏专属配置，后续启动此游戏仍沿用，其他游戏不受影响；按 SWF 内容识别，改名或移动仍匹配。仅恢复游戏自身支持的进度，不保留当前运行画面。恢复默认画面设置只重置缩放、画质和 FPS，不更改渲染接口。
+“渲染接口”子页面可选择 **OpenGL ES** 或 **Vulkan（实验）**，并标明当前实际使用的接口。选择另一接口后，默认先选中“取消”；确认后保存当前游戏原生进度、记住全局选择并重启当前游戏，其他游戏后续启动也使用该接口。仅恢复游戏自身支持的进度，不保留当前运行画面。恢复默认画面设置会重置所有游戏共用的缩放、画质和 FPS，保留渲染接口。
 
-Vulkan 复用固定版本的 Ruffle 官方桌面端 `wgpu` 后端。Pocket1 当前驱动缺少原生 Vulkan Wayland 窗口扩展，本版通过 GPU 共享图像呈现：**Flash 使用 Vulkan 绘制，OpenGL ES 负责最终显示和菜单**，显示链路不做逐帧 CPU 像素读回。Vulkan 初始化失败时会提示并恢复此游戏的 OpenGL ES 偏好；已捕获的运行期 GPU 错误会结束会话、尝试提交原生进度，并将后续启动偏好恢复为 GLES。
+旧的每游戏音画配置文件保留，但不再读取或自动迁移。没有全局配置时，所有游戏统一使用保持比例、高画质、FPS 开和 OpenGL ES；首次主动调整后写入全局文件。
+
+Vulkan 复用固定版本的 Ruffle 官方桌面端 `wgpu` 后端。Pocket1 当前驱动缺少原生 Vulkan Wayland 窗口扩展，本版通过 GPU 共享图像呈现：**Flash 使用 Vulkan 绘制，OpenGL ES 负责最终显示和菜单**，显示链路不做逐帧 CPU 像素读回。按全局偏好启动 Vulkan 失败时会提示并将全局偏好恢复为 OpenGL ES；已捕获的运行期 GPU 错误会结束会话、尝试提交原生进度，并将后续游戏共用的偏好恢复为 GLES。诊断命令行 `--renderer` 仅覆盖本次运行，不改写全局接口选择。
 
 Vulkan 仍属实验功能；部分游戏的画面、滤镜、稳定性或性能可能与 GLES 不同，**没有证明它一定更快**。遇到问题可切回 OpenGL ES。格式及兼容规则见[渲染设置格式](docs/formats/graphics-settings.md)，实际接口以日志 `leaf-graphics actual=` 为准，不能仅凭 `GL_VERSION` 判断 Flash 绘制后端。
 
@@ -158,7 +160,7 @@ FPS、映射 toast 和左键保持提示的底色随文字尺寸收缩。人工�
 
 ## Apps 数据管理与数据路径
 
-Apps 的“Flash 数据管理”入口直接进入同名管理界面。左右选游戏，可清空其五个进度或重置按键；也可清空全部新格式进度、重置全部按键配置。操作前二次确认，默认“取消”；清理数据移入本地归档。ROM、封面、旧 `.cfg`、未迁移的 `.sol` 和独立音画配置保留。
+Apps 的“Flash 数据管理”入口直接进入同名管理界面。左右选游戏，可清空其五个进度或重置按键；也可清空全部新格式进度、重置全部按键配置。操作前二次确认，默认“取消”；清理数据移入本地归档。ROM、封面、旧 `.cfg`、未迁移的 `.sol` 和全局画面配置保留。
 
 以下路径对应正式启动脚本，根目录由 Leaf 当前所选卡环境提供：
 
@@ -168,7 +170,7 @@ Apps 的“Flash 数据管理”入口直接进入同名管理界面。左右选
 | 全局光标 | `$USERDATA_PATH/ruffle-probe/config/controls/cursor.conf` |
 | 界面语言 | `$USERDATA_PATH/ruffle-probe/config/language.conf`，游戏与 Apps 共用 |
 | 原生进度 | `$SAVES_PATH/ruffle-leaf-preview/shared_objects/slots-v1/games/<内容指纹>/slot-1.rls`—`slot-5.rls` |
-| 音画配置 | `$USERDATA_PATH/ruffle-probe/config/audiovisual/<内容指纹>.rav` |
+| 全局画面配置 | `$USERDATA_PATH/ruffle-probe/config/audiovisual/global.rav`；所有游戏共用 |
 | 清理归档 | `$SAVES_PATH/ruffle-leaf-preview/shared_objects/cleared-data/` |
 | 运行日志 | `$LOGS_PATH/ruffle-probe.log`，上次日志为 `.previous` |
 
