@@ -77,6 +77,8 @@ jobs:
         run: python scripts/build_player.py build --isolated-config --jobs 4
       - name: Run host input and state tests
         run: python scripts/test_session.py
+      - name: Verify bundled customized games and external assets
+        run: python -m unittest discover -s scripts -p test_package_preview.py -v
       - name: Build and test diagnostics
         run: python scripts/build_diagnostics.py
       - name: Package root directory installation ZIP

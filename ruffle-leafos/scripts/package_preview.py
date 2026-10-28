@@ -30,6 +30,25 @@ def source_ignore(directory, names):
     return ignored - {'.env.example', '.env.sample', '.env.template'}
 
 
+def bundle_games(stage, games_root=ROOT / 'games'):
+    manifest = json.loads((games_root / 'manifest.json').read_text(encoding='utf8'))
+    source = games_root / 'flash'
+    files = {p.relative_to(source).as_posix(): p for p in source.rglob('*') if p.is_file()}
+    expected = manifest['files_sha256']
+    if files.keys() != expected.keys():
+        raise ValueError('bundled game files differ from manifest: missing='
+                         + repr(sorted(expected.keys() - files.keys())) + ', extra='
+                         + repr(sorted(files.keys() - expected.keys())))
+    for relative, path in files.items():
+        if sha(path) != expected[relative]:
+            raise ValueError('bundled game checksum mismatch: ' + relative)
+    for game in manifest['games']:
+        if game['entrypoint'] not in expected:
+            raise ValueError('bundled game entrypoint missing: ' + game['entrypoint'])
+    shutil.copytree(source, stage / 'Roms/flash', dirs_exist_ok=True)
+    return manifest['games']
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', required=True, type=Path)
@@ -78,8 +97,11 @@ def main():
     shutil.copyfile(shim, frontend / 'lib/libruffle_probe.so')
     make_movie(frontend / 'res/Leaf-GPU-Probe.swf')
     make_movie(stage / 'Roms/flash/Leaf-GPU-Probe.swf')
+    bundled_games = bundle_games(stage)
     (stage / 'Images/flash').mkdir(parents=True)
     shutil.copyfile(ROOT / 'README.md', pak / 'README.md')
+    (pak / 'games').mkdir()
+    shutil.copyfile(ROOT / 'games/README.md', pak / 'games/README.md')
     shutil.copytree(ROOT / 'docs', pak / 'docs',
                     ignore=shutil.ignore_patterns('__pycache__'))
     shutil.copyfile(ROOT / 'docs/THIRD_PARTY.md', pak / 'THIRD_PARTY.md')
@@ -107,6 +129,7 @@ def main():
     shutil.copyfile(ROOT / 'vendor/jawaka.lock.json', provenance / 'jawaka.lock.json')
     shutil.copyfile(ROOT / 'vendor/catastrophe.lock.json', provenance / 'catastrophe.lock.json')
     shutil.copyfile(ROOT / 'vendor/ruffle-wgpu.lock.json', provenance / 'ruffle-wgpu.lock.json')
+    shutil.copyfile(ROOT / 'games/manifest.json', provenance / 'bundled-games.json')
     # Validate against the pinned official contract, then the new behavior.
     contracts = ROOT / 'vendor/leaf-contracts/contracts'
     sys.path[:0] = [str(contracts / 'leaf-content/scripts'), str(contracts / 'leaf-services/scripts')]
@@ -126,6 +149,7 @@ def main():
         'version': version, 'runtime_rebuilt_from_source': True,
         'runtime_sha256': sha(binary), 'source': source_lock,
         'player_build': build_info,
+        'bundled_games': bundled_games,
         'target': 'Leaf 0.13.0 / AArch64 / glibc 2.38 / GLES 3 / experimental Vulkan',
         'upstream_wgpu_renderer': renderer_lock,
         'keyboard_reference': keyboard_lock,
@@ -172,7 +196,7 @@ def main():
         assert all((item.external_attr >> 16) & 0o111 for item in z.infolist() if item.filename.endswith('.sh'))
     if args.include_source:
         source_stage = Path(tempfile.mkdtemp(prefix='preview-source-', dir=ROOT / 'build'))
-        for folder in ['player', 'adapter', 'pak', 'scripts', 'docs', 'target-libs', 'runtime/leaf-12', 'vendor/leaf-contracts', 'vendor/catastrophe']:
+        for folder in ['player', 'adapter', 'pak', 'scripts', 'docs', 'games', 'target-libs', 'runtime/leaf-12', 'vendor/leaf-contracts', 'vendor/catastrophe']:
             shutil.copytree(ROOT / folder, source_stage / folder,
                 ignore=source_ignore)
         for filename in ['README.md', '.gitignore', 'leaf-source.lock.json', 'arm-gnu.lock.json']:

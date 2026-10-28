@@ -17,6 +17,7 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 | [player/sdl2test-rocknix/src/](../player/sdl2test-rocknix/src/) | 本项目掌机前端：输入、菜单、映射、光标、原生进度和音画 |
 | [player/core/](../player/core/) | 固定 Ruffle core 及少量核心接口改动；其余 workspace 成员保留依赖关系 |
 | [pak/](../pak/) | Leaf 清单、Flash/Apps 启动、路径、主题和诊断脚本 |
+| [games/](../games/README.md) | 版本化的两款定制游戏、完整外部资源及 SHA-256 清单；安装到 `Roms/flash/` |
 | [scripts/](../scripts/) | 构建、主机回归、诊断和打包 |
 | [adapter/src/](../adapter/src/) | 复用的 SDL 诊断/物理输入采样 C 库；adapter 其他说明对应早期适配版本 |
 | [runtime/leaf-12/](../runtime/leaf-12/)、[target-libs/](../target-libs/) | 固定的原始运行时对照、发布所需库/字体、目标链接输入 |
@@ -126,7 +127,7 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 `scripts/optimize_swf_bitmaps.py` 使用 Python 标准库裁掉私有无损位图的零色外边并合并完全相同的内部位图，同步重写填充 ID/矩阵，不修改脚本、音频和帧调度。默认仅处理 AVM1；只支持可完整解析并安全重写的 FWS/CWS、DefineBitsLossless2 和 Shape 1—4。导出或其他引用保护、平铺填充、分数 twip 补偿及未知结构按保守规则跳过或拒绝。拒绝覆盖原文件与已有输出/报告。
 
-用 `python scripts/optimize_swf_bitmaps.py <输入.swf> --output <新输出.swf> --report <新报告.json>` 生成副本，`python -m unittest discover -s scripts -p test_optimize_swf_bitmaps.py -v` 运行格式与保护条件回归。游戏文件与完整修改明细放入忽略的 `outputs/`，不进入 Git 或应用发布包。副本内容指纹变化会建立独立原生进度，不能将素材展开尺寸减少当作实机 FPS/RSS 改善；适用范围和验证见[拳皇 SWF 优化报告](validation/kof-swf-optimization-20261026.md)。
+用 `python scripts/optimize_swf_bitmaps.py <输入.swf> --output <新输出.swf> --report <新报告.json>` 生成副本，`python -m unittest discover -s scripts -p test_optimize_swf_bitmaps.py -v` 运行格式与保护条件回归。游戏优化的临时输出与完整修改明细放入忽略的 `outputs/`；按用户要求固定收录的两款定制游戏另在 [games/](../games/README.md) 版本化并随包分发。副本内容指纹变化会建立独立原生进度，不能将素材展开尺寸减少当作实机 FPS/RSS 改善；适用范围和验证见[拳皇 SWF 优化报告](validation/kof-swf-optimization-20261026.md)。
 
 对已检查主电影及所有外部调用者的 AVM2 素材，可显式增加 `--avm2-private-bitmaps`，仅改写未导出、未直接放置的内部填充位图，保留 ABC、SymbolClass 和时间轴标签。工具拒绝 ABC 中含 `readGraphicsData` / `GraphicsBitmapFill` 的文件，因为这些接口可暴露或修改原本私有的位图。这个局部检查不能识别外部代码或动态拼接的名字，开关不能替代调用者审查、逐像素还原、形状补偿验证及实机检查。报告中的 `avm2_private_bitmaps` 表示输入是否为已显式允许的 AVM2；默认拒绝 AVM2 的保护保留。具体处理和范围见[3.3 素材优化记录](validation/bvn33-assets-20261028.md)。
 
@@ -182,7 +183,9 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 新生成的安装归档名为 `ruffle-leafos-<版本>.zip`，源码归档为 `ruffle-leafos-<版本>-source.zip`；旧交付目录及历史归档保留原名。
 
-安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源及许可组成。随包 README 使用当前项目 README，支持文档一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、文档、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
+安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源、两款定制游戏及许可组成。随包 README 使用当前项目 README，支持文档一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
+
+`package_preview.py` 的 `bundle_games` 从 `games/manifest.json` 读取游戏入口和全部文件 SHA-256，先检查 `games/flash/` 的文件集合、逐文件字节及主入口，再完整复制到 `Roms/flash/`，保留死神的 398 个外部资源及相对路径。缺失、多余或内容变化均停止打包。`build-manifest.json` / `build-report.json` 的 `bundled_games` 记录名称、入口、来源名称和主文件指纹，包内 `provenance/bundled-games.json` 保留完整文件清单；`games/README.md` 随应用附带。`python -m unittest discover -s scripts -p test_package_preview.py -v` 检查错误输入及两份真实游戏的完整安装路径，GitHub release job 在构建后执行同一回归。
 
 主机测试与静态校验后，还需按改动执行真机隔离验证、正式 Flash/Apps 通路、用户数据前后比对、安装文件指纹核对。开发时复用当前会话提供的 ADB 地址连接、截图和读取日志，不将临时地址视为固定配置。隔离验证使用单独数据目录，完整流程与具体发布结论查对应[进度及证据](progress.md)。
 
@@ -201,7 +204,7 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 构建在 `windows-2022` 上执行，复用现有 Windows GNU → ARM64 路线。[setup_release_tools.py](../scripts/setup_release_tools.py) 按已有工具锁下载并逐个校验 Rust 1.94.0（含 GNU 主机和 ARM64 标准库）、w64devkit 2.1.0、Zig 0.14.1 和 ARM GNU 14.2 SDK，在工程 `.tools/` 中解包，并生成忽略的 `workspace.local.json`。Python 3.12、Node.js 22、JDK 17 由工作流准备，7-Zip 由 runner 提供。工具和 Cargo 下载缓存分别保存在 `.tools/` 和根目录 `work/toolchains/cargo-home/`；每次仍从源码编译播放器，不缓存成品播放器。
 
-完整流水线依次执行：发布脚本回归、ARM64 release 编译、主机输入/状态回归、诊断库编译与测试、现有打包脚本的 ELF/GLIBC/源码/清单/ZIP 校验。自动打包不加 `--include-source`，只向 Release 附加一个 `ruffle-leafos-<版本>.zip`；GitHub 自带的 Source code 下载由平台生成。ZIP 顶层直接是 `Apps/`、`Roms/`、`Images/`，不含本机配置、SDK、构建缓存或外层版本目录。
+完整流水线依次执行：发布脚本回归、ARM64 release 编译、主机输入/状态回归、随包游戏完整性与安装路径回归、诊断库编译与测试、现有打包脚本的 ELF/GLIBC/源码/清单/ZIP 校验。自动打包不加 `--include-source`，只向 Release 附加一个 `ruffle-leafos-<版本>.zip`；GitHub 自带的 Source code 下载由平台生成。ZIP 顶层直接是 `Apps/`、`Roms/`、`Images/`，不含本机配置、SDK、构建缓存或外层版本目录。
 
 流程使用仓库自带的 `GITHUB_TOKEN`，仅发布 job 申请 `contents: write`，不需要单独配置 PAT。自动创建 `v<版本>` tag，绑定实际构建的提交；当前均以开发预览（Prerelease）发布。说明中写入完整构建 SHA 及链接、上一可达 `v主.次.修订` tag 之后的 commit SHA/标题/作者、比较链接、安装方法和 ZIP SHA-256；首次发布列出全部历史。CI 说明明确标注未进行实机验证。
 
@@ -224,9 +227,10 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 | 原始 leaf-12 | 用户提供的原始播放器、库、字体及来源清单；[runtime.lock.json](../adapter/runtime.lock.json) 固定指纹。原始播放器用于对照与早期 adapter 校验，当前安装包使用新构建播放器 |
 | 目标链接库 | [target-libs/provenance.json](../target-libs/provenance.json) 固定的 SDL2/ALSA/DBus 输入，构建所需，属于外部依赖 |
 | adapter | C 诊断/输入库及其测试由当前工程复用；旧封装、来源审计与早期包保留用于回归和追溯，历史行为以其原文版本为准 |
+| 定制游戏 | 2026-10-28 按用户要求收录掌机两份优化副本，统一 `-定制版` 名称；主 SWF 和资源保持设备字节，来源、指纹和第三方权利说明见 [games/](../games/README.md) |
 
 原始 leaf-12 并非所有私有补丁均有公开源码；本工程基于固定公开基线重做 Leaf 前端，不声称能字节一致复现原包。第三方许可见[声明](THIRD_PARTY.md)。
 
 Git 收录项目源码、必要资源与测试、配置、文档、依赖锁和明确用途的固定输入。`outputs/`、`work/`、`adb-tools/`、`flash-transfer/`、工程 `.tools/` 与 `build/`、所有 target/构建缓存、本机 `workspace.local.json`、环境文件和编辑器缓存均由根 [.gitignore](../../.gitignore) 排除。不要全局忽略 `.so`、`.jar`、`.zip` 或 `.swf`：其中有必要依赖与测试夹具。
 
-[.gitattributes](../../.gitattributes) 保留导入源码的原始字节，Shell 脚本单独强制 LF；锁文件中的 SHA-256 依赖这些字节。整理时不批量格式化第三方源码。旧版本文档在 [archive/](archive/README.md)，验证摘要在 [validation/](validation/)，完整日志和截图在本地输出目录。裁剪的无关参考文件保存在本地 `work/repository-cleanup-20261025/unused-reference/`；Git 历史不做重写。
+[.gitattributes](../../.gitattributes) 保留导入源码的原始字节，Shell 脚本单独强制 LF；锁文件中的 SHA-256 依赖这些字节。`games/flash/` 额外保留游戏配置的原始空白，不为通过 diff 空白检查而改写第三方资源。整理时不批量格式化第三方源码。旧版本文档在 [archive/](archive/README.md)，验证摘要在 [validation/](validation/)，完整日志和截图在本地输出目录。裁剪的无关参考文件保存在本地 `work/repository-cleanup-20261025/unused-reference/`；Git 历史不做重写。

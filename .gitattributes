@@ -1,6 +1,9 @@
 # Keep imported source bytes intact: SHA-256 locks include existing CRLF files.
 * -text
 
+# Imported game bytes retain their original line endings and whitespace.
+ruffle-leafos/games/flash/** -text -whitespace
+
 # Scripts executed on Leaf/Linux must use LF after checkout.
 *.sh text eol=lf
 
