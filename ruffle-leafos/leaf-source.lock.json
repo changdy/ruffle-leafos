@@ -40,7 +40,8 @@
     "sdl2test-rocknix/src/translations.rs": "6ecbad53e67e34f4f5987622a4c1b1858e8ba0d897fd8fd797fef320492023dc",
     "sdl2test-rocknix/src/ui_backend.rs": "3f9f98f417469abaf44baf26d8f238f840e1f668ce604e39a7c7ef11002e0803",
     "sdl2test-rocknix/src/virtual_keyboard.rs": "2dbef461d745e9d86f19f82b3a820b47752d8562748b89c0f182c3ef376308a8",
-    "sdl2test-rocknix/src/keyboard_test.rs": "426d938e90d2e293ac5234ad528cf408e6ede4e3666996c2ba98940e8f48d7da"
+    "sdl2test-rocknix/src/keyboard_test.rs": "426d938e90d2e293ac5234ad528cf408e6ede4e3666996c2ba98940e8f48d7da",
+    "render/src/utils.rs": "e58775579bc9cdfc0ef4bb934857f83a0eb757eb338acabdf2333f498ba5851e"
   },
   "verified_leaf": {
     "version": "0.13.0",

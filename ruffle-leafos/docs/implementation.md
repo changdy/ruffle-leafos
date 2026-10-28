@@ -123,6 +123,12 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 `preload_ms`、`enter_ms`、`construct_ms`、`scripts_ms`、`exit_ms`、`audio_ms`、`mouse_ms` 和 `gc_ms` 分别记录预加载、AVM2 主帧生命周期阶段、声音更新、鼠标更新及 GC 债务处理。Construct 包含 frameConstructed 广播，Scripts/Exit 包含各自清理；Enter 的事件处理可触发嵌套 goto/构建，因此不能把它等同纯 AVM2 字节码耗时。这些计时位于 tick/update 内，彼此可能嵌套，不能与 tick 或 render 简单求和；AVM1 帧脚本未单独计入 AVM2 Scripts。关闭追踪时跳过时钟读取。3.3 的实测与限制见[性能报告](validation/bvn33-performance-20261027.md)。
 
+### 线程分工与位图解压
+
+前端 `#[tokio::main]` 创建多线程 runtime，但 `AndroidExecutor` 使用 `spawn_local`，`leaf.rs` 在 Flash 主循环处理 TaskPoll、tick、render、GC 和同步静态位图解码；这部分没有自动跨核执行。CPAL/ALSA、PulseAudio、Mali 驱动及物理菜单/系统音量观察各有线程。AVM2 生命周期和嵌套 goto 有时序约束，不能仅增加工作线程就并行推进；实测与线程占用见[2026-10-29 记录](validation/bvn33-threads-20261029.md)。
+
+`render/src/utils.rs` 按 Lossless 格式、尺寸、调色板和行填充，以及 JPEG3 alpha 的像素数提示 zlib 初始输出容量，减少按需解码时的反复扩容。预留最多 4 MiB，宽整数计算后封顶；它不是解压总量限制或持久缓存，异常数据继续使用既有解码/尺寸修正流程。`python scripts/test_renderer.py --suite decode` 运行无 GPU 的渲染库主机测试；不带参数继续只运行原 wgpu 所有权回归。主机微基准不替代掌机验证。
+
 ## 离线 SWF 位图素材优化
 
 `scripts/optimize_swf_bitmaps.py` 使用 Python 标准库裁掉私有无损位图的零色外边并合并完全相同的内部位图，同步重写填充 ID/矩阵，不修改脚本、音频和帧调度。默认仅处理 AVM1；只支持可完整解析并安全重写的 FWS/CWS、DefineBitsLossless2 和 Shape 1—4。导出或其他引用保护、平铺填充、分数 twip 补偿及未知结构按保守规则跳过或拒绝。拒绝覆盖原文件与已有输出/报告。

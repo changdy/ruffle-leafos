@@ -1,0 +1,158 @@
+{
+  "scope": "baseline1-fight1 only; mixed fight2 excluded",
+  "resource_samples": 30,
+  "thread_cpu_denominator": "one logical CPU = 100%; proc USER_HZ=100",
+  "summary": {
+    "seconds": 29.0,
+    "threads": [
+      {
+        "tid": 27996,
+        "name": "ruffle-thread-b",
+        "cpu_percent_one_core": 58.793
+      },
+      {
+        "tid": 28022,
+        "name": "tokio-rt-worker",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28023,
+        "name": "tokio-rt-worker",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28024,
+        "name": "tokio-rt-worker",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28025,
+        "name": "tokio-rt-worker",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28031,
+        "name": "mali-mem-purge",
+        "cpu_percent_one_core": 0.069
+      },
+      {
+        "tid": 28032,
+        "name": "mali-utility-wo",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28033,
+        "name": "mali-utility-wo",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28034,
+        "name": "mali-utility-wo",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28035,
+        "name": "mali-utility-wo",
+        "cpu_percent_one_core": 0.034
+      },
+      {
+        "tid": 28036,
+        "name": "mali-cmar-backe",
+        "cpu_percent_one_core": 5.483
+      },
+      {
+        "tid": 28037,
+        "name": "mali-compiler",
+        "cpu_percent_one_core": 0.0
+      },
+      {
+        "tid": 28045,
+        "name": "threaded-ml",
+        "cpu_percent_one_core": 3.414
+      },
+      {
+        "tid": 28048,
+        "name": "cpal_alsa_out",
+        "cpu_percent_one_core": 5.172
+      },
+      {
+        "tid": 28049,
+        "name": "ruffle-thread-b",
+        "cpu_percent_one_core": 1.345
+      },
+      {
+        "tid": 28050,
+        "name": "ruffle-thread-b",
+        "cpu_percent_one_core": 0.241
+      }
+    ],
+    "process_cpu_percent_one_core": 74.551,
+    "main_cpu_intervals": {
+      "min": 43.809523809554165,
+      "mean": 58.78552432733258,
+      "max": 71.0
+    },
+    "gpu_load_percent": {
+      "min": 11.0,
+      "mean": 28.724137931034484,
+      "max": 56.0
+    },
+    "rss_mib": {
+      "min": 590.390625,
+      "mean": 590.951953125,
+      "max": 592.44140625
+    },
+    "hwm_mib": 629.74609375,
+    "available_mib": {
+      "min": 187.84765625,
+      "mean": 188.469921875,
+      "max": 189.33984375
+    },
+    "gpu_process_mib": {
+      "min": 201.796875,
+      "mean": 202.379296875,
+      "max": 204.20703125
+    },
+    "vmstat_delta": {
+      "pgmajfault": 0,
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "perf": {
+      "windows": 30,
+      "seconds": 30.24,
+      "fps": 59.1931216931217,
+      "draws_per_second": 58.63095238095238,
+      "per_draw_ms": {
+        "tasks_ms": 0.00257473209249859,
+        "tick_ms": 6.792068245910885,
+        "render_ms": 2.76809926677947,
+        "swap_ms": 0.32397010716300056,
+        "enter_ms": 4.4239424703891705,
+        "construct_ms": 0.6701302876480542,
+        "scripts_ms": 0.4337044557247603,
+        "gc_ms": 0.21410603496897915,
+        "shape_ms": 0.66946418499718,
+        "decode_ms": 0.30059221658206425,
+        "upload_ms": 0.2106125211505922
+      },
+      "max_loop_ms": 181.786,
+      "bitmap_reloads": 755.0
+    },
+    "gpu_counter_busy_percent": 30.20808217547556,
+    "clocks_summary": {
+      "cpu_khz": {
+        "min": 1416000,
+        "max": 1992000
+      },
+      "gpu_hz": {
+        "min": 200000000,
+        "max": 800000000
+      },
+      "temperature_millidegrees": {
+        "min": 46666,
+        "max": 48333
+      }
+    }
+  }
+}

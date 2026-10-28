@@ -218,7 +218,7 @@ fn decode_jpeg(jpeg_data: &[u8], alpha_data: Option<&[u8]>) -> Result<Bitmap<'st
 
     // Decompress the alpha data (DEFLATE compression).
     if let Some(alpha_data) = alpha_data {
-        let alpha_data = decompress_zlib(alpha_data)?;
+        let alpha_data = decompress_zlib(alpha_data, decoded_data.len() / 3)?;
 
         if alpha_data.len() == decoded_data.len() / 3 {
             let rgba: Vec<_> = decoded_data
@@ -264,7 +264,7 @@ pub fn decode_define_bits_lossless(
     swf_tag: &swf::DefineBitsLossless,
 ) -> Result<Bitmap<'static>, Error> {
     // Decompress the image data (DEFLATE compression).
-    let mut decoded_data = decompress_zlib(&swf_tag.data)?;
+    let mut decoded_data = decompress_zlib(&swf_tag.data, lossless_size_hint(swf_tag))?;
 
     let has_alpha = swf_tag.version == 2;
 
@@ -485,13 +485,96 @@ pub fn unmultiply_alpha_rgba(rgba: &mut [u8]) {
     })
 }
 
-/// Decodes zlib-compressed data.
-fn decompress_zlib(data: &[u8]) -> Result<Vec<u8>, Error> {
-    let mut out_data = Vec::new();
+const ZLIB_ALLOCATION_HINT_LIMIT: usize = 4 * 1024 * 1024;
+
+/// Expected decompressed bytes, including palette and row padding. This is only
+/// an allocation hint: malformed streams retain the decoder's existing behavior.
+fn lossless_size_hint(tag: &swf::DefineBitsLossless<'_>) -> usize {
+    // Use wide arithmetic before capping, including on 32-bit frontends.
+    let width = u64::from(tag.width);
+    let height = u64::from(tag.height);
+    let size = match (tag.version, tag.format) {
+        (1, swf::BitmapFormat::Rgb15) => ((width + 1) & !1) * height * 2,
+        (1 | 2, swf::BitmapFormat::Rgb32) => width * height * 4,
+        (1 | 2, swf::BitmapFormat::ColorMap8 { num_colors }) => {
+            let color_bytes = if tag.version == 2 { 4 } else { 3 };
+            (u64::from(num_colors) + 1) * color_bytes
+                + ((width + 3) & !3) * height
+        }
+        _ => 0,
+    };
+    size.min(ZLIB_ALLOCATION_HINT_LIMIT as u64) as usize
+}
+
+/// Decodes zlib-compressed data without growing and copying the output through
+/// several small buffers for normal SWF bitmaps. Cap speculative allocation;
+/// the hint is not a limit on the decoded stream or a persistent bitmap cache.
+fn decompress_zlib(data: &[u8], size_hint: usize) -> Result<Vec<u8>, Error> {
+    let mut out_data = Vec::with_capacity(size_hint.min(ZLIB_ALLOCATION_HINT_LIMIT));
     let mut decoder = flate2::bufread::ZlibDecoder::new(data);
     decoder
         .read_to_end(&mut out_data)
         .map_err(Error::InvalidZlibCompression)?;
     out_data.shrink_to_fit();
     Ok(out_data)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    fn compressed(data: &[u8]) -> Vec<u8> {
+        let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+        encoder.write_all(data).unwrap();
+        encoder.finish().unwrap()
+    }
+
+    #[test]
+    fn lossless_allocation_hint_includes_palette_and_padding() {
+        let mut tag = swf::DefineBitsLossless {
+            version: 1, id: 1, width: 3, height: 2,
+            format: swf::BitmapFormat::Rgb15, data: Cow::Borrowed(&[]),
+        };
+        assert_eq!(lossless_size_hint(&tag), 16);
+        tag.format = swf::BitmapFormat::Rgb32;
+        assert_eq!(lossless_size_hint(&tag), 24);
+        tag.format = swf::BitmapFormat::ColorMap8 { num_colors: 255 };
+        assert_eq!(lossless_size_hint(&tag), 768 + 8);
+        tag.version = 2;
+        assert_eq!(lossless_size_hint(&tag), 1024 + 8);
+        tag.version = 3;
+        assert_eq!(lossless_size_hint(&tag), 0);
+        tag.version = 2;
+        tag.format = swf::BitmapFormat::Rgb32;
+        tag.width = u16::MAX;
+        tag.height = u16::MAX;
+        assert_eq!(lossless_size_hint(&tag), ZLIB_ALLOCATION_HINT_LIMIT);
+    }
+
+    #[test]
+    fn zlib_allocation_hint_preserves_short_long_and_corrupt_streams() {
+        let pixels: Vec<u8> = (0..200_000).map(|i| (i % 251) as u8).collect();
+        let data = compressed(&pixels);
+        for hint in [0, 1, pixels.len(), pixels.len() * 2, usize::MAX] {
+            assert_eq!(decompress_zlib(&data, hint).unwrap(), pixels);
+        }
+        assert!(decompress_zlib(b"invalid", 1024).is_err());
+        assert_eq!(decompress_zlib(&compressed(&[]), 1024).unwrap(), b"");
+    }
+
+    #[test]
+    fn lossless_hint_preserves_argb_pixels_and_palette_fallback() {
+        let mut tag = swf::DefineBitsLossless {
+            version: 2, id: 1, width: 2, height: 1,
+            format: swf::BitmapFormat::Rgb32,
+            data: Cow::Owned(compressed(&[255, 20, 30, 40, 0, 50, 60, 70])),
+        };
+        let bitmap = decode_define_bits_lossless(&tag).unwrap();
+        assert_eq!(bitmap.data(), &[20, 30, 40, 255, 50, 60, 70, 0]);
+        tag.format = swf::BitmapFormat::ColorMap8 { num_colors: 0 };
+        tag.data = Cow::Owned(compressed(&[20, 30, 40, 255, 0, 7, 0, 0]));
+        let bitmap = decode_define_bits_lossless(&tag).unwrap();
+        assert_eq!(bitmap.data(), &[20, 30, 40, 255, 0, 0, 0, 0]);
+    }
 }
