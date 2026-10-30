@@ -622,7 +622,14 @@ pub enum Context3DCommand<'a> {
 #[derive(Clone, Debug)]
 pub struct ShapeHandle(pub Arc<dyn ShapeHandleImpl>);
 
-pub trait ShapeHandleImpl: Any + Debug {}
+pub trait ShapeHandleImpl: Any + Debug {
+    /// Payload estimate used to bound optional retention of idle static shapes.
+    /// Include owned buffers and every referenced texture, even when another
+    /// shape also owns it. This intentionally overcharges shared textures; it
+    /// does not include driver/allocator overhead or limit total GPU memory.
+    /// Backends without a known estimate must keep the immediate-release path.
+    fn estimated_cache_bytes(&self) -> Option<u64> { None }
+}
 
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

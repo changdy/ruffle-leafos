@@ -36,7 +36,7 @@ pub enum Character<'gc> {
 #[collect(no_drop)]
 pub struct BitmapCharacter<'gc> {
     #[collect(require_static)]
-    compressed: CompressedBitmap,
+    compressed: Arc<CompressedBitmap>,
     /// A lazily constructed GPU handle, used when performing fills with this bitmap
     #[collect(require_static)]
     handle: RefCell<Option<Weak<dyn BitmapHandleImpl>>>,
@@ -48,7 +48,7 @@ pub struct BitmapCharacter<'gc> {
 impl<'gc> BitmapCharacter<'gc> {
     pub fn new(compressed: CompressedBitmap) -> Self {
         Self {
-            compressed,
+            compressed: Arc::new(compressed),
             handle: RefCell::default(),
             avm2_class: Lock::new(BitmapClass::NoSubclass),
         }
@@ -56,6 +56,13 @@ impl<'gc> BitmapCharacter<'gc> {
 
     pub fn compressed(&self) -> &CompressedBitmap {
         &self.compressed
+    }
+
+    pub(crate) fn predecode(&self) {
+        if self.handle.borrow().as_ref().and_then(Weak::upgrade).is_none() {
+            let source: Arc<dyn ruffle_render::bitmap_cache::BitmapDecoder> = self.compressed.clone();
+            ruffle_render::bitmap_cache::predecode(&source);
+        }
     }
 
     pub fn avm2_class(&self) -> BitmapClass<'gc> {
@@ -74,9 +81,11 @@ impl<'gc> BitmapCharacter<'gc> {
             return Ok(BitmapHandle(handle));
         }
         let start = crate::render_metrics::start();
-        let decoded = self.compressed.decode()?;
+        let source: Arc<dyn ruffle_render::bitmap_cache::BitmapDecoder> = self.compressed.clone();
+        let decoded = ruffle_render::bitmap_cache::decode(&source)?;
         let upload = crate::render_metrics::start();
-        let new_handle = backend.register_bitmap(decoded)?;
+        let new_handle = backend.register_bitmap(RenderBitmap::new(
+            decoded.width(), decoded.height(), decoded.format(), decoded.data()))?;
         let size = self.compressed.size();
         crate::render_metrics::bitmap(start, upload,
             u64::from(size.width) * u64::from(size.height) * 4,
@@ -127,6 +136,28 @@ impl CompressedBitmap {
             CompressedBitmap::Lossless(define_bits_lossless) => {
                 ruffle_render::utils::decode_define_bits_lossless(define_bits_lossless)
             }
+        }
+    }
+}
+
+impl ruffle_render::bitmap_cache::BitmapDecoder for CompressedBitmap {
+    fn decode(&self) -> Result<RenderBitmap<'static>, RenderError> { self.decode() }
+
+    fn predecode_bytes(&self) -> Option<usize> {
+        // Only Lossless has a bounded speculative decoder. JPEG/PNG/GIF remain
+        // demand decoded, and may still benefit from the pixel cache afterwards.
+        if let Self::Lossless(tag) = self {
+            if tag.data.len() <= 1024 * 1024 {
+                return usize::try_from(u64::from(tag.width) * u64::from(tag.height) * 4).ok();
+            }
+        }
+        None
+    }
+
+    fn decode_speculative(&self) -> Result<RenderBitmap<'static>, RenderError> {
+        match self {
+            Self::Lossless(tag) => ruffle_render::utils::decode_define_bits_lossless_bounded(tag, 1024 * 1024),
+            _ => Err(RenderError::TooLarge),
         }
     }
 }

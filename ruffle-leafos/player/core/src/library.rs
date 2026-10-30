@@ -492,6 +492,13 @@ impl<'gc> Library<'gc> {
     /// Keep static resources used by this frame; allow older animation frames
     /// to release their GPU allocations without discarding compressed SWF data.
     pub fn collect_static_render_resources(&self) {
+        self.collect_static_render_resources_with_budget(0);
+    }
+
+    pub fn collect_static_render_resources_with_budget(
+        &self,
+        budget: u64,
+    ) -> crate::StaticRenderResourceCacheStats {
         let mut resources = self.static_render_resources.borrow_mut();
         if resources.is_none() {
             let mut initial = StaticRenderResources::default();
@@ -506,7 +513,7 @@ impl<'gc> Library<'gc> {
             }
             *resources = Some(initial);
         }
-        resources.as_mut().unwrap().collect();
+        resources.as_mut().unwrap().collect_with_budget(budget)
     }
 
     pub(crate) fn track_static_render_resource(&self, resource: &Rc<StaticRenderResource>) {

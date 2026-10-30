@@ -264,7 +264,36 @@ pub fn decode_define_bits_lossless(
     swf_tag: &swf::DefineBitsLossless,
 ) -> Result<Bitmap<'static>, Error> {
     // Decompress the image data (DEFLATE compression).
-    let mut decoded_data = decompress_zlib(&swf_tag.data, lossless_size_hint(swf_tag))?;
+    let decoded_data = decompress_zlib(&swf_tag.data, lossless_size_hint(swf_tag))?;
+
+    decode_lossless_pixels(swf_tag, decoded_data)
+}
+
+/// Speculative work may reject unusually large or malformed streams. Demand
+/// decoding continues to use the original compatibility path above.
+pub fn decode_define_bits_lossless_bounded(
+    tag: &swf::DefineBitsLossless<'_>,
+    limit: usize,
+) -> Result<Bitmap<'static>, Error> {
+    let pixels = u64::from(tag.width) * u64::from(tag.height) * 4;
+    let expected = lossless_size_hint(tag);
+    if tag.width > u16::MAX - 3 || pixels > limit as u64 || expected == 0 || expected > limit || tag.data.len() > limit {
+        return Err(Error::TooLarge);
+    }
+    let mut data = Vec::with_capacity(expected + 1);
+    flate2::bufread::ZlibDecoder::new(tag.data.as_ref()).take(expected as u64 + 1)
+        .read_to_end(&mut data).map_err(Error::InvalidZlibCompression)?;
+    if data.len() != expected { return Err(Error::TooLarge); }
+    // The extra byte detects oversized streams; it must not remain charged to
+    // an otherwise exact RGBA reservation when RGB32 reuses this Vec.
+    data.shrink_to_fit();
+    decode_lossless_pixels(tag, data)
+}
+
+fn decode_lossless_pixels(
+    swf_tag: &swf::DefineBitsLossless<'_>,
+    mut decoded_data: Vec<u8>,
+) -> Result<Bitmap<'static>, Error> {
 
     let has_alpha = swf_tag.version == 2;
 
@@ -576,5 +605,29 @@ mod tests {
         tag.data = Cow::Owned(compressed(&[20, 30, 40, 255, 0, 7, 0, 0]));
         let bitmap = decode_define_bits_lossless(&tag).unwrap();
         assert_eq!(bitmap.data(), &[20, 30, 40, 255, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn speculative_lossless_is_bounded_and_preserves_pixels() {
+        let mut tag = swf::DefineBitsLossless {
+            version: 2, id: 1, width: 2, height: 1,
+            format: swf::BitmapFormat::Rgb32,
+            data: Cow::Owned(compressed(&[255, 20, 30, 40, 0, 50, 60, 70])),
+        };
+        assert_eq!(decode_define_bits_lossless_bounded(&tag, 64).unwrap().data(),
+            decode_define_bits_lossless(&tag).unwrap().data());
+        assert_eq!(decode_define_bits_lossless_bounded(&tag, 64).unwrap().allocation_size(), 8,
+            "the stream-overflow sentinel does not inflate an RGBA reservation");
+        assert!(decode_define_bits_lossless_bounded(&tag, 7).is_err());
+        tag.data = Cow::Owned(compressed(&[0; 100_000]));
+        assert!(decode_define_bits_lossless_bounded(&tag, 1024).is_err());
+        assert_eq!(decode_define_bits_lossless(&tag).unwrap().data().len(), 8,
+            "demand compatibility still accepts and truncates excess data");
+        tag.format = swf::BitmapFormat::ColorMap8 { num_colors: 0 };
+        tag.data = Cow::Owned(compressed(&[20, 30, 40, 255, 0, 7, 0, 0]));
+        assert_eq!(decode_define_bits_lossless_bounded(&tag, 64).unwrap().data(),
+            decode_define_bits_lossless(&tag).unwrap().data());
+        tag.data = Cow::Owned(compressed(&[0]));
+        assert!(decode_define_bits_lossless_bounded(&tag, 64).is_err(), "truncated palettes cannot panic in the worker");
     }
 }

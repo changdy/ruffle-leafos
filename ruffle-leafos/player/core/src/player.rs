@@ -2100,6 +2100,18 @@ impl Player {
         self.enter_arena(|_, gc_root, _| gc_root.library.collect_static_render_resources());
     }
 
+    /// Retain idle static shapes up to a conservative payload-byte budget.
+    /// Zero uses immediate release. Call only after a complete rendered frame.
+    /// This is not a limit on current-frame, in-flight or total GPU memory.
+    pub fn collect_static_render_resources_with_budget(
+        &mut self,
+        budget: u64,
+    ) -> crate::StaticRenderResourceCacheStats {
+        self.enter_arena(|_, gc_root, _| {
+            gc_root.library.collect_static_render_resources_with_budget(budget)
+        })
+    }
+
     #[instrument(level = "debug", skip_all)]
     pub fn render_mouse(&mut self, mouse_x:f32, mouse_y:f32){
         let invalidated = self.enter_arena(|_, gc_root, _| gc_root.stage.invalidated());

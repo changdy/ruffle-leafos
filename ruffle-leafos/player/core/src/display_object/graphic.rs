@@ -59,6 +59,7 @@ impl<'gc> Graphic<'gc> {
             // Registering a shape also uploads its bitmap fills. Large games can
             // exhaust shared GPU/system memory before any fighter is displayed.
             render_resource: Rc::default(),
+            bitmap_ids: OnceCell::new(),
             shape: swf_shape,
             movie,
         };
@@ -81,6 +82,7 @@ impl<'gc> Graphic<'gc> {
             id: 0,
             bounds: Default::default(),
             render_resource: Rc::default(),
+            bitmap_ids: OnceCell::new(),
             shape: swf::Shape {
                 version: 32,
                 id: 0,
@@ -124,6 +126,40 @@ impl<'gc> Graphic<'gc> {
     pub(crate) fn track_cached_render_resource(self, resources: &mut StaticRenderResources) {
         resources.track(&self.0.shared.get().render_resource);
     }
+
+    fn predecode_bitmap_fills(self, context: &UpdateContext<'gc>) {
+        if !ruffle_render::bitmap_cache::predecode_enabled() { return; }
+        if self.0.drawing.get().is_some() { return; }
+        let shared = self.0.shared.get();
+        if shared.render_resource.handle.borrow().is_some() { return; }
+        let Some(library) = context.library.library_for_movie(shared.movie.clone()) else { return };
+        // Only placed shapes request work; preloading a movie never expands all
+        // of its artwork. Include styles introduced inside a shape as well.
+        let ids = shared.bitmap_ids.get_or_init(|| {
+            let mut ids = Vec::new();
+            let mut collect = |styles: &swf::ShapeStyles| {
+                for style in styles.fill_styles.iter().chain(styles.line_styles.iter().map(|line| line.fill_style())) {
+                    if let swf::FillStyle::Bitmap { id, .. } = style {
+                        ids.push(*id);
+                    }
+                }
+            };
+            collect(&shared.shape.styles);
+            for record in &shared.shape.shape {
+                if let swf::ShapeRecord::StyleChange(change) = record {
+                    if let Some(styles) = &change.new_styles { collect(styles); }
+                }
+            }
+            ids.sort_unstable();
+            ids.dedup();
+            ids
+        });
+        for id in ids {
+            if let Some(crate::character::Character::Bitmap(bitmap)) = library.character_by_id(*id) {
+                bitmap.predecode();
+            }
+        }
+    }
 }
 
 impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
@@ -148,6 +184,7 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
     }
 
     fn construct_frame(self, context: &mut UpdateContext<'gc>) {
+        self.predecode_bitmap_fills(context);
         if self.object2().is_none() && self.0.shared.get().movie.is_action_script_3() {
             let class_object = self
                 .0
@@ -190,6 +227,7 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
             tracing::warn!("PlaceObject: expected Graphic at character ID {}", id);
         }
         self.invalidate_cached_bitmap();
+        self.predecode_bitmap_fills(context);
     }
 
     fn render_self(self, context: &mut RenderContext) {
@@ -268,6 +306,7 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
         _instantiated_by: Instantiator,
         _run_frame: bool,
     ) {
+        self.predecode_bitmap_fills(context);
         if self.movie().is_action_script_3() {
             self.set_default_instance_name(context);
         }
@@ -303,6 +342,7 @@ struct GraphicShared {
     shape: swf::Shape,
     /// Shared by every instance; only allocate GPU resources on first render.
     render_resource: Rc<StaticRenderResource>,
+    bitmap_ids: OnceCell<Vec<CharacterId>>,
     bounds: Rectangle<Twips>,
     movie: Arc<SwfMovie>,
 }

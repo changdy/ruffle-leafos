@@ -3,6 +3,7 @@
 pub mod atf;
 pub mod backend;
 pub mod bitmap;
+pub mod bitmap_cache;
 pub mod blend;
 pub mod error;
 pub mod filters;

@@ -264,6 +264,16 @@ impl<'a> Bitmap<'a> {
         &self.data
     }
 
+    /// Bytes reserved by the pixel buffer, excluding the bitmap/container and
+    /// allocator overhead. A truncated owned buffer may reserve more than its
+    /// logical pixel length; borrowed buffers account for their visible slice.
+    pub fn allocation_size(&self) -> usize {
+        match &self.data {
+            Cow::Owned(data) => data.capacity(),
+            Cow::Borrowed(data) => data.len(),
+        }
+    }
+
     pub fn as_colors(&self) -> impl Iterator<Item = u32> + '_ {
         let chunks = match self.format {
             BitmapFormat::Rgb => self.data.chunks_exact(3),
@@ -557,7 +567,17 @@ impl From<Rectangle<Twips>> for PixelRegion {
 
 #[cfg(test)]
 mod test {
-    use super::PixelRegion;
+    use super::{Bitmap, BitmapFormat, PixelRegion};
+
+    #[test]
+    fn allocation_size_keeps_track_of_truncated_owned_storage() {
+        let bitmap = Bitmap::new(1, 1, BitmapFormat::Rgba, vec![0; 64]);
+        assert_eq!(bitmap.data().len(), 4);
+        assert_eq!(bitmap.allocation_size(), 64);
+        let pixels = [0; 4];
+        let borrowed = Bitmap::new(1, 1, BitmapFormat::Rgba, pixels.as_slice());
+        assert_eq!(borrowed.allocation_size(), 4);
+    }
 
     #[test]
     fn clamp_with_intersection() {

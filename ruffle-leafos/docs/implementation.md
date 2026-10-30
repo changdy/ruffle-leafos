@@ -76,7 +76,13 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 
 Vulkan 的待完成绘制和最终形状均保留原 `BitmapHandle`，使位图库弱引用在其他形状仍使用同一位图时继续命中；只保留 `TextureView`/bind group 无法保住该句柄。最后一个形状或帧命令释放后，句柄仍可回收并重新加载。直接 BitmapData 的自有 bind-group 缓存不持有自身句柄，避免 Arc 自循环。主机回归使用 wgpu noop 后端，仅验证实际 wgpu 对象的所有权，不验收 Vulkan 像素、同步或性能。
 
-Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static_render_resources()`。首次调用遍历已知电影，仅将已分配句柄加入活动队列；随后新建/重载资源自行登记，逐帧只遍历活动队列，不再重复扫描全库。队列使用 `Weak<StaticRenderResource>`，每份共享资源最多登记一次；本帧未使用的句柄释放后移出队列，再次显示时可重新入队。弱引用不持有电影或 GC 对象，未启用回收的前端不建立队列。实现见 `core/src/static_render_resources.rs` 与 `core/src/library.rs`。保留本帧使用的句柄，释放本帧未显示的缓存；帧命令、其他图形或正在执行的绘制仍可持有资源。动态 BitmapData、缓存位图、滤镜与游戏主动保留的数据不在此静态缓存回收范围内。回收按已显示的完整帧执行，不能在局部/离屏绘制中途调用。重新显示可能产生解码和上传成本，不能据此保证所有游戏不再 OOM。
+Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static_render_resources_with_budget()`。首次调用遍历已知电影，将已分配句柄加入弱引用活动队列；新建或重载资源自行登记，不重复扫描全库。GLES 为形状估算顶点/索引缓冲及纹理 RGBA 负载，按最近呈现帧 LRU 保留最多 16 MiB 闲置负载（可调上限 32 MiB）和 1,024 个闲置形状。形状内共享纹理去重，跨形状重复计费，是保守负载估算而非实际 GPU 分配量。当前帧、在途绘制、驱动开销、动态 BitmapData、滤镜及游戏主动持有的数据不受该闲置预算约束。未知估算后端（当前包括 Vulkan）仍在一帧未使用时释放。原 `collect_static_render_resources()` 保留零预算行为，其他前端不自动开启缓存；弱引用不阻止电影卸载，淘汰后再次显示可重新入队。
+
+`render/src/bitmap_cache.rs` 为不可变 SWF 填充位图保留默认 8 MiB 的 CPU 像素 LRU（可调上限 16 MiB），按 `Vec.capacity()` 收费，防止截断后的大分配绕过预算。CPU 与 GPU 可以同时保有两份像素；当前按需解码、中间缓冲、压缩源、元数据和驱动开销仍在预算之外。像素命中省解码，GPU 形状命中还可省上传和重建。缓存按播放器运行作用域清理；其他前端不配置时沿用原解码路径。
+
+`RUFFLE_BITMAP_CACHE_MIB=0..16`、`RUFFLE_STATIC_CACHE_MIB=0..32` 用于隔离对照；0 禁用对应留存。`RUFFLE_BITMAP_PREDECODE=1` 可选单线程预解码，默认关闭，仅处理不超过 1 MiB 的合格 Lossless 素材，最多四项排队/执行/待领取任务，与像素缓存共用输出预算。投机工作不驱逐已有有效像素，失败素材弱记录去重，主线程永不等待后台结果，迟到时仍走同步兼容路径；线程不接触 GC 或 GPU，退出时回收。
+
+`session::resource_cache::CachePolicy` 每秒读取 `MemAvailable`：低于 128 MiB 或读取失败时将留存预算降为 0，超过 160 MiB 恢复，使用迟滞避免反复清空。CPU 像素立即收缩，GPU 闲置资源在下次完整游戏绘制后回收；暂停/无重绘期间不额外推进游戏帧。秒级采样不能防住瞬时大分配或保证不再 OOM。实现与限定实测见 [资源缓存报告](validation/resource-cache-20261030.md)。
 
 用户可直接使用的数据路径列于[README](../README.md#apps-数据管理与数据路径)。正式启动器通过 Leaf 的 `USERDATA_PATH`、`SAVES_PATH`、`LOGS_PATH` 选择当前卡；用户配置与进度不写入可升级的 pak 目录。
 
@@ -122,6 +128,9 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 `shapes`、`bitmaps`、`bitmap_reloads`、`evictions` 记录静态图形创建、位图成功上传、弱缓存失效后的重载和缓存句柄释放次数；`bitmap_rgba_mib` 是宽×高×4 的等价累计尺寸，不是实际驻留内存。`shape_ms` 包含位图解码/上传，且包含于 `render_ms`；Vulkan 的 `vk_submit_ms` 包含队列提交和 fence 等待，`vk_poll_ms`、`vk_present_ms` 记录驱动轮询与最终 GLES 采样/`glFinish`，也包含于 `render_ms`。细分项不能与上层耗时重复相加，也不能将墙钟等待等同 GPU 纯执行时间。核心计数器按线程启用和取出，关闭时不读取高频计时器；不要跨线程汇总时误当全局统计。实测示例及限制见[拳皇性能报告](validation/kof-performance-20261026.md)。
 
 `preload_ms`、`enter_ms`、`construct_ms`、`scripts_ms`、`exit_ms`、`audio_ms`、`mouse_ms` 和 `gc_ms` 分别记录预加载、AVM2 主帧生命周期阶段、声音更新、鼠标更新及 GC 债务处理。Construct 包含 frameConstructed 广播，Scripts/Exit 包含各自清理；Enter 的事件处理可触发嵌套 goto/构建，因此不能把它等同纯 AVM2 字节码耗时。这些计时位于 tick/update 内，彼此可能嵌套，不能与 tick 或 render 简单求和；AVM1 帧脚本未单独计入 AVM2 Scripts。关闭追踪时跳过时钟读取。3.3 的实测与限制见[性能报告](validation/bvn33-performance-20261027.md)。
+
+
+新增性能字段包括 `pixel_hits/misses/evictions/mib`、`predecode_queued/hits/late/unused/failed/reserved_mib/worker_ms`，以及超过 16.667/33.333/50 ms 的主循环计数。`static_idle_mib/shapes` 和 `static_current_mib/shapes` 为窗口内各自峰值，可能来自不同帧，不能相加当 GPU 峰值；像素/任务计数也会跨窗口发生，窗口命中次数不必等于同窗口排队次数。`python scripts/build_cache_diagnostic.py` 生成原创 30 FPS 三帧静态位图循环和预期图，默认写入忽略的 `build/diagnostics/`，可用 `--output-dir` 改位置；CPU0/GPU0 与 CPU0/GPU8 可隔离验证重复注册和上传。
 
 ### 线程分工与位图解压
 

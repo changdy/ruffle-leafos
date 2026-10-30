@@ -1,6 +1,6 @@
 use std::any::Any;
 use std::cell::Cell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
 use std::sync::{Arc, Weak};
 use std::borrow::Cow;
@@ -490,6 +490,7 @@ struct BitmapDraw {
 struct Mesh {
     gl: Arc<glow::Context>,
     draws: Vec<Draw>,
+    cache_bytes: u64,
 }
 
 impl std::fmt::Debug for Mesh {
@@ -514,7 +515,9 @@ impl Drop for Mesh {
     }
 }
 
-impl ShapeHandleImpl for Mesh {}
+impl ShapeHandleImpl for Mesh {
+    fn estimated_cache_bytes(&self) -> Option<u64> { Some(self.cache_bytes) }
+}
 
 fn as_mesh(handle: &ShapeHandle) -> &Mesh {
     <dyn Any>::downcast_ref(&*handle.0).expect("Shape handle must be a Mesh")
@@ -2231,6 +2234,7 @@ impl GlRenderBackend {
             .tessellate_shape(shape, bitmap_source);
 
         let mut draws = Vec::with_capacity(lyon_mesh.draws.len());
+        let mut cache_bytes = 0u64;
         for draw in lyon_mesh.draws {
             let num_indices = draw.indices.len() as i32;
             let num_mask_indices = draw.mask_index_count as i32;
@@ -2246,6 +2250,9 @@ impl GlRenderBackend {
             }
 
             let vertices: Vec<_> = draw.vertices.into_iter().map(Vertex::from).collect();
+            cache_bytes = cache_bytes
+                .saturating_add(std::mem::size_of_val(vertices.as_slice()) as u64)
+                .saturating_add(std::mem::size_of_val(draw.indices.as_slice()) as u64);
             unsafe {
                 self.gl.buffer_data_u8_slice(
                     glow::ARRAY_BUFFER,
@@ -2351,9 +2358,27 @@ impl GlRenderBackend {
             }
         }
 
+        // Charge one RGBA payload per distinct texture inside this shape.
+        // A texture shared by separate shapes is deliberately charged to each
+        // shape, making the idle-cache budget conservative rather than relying
+        // on backend/command ownership for global allocation accounting.
+        let mut textures = HashSet::new();
+        for draw in &draws {
+            if let DrawType::Bitmap(bitmap) = &draw.draw_type {
+                if let Some(handle) = &bitmap.handle {
+                    let id = Arc::as_ptr(&handle.0) as *const () as usize;
+                    if textures.insert(id) {
+                        let texture = as_registry_data(handle);
+                        cache_bytes = cache_bytes.saturating_add(
+                            u64::from(texture.width.get()) * u64::from(texture.height.get()) * 4);
+                    }
+                }
+            }
+        }
         Ok(Mesh {
             gl: self.gl.clone(),
             draws,
+            cache_bytes,
         })
     }
 
@@ -3308,6 +3333,7 @@ impl RenderBackend for GlRenderBackend {
                 Mesh {
                     gl: self.gl.clone(),
                     draws: vec![],
+                    cache_bytes: 0,
                 }
             }
         });

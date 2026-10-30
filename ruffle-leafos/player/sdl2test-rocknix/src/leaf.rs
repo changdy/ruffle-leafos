@@ -743,6 +743,18 @@ pub async fn run() -> Result<(), String> {
     install_signals();
     let opt = Opt::parse();
     crate::performance::enable(opt.trace_performance);
+    let bitmap_cache_mib = std::env::var("RUFFLE_BITMAP_CACHE_MIB").ok()
+        .and_then(|value| value.parse::<usize>().ok()).unwrap_or(8).min(16);
+    let bitmap_predecode = std::env::var("RUFFLE_BITMAP_PREDECODE").is_ok_and(|value| value == "1");
+    let _bitmap_cache = ruffle_render::bitmap_cache::configure(bitmap_cache_mib * 1024 * 1024, bitmap_predecode);
+    println!("leaf-bitmap-cache mib={bitmap_cache_mib} predecode={bitmap_predecode}");
+    let static_cache_mib = std::env::var("RUFFLE_STATIC_CACHE_MIB").ok()
+        .and_then(|value| value.parse::<u64>().ok()).unwrap_or(16).min(32);
+    let mut cache_policy = crate::session::resource_cache::CachePolicy::new(bitmap_cache_mib as u64, static_cache_mib);
+    let memory = std::fs::read_to_string("/proc/meminfo").ok();
+    cache_policy.update(memory.as_deref());
+    ruffle_render::bitmap_cache::set_limit(cache_policy.pixel_bytes());
+    println!("leaf-static-cache mib={static_cache_mib} pressure={}", cache_policy.under_pressure());
     let mut performance = crate::performance::Performance::default();
     if opt.self_test_experience && (opt.storage_dir.is_none()||opt.controls_dir.is_none()) {
         return Err("Experience self-test requires explicit isolated --storage-dir and --controls-dir".into());
@@ -1175,6 +1187,14 @@ pub async fn run() -> Result<(), String> {
         }
         if !front.state.paused&&last_flush.elapsed()>=Duration::from_secs(10){front.flush_progress(false);last_flush=Instant::now();}
         if fps_at.elapsed()>=Duration::from_secs(1) {
+            let memory = std::fs::read_to_string("/proc/meminfo").ok();
+            if cache_policy.update(memory.as_deref()) {
+                ruffle_render::bitmap_cache::set_limit(cache_policy.pixel_bytes());
+                println!("leaf-cache-pressure active={} pixel_mib={} static_mib={}",
+                    cache_policy.under_pressure(), cache_policy.pixel_bytes() / (1024 * 1024),
+                    cache_policy.shape_bytes() / (1024 * 1024));
+            }
+            ruffle_render::bitmap_cache::maintain();
             let p=front.active.player.lock().unwrap();let frames=p.frames_run();
             front.state.experience.fps=if front.state.paused{0.}else{frames.saturating_sub(fps_frames) as f64/fps_at.elapsed().as_secs_f64()};
             front.state.experience.target_fps=p.frame_rate();
@@ -1202,7 +1222,11 @@ pub async fn run() -> Result<(), String> {
                     performance.max_render = performance.max_render.max(render_cost);
                     performance.draws += 1;
                     let collect_at = crate::performance::Performance::start(opt.trace_performance);
-                    p.collect_static_render_resources();
+                    let cache_stats = p.collect_static_render_resources_with_budget(cache_policy.shape_bytes());
+                    performance.static_idle_bytes = performance.static_idle_bytes.max(cache_stats.idle_bytes);
+                    performance.static_idle_shapes = performance.static_idle_shapes.max(cache_stats.idle_entries);
+                    performance.static_current_bytes = performance.static_current_bytes.max(cache_stats.current_bytes);
+                    performance.static_current_shapes = performance.static_current_shapes.max(cache_stats.current_entries);
                     performance.collect += crate::performance::Performance::elapsed(collect_at);
                     drop(p);
                     if front.state.experience.settings.fps || front.state.drag_locked || front.cursor_visible || front.state.toast.is_some() || front.state.system_volume.is_some() { menu.draw(size.0, size.1, &front.state, if front.cursor_visible {Some(front.cursor)} else {None}); }
@@ -1235,7 +1259,12 @@ pub async fn run() -> Result<(), String> {
         // loop sleep must not add another frame to a short release window.
         if !front.state.paused {front.update_repeats();}
         let cost = now.elapsed();
-        if opt.trace_performance {performance.max_loop=performance.max_loop.max(cost);}
+        if opt.trace_performance {
+            performance.max_loop=performance.max_loop.max(cost);
+            for (count, threshold) in performance.slow_loops.iter_mut().zip([16_667, 33_333, 50_000]) {
+                *count += u64::from(cost.as_micros() > threshold);
+            }
+        }
         let mut delay=Duration::from_millis(16).saturating_sub(cost);
         if let Some(repeat_delay)=front.repeater.next_delay(front.started.elapsed()) {delay=delay.min(repeat_delay);}
         if !delay.is_zero() {sleep(delay);}

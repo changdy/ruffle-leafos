@@ -35,6 +35,11 @@ pub struct Performance {
     pub max_tick: Duration,
     pub max_render: Duration,
     pub max_loop: Duration,
+    pub slow_loops: [u64; 3],
+    pub static_idle_bytes: u64,
+    pub static_idle_shapes: usize,
+    pub static_current_bytes: u64,
+    pub static_current_shapes: usize,
 }
 
 impl Performance {
@@ -48,13 +53,17 @@ impl Performance {
 
     pub fn log(&mut self, elapsed: Duration, frames: u64, target: f64, paused: bool) {
         let metrics = ruffle_core::render_metrics::take();
+        let cache = ruffle_render::bitmap_cache::take_metrics();
         let vulkan = VULKAN.replace([Duration::ZERO; 3]);
         println!(concat!("leaf-perf window_ms={} frames={} target_fps={:.2} paused={} draws={} ",
             "tasks_ms={:.3} tick_ms={:.3} render_ms={:.3} collect_ms={:.3} swap_ms={:.3} ",
             "max_tick_ms={:.3} max_render_ms={:.3} max_loop_ms={:.3} ",
             "shapes={} shape_ms={:.3} bitmaps={} bitmap_reloads={} bitmap_rgba_mib={:.3} ",
             "decode_ms={:.3} upload_ms={:.3} evictions={} vk_submit_ms={:.3} vk_poll_ms={:.3} vk_present_ms={:.3} ",
-            "preload_ms={:.3} enter_ms={:.3} construct_ms={:.3} scripts_ms={:.3} exit_ms={:.3} audio_ms={:.3} mouse_ms={:.3} gc_ms={:.3}"),
+            "preload_ms={:.3} enter_ms={:.3} construct_ms={:.3} scripts_ms={:.3} exit_ms={:.3} audio_ms={:.3} mouse_ms={:.3} gc_ms={:.3} ",
+            "pixel_hits={} pixel_misses={} pixel_evictions={} pixel_mib={:.3} predecode_queued={} predecode_hits={} predecode_late={} predecode_unused={} predecode_failed={} predecode_reserved_mib={:.3} predecode_worker_ms={:.3} ",
+            "loops_over_16ms={} loops_over_33ms={} loops_over_50ms={} ",
+            "static_idle_mib={:.3} static_idle_shapes={} static_current_mib={:.3} static_current_shapes={}"),
             elapsed.as_millis(), frames, target, paused, self.draws,
             self.tasks.as_secs_f64()*1000., self.tick.as_secs_f64()*1000.,
             self.render.as_secs_f64()*1000., self.collect.as_secs_f64()*1000.,
@@ -67,7 +76,13 @@ impl Performance {
             metrics.phases_us[0] as f64/1000., metrics.phases_us[1] as f64/1000.,
             metrics.phases_us[2] as f64/1000., metrics.phases_us[3] as f64/1000.,
             metrics.phases_us[4] as f64/1000., metrics.phases_us[5] as f64/1000.,
-            metrics.phases_us[6] as f64/1000., metrics.phases_us[7] as f64/1000.);
+            metrics.phases_us[6] as f64/1000., metrics.phases_us[7] as f64/1000.,
+            cache.hits, cache.misses, cache.evictions, cache.bytes as f64/1048576.,
+            cache.queued, cache.ready_hits, cache.late, cache.unused, cache.failed,
+            cache.reserved as f64/1048576., cache.worker_us as f64/1000.,
+            self.slow_loops[0], self.slow_loops[1], self.slow_loops[2],
+            self.static_idle_bytes as f64/1048576., self.static_idle_shapes,
+            self.static_current_bytes as f64/1048576., self.static_current_shapes);
         *self = Self::default();
     }
 }

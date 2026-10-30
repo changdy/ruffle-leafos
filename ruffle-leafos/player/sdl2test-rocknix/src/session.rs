@@ -22,6 +22,8 @@ pub mod system_volume;
 pub mod i18n;
 #[path = "virtual_keyboard.rs"]
 pub mod virtual_keyboard;
+#[path = "resource_cache.rs"]
+pub mod resource_cache;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Source {
