@@ -97,6 +97,13 @@ pub trait RenderBackend: Any {
     /// An internal name that is used to identify the render-backend.
     fn name(&self) -> &'static str;
 
+    /// Trim optional idle backend resources without discarding current or
+    /// in-flight allocations. Backends without idle pools may ignore this.
+    fn set_memory_pressure(&mut self, _under_pressure: bool) {}
+
+    /// Logical allocation diagnostics, not physical driver memory usage.
+    fn memory_debug_info(&self) -> Option<String> { None }
+
     fn set_quality(&mut self, quality: StageQuality);
 
     fn compile_pixelbender_shader(

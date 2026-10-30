@@ -822,7 +822,7 @@ pub async fn run() -> Result<(), String> {
     let graphics_failure=Arc::new(Mutex::new(None::<String>));
     let requested=av.requested_renderer(opt.app_settings,opt.renderer.as_deref());
     let mut actual=requested;let mut renderer_failed=false;
-    let renderer:Box<dyn RenderBackend>=if requested==GraphicsBackend::Vulkan {
+    let mut renderer:Box<dyn RenderBackend>=if requested==GraphicsBackend::Vulkan {
         #[cfg(target_os="linux")]
         let attempt=unsafe{crate::vulkan_backend::create(gl.clone(),size.0,size.1,graphics_failure.clone()).await};
         #[cfg(not(target_os="linux"))]
@@ -839,6 +839,7 @@ pub async fn run() -> Result<(), String> {
             }
         }
     } else {Box::new(unsafe{GlRenderBackend::new_shared(gl.clone(),size.0,size.1).map_err(|e|format!("Renderer: {e:?}"))?})};
+    renderer.set_memory_pressure(cache_policy.under_pressure());
     println!("leaf-graphics actual={} renderer={}",actual.name(),renderer.debug_info());
     let font_path = std::env::var_os("RUFFLE_MENU_FONT").map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("res/menu-font.ttf"));
@@ -1195,10 +1196,15 @@ pub async fn run() -> Result<(), String> {
                     cache_policy.shape_bytes() / (1024 * 1024));
             }
             ruffle_render::bitmap_cache::maintain();
-            let p=front.active.player.lock().unwrap();let frames=p.frames_run();
+            let mut p=front.active.player.lock().unwrap();
+            p.renderer_mut().set_memory_pressure(cache_policy.under_pressure());
+            let frames=p.frames_run();
             front.state.experience.fps=if front.state.paused{0.}else{frames.saturating_sub(fps_frames) as f64/fps_at.elapsed().as_secs_f64()};
             front.state.experience.target_fps=p.frame_rate();
-            if opt.trace_performance {performance.log(fps_at.elapsed(), frames.saturating_sub(fps_frames),p.frame_rate(),front.state.paused);}
+            if opt.trace_performance {
+                performance.log(fps_at.elapsed(), frames.saturating_sub(fps_frames),p.frame_rate(),front.state.paused);
+                if let Some(info)=p.renderer().memory_debug_info() {println!("leaf-gl-memory {info}");}
+            }
             drop(p);fps_frames=frames;fps_at=Instant::now();
             if front.state.paused||front.state.experience.settings.fps{front.redraw=true;}
         }

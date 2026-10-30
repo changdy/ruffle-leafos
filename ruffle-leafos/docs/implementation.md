@@ -82,7 +82,17 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 
 `RUFFLE_BITMAP_CACHE_MIB=0..16`、`RUFFLE_STATIC_CACHE_MIB=0..32` 用于隔离对照；0 禁用对应留存。`RUFFLE_BITMAP_PREDECODE=1` 可选单线程预解码，默认关闭，仅处理不超过 1 MiB 的合格 Lossless 素材，最多四项排队/执行/待领取任务，与像素缓存共用输出预算。投机工作不驱逐已有有效像素，失败素材弱记录去重，主线程永不等待后台结果，迟到时仍走同步兼容路径；线程不接触 GC 或 GPU，退出时回收。
 
-`session::resource_cache::CachePolicy` 每秒读取 `MemAvailable`：低于 128 MiB 或读取失败时将留存预算降为 0，超过 160 MiB 恢复，使用迟滞避免反复清空。CPU 像素立即收缩，GPU 闲置资源在下次完整游戏绘制后回收；暂停/无重绘期间不额外推进游戏帧。秒级采样不能防住瞬时大分配或保证不再 OOM。实现与限定实测见 [资源缓存报告](validation/resource-cache-20261030.md)。
+`session::resource_cache::CachePolicy` 每秒读取 `MemAvailable`：低于 128 MiB 或读取失败时将留存预算降为 0，超过 160 MiB 恢复，使用迟滞避免反复清空。CPU 像素及 GLES 临时纹理/PBO 立即收缩，静态形状闲置资源在下次完整游戏绘制后回收；暂停/无重绘期间不额外推进游戏帧。秒级采样不能防住瞬时大分配或保证不再 OOM。实现与限定实测见 [资源缓存报告](validation/resource-cache-20261030.md)。
+
+### GLES 滤镜与读回临时资源
+
+`gl_backend.rs` 的滤镜 scratch 纹理与异步读回 PBO 使用独立 `idle_pool.rs`。旧实现仅按尺寸复用并全部回池，动画滤镜的不同边界尺寸会持续留下纹理；它们不属于静态形状 LRU。现在 scratch 闲置池最多保留 16 MiB RGBA 有效载荷 / 32 项，PBO 闲置池最多 8 MiB / 16 项，超限按最近回池次序淘汰，并由当前 GL 线程显式删除。scratch 保持精确尺寸复用以保留坐标及采样；PBO 优先取最小足够大者，否则复用较大的旧小缓冲并扩容，按实际容量计费。
+
+`RenderBackend::set_memory_pressure(bool)` 默认无操作；Leaf 启动及每秒将现有 128/160 MiB 迟滞状态传给后端，暂停时也调用。GLES 收到压力状态后立即将两池降零，归还的新闲置项也不保留；活动滤镜纹理及未完成读回不被删除，恢复后重新允许有界保留。池预算不是总 GPU/RSS 上限，也不包含驱动布局、元数据、在途存储、游戏持有的目标与 BitmapData。纹理删除使共享绑定缓存失效，部分 scratch 获取失败也释放已取得项。
+
+`--trace-performance` 每秒附加 `leaf-gl-memory`：`upload_*` / `empty_*` 表示由上传/空目标入口创建的 live 逻辑 RGBA 分配，含当前数量、字节、累计创建/删除；`scratch_*` 与 `pbo_*` 给出闲置池字节/数量及创建/删除/淘汰，`pending_readbacks/pending_bytes` 独立列在途容量，`stencil_bytes/stencil_reallocations` 描述模板缓冲请求。它们与 Mali 实际页、RSS 是不同口径，不能简单相加或把逻辑释放当驱动立刻释放。其他后端 `memory_debug_info()` 默认无输出。
+
+`python scripts/build_filter_cache_diagnostic.py` 生成原创无外部资源的单实例 Glow 尺寸变化 SWF，末帧停止，默认输出到忽略的 `build/diagnostics/`，可用 `--output-dir` 改位置。它不每帧新建实例，便于隔离滤镜临时分配与核对稳定画面；`test_session.py` 同时运行纯 Rust 闲置池边界回归。实机内存分解、固定夹具、拳皇及验证限制见[本轮报告](validation/kof-gles-memory-20261031.md)。
 
 用户可直接使用的数据路径列于[README](../README.md#apps-数据管理与数据路径)。正式启动器通过 Leaf 的 `USERDATA_PATH`、`SAVES_PATH`、`LOGS_PATH` 选择当前卡；用户配置与进度不写入可升级的 pak 目录。
 

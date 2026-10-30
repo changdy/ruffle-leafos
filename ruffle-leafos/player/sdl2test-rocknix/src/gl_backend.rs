@@ -2,6 +2,7 @@ use std::any::Any;
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
+use std::rc::Rc;
 use std::sync::{Arc, Weak};
 use std::borrow::Cow;
 
@@ -26,6 +27,15 @@ use ruffle_render::tessellator::{
     Gradient as TessGradient, ShapeTessellator, Vertex as TessVertex,
 };
 use ruffle_render::transform::Transform;
+
+#[path = "idle_pool.rs"]
+mod idle_pool;
+use idle_pool::IdlePool;
+
+const SCRATCH_IDLE_BYTES: u64 = 16 * 1024 * 1024;
+const SCRATCH_IDLE_ENTRIES: usize = 32;
+const PBO_IDLE_BYTES: u64 = 8 * 1024 * 1024;
+const PBO_IDLE_ENTRIES: usize = 16;
 
 const COLOR_VERTEX_GLSL: &str = include_str!("../shaders/color.vert");
 const COLOR_FRAGMENT_GLSL: &str = include_str!("../shaders/color.frag");
@@ -122,12 +132,21 @@ pub struct GlRenderBackend {
     offscreen_fbo: glow::Framebuffer,
     offscreen_stencil_rbo: glow::Renderbuffer,
     offscreen_stencil_size: (i32, i32),
-    active_texture_2d: Cell<Option<glow::Texture>>,
+    active_texture_2d: Rc<Cell<Option<glow::Texture>>>,
     pending_readbacks: HashMap<u64, PendingReadback>,
-    reusable_readback_pbos: Vec<ReadbackPbo>,
+    reusable_readback_pbos: IdlePool<ReadbackPbo>,
     texture_resources: Vec<TextureResource>,
-    scratch_texture_pool: Vec<ScratchTexture>,
+    scratch_texture_pool: IdlePool<ScratchTexture>,
     next_readback_id: u64,
+    upload_allocations: Rc<AllocationStats>,
+    empty_allocations: Rc<AllocationStats>,
+    scratch_created: u64,
+    scratch_deleted: u64,
+    pbo_created: u64,
+    pbo_deleted: u64,
+    pbo_resizes: u64,
+    stencil_reallocations: u64,
+    under_memory_pressure: bool,
 }
 
 // These should match the uniform names in the shaders.
@@ -380,9 +399,41 @@ impl From<GlError> for BitmapError {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Default)]
+struct AllocationStats {
+    live_count: Cell<u64>,
+    live_bytes: Cell<u64>,
+    created: Cell<u64>,
+    deleted: Cell<u64>,
+}
+
+impl AllocationStats {
+    fn add(&self, bytes: u64) {
+        self.live_count.set(self.live_count.get() + 1);
+        self.live_bytes.set(self.live_bytes.get().saturating_add(bytes));
+        self.created.set(self.created.get() + 1);
+    }
+
+    fn resize(&self, old_bytes: u64, new_bytes: u64) {
+        self.live_bytes.set(self.live_bytes.get().saturating_sub(old_bytes).saturating_add(new_bytes));
+    }
+
+    fn remove(&self, bytes: u64) {
+        self.live_count.set(self.live_count.get().saturating_sub(1));
+        self.live_bytes.set(self.live_bytes.get().saturating_sub(bytes));
+        self.deleted.set(self.deleted.get() + 1);
+    }
+}
+
+fn rgba_bytes(width: u32, height: u32) -> u64 {
+    u64::from(width) * u64::from(height) * 4
+}
+
+#[derive(Debug)]
 struct RegistryData {
     gl: Arc<glow::Context>,
+    binding: Rc<Cell<Option<glow::Texture>>>,
+    allocations: Rc<AllocationStats>,
     texture: glow::Texture,
     width: Cell<u32>,
     height: Cell<u32>,
@@ -397,15 +448,29 @@ impl Drop for RegistryData {
         unsafe {
             self.gl.delete_texture(self.texture);
         }
+        // Deleted GL names can be reused. A stale cached name must not make
+        // the next upload skip its actual texture bind.
+        self.binding.set(None);
+        self.allocations.remove(rgba_bytes(self.width.get(), self.height.get()));
     }
 }
 
 impl BitmapHandleImpl for RegistryData {}
 
 impl RegistryData {
-    fn new(gl: Arc<glow::Context>, texture: glow::Texture, width: u32, height: u32) -> Self {
+    fn new(
+        gl: Arc<glow::Context>,
+        binding: Rc<Cell<Option<glow::Texture>>>,
+        allocations: Rc<AllocationStats>,
+        texture: glow::Texture,
+        width: u32,
+        height: u32,
+    ) -> Self {
+        allocations.add(rgba_bytes(width, height));
         Self {
             gl,
+            binding,
+            allocations,
             texture,
             width: Cell::new(width),
             height: Cell::new(height),
@@ -842,12 +907,21 @@ impl GlRenderBackend {
             offscreen_fbo,
             offscreen_stencil_rbo,
             offscreen_stencil_size: (0, 0),
-            active_texture_2d: Cell::new(None),
+            active_texture_2d: Rc::new(Cell::new(None)),
             pending_readbacks: HashMap::new(),
-            reusable_readback_pbos: Vec::new(),
+            reusable_readback_pbos: IdlePool::new(PBO_IDLE_BYTES, PBO_IDLE_ENTRIES),
             texture_resources: Vec::new(),
-            scratch_texture_pool: Vec::new(),
+            scratch_texture_pool: IdlePool::new(SCRATCH_IDLE_BYTES, SCRATCH_IDLE_ENTRIES),
             next_readback_id: 1,
+            upload_allocations: Rc::default(),
+            empty_allocations: Rc::default(),
+            scratch_created: 0,
+            scratch_deleted: 0,
+            pbo_created: 0,
+            pbo_deleted: 0,
+            pbo_resizes: 0,
+            stencil_reallocations: 0,
+            under_memory_pressure: false,
         };
 
         renderer.push_blend_mode(RenderBlendMode::Builtin(BlendMode::Normal));
@@ -1180,23 +1254,31 @@ impl GlRenderBackend {
     }
 
     fn acquire_scratch_texture(&mut self, width: u32, height: u32) -> Result<ScratchTexture, BitmapError> {
-        if let Some(index) = self
-            .scratch_texture_pool
-            .iter()
-            .position(|texture| texture.width == width && texture.height == height)
-        {
-            return Ok(self.scratch_texture_pool.swap_remove(index));
+        if let Some(texture) = self.scratch_texture_pool.take_best(|texture|
+            (texture.width == width && texture.height == height).then_some(())) {
+            return Ok(texture);
         }
 
-        Ok(ScratchTexture {
+        let texture = ScratchTexture {
             texture: self.create_filter_texture(width, height)?,
             width,
             height,
-        })
+        };
+        self.scratch_created += 1;
+        Ok(texture)
     }
 
     fn release_scratch_texture(&mut self, texture: ScratchTexture) {
-        self.scratch_texture_pool.push(texture);
+        let bytes = rgba_bytes(texture.width, texture.height);
+        for evicted in self.scratch_texture_pool.push(texture, bytes) {
+            self.delete_scratch_texture(evicted);
+        }
+    }
+
+    fn delete_scratch_texture(&mut self, texture: ScratchTexture) {
+        unsafe { self.gl.delete_texture(texture.texture); }
+        self.active_texture_2d.set(None);
+        self.scratch_deleted += 1;
     }
 
     fn common_filter_vertices() -> [f32; 16] {
@@ -2079,11 +2161,19 @@ impl GlRenderBackend {
         height: u32,
         filters: &[Filter],
     ) -> Result<(), BitmapError> {
-        let temp_textures = [
-            self.acquire_scratch_texture(width, height)?,
-            self.acquire_scratch_texture(width, height)?,
-            self.acquire_scratch_texture(width, height)?,
-        ];
+        let mut temp_textures = Vec::with_capacity(3);
+        for _ in 0..3 {
+            match self.acquire_scratch_texture(width, height) {
+                Ok(texture) => temp_textures.push(texture),
+                Err(error) => {
+                    // ScratchTexture holds a raw GL name, so partial
+                    // acquisition must explicitly return every earlier item.
+                    for texture in temp_textures { self.release_scratch_texture(texture); }
+                    self.active_texture_2d.set(None);
+                    return Err(error);
+                }
+            }
+        }
         let temp_handles = [
             temp_textures[0].texture,
             temp_textures[1].texture,
@@ -2716,11 +2806,16 @@ impl GlRenderBackend {
         }
     }
 
-    fn delete_pending_readback(&self, pending: PendingReadback) {
+    fn delete_readback_pbo(&mut self, buffer: glow::Buffer) {
+        unsafe { self.gl.delete_buffer(buffer); }
+        self.pbo_deleted += 1;
+    }
+
+    fn delete_pending_readback(&mut self, pending: PendingReadback) {
         unsafe {
             self.gl.delete_sync(pending.fence);
-            self.gl.delete_buffer(pending.pbo);
         }
+        self.delete_readback_pbo(pending.pbo);
     }
 
     fn ensure_offscreen_stencil(&mut self, width: i32, height: i32) {
@@ -2741,25 +2836,22 @@ impl GlRenderBackend {
         }
 
         self.offscreen_stencil_size = (width, height);
+        self.stencil_reallocations += 1;
     }
 
     fn acquire_readback_pbo(&mut self, size_bytes: usize) -> Result<ReadbackPbo, BitmapError> {
-        let index = self
-            .reusable_readback_pbos
-            .iter()
-            .enumerate()
-            .filter(|(_, pbo)| pbo.size_bytes >= size_bytes)
-            .min_by_key(|(_, pbo)| pbo.size_bytes)
-            .map(|(index, _)| index);
-
-        if let Some(index) = index {
-            Ok(self.reusable_readback_pbos.swap_remove(index))
+        // Prefer the smallest buffer that already fits. Otherwise reuse and
+        // grow the closest smaller idle buffer rather than stranding it.
+        if let Some(pbo) = self.reusable_readback_pbos.take_best(|pbo|
+            Some((pbo.size_bytes < size_bytes, pbo.size_bytes.abs_diff(size_bytes)))) {
+            Ok(pbo)
         } else {
             let buffer = unsafe {
                 self.gl.create_buffer().map_err(|_| {
                     BitmapError::Unimplemented("Unable to create pixel pack buffer".into())
                 })?
             };
+            self.pbo_created += 1;
             Ok(ReadbackPbo {
                 buffer,
                 size_bytes: 0,
@@ -2768,8 +2860,10 @@ impl GlRenderBackend {
     }
 
     fn recycle_readback_pbo(&mut self, buffer: glow::Buffer, size_bytes: usize) {
-        self.reusable_readback_pbos
-            .push(ReadbackPbo { buffer, size_bytes });
+        for evicted in self.reusable_readback_pbos
+            .push(ReadbackPbo { buffer, size_bytes }, size_bytes as u64) {
+            self.delete_readback_pbo(evicted.buffer);
+        }
     }
 
     fn collect_released_resources(&mut self) {
@@ -2808,6 +2902,7 @@ impl GlRenderBackend {
                     glow::STREAM_READ,
                 );
                 readback_pbo.size_bytes = byte_len;
+                self.pbo_resizes += 1;
             }
 
             self.gl
@@ -2831,7 +2926,7 @@ impl GlRenderBackend {
                 );
                 self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
                 self.gl.bind_buffer(glow::PIXEL_PACK_BUFFER, None);
-                self.gl.delete_buffer(readback_pbo.buffer);
+                self.delete_readback_pbo(readback_pbo.buffer);
                 return Err(BitmapError::Unimplemented(
                     format!("Framebuffer not complete for async pixel readback: {status:#x}").into(),
                 ));
@@ -2859,7 +2954,7 @@ impl GlRenderBackend {
                     );
                     self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
                     self.gl.bind_buffer(glow::PIXEL_PACK_BUFFER, None);
-                    self.gl.delete_buffer(readback_pbo.buffer);
+                    self.delete_readback_pbo(readback_pbo.buffer);
                     return Err(BitmapError::Unimplemented(e.into()));
                 }
             };
@@ -3059,16 +3154,12 @@ impl Drop for GlRenderBackend {
         for (_, pending) in pending {
             self.delete_pending_readback(pending);
         }
-        for pbo in std::mem::take(&mut self.reusable_readback_pbos) {
-            unsafe {
-                self.gl.delete_buffer(pbo.buffer);
-            }
+        for pbo in self.reusable_readback_pbos.set_limit(0) {
+            self.delete_readback_pbo(pbo.buffer);
         }
 
-        for scratch in std::mem::take(&mut self.scratch_texture_pool) {
-            unsafe {
-                self.gl.delete_texture(scratch.texture);
-            }
+        for scratch in self.scratch_texture_pool.set_limit(0) {
+            self.delete_scratch_texture(scratch);
         }
 
         unsafe {
@@ -3414,7 +3505,8 @@ impl RenderBackend for GlRenderBackend {
             );
         }
 
-        let entry = Arc::new(RegistryData::new(self.gl.clone(), texture, bitmap.width(), bitmap.height()));
+        let entry = Arc::new(RegistryData::new(self.gl.clone(), self.active_texture_2d.clone(),
+            self.upload_allocations.clone(), texture, bitmap.width(), bitmap.height()));
         self.set_texture_parameters(entry.as_ref(), glow::LINEAR as i32, glow::CLAMP_TO_EDGE as i32);
         self.texture_resources.push(TextureResource {
             weak: Arc::downgrade(&entry),
@@ -3457,6 +3549,8 @@ impl RenderBackend for GlRenderBackend {
                     Some(bitmap.data()),
                 );
             }
+            entry.allocations.resize(rgba_bytes(entry.width.get(), entry.height.get()),
+                rgba_bytes(bitmap.width(), bitmap.height()));
             entry.width.set(bitmap.width());
             entry.height.set(bitmap.height());
             return Ok(());
@@ -3507,6 +3601,41 @@ impl RenderBackend for GlRenderBackend {
 
     fn name(&self) -> &'static str {
         "glow-gles"
+    }
+
+    fn set_memory_pressure(&mut self, under_pressure: bool) {
+        self.under_memory_pressure = under_pressure;
+        let scratch_limit = if under_pressure { 0 } else { SCRATCH_IDLE_BYTES };
+        for texture in self.scratch_texture_pool.set_limit(scratch_limit) {
+            self.delete_scratch_texture(texture);
+        }
+        let pbo_limit = if under_pressure { 0 } else { PBO_IDLE_BYTES };
+        for pbo in self.reusable_readback_pbos.set_limit(pbo_limit) {
+            self.delete_readback_pbo(pbo.buffer);
+        }
+    }
+
+    fn memory_debug_info(&self) -> Option<String> {
+        let pending_bytes: u64 = self.pending_readbacks.values()
+            .map(|pending| pending.size_bytes as u64).sum();
+        let stencil_bytes = self.offscreen_stencil_size.0.max(0) as u64
+            * self.offscreen_stencil_size.1.max(0) as u64;
+        Some(format!(concat!("pressure={} ",
+            "upload_live={} upload_bytes={} upload_created={} upload_deleted={} ",
+            "empty_live={} empty_bytes={} empty_created={} empty_deleted={} ",
+            "scratch_idle={} scratch_bytes={} scratch_created={} scratch_deleted={} scratch_evicted={} ",
+            "pbo_idle={} pbo_bytes={} pbo_created={} pbo_deleted={} pbo_evicted={} pbo_resizes={} ",
+            "pending_readbacks={} pending_bytes={} stencil_bytes={} stencil_reallocations={}"),
+            self.under_memory_pressure,
+            self.upload_allocations.live_count.get(), self.upload_allocations.live_bytes.get(),
+            self.upload_allocations.created.get(), self.upload_allocations.deleted.get(),
+            self.empty_allocations.live_count.get(), self.empty_allocations.live_bytes.get(),
+            self.empty_allocations.created.get(), self.empty_allocations.deleted.get(),
+            self.scratch_texture_pool.len(), self.scratch_texture_pool.bytes(),
+            self.scratch_created, self.scratch_deleted, self.scratch_texture_pool.evictions(),
+            self.reusable_readback_pbos.len(), self.reusable_readback_pbos.bytes(),
+            self.pbo_created, self.pbo_deleted, self.reusable_readback_pbos.evictions(), self.pbo_resizes,
+            self.pending_readbacks.len(), pending_bytes, stencil_bytes, self.stencil_reallocations))
     }
 
     fn set_quality(&mut self, _quality: StageQuality) {}
@@ -3577,7 +3706,8 @@ impl RenderBackend for GlRenderBackend {
             );
         }
 
-        let entry = Arc::new(RegistryData::new(self.gl.clone(), texture, width.get(), height.get()));
+        let entry = Arc::new(RegistryData::new(self.gl.clone(), self.active_texture_2d.clone(),
+            self.empty_allocations.clone(), texture, width.get(), height.get()));
         self.set_texture_parameters(entry.as_ref(), glow::LINEAR as i32, glow::CLAMP_TO_EDGE as i32);
         self.texture_resources.push(TextureResource {
             weak: Arc::downgrade(&entry),

@@ -1,6 +1,6 @@
 # Ruffle Flash
 
-面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.2 开发预览**，支持中英文界面，默认 OpenGL ES，可选实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-28，验证范围见[工程进度](docs/progress.md)。
+面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.2 开发预览**，支持中英文界面，默认 OpenGL ES，可选实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-31，验证范围见[工程进度](docs/progress.md)。
 
 从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、全局画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
 
@@ -54,7 +54,9 @@ SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游�
 同日曾按用户要求将同名脚本素材优化版的 `ConfigVO.quality` 默认字段改为 **LOW**；后续复测确认入口又覆盖为 MEDIUM，首次启动 LOW / 30 FPS 尚未实现。本轮没有继续修改游戏，游戏内 **OPTION → QUALITY → APPLY** 仍可选择画质。字段更新改变内容指纹，原生进度独立；同名路径继续读取已有按键配置。旧主文件与说明/清单已备份，新目录及完整 ZIP 的 401 文件校验通过；入口修复和设置保存重开仍待验证。交付及后续更正见[默认低画质记录](docs/validation/bvn33-default-low-20261028.md)，当前随包定制版保留同一主文件。
 
 
-2026-10-30 增加了有上限的像素与近期 GLES 动画资源缓存，减少同一素材反复解码、上传及重建；低内存时自动缩减留存，后台预解码默认关闭。缓存会增加驻留内存，拳皇的 GLES 内存不足问题仍未解决，不能据此保证所有游戏不再卡顿或 OOM。限定角色、短样本及正式安装范围见[资源缓存实机报告](docs/validation/resource-cache-20261030.md)。
+2026-10-30 增加了有上限的像素与近期 GLES 动画资源缓存，减少同一素材反复解码、上传及重建；低内存时自动缩减留存，后台预解码默认关闭。缓存会增加驻留内存，该轮尚未解决拳皇的 GLES 内存不足问题，后续修复及验证见下文。限定角色、短样本及正式安装范围见[资源缓存实机报告](docs/validation/resource-cache-20261030.md)。
+
+2026-10-31 已进一步定位拳皇 GLES 的主要 GPU 增长源，并为滤镜临时纹理和读回缓冲增加独立容量限制，减少不同动画尺寸留下的长期占用。固定滤镜画面对照一致，拳皇限定角色的实战、换局和正常退出范围见[内存排查与修复报告](docs/validation/kof-gles-memory-20261031.md)；全角色与长时运行仍需验证。
 
 ## 菜单与快捷键
 
