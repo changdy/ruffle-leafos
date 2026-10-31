@@ -222,14 +222,14 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{t("Flash · 已暂停")}else{"Flash"},t("继续游戏"),FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
-        let rows=[t("继续"),t("按键设置"),t("鼠标光标"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("快捷键说明"),t("关于"),t("语言"),t("保存并退出")];
+        let rows=[t("继续"),t("按键设置"),t("鼠标设置"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("操作说明"),t("关于"),t("语言"),t("保存并退出")];
         let details=[String::new(),crate::tr!("◀ 方案 {} ▶", "◀ Profile {} ▶",slot+1),
-            String::new(),t("原生进度").into(),crate::tr!("存档 {} / 5", "Save {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new(),String::new()];
+            String::new(),t("游戏内进度").into(),crate::tr!("存档 {} / 5", "Slot {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
             self.leaf_row(i+1,line,137.+i as f32*46.,44.,i==state.selected);
             if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,141.+i as f32*46.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
-        let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),_=>t("操作方法见「快捷键说明」")};
+        let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),_=>t("操作方法见「操作说明」")};
         self.live_label_width(16,hint,20.,23.,606.,910.,false,self.palette[4]);
         }
         } else if state.drag_locked {
@@ -271,7 +271,7 @@ impl PauseMenu {
         self.live_label_width(150,t("输入文字"),35.,30.,18.,900.,false,self.palette[1]);
         self.rounded((30.,77.,900.,75.),10.,self.palette[2]);
         self.live_label_width(151,&keyboard.preview(),31.,47.,97.,866.,false,self.palette[3]);
-        self.live_label_width(152,t("A 输入 · B 删除 · X 空格 · Select 大小写"),23.,30.,164.,900.,true,self.palette[4]);
+        self.live_label_width(152,t("A 输入 · B 退格 · X 空格 · Select 大小写"),23.,30.,164.,900.,true,self.palette[4]);
         for (i,key) in keyboard.keys().iter().enumerate() {
             let selected=keyboard.row==key.row&&keyboard.col==key.col;
             self.rounded(key.rect,8.,self.palette[if selected {2}else{5}]);
@@ -282,7 +282,7 @@ impl PauseMenu {
         if keyboard.help {
             self.quad((0.,0.,960.,720.),[0.,0.,0.,0.65],None);
             self.rounded((65.,180.,830.,365.),18.,self.palette[0]);
-            let lines=[t("十字键选择字母，A 输入，B 删除，X 空格。"),
+            let lines=[t("十字键选择按键，A 输入，B 退格，X 空格。"),
                 t("Select 切换大小写，L2 切换符号。"),t("L1 / R1 移动文字光标；多行框可用 R2 换行。"),
                 t("Start 确认并回到游戏，Y 取消全部修改。"),t("按 M 或 A 关闭帮助。")];
             for (i,line) in lines.iter().enumerate() {self.live_label_width(205+i,line,25.,90.,215.+i as f32*60.,780.,false,self.palette[1]);}
@@ -372,7 +372,11 @@ impl PauseMenu {
         if u.page==Page::About {self.draw_about();return;}
         if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab);return;}
         let subtitle=match u.page{
-            Page::Saves=>if u.started{t("A 读取并重启游戏；Y 将当前进度复制到选中槽")}else{t("发现游戏进度，请先选择存档；空槽开始新进度")},
+            Page::Saves=>if u.selected>=u.slots.len(){if u.started{t("A 返回")}else{t("A 返回 Leaf")}}
+                else if u.slots[u.selected].broken{if u.started{t("存档损坏，无法读取；Y 用当前进度覆盖")}else{t("此槽位损坏；请先在数据管理中清理")}}
+                else if !u.started{t("发现游戏进度，请先选择存档；空槽开始新进度")}
+                else if u.selected==u.active{t("A 返回；Y 保存当前进度")}
+                else{t("A 切换存档并重启；Y 复制当前进度")},
             Page::Settings=>t("全局共用 · 调整后自动保存"),Page::Renderer=>t("全局接口 · 切换会保存当前进度并重启"),Page::Manager=>t("管理游戏数据，或选择批量清理"),Page::ManagerGames=>t("仅显示有存档或按键配置的游戏"),Page::ManagerGame=>u.manager_game().map(|g|g.title.as_str()).unwrap_or(""),Page::ManagerBulk=>t("影响全部游戏 · 清理前会再次确认"),Page::Language=>if crate::session::i18n::is_english(){"Choose a language · Applies immediately and saves for all games"}else{"选择语言 · 立即生效并保存，所有游戏共用"},Page::Confirm=>t("请选择确认或取消"),_=>""
         };
         let navigation=if u.page==Page::Settings{FooterNavigation::Adjust}else{FooterNavigation::List};
@@ -425,8 +429,8 @@ impl PauseMenu {
             if u.app&&u.pending<=2 {if let Some(game)=u.manager_game(){self.live_label_width(24,&game.title,27.,23.,145.,910.,false,self.palette[1]);}}
             self.live_label_width(19,&description,32.,23.,190.,910.,false,self.palette[1]);
             let note=if u.pending>=30 {t("仅恢复游戏自身支持的进度，不保留当前运行画面。")}
-                else if u.pending>=20 {t("仅复制游戏原生进度；覆盖时保留上次有效备份。")}
-                else if u.pending>=10 {t("将重新启动游戏，读取所选槽位的原生进度。")}else{t("清理的数据会移入本地备份目录。")};
+                else if u.pending>=20 {t("仅复制游戏内进度；覆盖时保留上次有效备份。")}
+                else if u.pending>=10 {t("将重新启动游戏，读取所选槽位的游戏内进度。")}else{t("清理的数据会移入本地备份目录。")};
             self.live_label_width(20,note,22.,60.,250.,830.,false,self.palette[1]);
         }
         for (i,row) in rows.iter().enumerate(){self.leaf_row(i+1,row,if u.page==Page::Confirm{340.+i as f32*75.}else if u.page==Page::ManagerGame{320.+i as f32*70.}else{143.+i as f32*59.},55.,i==u.selected);}
@@ -462,7 +466,7 @@ impl PauseMenu {
 
     unsafe fn draw_shortcuts(&mut self,tab:usize) {
         use crate::session::experience::{SHORTCUT_TABS,SHORTCUTS,SHORTCUT_NOTES};
-        self.leaf_background(t("快捷键说明"),t("先看想做什么，再按右侧提示操作"),t("返回"),FooterNavigation::Tabs);
+        self.leaf_background(t("操作说明"),t("先看想做什么，再按右侧提示操作"),t("返回"),FooterNavigation::Tabs);
         for (i,label) in SHORTCUT_TABS.iter().enumerate() {
             let x=23.+i as f32*307.;self.leaf_tile((x,140.,296.,44.),tab==i);
             self.live_label_width(65+i,t(label),28.,x+12.,145.,272.,true,self.palette[if tab==i{3}else{1}]);
@@ -532,7 +536,7 @@ impl PauseMenu {
         let controls = &state.controls;
         use crate::session::controls::{Page,CATEGORIES,GRID_COLS};
         let subtitle=match controls.page {
-            Page::Edit=>crate::tr!("L / R 切换方案 · Y 连发{}", "L / R Profile · Y Turbo{}",if controls.dirty(){t(" · 未保存")}else{""}),
+            Page::Edit=>crate::tr!("L1 / R1 切换方案 · Y 连发{}", "L1 / R1 Profile · Y Turbo{}",if controls.dirty(){t(" · 未保存")}else{""}),
             Page::Picker=>t("L1 / R1 切换动作类型").into(),
             Page::Cursor=>t("鼠标速度与光标外观").into(),
             Page::Confirm=>controls.pending_detail(),

@@ -171,7 +171,7 @@ impl Progress {
     }
     pub fn copy_to(&mut self,n:usize)->Result<(),String>{
         if n>=SAVE_SLOTS{return Err(t("存档槽位超出范围").into());}
-        if self.data.objects.is_empty(){return Err(t("游戏尚未产生原生进度，无法复制").into());}
+        if self.data.objects.is_empty(){return Err(t("尚无游戏内进度，无法复制").into());}
         let mut data=self.data.clone();data.time=now();self.commit(n,&data)
     }
     pub fn remove(&mut self,name:&str){
@@ -218,8 +218,8 @@ impl Settings {
         1=>self.quality=(self.quality as i32+d).rem_euclid(3) as u8,2=>self.fps=!self.fps,_=>{}
     }}
     pub fn rows(&self)->Vec<String>{vec![crate::tr!("画面缩放                         {}", "Scaling                         {}",[t("保持比例"),t("铺满屏幕"),t("原始大小")][self.scale as usize]),
-        crate::tr!("画面质量                         {}", "Flash quality                    {}",[t("低"),t("中"),t("高")][self.quality as usize]),
-        crate::tr!("左上角帧率                     {}", "FPS counter                     {}",if self.fps{t("开")}else{t("关")}),crate::tr!("渲染接口                         {}  ›", "Renderer                        {}  ›",self.renderer.label()),t("恢复默认画面设置").into(),t("返回").into()]}
+        crate::tr!("Flash 画质                       {}", "Flash quality                    {}",[t("低"),t("中"),t("高")][self.quality as usize]),
+        crate::tr!("左上角帧率                     {}", "FPS counter                     {}",if self.fps{t("开")}else{t("关")}),crate::tr!("渲染接口                         {}  ›", "Graphics API                    {}  ›",self.renderer.label()),t("恢复默认画面设置").into(),t("返回").into()]}
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
@@ -238,7 +238,7 @@ pub const SHORTCUTS:[[(&str,&str,&str);5];3]=[
     [
         ("选择菜单项", "十字键 ↑ ↓", "按 A 进入或确认，按 B 返回；主菜单按 B 继续游戏。"),
         ("在主菜单切换按键方案", "选中「按键设置」后按 ← →", "按 A 可编辑当前方案。"),
-        ("调整设置", "十字键 ← →", "在「画面设置」或「鼠标光标」中，先选中要调整的项目。"),
+        ("调整设置", "十字键 ← →", "在「画面设置」或「鼠标设置」中，先选中要调整的项目。"),
         ("调节系统音量", "机身音量 ＋ / －", "游戏中和暂停菜单中都可以调节。"),
         ("调节屏幕亮度", "按住 M，再按音量键", "按音量 ＋ 提高亮度，按音量 － 降低亮度。"),
     ],
@@ -304,11 +304,11 @@ impl Ui {
     pub fn manager_visible_start(&self)->usize {self.selected/MANAGER_VISIBLE_ROWS*MANAGER_VISIBLE_ROWS}
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}if page==Page::Language{self.selected=usize::from(self.language==super::i18n::Language::English);}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::ManagerGames|Page::ManagerGame=>t("游戏数据").into(),Page::ManagerBulk=>t("批量清理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("快捷键说明").into()
+        Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::ManagerGames|Page::ManagerGame=>t("游戏数据").into(),Page::ManagerBulk=>t("批量清理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("操作说明").into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Language=>super::i18n::Language::ALL.iter().map(|language| format!("{}{}",language.label(),if *language==self.language{"  ✓"}else{""})).chain(std::iter::once(t("返回").into())).collect(),
-        Page::Home=>vec![], Page::Saves=>(0..SAVE_SLOTS).map(|i|crate::tr!("存档 {}{}    {}", "Save {}{}    {}",i+1,if self.started&&i==self.active {t(" · 当前")}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{t("返回").into()}else{t("返回 Leaf").into()})).collect(),
+        Page::Home=>vec![], Page::Saves=>(0..SAVE_SLOTS).map(|i|crate::tr!("存档 {}{}    {}", "Slot {}{}    {}",i+1,if self.started&&i==self.active {t(" · 当前")}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{t("返回").into()}else{t("返回 Leaf").into()})).collect(),
         Page::Settings=>self.settings.rows(),
         Page::Renderer=>vec![format!("OpenGL ES                         {}",if self.actual_renderer==super::graphics::Backend::OpenGlEs{t("使用中")}else{""}),
             crate::tr!("Vulkan（实验）                   {}", "Vulkan (experimental)           {}",if self.actual_renderer==super::graphics::Backend::Vulkan{t("使用中")}else if self.renderer_failed{t("上次启动失败")}else{""}),t("返回").into()],
@@ -353,7 +353,7 @@ impl Ui {
             Nav::A=>match self.page{
                 Page::Language=>{if let Some(language)=super::i18n::Language::ALL.get(self.selected){return Command::Language(*language);}self.open(if self.app{Page::Manager}else{Page::Home});if self.app{self.selected=2;}},
                 Page::Saves=>{if self.selected==SAVE_SLOTS {if self.started{self.open(Page::Home)}else{return Command::Quit;}}
-                    else if self.slots[self.selected].broken {self.message=t("此槽位损坏；请先在应用中清理").into();}
+                    else if self.slots[self.selected].broken {self.message=t("此槽位损坏；请先在数据管理中清理").into();}
                     else if !self.started{return Command::Choose(self.selected);}
                     else if self.selected==self.active {self.open(Page::Home);}
                     else {self.pending=10+self.selected;self.open(Page::Confirm);}},

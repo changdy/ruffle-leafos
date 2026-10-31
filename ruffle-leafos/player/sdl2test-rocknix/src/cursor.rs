@@ -26,7 +26,7 @@ impl Style {
 impl Color {
     pub const ALL: [Self;7] = [Self::White,Self::Black,Self::Red,Self::Yellow,Self::Green,Self::Cyan,Self::Magenta];
     pub fn id(self) -> &'static str { match self { Self::White=>"white",Self::Black=>"black",Self::Red=>"red",Self::Yellow=>"yellow",Self::Green=>"green",Self::Cyan=>"cyan",Self::Magenta=>"magenta" } }
-    pub fn name(self) -> &'static str { match self { Self::White=>t("白色"),Self::Black=>t("黑色"),Self::Red=>t("红色"),Self::Yellow=>t("黄色"),Self::Green=>t("绿色"),Self::Cyan=>t("青色"),Self::Magenta=>t("紫色") } }
+    pub fn name(self) -> &'static str { match self { Self::White=>t("白色"),Self::Black=>t("黑色"),Self::Red=>t("红色"),Self::Yellow=>t("黄色"),Self::Green=>t("绿色"),Self::Cyan=>t("青色"),Self::Magenta=>t("紫红色") } }
     pub fn rgba(self) -> [f32;4] { match self { Self::White=>[1.,1.,1.,1.],Self::Black=>[0.,0.,0.,1.],Self::Red=>[1.,0.15,0.15,1.],Self::Yellow=>[1.,0.9,0.,1.],Self::Green=>[0.2,1.,0.25,1.],Self::Cyan=>[0.,0.9,1.,1.],Self::Magenta=>[1.,0.25,0.9,1.] } }
     pub fn parse(s: &str) -> Option<Self> { Self::ALL.into_iter().find(|v|v.id()==s) }
     pub fn next(self, step: i32) -> Self { Self::ALL[(Self::ALL.iter().position(|v|*v==self).unwrap() as i32+step).rem_euclid(7) as usize] }

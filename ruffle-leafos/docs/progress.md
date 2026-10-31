@@ -10,9 +10,10 @@
 | 按键与鼠标 | 每游戏十方案、空方案跳过、逐键 5/10/15 Hz 连发、方向互换、左键保持、全局光标 | [输入与连发验收](validation/stable-features.md)；不保证阻塞负载下硬实时响应 |
 | 原生进度 | SharedObject 五槽、复制、重开选档、有效备份回退；按内容识别 | 完整 VM 快照未实现；[五槽与重开验收](validation/stable-features.md) |
 | 中英文界面 | 首次读取系统语言，保存后全局共用；英语环境可切回中文 | [语言及字体验收](validation/stable-features.md)；不翻译游戏和用户命名 |
+| 菜单命名核对 | 依据代码统一中英文菜单、按键动作和软键盘名称；存档提示区分当前槽、其他槽、损坏槽和返回 | 2026-10-31：130 项前端、3 项语言及 15 项发布脚本主机测试通过，ARM64 `cargo check`、静态翻译查漏和源码指纹核验通过；本轮未做实机显示验证 |
 | 全局画面设置 | 缩放、Flash 画质、FPS、渲染偏好共用；旧每游戏文件不读取/迁移 | [RAV 契约](formats/graphics-settings.md)、[基础验收](validation/stable-features.md) |
 | 软键盘 | 标准可编辑 TextField、Unicode 草稿、密码遮挡、差分提交及暂停中立门 | AVM1/AVM2、GLES/Vulkan 限定夹具通过；[实机报告](validation/soft-keyboard-20261028.md) |
-| 图标与说明 | Apps/Flash 分类自定义图标、独立快捷键说明、关于和社区致谢 | [图标与关于验收](validation/stable-features.md) |
+| 图标与说明 | Apps/Flash 分类自定义图标、独立操作说明、关于和社区致谢 | [图标与关于验收](validation/stable-features.md) |
 | 构建与打包 | 锁定依赖、ARM64 构建、版本触发发布、两款定制游戏校验与安装路径 | [发布验证](validation/release-0.6.9-20261025.json)、[游戏收录](../games/README.md)；全新机器演练未完成 |
 
 模板管理、全局按键自动继承、旧 M+左右、游戏音量/静音、编辑页仅本次应用及恢复默认已移除。旧格式兼容范围统一见[按键契约](formats/controls-format-v5.md)；历史里程碑与需求从 Git 追溯。

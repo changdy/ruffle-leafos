@@ -74,8 +74,8 @@ impl Editor {
     }
     pub fn label(&self,row:usize,col:usize) -> String {
         match (row,col) {
-            (0,10)=>"Back".into(),(2,9)=>"OK".into(),(3,0)=>if self.shift {"ABC"}else{"abc"}.into(),
-            (3,8)=>if self.symbols {"ABC"}else{"#+="}.into(),(4,_)=>"Space".into(),
+            (0,10)=>super::i18n::t("退格").into(),(2,9)=>super::i18n::t("确认").into(),(3,0)=>if self.shift {"ABC"}else{"abc"}.into(),
+            (3,8)=>if self.symbols {"ABC"}else{"#+="}.into(),(4,_)=>super::i18n::t("空格").into(),
             (3,_)=>self.character(row,col-1),_=>self.character(row,col),
         }
     }

@@ -98,8 +98,8 @@ fn binding_label(binding: Binding) -> String {
     match binding {
         Binding::Key(code) => key_name(code), Binding::Chord(keys) => keys.iter().map(|k| key_name(*k)).collect::<Vec<_>>().join("+"),
         Binding::Combo(..) => controls::binding_label(binding),
-        Binding::None => t("无").into(), Binding::LeftClick => t("左键").into(), Binding::RightClick => t("右键").into(),
-        Binding::Slow => t("按住慢速").into(), Binding::Fast => t("按住快速").into(), Binding::Wheel(1) => t("滚轮上").into(),
+        Binding::None => t("未绑定").into(), Binding::LeftClick => t("左键").into(), Binding::RightClick => t("右键").into(),
+        Binding::Slow => t("按住鼠标减速").into(), Binding::Fast => t("按住鼠标加速").into(), Binding::Wheel(1) => t("滚轮上").into(),
         Binding::Wheel(_) => t("滚轮下").into(), Binding::DragLock => t("拖拽锁定").into(), Binding::Center => t("指针居中").into(),
         Binding::Pointer(_) => controls::binding_label(binding),
     }
@@ -116,7 +116,7 @@ fn profile_previews(keymap: &keycodes::KeyMap) -> Vec<[String; 4]> {
         let directions = DPAD.iter().map(|b| {
             if fine && binding_for(keymap, index, mode, *b, use_cfg) == Binding::None { t("鼠标").into() } else { label(*b) }
         }).collect::<Vec<_>>().join(" / ");
-        let stick = match stick_kind(index, mode) { Stick::Directions => t("同十字键"), Stick::Steering => t("仅左右转向"), Stick::Mouse => t("鼠标"), Stick::None => t("无"), Stick::Custom => t("独立映射") };
+        let stick = controls::stick_label(stick_kind(index, mode));
         let overrides = PROFILE_BUTTONS.iter().chain(DPAD.iter()).filter(|b| keymap.custom_keycode(**b).is_some()).count();
         [crate::tr!("十字键 上/下/左/右：{directions}；摇杆：{stick}", "D-pad Up/Down/Left/Right: {directions}; Stick: {stick}"),
          format!("A={}   B={}   X={}   Y={}", label(Button::A), label(Button::B), label(Button::X), label(Button::Y)),
@@ -249,7 +249,7 @@ impl Frontend {
         let error=p.error.clone().or_else(||if core_ok{None}else{Some(t("Flash 进度序列化或写盘失败").into())});let has_data=p.has_data();let active=p.active.unwrap_or(0);drop(p);
         self.refresh_saves();
         if let Some(error)=error {self.state.experience.message=crate::tr!("保存失败：{error}", "Save failed: {error}");self.toast(crate::tr!("保存失败：{error}", "Save failed: {error}"));return false;}
-        if announce {self.toast(if has_data {crate::tr!("存档 {} 的原生进度已保存", "Native progress saved to slot {}",active+1)}else{t("游戏尚未产生原生进度，请先使用游戏内保存功能").into()});}
+        if announce {self.toast(if has_data {crate::tr!("存档 {} 的游戏内进度已保存", "In-game progress saved to slot {}",active+1)}else{t("尚无游戏内进度，请先使用游戏内保存功能").into()});}
         println!("leaf-progress flush=ok slot={} has_data={has_data}",active+1);true
     }
     fn apply_av(&mut self) {
@@ -293,7 +293,7 @@ impl Frontend {
                     }
                 },
                 ExperienceCommand::Copy(n)=>{
-                    if self.flush_progress(false){self.progress.lock().unwrap().copy_to(n)?;self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);self.toast(crate::tr!("原生进度已复制到存档 {}", "Native progress copied to slot {}",n+1));}
+                    if self.flush_progress(false){self.progress.lock().unwrap().copy_to(n)?;self.refresh_saves();self.state.experience.open(ExperiencePage::Saves);self.toast(crate::tr!("游戏内进度已复制到存档 {}", "In-game progress copied to slot {}",n+1));}
                 },
                 ExperienceCommand::Settings=>{
                     self.apply_av();self.state.experience.settings.save(&self.settings_path)?;
@@ -1330,6 +1330,6 @@ pub async fn run() -> Result<(), String> {
         }
         println!("leaf-slots self_test=passed slot_switch=true tabs=9 grid=true editor=true save=true cursor=true idle=true");
     }
-    if !saved{return Err(t("游戏原生进度提交失败，请检查日志和存储卡").into());}
+    if !saved{return Err(t("游戏内进度保存失败，请检查日志和存储卡").into());}
     Ok(())
 }

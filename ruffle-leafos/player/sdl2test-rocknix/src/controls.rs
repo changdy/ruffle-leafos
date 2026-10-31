@@ -6,7 +6,7 @@ use std::{collections::BTreeMap, fs::{self, File, OpenOptions}, io::{Read, Write
 
 pub const LABELS: [&str; 14] = ["A", "B", "X", "Y", "L1", "R1", "L2", "R2", "Start", "Select", "十字上", "十字下", "十字左", "十字右"];
 pub const AXIS_LABELS: [&str; 5] = ["摇杆上", "摇杆下", "摇杆左", "摇杆右", "摇杆按下"];
-pub const CATEGORIES: [&str; 9] = ["常用", "字母", "数字", "功能", "鼠标", "Shift", "Ctrl", "Alt", "符号"];
+pub const CATEGORIES: [&str; 9] = ["常用", "字母", "数字", "功能键", "鼠标", "Shift", "Ctrl", "Alt", "符号"];
 pub const GAME_SLOTS: usize = 10;
 pub const GRID_COLS: usize = 5;
 const LIMIT: usize = 16384;
@@ -107,15 +107,15 @@ pub fn binding_label(binding: Binding) -> String {
     match binding {
         Binding::Key(key) => key_label(key),
         Binding::Chord(_) | Binding::Combo(..) => binding.actions().iter().filter_map(|a| match a { super::Action::Key(k) => Some(key_label(*k)), _ => None }).collect::<Vec<_>>().join("+"),
-        Binding::None => t("无").into(), Binding::LeftClick => t("鼠标左键").into(), Binding::RightClick => t("鼠标右键").into(),
-        Binding::Slow => t("按住慢速").into(), Binding::Fast => t("按住快速").into(), Binding::Wheel(1) => t("滚轮上").into(),
+        Binding::None => t("未绑定").into(), Binding::LeftClick => t("鼠标左键").into(), Binding::RightClick => t("鼠标右键").into(),
+        Binding::Slow => t("按住鼠标减速").into(), Binding::Fast => t("按住鼠标加速").into(), Binding::Wheel(1) => t("滚轮上").into(),
         Binding::Wheel(_) => t("滚轮下").into(), Binding::DragLock => t("拖拽锁定").into(), Binding::Center => t("指针居中").into(),
         Binding::Pointer(i) => crate::tr!("鼠标移{}", "Mouse {}", [t("上"),t("下"),t("左"),t("右")][usize::from(i).min(3)]),
     }
 }
 
 pub fn stick_label(stick: Stick) -> &'static str {
-    match stick { Stick::Directions => t("同十字键"), Stick::Steering => t("仅左右转向"), Stick::Mouse => t("鼠标"), Stick::None => t("方向禁用"), Stick::Custom => t("各方向独立映射") }
+    match stick { Stick::Directions => t("同十字键"), Stick::Steering => t("同十字左右"), Stick::Mouse => t("鼠标"), Stick::None => t("方向禁用"), Stick::Custom => t("各方向独立映射") }
 }
 
 fn allowed_key(key: i32) -> bool {
@@ -476,9 +476,9 @@ impl Controls {
         if self.category == 4 { return vec![None,LeftClick,RightClick,Wheel(1),Wheel(-1),DragLock,Center,Slow,Fast,Pointer(0),Pointer(1),Pointer(2),Pointer(3)]; }
         keys.into_iter().map(|k| if (5..=7).contains(&self.category) { Combo([match self.category { 5 => profiles::SHIFT, 6 => profiles::CTRL, _ => 1073742050 }, k,0,0],2) } else { Key(k) }).collect()
     }
-    pub fn title(&self) -> &str { match self.page { Page::Edit => t("按键设置"), Page::Picker => t("选择虚拟动作"), Page::Confirm => t("未保存的修改"), Page::Cursor => t("鼠标光标") } }
+    pub fn title(&self) -> &str { match self.page { Page::Edit => t("按键设置"), Page::Picker => t("选择按键动作"), Page::Confirm => t("未保存的修改"), Page::Cursor => t("鼠标设置") } }
     pub fn hint(&self) -> &str { match self.page {
-        Page::Edit => t("L / R 切换方案  A 修改  Y 连发  B 返回"),
+        Page::Edit => t("L1 / R1 切换方案  A 修改  Y 连发  B 返回"),
         Page::Picker => t("十字键移动  L1/R1 切换类型  A 确认  B 取消"),
         Page::Confirm => t("A 确定  B 继续编辑"),
         Page::Cursor => t("左右调整  A 确认  X 恢复此项  B 返回"),
@@ -486,7 +486,7 @@ impl Controls {
     pub fn lines(&self) -> Vec<String> { match self.page {
         Page::Edit => LABELS.iter().enumerate().map(|(i,s)| {let s=t(s); crate::tr!("{s}{}：{}", "{s}{}: {}",self.draft.turbo[i].badge(), binding_label(self.draft.buttons[i]))}).chain([
             crate::tr!("摇杆预设：{}", "Stick preset: {}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| {let s=t(s); crate::tr!("{s}{}：{}", "{s}{}: {}",self.draft.axis_turbo[i].badge(),binding_label(self.draft.axes[i]))})).chain([
-            crate::tr!("十字鼠标精调：{}", "D-pad precision: {}", if self.draft.fine {t("开")} else {t("关")}),
+            crate::tr!("十字鼠标精调：{}", "D-pad mouse precision: {}", if self.draft.fine {t("开")} else {t("关")}),
             crate::tr!("鼠标速度：{}", "Mouse speed: {}", match self.draft.speed { MouseSpeed::Slow => t("慢"), MouseSpeed::Normal => t("标准"), MouseSpeed::Fast => t("快") }),
             t("保存").into(), t("返回").into()]).collect(),
         Page::Cursor => vec![crate::tr!("光标样式：{}", "Cursor style: {}",self.cursor_draft.style.name()),crate::tr!("光标颜色：{}", "Cursor color: {}",self.cursor_draft.color.name()),

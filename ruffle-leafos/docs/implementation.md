@@ -55,9 +55,9 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 | 软键盘 | Ruffle 焦点回调排队；主循环内暂停、释放输入、草稿确认/取消；Leaf Catastrophe 布局与现有 GL 主题绘制 | [virtual_keyboard.rs](../player/sdl2test-rocknix/src/virtual_keyboard.rs)、[ui_backend.rs](../player/sdl2test-rocknix/src/ui_backend.rs)、[keyboard_test.rs](../player/sdl2test-rocknix/src/keyboard_test.rs) |
 | Flash FPS | 统计实际 Flash 帧执行量，按秒显示当前值；全局默认及恢复默认时开启，已有全局画面配置优先 | [core/src/player.rs](../player/core/src/player.rs)、[experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 
-M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有其他候选时保持当前方案；主菜单左右与编辑页 L/R 仍可选择全部十个方案。`Mapping::is_empty` 统一按 14 个按键和 5 个摇杆动作均为 `None` 且 `fine=false` 判断；鼠标精调是有效动作，基底、摇杆预设和速度等元数据不单独使方案非空。切换继续使用同一持久化/释放规则。M+十字下切左键保持，M+X 仅在本次运行互换十字/摇杆四方向，摇杆按下不变；交换状态不会写入映射文件。光标页速度仅本次生效，方案内保存的速度仍随方案读取；外观由所有游戏共用。
+M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有其他候选时保持当前方案；主菜单左右与编辑页 L1/R1 仍可选择全部十个方案。`Mapping::is_empty` 统一按 14 个按键和 5 个摇杆动作均为 `None` 且 `fine=false` 判断；鼠标精调是有效动作，基底、摇杆预设和速度等元数据不单独使方案非空。切换继续使用同一持久化/释放规则。M+十字下切左键保持，M+X 仅在本次运行互换十字/摇杆四方向，摇杆按下不变；交换状态不会写入映射文件。光标页速度仅本次生效，方案内保存的速度仍随方案读取；外观由所有游戏共用。
 
-暂停主菜单共十行，新增“语言”（英语显示 Language），与 Apps 管理页共用 `Page::Language`；“快捷键说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页，以三张卡片展示项目介绍、完整 GitHub 仓库地址和开源致谢，底部单独显示许可说明；文案维护在 `experience::BACKGROUND` 与 `pause_menu::draw_about`。快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
+暂停主菜单共十行，新增“语言”（英语显示 Language），与 Apps 管理页共用 `Page::Language`；“操作说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页，以三张卡片展示项目介绍、完整 GitHub 仓库地址和开源致谢，底部单独显示许可说明；文案维护在 `experience::BACKGROUND` 与 `pause_menu::draw_about`。快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
 
 摇杆现有径向死区为 0.18，键盘/点击动作采用 0.45 按下、0.30 释放的滞回阈值。完整可调设置和坐标矩阵仍在待办，现有阈值不等于该项验收完成。
 
@@ -68,6 +68,8 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 `i18n.rs` 维护简体中文/英语的识别、持久化和当前线程语言；`translations.rs` 集中保存静态文案，`tr!` 在调用点保留两份格式字面量，由 Rust 检查参数和命名捕获。菜单、按键、光标、存档、说明和提示显式取译文，用户标题/路径不进入翻译匹配。首次识别后写 `config/language.conf`，菜单保存成功才立即切换；协议、环境优先级及异常行为见[语言设置格式](formats/language-settings.md)。
 
 暂停主菜单和 Apps 管理页均提供语言入口，A 选择后自动保存，A/B 返回到对应入口。暂停列表采用十行布局；文本纹理缓存包含实际译文，切换后按需重建；已生成的临时状态提示清空。Leaf 所选主题字体继续负责有字形的文字，缺失字形使用 `paths.sh` 导出的随包 CJK 字体 `RUFFLE_FONT_FILE`，确保英语系统可显示中文选项并切回中文。
+
+菜单术语按实际功能统一：鼠标设置 / Mouse settings 包含速度与光标外观；操作说明 / Controls guide 覆盖组合键、菜单和编辑操作；Flash 画质 / Flash quality 对应 `StageQuality`；渲染接口 / Graphics API 对应 GLES/Vulkan。界面用“游戏内进度 / In-game progress”称呼 SharedObject 数据，英文槽位统一为 Slot；键盘功能键也通过同一翻译表显示退格 / Backspace、空格 / Space、确认 / Confirm。存档页提示依据所选项目区分当前槽、其他槽、损坏槽和返回行，与 `Ui::nav` 的保存、切槽、复制及返回行为保持一致。
 
 ## 渲染资源与内存
 
