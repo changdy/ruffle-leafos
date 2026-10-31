@@ -185,6 +185,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 对已检查主电影及所有外部调用者的 AVM2 素材，可显式增加 `--avm2-private-bitmaps`，仅改写未导出、未直接放置的内部填充位图，保留 ABC、SymbolClass 和时间轴标签。工具拒绝 ABC 中含 `readGraphicsData` / `GraphicsBitmapFill` 的文件，因为这些接口可暴露或修改原本私有的位图。这个局部检查不能识别外部代码或动态拼接的名字，开关不能替代调用者审查、逐像素还原、形状补偿验证及实机检查。报告中的 `avm2_private_bitmaps` 表示输入是否为已显式允许的 AVM2；默认拒绝 AVM2 的保护保留。具体处理和范围见[3.3 素材优化记录](validation/bvn33-assets-20261028.md)。
 
+3.6 独立目录版使用锁定的 AIR 源包，先按游戏自带的非标准密钥扩展/CBC 逻辑还原资源并逐文件重新编码核对，再处理标准 SWF 容器与该来源特有的保护标签。主程序追加离线启动、普通资源加载、SharedObject/日志和特效缓存适配类，跳过三处 AIR 专用地图缓存属性；内嵌 UI 合入与游戏摘要一致的 Adobe TLF，避免联网预加载。原核心仅改 12 个方法，新增缓存处理保留原帧槽、标签和顺序，裁剪透明区域并补偿坐标；素材优化继续使用上述既有工具。完整本地流程和证据放在 `work/bvn36-custom-20261031/` / `outputs/bvn36-custom-20261031/`，不作为播放器构建依赖，也不把特定保护记录的清理扩大为通用优化器支持。处理范围、像素核对和限定实机结果见[3.6 报告](validation/bvn36-custom-20261031.md)。
+
 ## 游戏截图与 Leaf 封面
 
 `session::screenshot` 负责封面解析、卡选择、裁剪边界和文件写入，保持无 SDL/GL 依赖，由 `test_session.py` 覆盖。`experience::Page::Screenshot/CoverConfirm` 与主菜单截图入口负责交互，覆盖默认取消。`leaf::Frontend` 只排队截图请求；暂停重绘在 `Player::render()` 后、`PauseMenu::draw()` 前执行单次同步读回，两种渲染接口均从最终 GLES 默认 framebuffer 读取，正常游戏帧不增加读回。
