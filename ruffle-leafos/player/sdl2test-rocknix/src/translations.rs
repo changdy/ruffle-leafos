@@ -1,6 +1,20 @@
 //! English UI catalog. Keys are the original Simplified Chinese labels.
 pub fn english(text: &str) -> Option<&'static str> {
     Some(match text {
+        "截图" => "Screenshot",
+        "截图作为封面" => "Use screenshot as cover",
+        "保存普通照片" => "Save photo",
+        "覆盖封面？" => "Replace cover?",
+        "覆盖封面" => "Replace cover",
+        "仅保存 Flash 游戏画面" => "Capture the Flash game area",
+        "已有封面，是否用当前截图替换？" => "Replace the existing cover with this screenshot?",
+        "不含菜单、播放器光标、帧率与系统提示。" => "Excludes menus, player cursor, FPS and system overlays.",
+        "普通照片优先存入副卡 Pictures/Ruffle Flash。" => "Photos prefer the second card: Pictures/Ruffle Flash.",
+        "没有可截取的游戏画面" => "No game area to capture",
+        "已有封面，请确认是否覆盖" => "A cover exists; confirm replacement",
+        "封面已保存，请在 Leaf 刷新游戏列表" => "Cover saved; refresh the Leaf game list",
+        "照片已保存" => "Photo saved",
+        "请重新选择截图作为封面" => "Choose Use screenshot as cover again",
         "语言" => "Language",
         "十字上" => "D-pad Up",
         "十字下" => "D-pad Down",

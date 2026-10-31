@@ -27,7 +27,7 @@ read_bounded() {
 }
 {
     field report_schema 1
-    field pak_version 0.8.1
+    field pak_version 0.8.2
     field collected_utc "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
     field device_validation 'not performed by collector'
     section versions

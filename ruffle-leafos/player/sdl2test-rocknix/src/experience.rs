@@ -15,7 +15,7 @@ pub fn game_id(bytes: &[u8]) -> String {
     format!("{:016x}{:016x}-{}", hash(bytes), hash(&reverse), bytes.len())
 }
 pub fn now() -> u64 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs() }
-fn unique() -> u128 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos() }
+pub(super) fn unique() -> u128 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos() }
 fn safe(path: &Path) -> Result<(), String> {
     for p in path.ancestors() {
         if fs::symlink_metadata(p).is_ok_and(|m| m.file_type().is_symlink()) { return Err(t("数据路径不能是符号链接").into()); }
@@ -23,9 +23,9 @@ fn safe(path: &Path) -> Result<(), String> {
     Ok(())
 }
 #[cfg(unix)]
-fn replace(a: &Path, b: &Path) -> std::io::Result<()> { fs::rename(a,b) }
+pub(super) fn replace(a: &Path, b: &Path) -> std::io::Result<()> { fs::rename(a,b) }
 #[cfg(windows)]
-fn replace(a: &Path, b: &Path) -> std::io::Result<()> {
+pub(super) fn replace(a: &Path, b: &Path) -> std::io::Result<()> {
     use std::os::windows::ffi::OsStrExt;
     #[link(name="kernel32")]
     extern "system" { fn MoveFileExW(a: *const u16,b: *const u16,flags:u32)->i32; }
@@ -223,7 +223,7 @@ impl Settings {
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
-pub enum Page {#[default] Home,Saves,Settings,Renderer,Manager,ManagerGames,ManagerGame,ManagerBulk,Confirm,About,Shortcuts,Language}
+pub enum Page {#[default] Home,Saves,Settings,Renderer,Manager,ManagerGames,ManagerGame,ManagerBulk,Confirm,About,Shortcuts,Language,Screenshot,CoverConfirm}
 
 pub const SHORTCUT_TABS:[&str;3]=["游戏中","菜单操作","按键编辑"];
 // Each row gives one goal, the exact input, and its context or result.
@@ -261,7 +261,7 @@ pub const BACKGROUND:[(&str,&str,&str);3]=[
     ("感谢开源社区，也感谢你", "感谢 Ruffle、aweigit/ruffle-miyooflip 和 Leaf / Jawaka 的开发者。", "也感谢每一位尝试、测试和反馈的玩家。祝你玩得开心！"),
 ];
 #[derive(Clone,Debug)]
-pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,RefreshGames,Renderer(super::graphics::Backend),Clear(usize),Language(super::i18n::Language),Quit}
+pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,RefreshGames,Renderer(super::graphics::Backend),Clear(usize),Language(super::i18n::Language),ScreenshotCover(bool),ScreenshotPhoto,Quit}
 pub use super::data_manager::Entry;
 pub const MANAGER_VISIBLE_ROWS:usize=7;
 // Clear is reversible: rename into a dated archive outside active data.
@@ -285,6 +285,7 @@ pub struct Ui {
     pub actual_renderer:super::graphics::Backend,
     pub renderer_failed:bool,
     pub language:super::i18n::Language,
+    pub cover_path:String,
 }
 impl Ui {
     pub fn manager_game(&self)->Option<&Entry>{self.games.get(self.game_index)}
@@ -304,9 +305,12 @@ impl Ui {
     pub fn manager_visible_start(&self)->usize {self.selected/MANAGER_VISIBLE_ROWS*MANAGER_VISIBLE_ROWS}
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}if page==Page::Language{self.selected=usize::from(self.language==super::i18n::Language::English);}}
     pub fn heading(&self)->String{match self.page{
+        Page::Screenshot=>t("截图").into(),Page::CoverConfirm=>t("覆盖封面？").into(),
         Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::ManagerGames|Page::ManagerGame=>t("游戏数据").into(),Page::ManagerBulk=>t("批量清理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("操作说明").into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
+        Page::Screenshot=>vec![t("截图作为封面").into(),t("保存普通照片").into(),t("返回").into()],
+        Page::CoverConfirm=>vec![t("取消").into(),t("覆盖封面").into()],
         Page::Language=>super::i18n::Language::ALL.iter().map(|language| format!("{}{}",language.label(),if *language==self.language{"  ✓"}else{""})).chain(std::iter::once(t("返回").into())).collect(),
         Page::Home=>vec![], Page::Saves=>(0..SAVE_SLOTS).map(|i|crate::tr!("存档 {}{}    {}", "Slot {}{}    {}",i+1,if self.started&&i==self.active {t(" · 当前")}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{t("返回").into()}else{t("返回 Leaf").into()})).collect(),
         Page::Settings=>self.settings.rows(),
@@ -333,6 +337,7 @@ impl Ui {
             Nav::Up=>self.selected=(self.selected+count-1)%count,
             Nav::Down=>self.selected=(self.selected+1)%count,
             Nav::B=>{if self.page==Page::ManagerGames{self.open(Page::Manager);}
+                else if self.page==Page::CoverConfirm{self.open(Page::Screenshot);}
                 else if self.page==Page::ManagerGame{self.open_games();}
                 else if self.page==Page::ManagerBulk{self.open(Page::Manager);self.selected=1;}
                 else if self.page==Page::Language{self.open(if self.app{Page::Manager}else{Page::Home});if self.app{self.selected=2;}}
@@ -351,6 +356,8 @@ impl Ui {
                 self.pending=20+self.selected;self.open(Page::Confirm);
             },
             Nav::A=>match self.page{
+                Page::Screenshot=>match self.selected {0=>return Command::ScreenshotCover(false),1=>return Command::ScreenshotPhoto,_=>self.open(Page::Home)},
+                Page::CoverConfirm=>{if self.selected==1{return Command::ScreenshotCover(true);}self.open(Page::Screenshot);},
                 Page::Language=>{if let Some(language)=super::i18n::Language::ALL.get(self.selected){return Command::Language(*language);}self.open(if self.app{Page::Manager}else{Page::Home});if self.app{self.selected=2;}},
                 Page::Saves=>{if self.selected==SAVE_SLOTS {if self.started{self.open(Page::Home)}else{return Command::Quit;}}
                     else if self.slots[self.selected].broken {self.message=t("此槽位损坏；请先在数据管理中清理").into();}
@@ -389,6 +396,15 @@ impl Ui {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn screenshot_confirmation_defaults_to_cancel_and_returns_to_screenshot() {
+        use super::super::controls::Nav;
+        let mut ui=Ui{started:true,..Ui::default()};ui.open(Page::Screenshot);
+        assert!(matches!(ui.nav(Nav::A),Command::ScreenshotCover(false)));
+        ui.open(Page::CoverConfirm);assert_eq!(ui.selected,0);assert!(matches!(ui.nav(Nav::A),Command::None));assert_eq!(ui.page,Page::Screenshot);
+        ui.open(Page::CoverConfirm);ui.nav(Nav::Down);assert!(matches!(ui.nav(Nav::A),Command::ScreenshotCover(true)));
+        ui.nav(Nav::B);assert_eq!(ui.page,Page::Screenshot);ui.nav(Nav::Down);assert!(matches!(ui.nav(Nav::A),Command::ScreenshotPhoto));
+        ui.nav(Nav::B);assert_eq!(ui.page,Page::Home);
+    }
     fn progress()->Progress {let root=std::env::temp_dir().join(format!("ruffle-progress-{}",unique()));Progress::new(root,b"fixture","测试游戏".into(),"1234".into(),"/mnt/sdcard/Roms/flash/game.swf".into())}
     #[test] fn profiles_survive_restart_are_isolated_and_move_with_rom(){
         let mut p=progress();p.register().unwrap();

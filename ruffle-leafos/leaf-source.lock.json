@@ -2,22 +2,22 @@
   "upstream_repository": "https://github.com/aweigit/ruffle-miyooflip",
   "upstream_commit": "3bc39c5e0fdbc9fcde92681706395f6ef70f991b",
   "upstream_cargo_lock_sha256": "c0df2d92702e187a07dd469f7ea58cde731c18ee1941fa8b35d56a4439736404",
-  "leaf_cargo_lock_sha256": "a69ee35d4bd778e439f74d2fd88de61a326110ba778b2cc405f6789292d4b16c",
+  "leaf_cargo_lock_sha256": "89947697e7bdddf521e34a9989d186d463037a96308a77c989b7475476a98470",
   "relationship": "Leaf frontend derived from the pinned public base; does not reproduce all original leaf-12 private patches.",
   "leaf_files_sha256": {
-    "Cargo.lock": "a69ee35d4bd778e439f74d2fd88de61a326110ba778b2cc405f6789292d4b16c",
+    "Cargo.lock": "89947697e7bdddf521e34a9989d186d463037a96308a77c989b7475476a98470",
     "core/src/player.rs": "b3dfbc72dfe5f971665e417f9b9263e784e3a96b4b4899d2196c6b7e131054d6",
-    "sdl2test-rocknix/Cargo.toml": "056a27b8788d0112f03df1708abecc76ba5765f2f6f6d705c506f239894e1eae",
+    "sdl2test-rocknix/Cargo.toml": "b549ec75972fc01b69bbf79e0619a117b39dd52d8b61637aab1d27e6c43793be",
     "sdl2test-rocknix/src/controls.rs": "b63e02073e91d3ae580fc593baa31f142b5abeff05351d3e51be509b1910fc74",
     "sdl2test-rocknix/src/cursor.rs": "7476fa43e71e59881f77145a885c68ecee6fc9dbdd06c23a58848a8982806f8a",
-    "sdl2test-rocknix/src/experience.rs": "080d5ce41ef91dad15a8a2b8d053824dc08041ef4c9e7e40a906fa092fed8d52",
+    "sdl2test-rocknix/src/experience.rs": "13a4610e2183aae6550600852377c2de04aa0ef7ca0e9c5aaea346250ba616f8",
     "sdl2test-rocknix/src/gl_backend.rs": "f696408f2e2b513a7dd7f6a9184666bbfe24f0731d3d9b5373d6cd2b41ad3342",
     "sdl2test-rocknix/src/keycodes.rs": "10c3367cb9c9431b86c42b590163b41593a0d514e41d289ede86451a198a9705",
-    "sdl2test-rocknix/src/leaf.rs": "09aa05571e59575483866b05dbb64c73d893434fc94b9733cd66abcf392c1068",
+    "sdl2test-rocknix/src/leaf.rs": "5f3ff11fd73fe4a6033bab4fc541b83a05417a56a55f0299ddc6ee9714a35d91",
     "sdl2test-rocknix/src/main.rs": "e6b71ae097eb2c9f102e6676904f72544e7e7e07ed5b9e92844d0792828dd2f8",
-    "sdl2test-rocknix/src/pause_menu.rs": "b67404bcfe67a631988baf149cc3fb63ac063b07966595c6f54449065ea73497",
+    "sdl2test-rocknix/src/pause_menu.rs": "1422679c418b6846d562f910b34a1847591447438be3830a1b5dfb2751146a08",
     "sdl2test-rocknix/src/profiles.rs": "abea2df80a02d5d267fa9ac10354637a76491d7d673207a23cd2c3b227c2b1c5",
-    "sdl2test-rocknix/src/session.rs": "6294be2e31e4023c11a8a77760f1cccdbb1587369bee799fd5c8fb439b31a09d",
+    "sdl2test-rocknix/src/session.rs": "ef65c20151de798e05f3ce7e1515b88e65f8d44dc50ce6ab9acfb15626938e2b",
     "sdl2test-rocknix/src/shortcuts.rs": "670b69702e17ab5763b58b12593bf864790b4b12e3439f825f34978232253a86",
     "sdl2test-rocknix/src/turbo.rs": "a77673e4c9a2f4f541097e7cdba64ce081313291f5c42bbc99b9987a16cacb9a",
     "sdl2test-rocknix/src/system_volume.rs": "e670da4423cea4c2bcfe37413b0417d91e1c48921ce0774d2a9d9d6d993c1c07",
@@ -37,7 +37,7 @@
     "core/src/display_object/movie_clip.rs": "adeeeedc141b2cf53875d322ce217be236a76f37192f490ce87b26828ca76723",
     "render/wgpu/tests/bitmap_lifetime.rs": "400069796f754d1ca8daaa517691bee28014062310c38ab53b28528de0eb9102",
     "sdl2test-rocknix/src/i18n.rs": "9d3570e5e4e94a4e96fd636f74ab5eb41ae69173885117cb4d635eb3dbaf2ad2",
-    "sdl2test-rocknix/src/translations.rs": "62a9cafcbf962d54055146c1103185e90f4b823341ba7d71963dfe9a180c605c",
+    "sdl2test-rocknix/src/translations.rs": "578832db1db91eacfe223307eb61bf011f4a1c6d4b5607c3a537657cc14f6347",
     "sdl2test-rocknix/src/ui_backend.rs": "3f9f98f417469abaf44baf26d8f238f840e1f668ce604e39a7c7ef11002e0803",
     "sdl2test-rocknix/src/virtual_keyboard.rs": "ec53a5301b2b287d12ee23f351430f49aa0e21cdb02649d555ddab82a1651b4f",
     "sdl2test-rocknix/src/keyboard_test.rs": "426d938e90d2e293ac5234ad528cf408e6ede4e3666996c2ba98940e8f48d7da",
@@ -48,12 +48,13 @@
     "render/src/lib.rs": "5c8712d33435d5e08639b64902f6efa8200fe6fbe5af7bb76992c11e09a3a181",
     "sdl2test-rocknix/src/resource_cache.rs": "514816a9cb10c175b2d23c5610822b237afb72bbc514d63fec63026052de0e4f",
     "sdl2test-rocknix/src/idle_pool.rs": "07b9278495ec187b9d0648a3246c47d9ad49adcc5984af2699f3ddc552f56b53",
-    "sdl2test-rocknix/src/data_manager.rs": "7fdc0b56d98724afc3374cc7fab72d23b4d396bfbcff3de8a13ee1a652fc80aa"
+    "sdl2test-rocknix/src/data_manager.rs": "7fdc0b56d98724afc3374cc7fab72d23b4d396bfbcff3de8a13ee1a652fc80aa",
+    "sdl2test-rocknix/src/screenshot.rs": "0d1f7bf75f61ac1da1507326ce4855bca4a7cff0d1d270ddb7192cdba4e22de1"
   },
   "verified_leaf": {
     "version": "0.13.0",
     "launcher_commit": "915c48595fbd20ec56a9d23b2fc1f39a4f6f8803",
     "menu_contract": "Built-in evdev injection through Leaf virtual pad and SDL tested; long-hold escape remains pending"
   },
-  "frontend_version": "0.8.1"
+  "frontend_version": "0.8.2"
 }

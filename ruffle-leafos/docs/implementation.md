@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.8.1 开发预览**，整理于 2026-10-31。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.8.2 开发预览**，整理于 2026-10-31。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 命名与兼容标识
 
@@ -171,6 +171,16 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 对已检查主电影及所有外部调用者的 AVM2 素材，可显式增加 `--avm2-private-bitmaps`，仅改写未导出、未直接放置的内部填充位图，保留 ABC、SymbolClass 和时间轴标签。工具拒绝 ABC 中含 `readGraphicsData` / `GraphicsBitmapFill` 的文件，因为这些接口可暴露或修改原本私有的位图。这个局部检查不能识别外部代码或动态拼接的名字，开关不能替代调用者审查、逐像素还原、形状补偿验证及实机检查。报告中的 `avm2_private_bitmaps` 表示输入是否为已显式允许的 AVM2；默认拒绝 AVM2 的保护保留。具体处理和范围见[3.3 素材优化记录](validation/bvn33-assets-20261028.md)。
 
+## 游戏截图与 Leaf 封面
+
+`session::screenshot` 负责封面解析、卡选择、裁剪边界和文件写入，保持无 SDL/GL 依赖，由 `test_session.py` 覆盖。`experience::Page::Screenshot/CoverConfirm` 与主菜单截图入口负责交互，覆盖默认取消。`leaf::Frontend` 只排队截图请求；暂停重绘在 `Player::render()` 后、`PauseMenu::draw()` 前执行单次同步读回，两种渲染接口均从最终 GLES 默认 framebuffer 读取，正常游戏帧不增加读回。
+
+裁剪使用 Ruffle 当前 Stage 的 `view_matrix()` 与 `movie_size()`，以屏幕为界向内取整。保留玩家当前缩放及可见内容，不临时设置 viewport，不触发 resize 或 tick；不承诺 SWF 原始分辨率。`PauseMenu::game_png()` 保存并恢复读 framebuffer、read buffer、PBO 和全部二维 pack 参数，翻转 OpenGL 自下而上的行序，输出不透明 RGBA PNG；直接依赖已有锁定的 `png 0.18.1`，不增加新版本依赖。
+
+封面规则核对本地 Leaf/Jawaka `internal/discovery/art_path.c`：按 ROM 存储源优先 `Images/flash/<stem>`，回退 `Roms/flash/Imgs/<stem>`；PNG、JPG、JPEG 按顺序选择，扩展名大小写按源实现排序，文件名大小写遵循存储卡文件系统。嵌套 ROM 路径不映射到嵌套 Images 目录；重复 `.swf.swf` 与 Leaf 一样再去一次内容扩展名。写入目标始终为 canonical PNG；存在 PNG 则沿用其实际扩展名拼写，存在其他格式则确认后添加高优先级 PNG，保留旧图。覆盖使用同目录独占临时文件、`sync_all`、原子替换及目录同步；未确认不会写已有封面。返回 Leaf 后由用户刷新游戏列表更新索引与封面缓存。
+
+普通照片使用 `SDCARD_PATH`、`SDCARD_PATHS` 和 `UMRK_SECONDARY_SDCARD_PATH`（Pocket1 默认 `/media/sdcard1`）。候选先 canonicalize，结合 Linux `/proc/self/mountinfo` 验证副卡挂载点及设备号与系统卡不同；不依据空目录或 `/mnt/external_sd` 名字猜测。没有独立已挂载副卡时使用系统卡，有副卡但写失败时明确报错。照片位于所选卡 `Pictures/Ruffle Flash/`，用设备 `localtime_r` 时间及 `create_new` 防重名序号；失败清理当前未写完照片，不覆盖既有照片。满卡/热拔卡完整故障矩阵与真实双 TF 组合仍需独立验收。
+
 ## 构建环境与命令
 
 在本工程根目录执行：
@@ -183,7 +193,7 @@ python -m unittest discover -s scripts -p test_language.py -v
 python scripts/test_renderer.py
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.1-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.2-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。

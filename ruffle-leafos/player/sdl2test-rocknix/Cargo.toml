@@ -1,11 +1,12 @@
 [package]
 name = "sdl2test-rocknix"
-version = "0.8.1"
+version = "0.8.2"
 edition = "2021"
 
 [dependencies]
 sdl2 = { version = "0.38.0", features = ["raw-window-handle"] }
 glow = "0.14"
+png = "0.18.1"
 wgpu = { workspace = true, features = ["vulkan", "naga-ir"] }
 ash = "=0.38.0"
 libloading = "=0.8.9"

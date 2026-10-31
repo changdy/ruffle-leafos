@@ -128,6 +128,20 @@ fn profile_previews(keymap: &keycodes::KeyMap) -> Vec<[String; 4]> {
 
 struct KeyboardTarget { id: usize, text: String, selection: (usize,usize), password: bool, multiline: bool }
 
+enum Screenshot { Cover(session::screenshot::Cover,bool), Photo }
+
+fn screenshot_timestamp() -> String {
+    #[cfg(unix)] unsafe {
+        let now=libc::time(std::ptr::null_mut());
+        let mut local:libc::tm=std::mem::zeroed();let mut text=[0u8;32];
+        if !libc::localtime_r(&now,&mut local).is_null() {
+            let len=libc::strftime(text.as_mut_ptr().cast(),text.len(),c"%Y%m%d-%H%M%S".as_ptr(),&local);
+            if len>0 {return String::from_utf8_lossy(&text[..len]).into_owned();}
+        }
+    }
+    experience::now().to_string()
+}
+
 struct Frontend {
     keyboard_request: virtual_keyboard::Request,
     keyboard_seen: u64,
@@ -136,6 +150,9 @@ struct Frontend {
     settings_path: PathBuf,
     language_path: PathBuf,
     movie_size: (u32,u32),
+    movie_path: PathBuf,
+    screenshot: Option<Screenshot>,
+    cover: Option<session::screenshot::Cover>,
     display_size: (u32,u32),
     restart_slot: Option<usize>,
     restart_renderer: Option<GraphicsBackend>,
@@ -162,6 +179,42 @@ struct Frontend {
 }
 
 impl Frontend {
+    unsafe fn save_screenshot(&mut self, menu:&PauseMenu) {
+        let Some(request)=self.screenshot.take() else {return};
+        let result=(|| -> Result<PathBuf,String> {
+            let stage=self.active.player.lock().unwrap().mutate_with_update_context(|context| {
+                let stage=context.stage;let m=stage.view_matrix();let (w,h)=stage.movie_size();
+                (m.tx.to_pixels(),m.ty.to_pixels(),f64::from(m.a)*w as f64,f64::from(m.d)*h as f64)
+            });
+            let rect=session::screenshot::crop(self.display_size,stage).ok_or(t("没有可截取的游戏画面"))?;
+            let bytes=menu.game_png(self.display_size,rect)?;
+            let path=match &request {
+                Screenshot::Cover(cover,overwrite)=>{
+                    // Recheck before writing, including a newly added JPG/legacy cover.
+                    let current=session::screenshot::cover(&self.movie_path,&session::screenshot::cards()).map_err(|e|e.to_string())?;
+                    if !overwrite && current.existing.is_some() {self.cover=Some(current.clone());self.state.experience.cover_path=current.existing.unwrap().display().to_string();self.state.experience.open(ExperiencePage::CoverConfirm);return Err(t("已有封面，请确认是否覆盖").into());}
+                    session::screenshot::save_cover(cover,*overwrite,&bytes).map_err(|e|e.to_string())?;
+                    cover.target.clone()
+                },
+                Screenshot::Photo=>{
+                    let mounts=std::fs::read_to_string("/proc/self/mountinfo").map_err(|e|e.to_string())?;
+                    let root=session::screenshot::photo_root(&session::screenshot::cards(),&mounts).map_err(|e|e.to_string())?;
+                    session::screenshot::save_photo(&root,&self.state.experience.title,&screenshot_timestamp(),&bytes).map_err(|e|e.to_string())?
+                },
+            };
+            println!("leaf-screenshot saved={} width={} height={} overlays=false",path.display(),rect.2,rect.3);
+            Ok(path)
+        })();
+        match result {
+            Ok(path)=>{
+                self.state.experience.open(ExperiencePage::Screenshot);
+                self.state.experience.message=path.display().to_string();
+                self.toast(if matches!(request,Screenshot::Cover(..)){t("封面已保存，请在 Leaf 刷新游戏列表").into()}else{t("照片已保存").into()});
+            },
+            Err(error)=>{println!("leaf-screenshot failed={error}");self.state.experience.message=crate::tr!("截图失败：{error}","Screenshot failed: {error}");self.toast(self.state.experience.message.clone());},
+        }
+    }
+
     fn focused_text(&self) -> Option<KeyboardTarget> {
         self.active.player.lock().unwrap().mutate_with_update_context(|context| {
             let field=context.focus_tracker.get_as_edit_text()?;
@@ -274,6 +327,15 @@ impl Frontend {
         let result=(|| -> Result<(),String>{
             match command {
                 ExperienceCommand::None=>{},
+                ExperienceCommand::ScreenshotPhoto=>{self.screenshot=Some(Screenshot::Photo);},
+                ExperienceCommand::ScreenshotCover(overwrite)=>{
+                    let cover=if overwrite {self.cover.take().ok_or(t("请重新选择截图作为封面"))?}
+                        else {session::screenshot::cover(&self.movie_path,&session::screenshot::cards()).map_err(|e|e.to_string())?};
+                    if !overwrite && cover.existing.is_some() {
+                        self.state.experience.cover_path=cover.existing.as_ref().unwrap().display().to_string();
+                        self.cover=Some(cover);self.state.experience.open(ExperiencePage::CoverConfirm);
+                    } else {self.screenshot=Some(Screenshot::Cover(cover,overwrite));}
+                },
                 ExperienceCommand::Language(language)=>{
                     session::i18n::select(&self.language_path,language)?;
                     self.state.experience.language=language;
@@ -493,6 +555,7 @@ impl Frontend {
             MenuResult::OpenShortcuts => {self.state.experience.open(ExperiencePage::Shortcuts);},
             MenuResult::OpenAbout => {self.state.experience.open(ExperiencePage::About);},
             MenuResult::OpenLanguage => {self.state.experience.open(ExperiencePage::Language);},
+            MenuResult::OpenScreenshot => {self.cover=None;self.state.experience.open(ExperiencePage::Screenshot);},
             MenuResult::None => {}
         }
         self.redraw = true;
@@ -900,7 +963,7 @@ pub async fn run() -> Result<(), String> {
     let swap = std::env::var("RUFFLE_SWAP_AB").map(|s| s == "1").unwrap_or(true);
     let mut front = Frontend {
         keyboard_request,keyboard_seen:0,keyboard_target:None,
-        progress,settings_path,movie_size,display_size:size,restart_slot:None,restart_renderer:None,
+        progress,settings_path,movie_size,movie_path:swf_path.clone(),screenshot:None,cover:None,display_size:size,restart_slot:None,restart_renderer:None,
         menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), system_volume:session::system_volume::Monitor::new(), blocked:Default::default(),
         language_path,
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,
@@ -1222,6 +1285,7 @@ pub async fn run() -> Result<(), String> {
             unsafe {
                 if front.state.paused {
                     if front.state.experience.started&&!front.state.experience.app {front.active.player.lock().unwrap().render();}
+                    front.save_screenshot(&menu);
                     menu.draw(size.0, size.1, &front.state, None);
                 } else {
                     let mut p = front.active.player.lock().unwrap();

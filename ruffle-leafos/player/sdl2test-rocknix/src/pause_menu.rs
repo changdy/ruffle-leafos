@@ -222,12 +222,12 @@ impl PauseMenu {
         } else {
         self.leaf_background(&state.experience.title,if state.experience.started{t("Flash · 已暂停")}else{"Flash"},t("继续游戏"),FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
-        let rows=[t("继续"),t("按键设置"),t("鼠标设置"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("操作说明"),t("关于"),t("语言"),t("保存并退出")];
+        let rows=[t("继续"),t("按键设置"),t("鼠标设置"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("操作说明"),t("关于"),t("语言"),t("截图"),t("保存并退出")];
         let details=[String::new(),crate::tr!("◀ 方案 {} ▶", "◀ Profile {} ▶",slot+1),
-            String::new(),t("游戏内进度").into(),crate::tr!("存档 {} / 5", "Slot {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new(),String::new()];
+            String::new(),t("游戏内进度").into(),crate::tr!("存档 {} / 5", "Slot {} / 5",state.experience.active+1),String::new(),String::new(),String::new(),String::new(),String::new(),String::new()];
         for (i,line) in rows.iter().enumerate() {
-            self.leaf_row(i+1,line,137.+i as f32*46.,44.,i==state.selected);
-            if !details[i].is_empty(){self.live_label_width(30+i,&details[i],31.,600.,141.+i as f32*46.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
+            self.leaf_row(i+1,line,137.+i as f32*41.,39.,i==state.selected);
+            if !details[i].is_empty(){self.live_label_width(30+i,&details[i],29.,600.,140.+i as f32*41.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
         let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),_=>t("操作方法见「操作说明」")};
         self.live_label_width(16,hint,20.,23.,606.,910.,false,self.palette[4]);
@@ -371,6 +371,21 @@ impl PauseMenu {
         let u=&state.experience;
         if u.page==Page::About {self.draw_about();return;}
         if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab);return;}
+        if matches!(u.page,Page::Screenshot|Page::CoverConfirm) {
+            let confirm=u.page==Page::CoverConfirm;
+            self.leaf_background(&u.heading(),t("仅保存 Flash 游戏画面"),t("返回"),FooterNavigation::List);
+            if confirm {
+                self.live_label_width(19,t("已有封面，是否用当前截图替换？"),32.,23.,158.,910.,false,self.palette[1]);
+                self.live_label_width(20,&u.cover_path,23.,23.,222.,910.,false,self.palette[4]);
+            }
+            for (i,row) in u.rows().iter().enumerate(){self.leaf_row(i+1,row,if confirm{320.+i as f32*75.}else{155.+i as f32*65.},55.,i==u.selected);}
+            if !confirm {
+                self.live_label_width(19,t("不含菜单、播放器光标、帧率与系统提示。"),24.,23.,402.,910.,false,self.palette[4]);
+                self.live_label_width(20,t("普通照片优先存入副卡 Pictures/Ruffle Flash。"),24.,23.,450.,910.,false,self.palette[4]);
+            }
+            if !u.message.is_empty(){self.live_label_width(23,&u.message,22.,23.,580.,910.,false,self.palette[1]);}
+            return;
+        }
         let subtitle=match u.page{
             Page::Saves=>if u.selected>=u.slots.len(){if u.started{t("A 返回")}else{t("A 返回 Leaf")}}
                 else if u.slots[u.selected].broken{if u.started{t("存档损坏，无法读取；Y 用当前进度覆盖")}else{t("此槽位损坏；请先在数据管理中清理")}}
@@ -609,7 +624,48 @@ impl PauseMenu {
         self.rounded_corners(rect,radius,self.palette[if selected{2}else{5}],corners);
     }
 
-    /// Diagnostic-only framebuffer readback, never called during normal play.
+    /// Read a clean game frame before any frontend overlay is drawn. Preserve
+    /// every pack parameter: a renderer's PBO/stride cannot affect this read.
+    pub unsafe fn game_png(&self, screen:(u32,u32), rect:(u32,u32,u32,u32)) -> Result<Vec<u8>,String> {
+        let (x,y,width,height)=rect;
+        let len=(width as usize).checked_mul(height as usize).and_then(|n|n.checked_mul(4)).filter(|n|*n<=64*1024*1024).ok_or("Screenshot is too large")?;
+        let mut pixels=Vec::new();pixels.try_reserve_exact(len).map_err(|e|e.to_string())?;pixels.resize(len,0);
+        let gl=&self.gl;
+        let framebuffer=gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
+        let buffer=gl.get_parameter_buffer(glow::PIXEL_PACK_BUFFER_BINDING);
+        let params=[glow::PACK_ALIGNMENT,glow::PACK_ROW_LENGTH,glow::PACK_SKIP_PIXELS,glow::PACK_SKIP_ROWS];
+        let values=params.map(|p|gl.get_parameter_i32(p));
+        gl.bind_framebuffer(glow::READ_FRAMEBUFFER,None);
+        let read_buffer=gl.get_parameter_i32(glow::READ_BUFFER) as u32;
+        gl.read_buffer(glow::BACK);
+        gl.bind_buffer(glow::PIXEL_PACK_BUFFER,None);
+        for (p,v) in params.into_iter().zip([1,0,0,0]) {gl.pixel_store_i32(p,v);}
+        // Consume a previous renderer error so it isn't attributed to readback.
+        for _ in 0..16 {if gl.get_error()==glow::NO_ERROR {break;}}
+        gl.read_pixels(x as i32,(screen.1-y-height) as i32,width as i32,height as i32,glow::RGBA,glow::UNSIGNED_BYTE,glow::PixelPackData::Slice(&mut pixels));
+        let error=gl.get_error();
+        gl.read_buffer(read_buffer);
+        gl.bind_framebuffer(glow::READ_FRAMEBUFFER,framebuffer);
+        gl.bind_buffer(glow::PIXEL_PACK_BUFFER,buffer);
+        for (p,v) in params.into_iter().zip(values) {gl.pixel_store_i32(p,v);}
+        if error!=glow::NO_ERROR {return Err(format!("Screenshot readback failed: GL {error:#x}"));}
+        let stride=width as usize*4;
+        for row in 0..height as usize/2 {
+            let (top,bottom)=pixels.split_at_mut((height as usize-1-row)*stride);
+            top[row*stride..(row+1)*stride].swap_with_slice(&mut bottom[..stride]);
+        }
+        // Photos are opaque; retain the Flash-rendered RGB background.
+        for pixel in pixels.chunks_exact_mut(4) {pixel[3]=255;}
+        let mut bytes=Vec::new();
+        let mut encoder=png::Encoder::new(&mut bytes,width,height);
+        encoder.set_color(png::ColorType::Rgba);encoder.set_depth(png::BitDepth::Eight);
+        let mut writer=encoder.write_header().map_err(|e|e.to_string())?;
+        writer.write_image_data(&pixels).map_err(|e|e.to_string())?;
+        writer.finish().map_err(|e|e.to_string())?;
+        Ok(bytes)
+    }
+
+    /// Diagnostic-only full framebuffer readback, including frontend overlays.
     pub unsafe fn capture(&self, path: &Path, width: u32, height: u32) -> Result<(), String> {
         let gl = &self.gl;
         let framebuffer = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);

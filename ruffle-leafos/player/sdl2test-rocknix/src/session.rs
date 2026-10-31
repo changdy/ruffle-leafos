@@ -26,6 +26,8 @@ pub mod i18n;
 pub mod virtual_keyboard;
 #[path = "resource_cache.rs"]
 pub mod resource_cache;
+#[path = "screenshot.rs"]
+pub mod screenshot;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Source {
@@ -157,7 +159,7 @@ impl MouseSpeed {
     }
 }
 
-pub const MENU_ROWS: usize = 10;
+pub const MENU_ROWS: usize = 11;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MenuResult {
@@ -175,6 +177,7 @@ pub enum MenuResult {
     OpenShortcuts,
     OpenAbout,
     OpenLanguage,
+    OpenScreenshot,
     SaveProgress,
 }
 
@@ -334,6 +337,7 @@ impl Session {
             6 => MenuResult::OpenShortcuts,
             7 => MenuResult::OpenAbout,
             8 => MenuResult::OpenLanguage,
+            9 => MenuResult::OpenScreenshot,
             _ => MenuResult::Quit,
         }
     }
@@ -586,6 +590,7 @@ mod tests {
         s.menu_move(4);assert_eq!(s.accept(),MenuResult::OpenShortcuts);
         s.menu_move(1);assert_eq!(s.accept(),MenuResult::OpenAbout);
         s.menu_move(1);assert_eq!(s.accept(),MenuResult::OpenLanguage);
+        s.menu_move(1);assert_eq!(s.accept(),MenuResult::OpenScreenshot);
         s.menu_move(1);assert_eq!(s.accept(),MenuResult::Quit);
         assert_eq!(MouseSpeed::Slow.next(-1), MouseSpeed::Slow);
         assert_eq!(MouseSpeed::Fast.next(1), MouseSpeed::Fast);
