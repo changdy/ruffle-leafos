@@ -11,6 +11,8 @@ pub fn english(text: &str) -> Option<&'static str> {
         "不含菜单、播放器光标、帧率与系统提示。" => "Excludes menus, player cursor, FPS and system overlays.",
         "普通照片优先存入副卡 Pictures/Ruffle Flash。" => "Photos prefer the second card: Pictures/Ruffle Flash.",
         "没有可截取的游戏画面" => "No game area to capture",
+        "无法读取可用内存，暂不截图" => "Cannot check available memory; screenshot skipped",
+        "内存不足，暂不截图，请稍后重试" => "Not enough memory for a screenshot; try again later",
         "已有封面，请确认是否覆盖" => "A cover exists; confirm replacement",
         "封面已保存，请在 Leaf 刷新游戏列表" => "Cover saved; refresh the Leaf game list",
         "照片已保存" => "Photo saved",

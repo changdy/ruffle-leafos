@@ -185,9 +185,11 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 `session::screenshot` 负责封面解析、卡选择、裁剪边界和文件写入，保持无 SDL/GL 依赖，由 `test_session.py` 覆盖。`experience::Page::Screenshot/CoverConfirm` 与主菜单截图入口负责交互，覆盖默认取消。`leaf::Frontend` 只排队截图请求；暂停重绘在 `Player::render()` 后、`PauseMenu::draw()` 前执行单次同步读回，两种渲染接口均从最终 GLES 默认 framebuffer 读取，正常游戏帧不增加读回。
 
-裁剪使用 Ruffle 当前 Stage 的 `view_matrix()` 与 `movie_size()`，以屏幕为界向内取整。保留玩家当前缩放及可见内容，不临时设置 viewport，不触发 resize 或 tick；不承诺 SWF 原始分辨率。`PauseMenu::game_png()` 保存并恢复读 framebuffer、read buffer、PBO 和全部二维 pack 参数，翻转 OpenGL 自下而上的行序，输出不透明 RGBA PNG；直接依赖已有锁定的 `png 0.18.1`，不增加新版本依赖。
+裁剪使用 Ruffle 当前 Stage 的 `view_matrix()` 与 `movie_size()`，以屏幕为界向内取整。保留玩家当前缩放及可见内容，不临时设置 viewport，不触发 resize 或 tick；不承诺 SWF 原始分辨率。`PauseMenu::game_png()` 保存并恢复读 framebuffer、read buffer、PBO 和全部二维 pack 参数，单次读回裁剪后的 RGBA（最多 64 MiB，Pocket1 全屏为 2,764,800 B）。`screenshot_png::write_rgb()` 反向逐行读取该缓冲，每次只转换一行 RGB，以 `png 0.18.1` 的 32 KiB `stream_writer` 直接写文件；不再构建内部整图压缩 `Vec` 和外层 PNG `Vec`，也不另建完整 RGB 副本。输出是无 alpha 的不透明 RGB PNG，保留渲染后的 RGB 背景；读回缓冲和 RGB 行采用可失败的预留，PNG 库自身的小块分配仍可能不可恢复。
 
-封面规则核对本地 Leaf/Jawaka `internal/discovery/art_path.c`：按 ROM 存储源优先 `Images/flash/<stem>`，回退 `Roms/flash/Imgs/<stem>`；PNG、JPG、JPEG 按顺序选择，扩展名大小写按源实现排序，文件名大小写遵循存储卡文件系统。嵌套 ROM 路径不映射到嵌套 Images 目录；重复 `.swf.swf` 与 Leaf 一样再去一次内容扩展名。写入目标始终为 canonical PNG；存在 PNG 则沿用其实际扩展名拼写，存在其他格式则确认后添加高优先级 PNG，保留旧图。覆盖使用同目录独占临时文件、`sync_all`、原子替换及目录同步；未确认不会写已有封面。返回 Leaf 后由用户刷新游戏列表更新索引与封面缓存。
+截图请求在干净游戏重绘前立即刷新 128/160 MiB 内存迟滞策略；压力时退让 CPU 像素、GLES scratch/PBO 闲置池，以及上一完整游戏帧的闲置静态资源。实际重绘后再次按当前预算收集静态资源，并重新计算舞台裁剪。重绘前、读回前均检查 `MemAvailable`，要求至少为 RGBA 读回字节 + 2 MiB 编码器余量 + 32 MiB 系统余量（960×720 约 36.64 MiB）；缺失/无效计数也拒绝截图，保持暂停并提示稍后重试。该门槛是保守的准入策略，不预留物理内存，不能保证阻止其他进程、当前游戏或驱动的突发分配 OOM。
+
+封面规则核对本地 Leaf/Jawaka `internal/discovery/art_path.c`：按 ROM 存储源优先 `Images/flash/<stem>`，回退 `Roms/flash/Imgs/<stem>`；PNG、JPG、JPEG 按顺序选择，扩展名大小写按源实现排序，文件名大小写遵循存储卡文件系统。嵌套 ROM 路径不映射到嵌套 Images 目录；重复 `.swf.swf` 与 Leaf 一样再去一次内容扩展名。写入目标始终为 canonical PNG；存在 PNG 则沿用其实际扩展名拼写，存在其他格式则确认后添加高优先级 PNG，保留旧图。文件保存接口接受编码回调：先独占创建文件，再编码，避免路径错误时仍分配读回缓冲。覆盖继续使用同目录临时文件、`sync_all`、原子替换及目录同步；编码或写入失败删除当前临时文件，保留旧封面。未确认不会写已有封面。返回 Leaf 后由用户刷新游戏列表更新索引与封面缓存。
 
 普通照片使用 `SDCARD_PATH`、`SDCARD_PATHS` 和 `UMRK_SECONDARY_SDCARD_PATH`（Pocket1 默认 `/media/sdcard1`）。候选先 canonicalize，结合 Linux `/proc/self/mountinfo` 验证副卡挂载点及设备号与系统卡不同；不依据空目录或 `/mnt/external_sd` 名字猜测。没有独立已挂载副卡时使用系统卡，有副卡但写失败时明确报错。照片位于所选卡 `Pictures/Ruffle Flash/`，用设备 `localtime_r` 时间及 `create_new` 防重名序号；失败清理当前未写完照片，不覆盖既有照片。满卡/热拔卡完整故障矩阵与真实双 TF 组合仍需独立验收。
 
@@ -201,6 +203,7 @@ python scripts/build_player.py build --offline --isolated-config --tuning pocket
 python scripts/test_session.py
 python -m unittest discover -s scripts -p test_language.py -v
 python scripts/test_renderer.py
+python scripts/test_renderer.py --suite screenshot
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py
 python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuild --include-source
@@ -213,6 +216,8 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuil
 成功构建同时生成 `build/player-build.json`，记录二进制 SHA-256、Rust 版本、目标 CPU、tuning、实际 profile 与 release 参数。打包要求此记录存在且 SHA-256 与 `build/ruffle-leaf` 一致，并写入包内 `build-manifest.json` 的 `player_build`；已有旧 ELF 需先重新执行构建脚本。本地打包目前分别校验 ELF 与当前源码锁，尚未绑定构建时源码摘要；修改源码或更新来源锁后应先重建，不能仅凭两项校验通过认定现成 ELF 对应新源码。编译优化的实测方法、结果与局限见 [Pocket1 验证记录](validation/pocket1-build-20261028.md)。
 
 `test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
+
+`test_renderer.py --suite screenshot` 使用已有渲染库依赖编译前端的实际 PNG 编码模块，验证奇数高度翻转、RGB 像素还原、难压缩全屏的有界输出以及短写/满卡错误传播；没有 SDL/GPU 依赖，不构成实机渲染或完整 OOM 验收。
 
 `test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。静态资源用例可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。Rust测试框架与应用ELF的系统要求可能不同；既有测试框架需要GLIBC 2.39，仅在隔离目录通过SDK匹配的加载器、libc/libm执行，没有替换设备系统库。当前静态资源测试与隔离运行边界见[缓存验证报告](validation/resource-cache-20261030.md)。
 

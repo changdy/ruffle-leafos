@@ -260,6 +260,7 @@ struct Opt {
 
 mod session;
 mod pause_menu;
+mod screenshot_png;
 mod leaf;
 mod performance;
 

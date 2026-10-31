@@ -1,4 +1,4 @@
-"""Run renderer ownership or bitmap decoding regressions without a GPU."""
+"""Run renderer ownership, bitmap decoding, or screenshot PNG regressions without a GPU."""
 from pathlib import Path
 import argparse
 import json
@@ -7,7 +7,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--suite', choices=['ownership', 'decode'], default='ownership')
+parser.add_argument('--suite', choices=['ownership', 'decode', 'screenshot'], default='ownership')
 args = parser.parse_args()
 local = ROOT / 'workspace.local.json'
 settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
@@ -26,6 +26,7 @@ env.update(CARGO_HOME=str(cache / 'cargo-home'), CARGO_TARGET_DIR=str(build / 'c
            CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=str(linker))
 env['PATH'] = os.pathsep.join([str(rust / 'bin'), str(mingw / 'bin'), env['PATH']])
 test_target = (['-p', 'ruffle_render', '--lib'] if args.suite == 'decode'
+               else ['-p', 'ruffle_render', '--test', 'screenshot_png'] if args.suite == 'screenshot'
                else ['-p', 'ruffle_render_wgpu', '--test', 'bitmap_lifetime'])
 command = [str(rust / 'bin/cargo.exe'), 'test', '--locked', '--offline',
            '--target', 'x86_64-pc-windows-gnu', *test_target, '-j', '4',
@@ -36,10 +37,11 @@ command = [str(rust / 'bin/cargo.exe'), 'test', '--locked', '--offline',
 result = subprocess.run(command, cwd=Path(ROOT.anchor), env=env, text=True, capture_output=True)
 print(result.stdout, end='')
 print(result.stderr, end='')
-report = 'bitmap-decode-test-report.json' if args.suite == 'decode' else 'renderer-test-report.json'
+report = {'decode':'bitmap-decode-test-report.json', 'screenshot':'screenshot-test-report.json'}.get(args.suite,'renderer-test-report.json')
 (build / report).write_text(json.dumps({
     'exit_code': result.returncode, 'output': result.stdout, 'stderr': result.stderr,
     'backend': ('CPU bitmap decoding; no GPU acceptance' if args.suite == 'decode'
+                else 'CPU screenshot encoding; no GPU acceptance' if args.suite == 'screenshot'
                 else 'wgpu noop; resource ownership only, no pixel or GPU acceptance'),
 }, indent=2) + '\n', encoding='utf8')
 raise SystemExit(result.returncode)

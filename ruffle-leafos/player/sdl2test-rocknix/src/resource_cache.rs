@@ -1,6 +1,15 @@
 //! Leaf's optional idle-resource budgets, with a conservative memory fallback.
 const MIB: u64 = 1024 * 1024;
 
+pub fn available_bytes(meminfo: Option<&str>) -> Option<u64> {
+    meminfo?.lines().find_map(|line| {
+        let mut fields = line.split_whitespace();
+        if fields.next()? != "MemAvailable:" { return None; }
+        let kib = fields.next()?.parse::<u64>().ok()?;
+        (fields.next()? == "kB").then_some(kib.saturating_mul(1024))
+    })
+}
+
 pub struct CachePolicy {
     pixels: u64,
     shapes: u64,
@@ -15,12 +24,7 @@ impl CachePolicy {
     /// Missing or malformed counters disable optional retention until a valid
     /// sample is available. Hysteresis avoids repeated purge/refill near a limit.
     pub fn update(&mut self, meminfo: Option<&str>) -> bool {
-        let available = meminfo.and_then(|text| text.lines().find_map(|line| {
-            let mut fields = line.split_whitespace();
-            if fields.next()? != "MemAvailable:" { return None; }
-            let kib = fields.next()?.parse::<u64>().ok()?;
-            (fields.next()? == "kB").then_some(kib.saturating_mul(1024))
-        }));
+        let available = available_bytes(meminfo);
         let previous = self.pressure;
         match available {
             Some(bytes) if bytes < 128 * MIB => self.pressure = true,

@@ -120,6 +120,8 @@ When you reach a frame you want to keep, tap **M → Screenshot**, then choose:
 
 Screenshots capture the visible game area, trimming borders outside the stage and excluding player menus, cursor and FPS. Text and cursors drawn by the game itself remain. Images use the current screen rendering size, rather than a fresh render at the SWF’s original resolution. You remain in the pause menu after capture.
 
+If available memory is too low or cannot be checked, capture reports a failure and stays paused. You can retry later; an existing cover is preserved when capture is refused.
+
 | Five progress slots | Screenshots and covers |
 | --- | --- |
 | ![Native progress list with five slots](docs/images/progress-slots-en.png) | ![Screenshot menu with cover and photo options](docs/images/screenshot-en.png) |

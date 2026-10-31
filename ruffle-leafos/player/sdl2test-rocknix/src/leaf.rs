@@ -179,27 +179,66 @@ struct Frontend {
 }
 
 impl Frontend {
-    unsafe fn save_screenshot(&mut self, menu:&PauseMenu) {
+    fn screenshot_rect(&self) -> Option<(u32,u32,u32,u32)> {
+        let stage=self.active.player.lock().unwrap().mutate_with_update_context(|context| {
+            let stage=context.stage;let m=stage.view_matrix();let (w,h)=stage.movie_size();
+            (m.tx.to_pixels(),m.ty.to_pixels(),f64::from(m.a)*w as f64,f64::from(m.d)*h as f64)
+        });
+        session::screenshot::crop(self.display_size,stage)
+    }
+
+    fn check_screenshot_memory(width:u32,height:u32) -> Result<(),String> {
+        let memory=std::fs::read_to_string("/proc/meminfo").ok();
+        let available=session::resource_cache::available_bytes(memory.as_deref())
+            .ok_or(t("无法读取可用内存，暂不截图"))?;
+        if !session::screenshot::memory_sufficient(width,height,Some(available)) {
+            return Err(t("内存不足，暂不截图，请稍后重试").into());
+        }
+        Ok(())
+    }
+
+    unsafe fn save_screenshot(&mut self, menu:&PauseMenu, cache_policy:&mut session::resource_cache::CachePolicy) {
         let Some(request)=self.screenshot.take() else {return};
         let result=(|| -> Result<PathBuf,String> {
-            let stage=self.active.player.lock().unwrap().mutate_with_update_context(|context| {
-                let stage=context.stage;let m=stage.view_matrix();let (w,h)=stage.movie_size();
-                (m.tx.to_pixels(),m.ty.to_pixels(),f64::from(m.a)*w as f64,f64::from(m.d)*h as f64)
-            });
-            let rect=session::screenshot::crop(self.display_size,stage).ok_or(t("没有可截取的游戏画面"))?;
-            let bytes=menu.game_png(self.display_size,rect)?;
+            let rect=self.screenshot_rect().ok_or(t("没有可截取的游戏画面"))?;
+            // Refresh pressure now, rather than waiting for the one-second
+            // poll. Reclaim only idle resources; never advance the paused VM.
+            let memory=std::fs::read_to_string("/proc/meminfo").ok();
+            if cache_policy.update(memory.as_deref()) {
+                ruffle_render::bitmap_cache::set_limit(cache_policy.pixel_bytes());
+                println!("leaf-cache-pressure active={} pixel_mib={} static_mib={}",
+                    cache_policy.under_pressure(),cache_policy.pixel_bytes()/(1024*1024),cache_policy.shape_bytes()/(1024*1024));
+            }
+            ruffle_render::bitmap_cache::maintain();
+            {
+                let mut p=self.active.player.lock().unwrap();
+                p.renderer_mut().set_memory_pressure(cache_policy.under_pressure());
+                if cache_policy.under_pressure() {p.collect_static_render_resources_with_budget(0);}
+            }
+            Self::check_screenshot_memory(rect.2,rect.3)?;
+            {
+                let mut p=self.active.player.lock().unwrap();
+                p.render();
+                p.collect_static_render_resources_with_budget(cache_policy.shape_bytes());
+            }
+            // Rendering can allocate filter targets or driver storage. Check
+            // again before touching the complete CPU readback allocation.
+            let rect=self.screenshot_rect().ok_or(t("没有可截取的游戏画面"))?;
+            Self::check_screenshot_memory(rect.2,rect.3)?;
+            let screen=self.display_size;
+            let encode=|file:&mut std::fs::File|menu.game_png(screen,rect,file);
             let path=match &request {
                 Screenshot::Cover(cover,overwrite)=>{
                     // Recheck before writing, including a newly added JPG/legacy cover.
                     let current=session::screenshot::cover(&self.movie_path,&session::screenshot::cards()).map_err(|e|e.to_string())?;
                     if !overwrite && current.existing.is_some() {self.cover=Some(current.clone());self.state.experience.cover_path=current.existing.unwrap().display().to_string();self.state.experience.open(ExperiencePage::CoverConfirm);return Err(t("已有封面，请确认是否覆盖").into());}
-                    session::screenshot::save_cover(cover,*overwrite,&bytes).map_err(|e|e.to_string())?;
+                    session::screenshot::save_cover(cover,*overwrite,encode).map_err(|e|e.to_string())?;
                     cover.target.clone()
                 },
                 Screenshot::Photo=>{
                     let mounts=std::fs::read_to_string("/proc/self/mountinfo").map_err(|e|e.to_string())?;
                     let root=session::screenshot::photo_root(&session::screenshot::cards(),&mounts).map_err(|e|e.to_string())?;
-                    session::screenshot::save_photo(&root,&self.state.experience.title,&screenshot_timestamp(),&bytes).map_err(|e|e.to_string())?
+                    session::screenshot::save_photo(&root,&self.state.experience.title,&screenshot_timestamp(),encode).map_err(|e|e.to_string())?
                 },
             };
             println!("leaf-screenshot saved={} width={} height={} overlays=false",path.display(),rect.2,rect.3);
@@ -1284,8 +1323,8 @@ pub async fn run() -> Result<(), String> {
         if front.redraw {
             unsafe {
                 if front.state.paused {
-                    if front.state.experience.started&&!front.state.experience.app {front.active.player.lock().unwrap().render();}
-                    front.save_screenshot(&menu);
+                    if front.screenshot.is_some() {front.save_screenshot(&menu,&mut cache_policy);}
+                    else if front.state.experience.started&&!front.state.experience.app {front.active.player.lock().unwrap().render();}
                     menu.draw(size.0, size.1, &front.state, None);
                 } else {
                     let mut p = front.active.player.lock().unwrap();

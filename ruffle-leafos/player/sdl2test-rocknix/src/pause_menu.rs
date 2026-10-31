@@ -626,10 +626,10 @@ impl PauseMenu {
 
     /// Read a clean game frame before any frontend overlay is drawn. Preserve
     /// every pack parameter: a renderer's PBO/stride cannot affect this read.
-    pub unsafe fn game_png(&self, screen:(u32,u32), rect:(u32,u32,u32,u32)) -> Result<Vec<u8>,String> {
+    pub unsafe fn game_png(&self, screen:(u32,u32), rect:(u32,u32,u32,u32), output:impl std::io::Write) -> std::io::Result<()> {
         let (x,y,width,height)=rect;
-        let len=(width as usize).checked_mul(height as usize).and_then(|n|n.checked_mul(4)).filter(|n|*n<=64*1024*1024).ok_or("Screenshot is too large")?;
-        let mut pixels=Vec::new();pixels.try_reserve_exact(len).map_err(|e|e.to_string())?;pixels.resize(len,0);
+        let len=crate::session::screenshot::rgba_len(width,height).ok_or_else(||std::io::Error::other("Screenshot is too large"))?;
+        let mut pixels=Vec::new();pixels.try_reserve_exact(len).map_err(std::io::Error::other)?;pixels.resize(len,0);
         let gl=&self.gl;
         let framebuffer=gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
         let buffer=gl.get_parameter_buffer(glow::PIXEL_PACK_BUFFER_BINDING);
@@ -648,21 +648,8 @@ impl PauseMenu {
         gl.bind_framebuffer(glow::READ_FRAMEBUFFER,framebuffer);
         gl.bind_buffer(glow::PIXEL_PACK_BUFFER,buffer);
         for (p,v) in params.into_iter().zip(values) {gl.pixel_store_i32(p,v);}
-        if error!=glow::NO_ERROR {return Err(format!("Screenshot readback failed: GL {error:#x}"));}
-        let stride=width as usize*4;
-        for row in 0..height as usize/2 {
-            let (top,bottom)=pixels.split_at_mut((height as usize-1-row)*stride);
-            top[row*stride..(row+1)*stride].swap_with_slice(&mut bottom[..stride]);
-        }
-        // Photos are opaque; retain the Flash-rendered RGB background.
-        for pixel in pixels.chunks_exact_mut(4) {pixel[3]=255;}
-        let mut bytes=Vec::new();
-        let mut encoder=png::Encoder::new(&mut bytes,width,height);
-        encoder.set_color(png::ColorType::Rgba);encoder.set_depth(png::BitDepth::Eight);
-        let mut writer=encoder.write_header().map_err(|e|e.to_string())?;
-        writer.write_image_data(&pixels).map_err(|e|e.to_string())?;
-        writer.finish().map_err(|e|e.to_string())?;
-        Ok(bytes)
+        if error!=glow::NO_ERROR {return Err(std::io::Error::other(format!("Screenshot readback failed: GL {error:#x}")));}
+        crate::screenshot_png::write_rgb(output,width,height,&pixels)
     }
 
     /// Diagnostic-only full framebuffer readback, including frontend overlays.
