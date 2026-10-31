@@ -247,6 +247,17 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 `package_preview.py` 的 `bundle_games` 从 `games/manifest.json` 读取游戏入口和全部文件 SHA-256，先检查 `games/flash/` 的文件集合、逐文件字节及主入口，再完整复制到 `Roms/flash/`，保留死神的 398 个外部资源及相对路径。缺失、多余或内容变化均停止打包。`build-manifest.json` / `build-report.json` 的 `bundled_games` 记录名称、入口、来源名称和主文件指纹，包内 `provenance/bundled-games.json` 保留完整文件清单；`games/README.md` 随应用附带。`python -m unittest discover -s scripts -p test_package_preview.py -v` 检查错误输入及两份真实游戏的完整安装路径，GitHub release job 在构建后执行同一回归。
 
+死神单文件实验可在仓库根目录执行以下命令，输出路径须尚不存在：
+
+```powershell
+python ruffle-leafos/scripts/package_bvn_single_swf.py --output "outputs/bvn-single/死神VS火影3.3-定制单文件版.swf" --report outputs/bvn-single/package-report.json
+python -m unittest discover -s ruffle-leafos/scripts -p test_package_bvn_single_swf.py -v
+```
+
+脚本固定已审查的主文件 SHA-256，校验 manifest 中 398 个资源的集合和字节，用确定性 ZIP（DEFLATE，附 FZip 兼容 Adler-32 字段）替换 `DefineBinaryData` 222 的空 ZIP，恢复 `bleachvsnaruto.initlize` 中停用的 19 字节 `ZipAssetLoader` 安装指令。外层为 FWS，不再压缩已经压缩的资源包；完成后从输出 SWF 提取资源逐项复核。
+
+[bvn_single_boot.py](../scripts/bvn_single_boot.py) 还修改 `MainGame.loadGameBack` 和 `EffectModel.cacheEffects`，将原特效对象按原枚举顺序交给 [RuffleSingleSwfBoot.as](../scripts/resources/RuffleSingleSwfBoot.as)，每次计时器执行一个原始 `cacheBitmapData`，全部完成后再调用原启动回调。原缓存方法、特效帧、战斗逻辑及画质默认值保持。原 ABC 只追加一个类名字符串和 QName，旧索引保持；新增 helper ABC 在原主 ABC 前定义。工具使用 Python 标准库、固定 Ruffle ASC、已构建的 `playerglobal.swf` 和 `workspace.local.json` 中的 JDK，与软键盘夹具共用 playerglobal 提取函数，不依赖历史游戏副本。正式安装包继续使用目录版；单文件的额外内存与实机范围见[验证报告](validation/bvn33-single-swf-20261031.md)。
+
 主机测试与静态校验后，还需按改动执行真机隔离验证、正式 Flash/Apps 通路、用户数据前后比对、安装文件指纹核对。开发时复用当前会话提供的 ADB 地址连接、截图和读取日志，不将临时地址视为固定配置。隔离验证使用单独数据目录，完整流程与具体发布结论查对应[进度及证据](progress.md)。
 
 ## GitHub Actions 自动发布
