@@ -49,7 +49,7 @@
     "sdl2test-rocknix/src/resource_cache.rs": "d19af8fa6722d39c0d2f639adefd8b4ead79ae5bcdcdd0cfdc19ca172e7b6358",
     "sdl2test-rocknix/src/idle_pool.rs": "07b9278495ec187b9d0648a3246c47d9ad49adcc5984af2699f3ddc552f56b53",
     "sdl2test-rocknix/src/data_manager.rs": "7fdc0b56d98724afc3374cc7fab72d23b4d396bfbcff3de8a13ee1a652fc80aa",
-    "sdl2test-rocknix/src/screenshot.rs": "ce2ba88d7ea8447baf76b8aac43fc1d5fba961a491de48529b7f8db26aca3fa7",
+    "sdl2test-rocknix/src/screenshot.rs": "e6bc44548cf8a41e687fc0d7fddffc6e482d8b76fd2bf91677dd9d145c0c82f6",
     "sdl2test-rocknix/src/screenshot_png.rs": "52e12911edf4321941027e3ed9556e6dddbeb0aeff551cdd04c5ab689dc164f5",
     "render/tests/screenshot_png.rs": "221dd64635d87253df2ed209d47c439f2f929fea107a8d0c0f6fb6c0d954d030"
   },

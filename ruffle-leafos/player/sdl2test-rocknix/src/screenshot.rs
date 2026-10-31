@@ -113,15 +113,10 @@ pub fn save_photo(root: &Path, title: &str, timestamp: &str, write: impl FnOnce(
     let title: String = title.chars().map(|c|if c.is_control() || "<>:\"/\\|?*".contains(c) {'_'}else{c}).take(64).collect();
     let title=title.trim().trim_end_matches('.');
     let dir=root.join("Pictures/Ruffle Flash");fs::create_dir_all(&dir)?;
-    for suffix in 0..1000 {
-        let path=dir.join(format!("{}-{timestamp}-{suffix:03}.png",if title.is_empty(){"Flash"}else{title}));
-        let mut file=match OpenOptions::new().write(true).create_new(true).open(&path) {
-            Ok(file)=>file,Err(e) if e.kind()==io::ErrorKind::AlreadyExists=>continue,Err(e)=>return Err(e),
-        };
-        if let Err(e)=write(&mut file).and_then(|_|file.sync_all()) {drop(file);let _=fs::remove_file(&path);return Err(e);}
-        return Ok(path);
-    }
-    Err(io::Error::new(io::ErrorKind::AlreadyExists,"Too many photos with this timestamp"))
+    let path=dir.join(format!("{}-{timestamp}.png",if title.is_empty(){"Flash"}else{title}));
+    let mut file=OpenOptions::new().write(true).create_new(true).open(&path)?;
+    if let Err(e)=write(&mut file).and_then(|_|file.sync_all()) {drop(file);let _=fs::remove_file(&path);return Err(e);}
+    Ok(path)
 }
 
 pub fn save_cover(cover: &Cover, overwrite: bool, write: impl FnOnce(&mut File) -> io::Result<()>) -> io::Result<()> {
@@ -172,7 +167,12 @@ mod tests {
         assert_eq!(photo_root(&cards,&mounts).unwrap(),fs::canonicalize(&primary).unwrap());
         let mounts=format!("{mounts}2 0 8:2 / {} rw - vfat /dev/two rw\n",fs::canonicalize(&second).unwrap().display());assert_eq!(photo_root(&cards,&mounts).unwrap(),fs::canonicalize(&second).unwrap());
         let same=mounts.replace("8:2","8:1");assert_eq!(photo_root(&cards,&same).unwrap(),fs::canonicalize(&primary).unwrap());
-        let first=save_photo(&primary,"../游戏:名字","20261031-101112",|f|f.write_all(b"one")).unwrap();let next=save_photo(&primary,"../游戏:名字","20261031-101112",|f|f.write_all(b"two")).unwrap();assert_ne!(first,next);assert_eq!(fs::read(first).unwrap(),b"one");assert_eq!(fs::read(next).unwrap(),b"two");fs::remove_dir_all(root).unwrap();
+        let first=save_photo(&primary,"../游戏:名字","20261031-101112",|f|f.write_all(b"one")).unwrap();
+        assert_eq!(first.file_name().unwrap(),".._游戏_名字-20261031-101112.png");
+        let duplicate=save_photo(&primary,"../游戏:名字","20261031-101112",|_|panic!("A duplicate must not start encoding"));
+        assert_eq!(duplicate.unwrap_err().kind(),io::ErrorKind::AlreadyExists);assert_eq!(fs::read(&first).unwrap(),b"one");
+        assert_eq!(fs::read_dir(first.parent().unwrap()).unwrap().count(),1);
+        let next=save_photo(&primary,"../游戏:名字","20261031-101113",|f|f.write_all(b"two")).unwrap();assert_ne!(first,next);assert_eq!(fs::read(next).unwrap(),b"two");fs::remove_dir_all(root).unwrap();
     }
     #[test] fn failed_streams_preserve_cover_and_remove_partial_files() {
         let root=fixture();let path=root.join("Images/flash/game.png");fs::create_dir_all(path.parent().unwrap()).unwrap();fs::write(&path,b"old").unwrap();

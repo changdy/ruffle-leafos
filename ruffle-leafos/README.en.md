@@ -116,11 +116,13 @@ When you reach a frame you want to keep, tap **M → Screenshot**, then choose:
 | Option | Destination |
 | --- | --- |
 | **Use screenshot as cover** | `Images/flash/<main SWF filename>.png` on the game’s card. Replacing an existing cover requires confirmation; refresh the Leaf game list afterward |
-| **Save photo** | `Pictures/Ruffle Flash/`, named with the game and device-local date/time. Prefers an independently mounted secondary TF card; otherwise uses the system card |
+| **Save photo** | `Pictures/Ruffle Flash/<game>-YYYYMMDD-HHMMSS.png`, using device-local date/time with no sequence suffix. Prefers an independently mounted secondary TF card; otherwise uses the system card |
 
 Screenshots capture the visible game area, trimming borders outside the stage and excluding player menus, cursor and FPS. Text and cursors drawn by the game itself remain. Images use the current screen rendering size, rather than a fresh render at the SWF’s original resolution. You remain in the pause menu after capture.
 
 If available memory is too low or cannot be checked, capture reports a failure and stays paused. You can retry later; an existing cover is preserved when capture is refused.
+
+If a photo with the same name already exists, saving fails without overwriting it. Wait a second and retry.
 
 | Five progress slots | Screenshots and covers |
 | --- | --- |
