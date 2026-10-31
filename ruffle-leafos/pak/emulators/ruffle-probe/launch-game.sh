@@ -87,7 +87,7 @@ if [ -n "${JAWAKA_INPUT_VIRTUAL_EVENT:-}" ]; then export SDL_JOYSTICK_DEVICE="$J
 unset RUFFLE_RETURN_TO_MENU_FILE
 [ ! -L "$LOG_FILE" ] && [ ! -L "$LOG_FILE.previous" ] || ruffle_die '日志目标不能是符号链接'
 if [ -f "$LOG_FILE" ]; then mv -f -- "$LOG_FILE" "$LOG_FILE.previous" || ruffle_die '无法轮换日志'; fi
-printf 'ruffle-leaf 0.7.2\nswf=%s\nmode=%s\nvideo=%s\nwayland=%s\nsdl=%s\n' \
+printf 'ruffle-leaf 0.7.3\nswf=%s\nmode=%s\nvideo=%s\nwayland=%s\nsdl=%s\n' \
     "$SWF" "$SESSION_MODE" "$SDL_VIDEODRIVER" "$WAYLAND_DISPLAY" "$SDL_LIB" >"$LOG_FILE" || ruffle_die '无法写入启动日志'
 printf 'bundled_cjk_font=%s\n' "$RUFFLE_FONT_FILE" >>"$LOG_FILE"
 printf 'audio_route=%s\n' "$RUFFLE_AUDIO_ROUTE" >>"$LOG_FILE"

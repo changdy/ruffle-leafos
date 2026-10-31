@@ -1,6 +1,6 @@
 # Ruffle Flash
 
-面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.2 开发预览**，支持中英文界面，默认 OpenGL ES，可选实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-31，验证范围见[工程进度](docs/progress.md)。
+面向迷你龙 Miniloong Pocket 1 / LeafOS 的本地 Flash 播放器，基于 Ruffle 和固定的 aweigit/ruffle-miyooflip 公开源码。当前版本为 **0.7.3 开发预览**，支持中英文界面，默认 OpenGL ES，可选实验性 Vulkan 绘制。已验证设备为 Leaf 0.13.0 / ARM64 / Mali-G52 / GLES 3.2 / Vulkan 1.2.218。文档整理于 2026-10-31，验证范围见[工程进度](docs/progress.md)。
 
 从 Leaf 的 Flash 分类选择 SWF 即可游玩；支持每游戏十个按键方案、逐键连发、五份游戏原生进度、全局画面设置和全局鼠标光标。Apps 入口用于数据管理。五份进度保存游戏的 SharedObject 数据，完整运行现场快照尚未实现；广泛游戏体验、断电与休眠等验收仍待完成。
 
@@ -39,7 +39,7 @@ SWF 放入 `Roms/flash/`，封面放入 `Images/flash/`；有外部资源的游�
 | 拳皇 Wing 1.91 素材优化版 | `拳皇Wing1.91-定制版.swf` |
 | 死神 VS 火影 3.3 脚本素材优化版 | `死神VS火影3.3-定制版/死神VS火影3.3-定制版.swf` |
 
-死神须保留完整目录和相邻 `assets/`，不要启动资源 SWF。当前已提交版本的入口仍将初始画质设为 MEDIUM，需在游戏内 **OPTION → QUALITY → APPLY** 手动选择 LOW（战斗目标 30 FPS）；入口覆盖默认值的问题及验证边界见[性能复测](docs/validation/bvn33-feature-profile-20261028.md)。游戏内部画质与播放器的 Flash 画质分别设置。
+死神须保留完整目录和相邻 `assets/`，不要启动资源 SWF。**0.7.3 修复了启动入口覆盖 LOW 的问题**，新进度默认使用游戏内部 LOW：战斗目标 30 FPS、闪光效果 15 FPS、关闭效果平滑。游戏内 **OPTION → QUALITY → APPLY** 可选择其他画质；保存读取逻辑未改，保存不同画质后重开的实机验证仍待完成。修复改变主 SWF 内容指纹，不自动迁移旧版原生进度；398 个外部资源不变，按键仍按 ROM 路径识别。验证范围见[LOW 修复报告](docs/validation/bvn33-low-fix-20261028.md)；游戏内部画质与播放器的 Flash 画质分别设置。
 
 原生进度按 SWF 内容识别，按键配置按 ROM 路径识别；换用不同内容或路径前请备份数据。旧实验目录不会随安装自动移除。游戏来源、完整性清单和定制范围见[随包游戏说明](games/README.md)。
 

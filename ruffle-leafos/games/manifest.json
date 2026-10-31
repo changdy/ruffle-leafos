@@ -11,7 +11,7 @@
       "name": "死神VS火影3.3-定制版",
       "entrypoint": "死神VS火影3.3-定制版/死神VS火影3.3-定制版.swf",
       "source_name": "死神VS火影3.3-脚本素材优化版/死神VS火影3.3-脚本素材优化版.swf",
-      "main_sha256": "b4fa381c0639cbe7f9b07cc0e856674a39fc38f76c3107e19ff0e486c12cc9c6"
+      "main_sha256": "294e5e3c60e24fe01475c1fbb4dfc1f9aad1e23e4fbd62dd9849308f2fb020c0"
     }
   ],
   "files_sha256": {
@@ -414,8 +414,8 @@
     "死神VS火影3.3-定制版/assets/sounds/step1.mp3": "7b5abb446ebd3f6b70f3165fb39509bf270f6f0aa5b721893524bddc1c4757da",
     "死神VS火影3.3-定制版/assets/sounds/step2.mp3": "23ac0d55182c48c1d18dad7ef815111500f7802af5d877e1c54220eea89a31e2",
     "死神VS火影3.3-定制版/assets/sounds/step3.mp3": "d1191cc03302d5cd0f82b82821e6dabb44228e2f555899663694cfab546060b8",
-    "死神VS火影3.3-定制版/SHA256SUMS.txt": "7301ace7175229c061646a5b613392b52c721d3252ae58133ba77dbd91f942e4",
-    "死神VS火影3.3-定制版/使用说明.txt": "0be8cfe4e3caf70fd28193fbeb8412ae73a9c89462711332e30eabc20aa42ab6",
-    "死神VS火影3.3-定制版/死神VS火影3.3-定制版.swf": "b4fa381c0639cbe7f9b07cc0e856674a39fc38f76c3107e19ff0e486c12cc9c6"
+    "死神VS火影3.3-定制版/SHA256SUMS.txt": "00c5beb958b230623a110fc61eec3822b01b1a473611259d40576bbf0a4154e4",
+    "死神VS火影3.3-定制版/使用说明.txt": "148ece46d671c35755dfdc09b3967e999804087d6a5b1a904ae52a259a57fc46",
+    "死神VS火影3.3-定制版/死神VS火影3.3-定制版.swf": "294e5e3c60e24fe01475c1fbb4dfc1f9aad1e23e4fbd62dd9849308f2fb020c0"
   }
 }
