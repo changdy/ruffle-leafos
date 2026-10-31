@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.7.2 开发预览**，整理于 2026-10-28。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.7.2 开发预览**，整理于 2026-10-31。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 命名与兼容标识
 
@@ -69,7 +69,7 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 
 暂停主菜单和 Apps 管理页均提供语言入口，A 选择后自动保存，A/B 返回到对应入口。暂停列表采用十行布局；文本纹理缓存包含实际译文，切换后按需重建；已生成的临时状态提示清空。Leaf 所选主题字体继续负责有字形的文字，缺失字形使用 `paths.sh` 导出的随包 CJK 字体 `RUFFLE_FONT_FILE`，确保英语系统可显示中文选项并切回中文。
 
-## 数据身份与持久化
+## 渲染资源与内存
 
 ### 受限内存下的静态绘图资源
 
@@ -95,6 +95,12 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 
 `python scripts/build_filter_cache_diagnostic.py` 生成原创无外部资源的单实例 Glow 尺寸变化 SWF，末帧停止，默认输出到忽略的 `build/diagnostics/`，可用 `--output-dir` 改位置。它不每帧新建实例，便于隔离滤镜临时分配与核对稳定画面；`test_session.py` 同时运行纯 Rust 闲置池边界回归。实机内存分解、固定夹具、拳皇及验证限制见[本轮报告](validation/kof-gles-memory-20261031.md)。
 
+### 显示树遍历
+
+显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[显示树性能报告](validation/bvn33-traversal-20261027.md)。
+
+## 数据身份与持久化
+
 用户可直接使用的数据路径列于[README](../README.md#apps-数据管理与数据路径)。正式启动器通过 Leaf 的 `USERDATA_PATH`、`SAVES_PATH`、`LOGS_PATH` 选择当前卡；用户配置与进度不写入可升级的 pak 目录。
 
 | 数据 | 身份、格式与恢复规则 |
@@ -106,7 +112,7 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 | 全局画面与渲染 | 所有游戏共用 `audiovisual/global.rav`，写 RAV2，全局路径兼容解码 RAV1 并默认 GLES；旧的每游戏文件保留但不读取或迁移；旧音量/静音字段不影响系统声音，新写固定中性值；字段见[契约](formats/graphics-settings.md) |
 | 清理 | Apps 确认默认取消；确认后将目标数据移入 `cleared-data/` 本地归档，不清 ROM、封面、旧 cfg、未迁移 sol 或全局画面配置 |
 
-格式的全部字段、路径及旧版兼容关系见 [v5](formats/controls-format-v5.md)、[v4](formats/controls-format-v4.md)、[v3](formats/controls-format-v3.md)、[v2](formats/controls-format-v2.md)、[v1](formats/controls-format-v1.md)。旧文档里的模板、恢复默认及旧快捷键只描述当时版本；当前操作以 README 为准。
+字段及旧版兼容关系统一见[映射 v5 契约](formats/controls-format-v5.md)及其中的旧版链接；当前操作以 README 为准。
 
 SharedObject 提交采用同目录临时文件写入、sync、校验及原子替换；保留有效 `.bak`，主文件损坏可从有效备份读取，主备都损坏时禁止当成空槽覆盖。显式 flush、周期请求（十秒）、打开菜单和正常退出会请求提交。切换存档先提交当前槽，成功后重启播放器读取目标槽；复制覆盖前再次确认。
 
@@ -119,8 +125,6 @@ SharedObject 提交采用同目录临时文件写入、sync、校验及原子替
 `data_manager::entries` 结合 `slots-v1/games/`、`controls/slots/`、旧 `controls/games/` 和 `slots-v1/catalog/` 建立条目。实际存档、按键方案及其备份或损坏文件均计入；只有 `selected.rmap` 的游戏也计入，因为它保存用户选择。只有 catalog 记录、内置默认键位或已移入 `cleared-data/` 的归档不计入。清理目标按实际关联的存档内容身份和按键路径身份分别处理，不能以游戏标题猜测数据目录。
 
 新写入的 `catalog/<内容指纹>.meta` 保留前两行标题、按键路径标识，第三行增加 `path=<UTF-8 绝对 SWF 路径的十六进制编码>`；读取继续兼容旧两行记录，字段限制与存在性检查边界见[目录格式契约](formats/data-manager-catalog.md)。按键文件中的完整 `identity` 可恢复 `flash/<相对路径>`，用于查找没有 catalog 或只保留旧记录的配置。路径查找使用启动环境给出的 Flash 根目录；已知路径找不到时显示“已失效 / Unavailable”，无法确认路径的历史数据保留清理入口，不武断标为删除。用户标题和路径不翻译，页面、状态与操作提示均通过现有中英翻译接口显示。
-
-显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[显示树性能报告](validation/bvn33-traversal-20261027.md)。
 
 ## Flash 软键盘
 
@@ -184,7 +188,7 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.7.2-rebuil
 
 `build_player.py` 默认 `--tuning generic`，保留此前的通用 ARM64、release opt-level 2、关闭跨 crate LTO 与 16 个 codegen units。可显式选择实验性 `--tuning pocket1`：Rust ARM64 目标使用 `-Ctarget-cpu=cortex-a55`，release 使用 opt-level 3、ThinLTO，仍为 16 个 codegen units；本轮未证明稳定游戏提速，因此不改变默认构建或自动发布参数。该候选只针对 RK3566 的 Pocket1，不能当成通用 ARM64 发行版。切换参数会重新编译受影响的目标依赖；上面两条 build 命令是两种选择，普通构建只需第一条。debug 不启用 release 优化，但 CPU 选择仍生效。脚本只在子进程环境移除优先级更高的全局 `RUSTFLAGS` / `CARGO_ENCODED_RUSTFLAGS`，不改用户全局配置。C/汇编依赖、系统库和预编译标准库不在本轮重新定向构建范围内。
 
-成功构建同时生成 `build/player-build.json`，记录二进制 SHA-256、Rust 版本、目标 CPU、tuning、实际 profile 与 release 参数。打包要求此记录存在且 SHA-256 与 `build/ruffle-leaf` 一致，并写入包内 `build-manifest.json` 的 `player_build`；已有旧 ELF 需先重新执行构建脚本。编译优化的实测方法、结果与局限见 [Pocket1 验证记录](validation/pocket1-build-20261028.md)。
+成功构建同时生成 `build/player-build.json`，记录二进制 SHA-256、Rust 版本、目标 CPU、tuning、实际 profile 与 release 参数。打包要求此记录存在且 SHA-256 与 `build/ruffle-leaf` 一致，并写入包内 `build-manifest.json` 的 `player_build`；已有旧 ELF 需先重新执行构建脚本。本地打包目前分别校验 ELF 与当前源码锁，尚未绑定构建时源码摘要；修改源码或更新来源锁后应先重建，不能仅凭两项校验通过认定现成 ELF 对应新源码。编译优化的实测方法、结果与局限见 [Pocket1 验证记录](validation/pocket1-build-20261028.md)。
 
 `test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
 

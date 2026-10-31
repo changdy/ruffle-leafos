@@ -1,6 +1,6 @@
 # 音画与渲染设置：RAV1 / RAV2
 
-0.7.0 开发预览。实现为 `experience::Settings`；所有游戏共用一份全局画面与渲染偏好，不保存完整运行现场或 SharedObject 进度。
+当前实现为 `experience::Settings`；所有游戏共用一份全局画面与渲染偏好，不保存完整运行现场或 SharedObject 进度。
 
 ## 全局路径与旧配置
 

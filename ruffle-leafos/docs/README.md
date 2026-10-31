@@ -1,19 +1,19 @@
 # 文档索引
 
-当前版本：**0.7.1 开发预览**，文档整理于 2026-10-31。
+当前版本：**0.7.2 开发预览**，整理于 2026-10-31。
 
 | 主文档 | 职责 |
 | --- | --- |
-| [项目 README](../README.md) | 介绍、安装和完整使用说明 |
-| [工程进度](progress.md) | 已完成、待办、版本、验收及证据范围 |
+| [项目 README](../README.md) | 介绍、安装和使用说明 |
+| [工程进度](progress.md) | 当前结果、待办、版本与验证证据入口 |
 | [工程实现细节](implementation.md) | 架构、源码入口、数据、构建、发布与仓库边界 |
 
-补充资料：[当前映射格式 v5](formats/controls-format-v5.md)（包含旧版兼容链接）、[音画与渲染设置 RAV1/RAV2](formats/graphics-settings.md)、[界面语言](formats/language-settings.md)、[Flash 数据管理目录](formats/data-manager-catalog.md)、[验证摘要](validation/)、[第三方声明](THIRD_PARTY.md)、[历史归档](archive/README.md)。完整发布包、截图和原始日志在工作区本地 `outputs/`，不进入 Git。
+| 补充资料 | 内容 |
+| --- | --- |
+| [按键 v5](formats/controls-format-v5.md) | 当前映射及旧版兼容链接 |
+| [画面 RAV1/RAV2](formats/graphics-settings.md)、[语言](formats/language-settings.md)、[数据管理目录](formats/data-manager-catalog.md) | 字段级契约 |
+| [验证报告](validation/) | 各轮场景、二进制身份、原始数据位置和验收边界；当前结论由工程进度汇总 |
+| [0.6.9 后逐提交审查](validation/review-after-0.6.9-20261031.md) | 39 个提交的代码合理性与历史问题闭环 |
+| [第三方声明](THIRD_PARTY.md)、[历史归档](archive/README.md) | 来源许可、历史实施及需求快照 |
 
-资源缓存的当前实现、性能对照与验收边界见[资源缓存实机报告](validation/resource-cache-20261030.md)。
-
-维护时，使用行为只更新项目 README，进度/待办与证据范围只更新 progress，实现与工程命令只更新 implementation。字段级契约维护在 formats；发布后实施记录和需求快照进入 archive。历史文档不作为当前需求或待办入口。
-
-拳皇 GLES 内存分解、滤镜临时池修复与限定验证见[本轮报告](validation/kof-gles-memory-20261031.md)。
-
-Flash 数据管理的列表、失效标记与中英实机验证见[本轮报告](validation/data-manager-20261031.md)。
+使用行为维护在 README，状态/待办维护在 progress，实现/工程命令维护在 implementation，字段契约维护在 formats。已稳定功能不重复记录每轮操作过程；详细证据留在 validation，历史需求留在 archive。完整发布包、截图和原始日志在本地 `outputs/`，不进入 Git。
