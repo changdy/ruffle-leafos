@@ -27,13 +27,13 @@ read_bounded() {
 }
 {
     field report_schema 1
-    field pak_version 0.3.0
+    field pak_version 0.8.0
     field collected_utc "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
     field device_validation 'not performed by collector'
     section versions
     field leaf_version_export "${LEAF_VERSION:-unknown}"
     field loongos_version_export "${LOONGOS_VERSION:-unknown}"
-    field declared_min_leaf '0.12.0 (package metadata; NOT detected device version)'
+    field declared_min_leaf '0.13.0 (package metadata; NOT detected device version)'
     field kernel "$(uname -sr 2>/dev/null || printf unknown)"
     field abi "$(uname -m 2>/dev/null || printf unknown)"
     LIBC_VERSION="$(getconf GNU_LIBC_VERSION 2>/dev/null || true)"
@@ -84,8 +84,8 @@ read_bounded() {
     field evidence 'See leaf-graphics actual= and leaf-vulkan in ruffle-probe.log; GL strings identify the presentation context, not necessarily the Flash renderer'
     field performance 'Present intervals and swap-call wall time only; NOT GPU execution time or power measurements'
     section source
-    field runtime 'leaf-12; SHA-256 b3ecd3094f678a9be3e99602267f345191e02653a023ca6005fe3b0cf5aab342'
-    field source_status 'custom player source unresolved; public base candidate pinned in player-source.lock.json; adaptation layer rebuildable'
+    field runtime 'source-built Ruffle Flash; see build-manifest.json for binary SHA-256'
+    field source_status 'pinned public base and local Leaf frontend; see provenance/leaf-source.lock.json'
 } >"$TEMP_REPORT" || ruffle_die '诊断写入失败，上一份报告仍保留'
 if [ -f "$REPORT" ]; then
     cp -f -- "$REPORT" "$REPORT.previous" || ruffle_die '无法保留上一份诊断报告'
