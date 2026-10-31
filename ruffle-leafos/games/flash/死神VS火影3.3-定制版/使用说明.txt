@@ -11,7 +11,7 @@
 修复前主文件 b4fa381c… 的 60 FPS 性能样本仍仅适用于实际 MEDIUM；不能把它当作本修复版的 LOW 性能结论。
 原有 #1006 与音频告警保留；全部角色、变身、招式、地图、Vulkan、长时及人工听感未完整验收，不保证卡顿消失。
 
-验证记录：ruffle-leafos/docs/validation/bvn33-low-fix-20261028.md；字段修改历史见 bvn33-default-low-20261028.md，修复前性能见 bvn33-feature-profile-20261028.md。
+验证记录：ruffle-leafos/docs/validation/bvn33-low-fix-20261028.md；早期字段修改和修复前性能只代表当时版本，原始记录从 Git 历史追溯。
 SHA256SUMS.txt 列出目录中除清单自身之外的所有文件。
 
 2026-10-28：按用户要求统一命名为“-定制版”，纳入仓库并随安装包放入 Roms/flash/；0.7.3 追加 LOW 入口修复，主 SWF SHA-256 为 294e5e3c60e24fe01475c1fbb4dfc1f9aad1e23e4fbd62dd9849308f2fb020c0，外部素材保持。

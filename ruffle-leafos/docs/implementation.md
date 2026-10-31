@@ -97,7 +97,7 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 
 ### 显示树遍历
 
-显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[显示树性能报告](validation/bvn33-traversal-20261027.md)。
+显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[逐提交代码审查](validation/review-after-0.6.9-20261031.md)。
 
 ## 数据身份与持久化
 
@@ -112,7 +112,7 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 | 全局画面与渲染 | 所有游戏共用 `audiovisual/global.rav`，写 RAV2，全局路径兼容解码 RAV1 并默认 GLES；旧的每游戏文件保留但不读取或迁移；旧音量/静音字段不影响系统声音，新写固定中性值；字段见[契约](formats/graphics-settings.md) |
 | 清理 | Apps 确认默认取消；确认后将目标数据移入 `cleared-data/` 本地归档，不清 ROM、封面、旧 cfg、未迁移 sol 或全局画面配置 |
 
-字段及旧版兼容关系统一见[映射 v5 契约](formats/controls-format-v5.md)及其中的旧版链接；当前操作以 README 为准。
+字段及旧版兼容关系统一见[映射 v5 契约](formats/controls-format-v5.md)及其中的旧版兼容表；当前操作以 README 为准。
 
 SharedObject 提交采用同目录临时文件写入、sync、校验及原子替换；保留有效 `.bak`，主文件损坏可从有效备份读取，主备都损坏时禁止当成空槽覆盖。显式 flush、周期请求（十秒）、打开菜单和正常退出会请求提交。切换存档先提交当前槽，成功后重启播放器读取目标槽；复制覆盖前再次确认。
 
@@ -148,9 +148,9 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 每秒的 `leaf-perf` 日志包含窗口长度、Flash 帧推进量 `frames`、非暂停绘制次数 `draws`、异步加载任务/tick/render/静态资源回收/swap 的总墙钟耗时及最长 tick/render/循环；循环耗时不含主动 sleep。暂停绘制和菜单开销不计入 `draws`/`render`，因此基准应排除暂停和恢复边界窗口。`frames / 窗口秒数` 与画面提交速率 `draws / 窗口秒数` 分别统计，逻辑补帧时二者可以不同。
 
-`shapes`、`bitmaps`、`bitmap_reloads`、`evictions` 记录静态图形创建、位图成功上传、弱缓存失效后的重载和缓存句柄释放次数；`bitmap_rgba_mib` 是宽×高×4 的等价累计尺寸，不是实际驻留内存。`shape_ms` 包含位图解码/上传，且包含于 `render_ms`；Vulkan 的 `vk_submit_ms` 包含队列提交和 fence 等待，`vk_poll_ms`、`vk_present_ms` 记录驱动轮询与最终 GLES 采样/`glFinish`，也包含于 `render_ms`。细分项不能与上层耗时重复相加，也不能将墙钟等待等同 GPU 纯执行时间。核心计数器按线程启用和取出，关闭时不读取高频计时器；不要跨线程汇总时误当全局统计。实测示例及限制见[拳皇性能报告](validation/kof-performance-20261026.md)。
+`shapes`、`bitmaps`、`bitmap_reloads`、`evictions` 记录静态图形创建、位图成功上传、弱缓存失效后的重载和缓存句柄释放次数；`bitmap_rgba_mib` 是宽×高×4 的等价累计尺寸，不是实际驻留内存。`shape_ms` 包含位图解码/上传，且包含于 `render_ms`；Vulkan 的 `vk_submit_ms` 包含队列提交和 fence 等待，`vk_poll_ms`、`vk_present_ms` 记录驱动轮询与最终 GLES 采样/`glFinish`，也包含于 `render_ms`。细分项不能与上层耗时重复相加，也不能将墙钟等待等同 GPU 纯执行时间。核心计数器按线程启用和取出，关闭时不读取高频计时器；不要跨线程汇总时误当全局统计。实测示例及限制见[拳皇内存与采样报告](validation/kof-gles-memory-20261031.md)。
 
-`preload_ms`、`enter_ms`、`construct_ms`、`scripts_ms`、`exit_ms`、`audio_ms`、`mouse_ms` 和 `gc_ms` 分别记录预加载、AVM2 主帧生命周期阶段、声音更新、鼠标更新及 GC 债务处理。Construct 包含 frameConstructed 广播，Scripts/Exit 包含各自清理；Enter 的事件处理可触发嵌套 goto/构建，因此不能把它等同纯 AVM2 字节码耗时。这些计时位于 tick/update 内，彼此可能嵌套，不能与 tick 或 render 简单求和；AVM1 帧脚本未单独计入 AVM2 Scripts。关闭追踪时跳过时钟读取。3.3 的实测与限制见[性能报告](validation/bvn33-performance-20261027.md)。
+`preload_ms`、`enter_ms`、`construct_ms`、`scripts_ms`、`exit_ms`、`audio_ms`、`mouse_ms` 和 `gc_ms` 分别记录预加载、AVM2 主帧生命周期阶段、声音更新、鼠标更新及 GC 债务处理。Construct 包含 frameConstructed 广播，Scripts/Exit 包含各自清理；Enter 的事件处理可触发嵌套 goto/构建，因此不能把它等同纯 AVM2 字节码耗时。这些计时位于 tick/update 内，彼此可能嵌套，不能与 tick 或 render 简单求和；AVM1 帧脚本未单独计入 AVM2 Scripts。关闭追踪时跳过时钟读取。3.3 的实测与限制见[线程与解压报告](validation/bvn33-threads-20261029.md)。
 
 
 新增性能字段包括 `pixel_hits/misses/evictions/mib`、`predecode_queued/hits/late/unused/failed/reserved_mib/worker_ms`，以及超过 16.667/33.333/50 ms 的主循环计数。`static_idle_mib/shapes` 和 `static_current_mib/shapes` 为窗口内各自峰值，可能来自不同帧，不能相加当 GPU 峰值；像素/任务计数也会跨窗口发生，窗口命中次数不必等于同窗口排队次数。`python scripts/build_cache_diagnostic.py` 生成原创 30 FPS 三帧静态位图循环和预期图，默认写入忽略的 `build/diagnostics/`，可用 `--output-dir` 改位置；CPU0/GPU0 与 CPU0/GPU8 可隔离验证重复注册和上传。
@@ -192,7 +192,7 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.7.3-rebuil
 
 `test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
 
-`test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。五个静态资源测试可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。该 Rust 测试框架与应用 ELF 的系统要求可能不同；本轮测试框架需要 GLIBC 2.39，因此仅在隔离调试目录通过工具链自带的匹配加载器、libc/libm 执行，没有替换设备系统库。详情见[验证记录](validation/fighting-games-20261026.json)。
+`test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。静态资源用例可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。Rust测试框架与应用ELF的系统要求可能不同；既有测试框架需要GLIBC 2.39，仅在隔离目录通过SDK匹配的加载器、libc/libm执行，没有替换设备系统库。当前静态资源测试与隔离运行边界见[缓存验证报告](validation/resource-cache-20261030.md)。
 
 依赖 Git、Python、Node.js、JDK 17、Rust 1.94.0（Windows GNU 主机及 `aarch64-unknown-linux-gnu` 标准库）、w64devkit 2.1.0、Zig 0.14.1、ARM GNU 14.2 SDK。版本与下载校验见 [Rust 工具锁](../adapter/rust-toolchain.lock.json)、[工具来源锁](../adapter/references.lock.json)和 [ARM SDK 锁](../arm-gnu.lock.json)。
 
@@ -271,4 +271,4 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 
 Git 收录项目源码、必要资源与测试、配置、文档、依赖锁和明确用途的固定输入。`outputs/`、`work/`、`adb-tools/`、`flash-transfer/`、工程 `.tools/` 与 `build/`、所有 target/构建缓存、本机 `workspace.local.json`、环境文件和编辑器缓存均由根 [.gitignore](../../.gitignore) 排除。不要全局忽略 `.so`、`.jar`、`.zip` 或 `.swf`：其中有必要依赖与测试夹具。
 
-[.gitattributes](../../.gitattributes) 保留导入源码的原始字节，Shell 脚本单独强制 LF；锁文件中的 SHA-256 依赖这些字节。`games/flash/` 额外保留游戏配置的原始空白，不为通过 diff 空白检查而改写第三方资源。整理时不批量格式化第三方源码。旧版本文档在 [archive/](archive/README.md)，验证摘要在 [validation/](validation/)，完整日志和截图在本地输出目录。裁剪的无关参考文件保存在本地 `work/repository-cleanup-20261025/unused-reference/`；Git 历史不做重写。
+[.gitattributes](../../.gitattributes) 保留导入源码的原始字节，Shell 脚本单独强制 LF；锁文件中的 SHA-256 依赖这些字节。`games/flash/` 额外保留游戏配置的原始空白，不为通过 diff 空白检查而改写第三方资源。整理时不批量格式化第三方源码。旧版本使用说明、需求快照和重复报告不再保留独立文件，历史内容从 Git 追溯；当前验证摘要在 [validation/](validation/)，完整日志和截图在本地输出目录。裁剪的无关参考文件保存在本地 `work/repository-cleanup-20261025/unused-reference/`；Git 历史不做重写。

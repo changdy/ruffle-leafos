@@ -4,7 +4,7 @@
 
 ## 选择依据
 
-既有[3.3 性能分析](bvn33-performance-20261027.md)与[显示树采样](bvn33-traversal-20261027.md)表明，AVM2 生命周期、嵌套 goto 与对象遍历是重要 CPU 开销；GLES 绘制并非这些场景的主要瓶颈。当前构建脚本覆盖了 workspace 的 release 配置，实际采用通用 AArch64、opt-level 2、跨 crate LTO 关闭、16 个 codegen units。
+前期3.3实机采样表明，AVM2生命周期、嵌套goto与对象遍历是重要CPU开销；GLES绘制并非那些场景的主要瓶颈，原始过程可从Git历史追溯。当前线程与解压证据统一见[后续报告](bvn33-threads-20261029.md)。本轮基线构建脚本覆盖 workspace 的release配置，实际采用通用AArch64、opt-level 2、跨crate LTO关闭、16个codegen units。
 
 本轮候选对 Rust 目标代码启用 `target-cpu=cortex-a55`、opt-level 3、ThinLTO，保留 16 个 codegen units 与既有工具链和依赖。设备 `/proc/cpuinfo` 报告 atomics、crc32、asimddp 等对应特性；此构建仍只针对 Pocket1，不能据 AArch64 ELF 标识推定兼容其他 CPU。C/汇编依赖和预编译标准库没有重新定向构建，不声称整个程序所有指令均按 A55 重编。
 

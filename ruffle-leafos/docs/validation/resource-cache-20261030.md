@@ -116,4 +116,4 @@
 
 本轮 `RuffleCacheOptimizationDebug.pak` 及此前同缓存任务遗留的 `RuffleBitmapDebug.pak` 均已归档到 `Apps/` 外；刷新前备份 Leaf SQLite 数据库，刷新后 Apps 与搜索索引查询均无这两个入口。没有手工删除其他记录，既有 LOW 验证入口和其他存储源保留。结束时无遗留播放器进程；内核 OOM 增量仍为上述拳皇新旧对照的两次，没有把该失败归零。备份、安装、正式通路、恢复及清理摘要分别在本地 `installed-validation.json`、`formal-validation.json`、`formal-apps-validation.json`、`formal-data-restoration.json`、`cleanup.json`。
 
-原始日志、资源快照、截图及构建记录保存在忽略目录 `outputs/cache-optimization-20261030/`。设备操作和派生分析脚本、夹具产物保存在忽略目录 `work/cache-optimization-20261030/`；`analyze.py` 记录窗口筛选，`summary.py` 只生成派生汇总。简要机器可读结论见[资源缓存验证摘要](resource-cache-20261030.json)，不收录原始大日志和临时 ADB 地址。
+原始日志、资源快照、截图及构建记录保存在忽略目录 `outputs/cache-optimization-20261030/`。设备操作和派生分析脚本、夹具产物保存在忽略目录 `work/cache-optimization-20261030/`；`analyze.py` 记录窗口筛选，`summary.py` 只生成派生汇总。重复的JSON摘要已删除，结论与构建身份统一保留在本文，不收录原始大日志和临时ADB地址。

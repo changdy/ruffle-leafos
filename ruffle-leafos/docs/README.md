@@ -10,10 +10,13 @@
 
 | 补充资料 | 内容 |
 | --- | --- |
-| [按键 v5](formats/controls-format-v5.md) | 当前映射及旧版兼容链接 |
+| [按键与光标](formats/controls-format-v5.md) | 当前 v5 全字段、v1—v4 兼容表及全局光标 |
 | [画面 RAV1/RAV2](formats/graphics-settings.md)、[语言](formats/language-settings.md)、[数据管理目录](formats/data-manager-catalog.md) | 字段级契约 |
 | [验证报告](validation/) | 各轮场景、二进制身份、原始数据位置和验收边界；当前结论由工程进度汇总 |
+| [稳定功能验证摘要](validation/stable-features.md) | 输入、进度、正式入口、语言、图标及旧版基础验收 |
 | [0.6.9 后逐提交审查](validation/review-after-0.6.9-20261031.md) | 39 个提交的代码合理性与历史问题闭环 |
-| [第三方声明](THIRD_PARTY.md)、[历史归档](archive/README.md) | 来源许可、历史实施及需求快照 |
+| [第三方声明](THIRD_PARTY.md) | 来源与许可 |
 
-使用行为维护在 README，状态/待办维护在 progress，实现/工程命令维护在 implementation，字段契约维护在 formats。已稳定功能不重复记录每轮操作过程；详细证据留在 validation，历史需求留在 archive。完整发布包、截图和原始日志在本地 `outputs/`，不进入 Git。
+使用行为维护在 README，状态/待办维护在 progress，实现/工程命令维护在 implementation，字段契约维护在 formats。验证报告只保留当前仍有独立价值的内容，稳定功能的旧验收合并为一份摘要，不再逐版保存使用说明或需求副本。完整发布包、截图和原始日志在本地 `outputs/`，不进入 Git。
+
+删除的旧文档可从 Git 历史读取，例如在仓库根运行 `git show 95dbdf3:ruffle-leafos/docs/archive/requirements-v2.7.md`。历史设计不覆盖当前 README、进度与格式契约。
