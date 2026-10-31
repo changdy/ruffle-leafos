@@ -16,6 +16,7 @@
 | [验证报告](validation/) | 各轮场景、二进制身份、原始数据位置和验收边界；当前结论由工程进度汇总 |
 | [稳定功能验证摘要](validation/stable-features.md) | 输入、进度、正式入口、语言、图标及旧版基础验收 |
 | [游戏截图验证](validation/screenshots-20261031.md) | 纯游戏画面、封面/照片、流式编码内存、低内存拒绝/恢复和两后端实机检查 |
+| [死神人机卡顿验证](validation/bvn33-pve-stutter-20261031.md) | 换回合 BitmapData 完整覆盖、旧目标读回消除及实际像素检查 |
 | [0.6.9 后逐提交审查](validation/review-after-0.6.9-20261031.md) | 39 个提交的代码合理性与历史问题闭环 |
 | [第三方声明](THIRD_PARTY.md) | 来源与许可 |
 | [截图来源](images/README.md) | 首页与指南使用的实机图片、拍摄日期及版本范围 |

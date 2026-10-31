@@ -20,6 +20,9 @@ use ruffle_render::transform::Transform;
 use std::cell::{Ref, RefMut};
 use swf::{BlendMode, ColorTransform, Fixed8, Rectangle, Twips};
 
+#[cfg(test)]
+mod copy_pixels_tests;
+
 /// AVM1 and AVM2 have a shared set of operations they can perform on BitmapDatas.
 /// Instead of directly manipulating the BitmapData in each place, they should call
 /// a shared method here which will do it.
@@ -1321,7 +1324,15 @@ fn copy_on_cpu<'gc>(
 
         write.set_cpu_dirty(context, dest_region);
     } else {
-        let dest = dest.sync(renderer);
+        let dest = if !blend
+            && dest_region == PixelRegion::for_whole_size(dest.width(), dest.height())
+        {
+            // A complete replacement never reads the previous destination pixels.
+            // Discard its pending GPU readback, just as a full fillRect does.
+            dest.overwrite_cpu_pixels_from_gpu(context).0
+        } else {
+            dest.sync(renderer)
+        };
         let mut dest_write = dest.borrow_mut(context);
         let source_read = source.read_area(source_region, renderer);
 

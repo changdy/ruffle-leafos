@@ -51,7 +51,9 @@
     "sdl2test-rocknix/src/data_manager.rs": "7fdc0b56d98724afc3374cc7fab72d23b4d396bfbcff3de8a13ee1a652fc80aa",
     "sdl2test-rocknix/src/screenshot.rs": "db8b3c4b31b0f88f0f0e6d920ef45e01035d36f19e4b6b1bc456b574bae4ed53",
     "sdl2test-rocknix/src/screenshot_png.rs": "52e12911edf4321941027e3ed9556e6dddbeb0aeff551cdd04c5ab689dc164f5",
-    "render/tests/screenshot_png.rs": "221dd64635d87253df2ed209d47c439f2f929fea107a8d0c0f6fb6c0d954d030"
+    "render/tests/screenshot_png.rs": "221dd64635d87253df2ed209d47c439f2f929fea107a8d0c0f6fb6c0d954d030",
+    "core/src/bitmap/operations.rs": "77f7ca67280ac0613ea0963dc672183f521d1335c6233c49ef8bdd5a595305b7",
+    "core/src/bitmap/operations/copy_pixels_tests.rs": "948c2df9c14b867ccd429950d8caa9a4fabff1efdfb8a0acf849235b9a590157"
   },
   "verified_leaf": {
     "version": "0.13.0",

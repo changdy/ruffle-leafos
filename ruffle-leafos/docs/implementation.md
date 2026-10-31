@@ -89,6 +89,10 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 
 ### GLES 滤镜与读回临时资源
 
+`core/src/bitmap/operations.rs::copy_on_cpu()` 在不同 BitmapData 之间进行不混合的完整目标覆盖时，使用已有 `overwrite_cpu_pixels_from_gpu()` 丢弃目标的过期 CPU 像素及待完成读回，再复制来源。它沿用整图 `fillRect()` 的所有权规则；来源仍按需同步，局部覆盖、透明混合和自复制保持原同步路径。避免《死神 VS 火影》换回合清空血条快照前回读即将被覆盖的旧内容，不改变游戏帧、事件或缓存预算。[人机卡顿验证](validation/bvn33-pve-stutter-20261031.md)。
+
+`python scripts/make_bitmap_copy_fixture.py --output build/diagnostics/bitmap-copy` 使用已构建 playerglobal 和配置 JDK 生成原创 AVM2 夹具。八组公开 `BitmapData` API 检查会在实际 `draw()` 后验证复制结果，成功日志为 `COPY_PIXELS_PROBE PASS cases=8`；生成的 SWF/ABC 留在忽略目录。
+
 `gl_backend.rs` 的滤镜 scratch 纹理与异步读回 PBO 使用独立 `idle_pool.rs`。旧实现仅按尺寸复用并全部回池，动画滤镜的不同边界尺寸会持续留下纹理；它们不属于静态形状 LRU。现在 scratch 闲置池最多保留 16 MiB RGBA 有效载荷 / 32 项，PBO 闲置池最多 8 MiB / 16 项，超限按最近回池次序淘汰，并由当前 GL 线程显式删除。scratch 保持精确尺寸复用以保留坐标及采样；PBO 优先取最小足够大者，否则复用较大的旧小缓冲并扩容，按实际容量计费。
 
 `RenderBackend::set_memory_pressure(bool)` 默认无操作；Leaf 启动及每秒将现有 128/160 MiB 迟滞状态传给后端，暂停时也调用。GLES 收到压力状态后立即将两池降零，归还的新闲置项也不保留；活动滤镜纹理及未完成读回不被删除，恢复后重新允许有界保留。池预算不是总 GPU/RSS 上限，也不包含驱动布局、元数据、在途存储、游戏持有的目标与 BitmapData。纹理删除使共享绑定缓存失效，部分 scratch 获取失败也释放已取得项。
