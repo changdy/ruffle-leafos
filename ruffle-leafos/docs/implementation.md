@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.8.2 开发预览**，整理于 2026-10-31。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.8.3 开发预览**，整理于 2026-10-31。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 命名与兼容标识
 
@@ -193,7 +193,7 @@ python -m unittest discover -s scripts -p test_language.py -v
 python scripts/test_renderer.py
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.2-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。

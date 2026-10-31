@@ -2,12 +2,12 @@
   "upstream_repository": "https://github.com/aweigit/ruffle-miyooflip",
   "upstream_commit": "3bc39c5e0fdbc9fcde92681706395f6ef70f991b",
   "upstream_cargo_lock_sha256": "c0df2d92702e187a07dd469f7ea58cde731c18ee1941fa8b35d56a4439736404",
-  "leaf_cargo_lock_sha256": "89947697e7bdddf521e34a9989d186d463037a96308a77c989b7475476a98470",
+  "leaf_cargo_lock_sha256": "d4eb7bf07948947fcd17d3c19da737ccdbb1d770a46a5ab28797ba9f1848d3d0",
   "relationship": "Leaf frontend derived from the pinned public base; does not reproduce all original leaf-12 private patches.",
   "leaf_files_sha256": {
-    "Cargo.lock": "89947697e7bdddf521e34a9989d186d463037a96308a77c989b7475476a98470",
+    "Cargo.lock": "d4eb7bf07948947fcd17d3c19da737ccdbb1d770a46a5ab28797ba9f1848d3d0",
     "core/src/player.rs": "b3dfbc72dfe5f971665e417f9b9263e784e3a96b4b4899d2196c6b7e131054d6",
-    "sdl2test-rocknix/Cargo.toml": "b549ec75972fc01b69bbf79e0619a117b39dd52d8b61637aab1d27e6c43793be",
+    "sdl2test-rocknix/Cargo.toml": "e3c0066ea27f4b1f58cea1dcd34a64d2571887d53c4427d4d3df57f92a8f117c",
     "sdl2test-rocknix/src/controls.rs": "b63e02073e91d3ae580fc593baa31f142b5abeff05351d3e51be509b1910fc74",
     "sdl2test-rocknix/src/cursor.rs": "7476fa43e71e59881f77145a885c68ecee6fc9dbdd06c23a58848a8982806f8a",
     "sdl2test-rocknix/src/experience.rs": "13a4610e2183aae6550600852377c2de04aa0ef7ca0e9c5aaea346250ba616f8",
@@ -56,5 +56,5 @@
     "launcher_commit": "915c48595fbd20ec56a9d23b2fc1f39a4f6f8803",
     "menu_contract": "Built-in evdev injection through Leaf virtual pad and SDL tested; long-hold escape remains pending"
   },
-  "frontend_version": "0.8.2"
+  "frontend_version": "0.8.3"
 }
