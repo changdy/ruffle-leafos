@@ -99,7 +99,8 @@ def main():
     make_movie(stage / 'Roms/flash/Leaf-GPU-Probe.swf')
     bundled_games = bundle_games(stage)
     (stage / 'Images/flash').mkdir(parents=True)
-    shutil.copyfile(ROOT / 'README.md', pak / 'README.md')
+    for filename in ['README.md', 'README.en.md']:
+        shutil.copyfile(ROOT / filename, pak / filename)
     (pak / 'games').mkdir()
     shutil.copyfile(ROOT / 'games/README.md', pak / 'games/README.md')
     shutil.copytree(ROOT / 'docs', pak / 'docs',
@@ -199,7 +200,7 @@ def main():
         for folder in ['player', 'adapter', 'pak', 'scripts', 'docs', 'games', 'target-libs', 'runtime/leaf-12', 'vendor/leaf-contracts', 'vendor/catastrophe']:
             shutil.copytree(ROOT / folder, source_stage / folder,
                 ignore=source_ignore)
-        for filename in ['README.md', '.gitignore', 'leaf-source.lock.json', 'arm-gnu.lock.json']:
+        for filename in ['README.md', 'README.en.md', '.gitignore', 'leaf-source.lock.json', 'arm-gnu.lock.json']:
             shutil.copyfile(ROOT / filename, source_stage / filename)
         # Keep the exact menu reference and license available in the source
         # archive; packaging must not depend on an omitted vendor checkout.

@@ -103,7 +103,17 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 
 ## 数据身份与持久化
 
-用户可直接使用的数据路径列于[README](../README.md#apps-数据管理与数据路径)。正式启动器通过 Leaf 的 `USERDATA_PATH`、`SAVES_PATH`、`LOGS_PATH` 选择当前卡；用户配置与进度不写入可升级的 pak 目录。
+正式启动器通过 Leaf 的 `USERDATA_PATH`、`SAVES_PATH`、`LOGS_PATH` 选择当前卡；用户配置与进度不写入可升级的 pak 目录。升级、回滚或手动备份时，同时保留安装目录、控制配置目录与存档目录。数据路径如下，普通操作见[使用指南](../README.md#apps-数据管理)。
+
+| 数据 | 位置 |
+| --- | --- |
+| 按键映射 | `$USERDATA_PATH/ruffle-probe/config/controls/`；映射为 `slots/<路径标识>/slot-01.rmap`—`slot-10.rmap`，`selected.rmap` 记忆选择 |
+| 全局光标 | `$USERDATA_PATH/ruffle-probe/config/controls/cursor.conf` |
+| 界面语言 | `$USERDATA_PATH/ruffle-probe/config/language.conf`，游戏与 Apps 共用 |
+| 原生进度 | `$SAVES_PATH/ruffle-leaf-preview/shared_objects/slots-v1/games/<内容指纹>/slot-1.rls`—`slot-5.rls` |
+| 全局画面配置 | `$USERDATA_PATH/ruffle-probe/config/audiovisual/global.rav`；所有游戏共用 |
+| 清理归档 | `$SAVES_PATH/ruffle-leaf-preview/shared_objects/cleared-data/` |
+| 运行日志 | `$LOGS_PATH/ruffle-probe.log`，上次日志为 `.previous` |
 
 | 数据 | 身份、格式与恢复规则 |
 | --- | --- |
@@ -233,7 +243,7 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 新生成的安装归档名为 `ruffle-leafos-<版本>.zip`，源码归档为 `ruffle-leafos-<版本>-source.zip`；旧交付目录及历史归档保留原名。
 
-安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源、两款定制游戏及许可组成。随包 README 使用当前项目 README，支持文档一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
+安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源、两款定制游戏及许可组成。随包 `README.md` / `README.en.md` 使用当前项目中英文使用指南，支持文档与截图一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、中英文指南、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
 
 `package_preview.py` 的 `bundle_games` 从 `games/manifest.json` 读取游戏入口和全部文件 SHA-256，先检查 `games/flash/` 的文件集合、逐文件字节及主入口，再完整复制到 `Roms/flash/`，保留死神的 398 个外部资源及相对路径。缺失、多余或内容变化均停止打包。`build-manifest.json` / `build-report.json` 的 `bundled_games` 记录名称、入口、来源名称和主文件指纹，包内 `provenance/bundled-games.json` 保留完整文件清单；`games/README.md` 随应用附带。`python -m unittest discover -s scripts -p test_package_preview.py -v` 检查错误输入及两份真实游戏的完整安装路径，GitHub release job 在构建后执行同一回归。
 

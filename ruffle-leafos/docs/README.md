@@ -4,7 +4,8 @@
 
 | 主文档 | 职责 |
 | --- | --- |
-| [项目 README](../README.md) | 介绍、安装和使用说明 |
+| [项目首页](https://github.com/changdy/ruffle-leafos)、[English](https://github.com/changdy/ruffle-leafos/blob/main/README.en.md) | 游戏效果、主要功能、快速安装与下载入口 |
+| [中文使用指南](../README.md)、[English user guide](../README.en.md) | 安装、添加游戏、具体操作与常见问题；随安装包附带 |
 | [工程进度](progress.md) | 当前结果、待办、版本与验证证据入口 |
 | [工程实现细节](implementation.md) | 架构、源码入口、数据、构建、发布与仓库边界 |
 
@@ -17,6 +18,7 @@
 | [游戏截图验证](validation/screenshots-20261031.md) | 纯游戏画面、封面规则、覆盖确认、照片路径和两后端实机检查 |
 | [0.6.9 后逐提交审查](validation/review-after-0.6.9-20261031.md) | 39 个提交的代码合理性与历史问题闭环 |
 | [第三方声明](THIRD_PARTY.md) | 来源与许可 |
+| [截图来源](images/README.md) | 首页与指南使用的实机图片、拍摄日期及版本范围 |
 
 使用行为维护在 README，状态/待办维护在 progress，实现/工程命令维护在 implementation，字段契约维护在 formats。验证报告只保留当前仍有独立价值的内容，稳定功能的旧验收合并为一份摘要，不再逐版保存使用说明或需求副本。完整发布包、截图和原始日志在本地 `outputs/`，不进入 Git。
 
