@@ -50,6 +50,7 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 | 连发 | 每键 0/5/10/15 Hz，按住触发；松开阶段调度不超过 10 ms，其余周期按下；单调时钟、截止时间唤醒，卡顿不集中补发；仅键盘/组合键/鼠标左右键允许连发 | [turbo.rs](../player/sdl2test-rocknix/src/turbo.rs) |
 | 全局光标 | 外观独立保存；空心圆中心点固定 1×1 屏幕像素；移动恢复显示，静止 3.5 秒隐藏；点击/按住/滚轮不延长显示 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs) |
 | 原生进度/画面/Apps/说明 | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；全局缩放/画质/FPS/渲染接口；独立关于单页与快捷键三组说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
+| Apps 数据目录 | 结合实际存档、按键文件与旧目录记录生成游戏列表；恢复 SWF 路径并识别失效，保留孤立或损坏数据的清理入口 | [data_manager.rs](../player/sdl2test-rocknix/src/data_manager.rs) |
 | 系统音量 | 异步读取真实 Leaf 数值，仅显示系统硬件键反馈；旧每游戏音量/静音不再控制播放 | [system_volume.rs](../player/sdl2test-rocknix/src/system_volume.rs) |
 | 软键盘 | Ruffle 焦点回调排队；主循环内暂停、释放输入、草稿确认/取消；Leaf Catastrophe 布局与现有 GL 主题绘制 | [virtual_keyboard.rs](../player/sdl2test-rocknix/src/virtual_keyboard.rs)、[ui_backend.rs](../player/sdl2test-rocknix/src/ui_backend.rs)、[keyboard_test.rs](../player/sdl2test-rocknix/src/keyboard_test.rs) |
 | Flash FPS | 统计实际 Flash 帧执行量，按秒显示当前值；全局默认及恢复默认时开启，已有全局画面配置优先 | [core/src/player.rs](../player/core/src/player.rs)、[experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
@@ -110,6 +111,14 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 SharedObject 提交采用同目录临时文件写入、sync、校验及原子替换；保留有效 `.bak`，主文件损坏可从有效备份读取，主备都损坏时禁止当成空槽覆盖。显式 flush、周期请求（十秒）、打开菜单和正常退出会请求提交。切换存档先提交当前槽，成功后重启播放器读取目标槽；复制覆盖前再次确认。
 
 新建游戏不批量写十份方案。`Mapping::group` 仅为方案 1、2 提供默认键位；3—10 的 19 个绑定全为 `None`，摇杆为 `Stick::None`、精调与连发关闭。全空映射允许读取、保存、应用并写入 `selected.rmap`，便于清空已有方案或进入空方案编辑。已有槽位文件优先于默认值，不自动清空旧数据。缺少新方案 1 时可读旧此游戏 rmap，旧全局按键与 ROM 旁 cfg 不自动叠加。只有主动保存才升级旧映射并保留备份。按键按路径识别，进度按内容识别，两者迁移规则不同；具体限制与故障验收见[工程进度](progress.md)。
+
+### Apps 数据管理
+
+`Page::Manager` 只保留游戏数据、批量清理、语言和返回 Leaf 四个入口；`ManagerGames` 采用纵向列表，十字键上下选择，L1/R1 按可见行数翻页。A 进入 `ManagerGame` 的单游戏清理页，全部游戏操作另放在 `ManagerBulk`。B 按层级返回；取消确认和返回列表保留对应项目位置。确认页默认取消，执行后重新扫描实际文件；仍有另一类数据则保留条目，存档和按键均清空则移出列表。
+
+`data_manager::entries` 结合 `slots-v1/games/`、`controls/slots/`、旧 `controls/games/` 和 `slots-v1/catalog/` 建立条目。实际存档、按键方案及其备份或损坏文件均计入；只有 `selected.rmap` 的游戏也计入，因为它保存用户选择。只有 catalog 记录、内置默认键位或已移入 `cleared-data/` 的归档不计入。清理目标按实际关联的存档内容身份和按键路径身份分别处理，不能以游戏标题猜测数据目录。
+
+新写入的 `catalog/<内容指纹>.meta` 保留前两行标题、按键路径标识，第三行增加 `path=<UTF-8 绝对 SWF 路径的十六进制编码>`；读取继续兼容旧两行记录，字段限制与存在性检查边界见[目录格式契约](formats/data-manager-catalog.md)。按键文件中的完整 `identity` 可恢复 `flash/<相对路径>`，用于查找没有 catalog 或只保留旧记录的配置。路径查找使用启动环境给出的 Flash 根目录；已知路径找不到时显示“已失效 / Unavailable”，无法确认路径的历史数据保留清理入口，不武断标为删除。用户标题和路径不翻译，页面、状态与操作提示均通过现有中英翻译接口显示。
 
 显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[显示树性能报告](validation/bvn33-traversal-20261027.md)。
 

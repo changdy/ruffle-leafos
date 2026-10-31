@@ -112,8 +112,12 @@ impl Progress {
     }
     pub fn directory(&self)->PathBuf {self.root.join("games").join(&self.id)}
     pub fn register(&self)->Result<(),String>{
+        self.register_path(Path::new(&self.movie_path))
+    }
+    pub fn register_path(&self,movie:&Path)->Result<(),String>{
         let title=self.title.replace(['\r','\n']," ");
-        atomic(&self.root.join("catalog").join(format!("{}.meta",self.id)),format!("{title}\n{}\n",self.control_id).as_bytes())
+        let path=super::data_manager::encode_movie_path(movie).unwrap_or_default();
+        atomic(&self.root.join("catalog").join(format!("{}.meta",self.id)),format!("{title}\n{}\n{path}\n",self.control_id).as_bytes())
     }
     pub fn path(&self,n:usize)->PathBuf {self.directory().join(format!("slot-{}.rls",n+1))}
     fn read(&self,n:usize)->Result<(Snapshot,bool),String>{
@@ -219,7 +223,7 @@ impl Settings {
 }
 
 #[derive(Clone,Copy,Debug,PartialEq,Default)]
-pub enum Page {#[default] Home,Saves,Settings,Renderer,Manager,Confirm,About,Shortcuts,Language}
+pub enum Page {#[default] Home,Saves,Settings,Renderer,Manager,ManagerGames,ManagerGame,ManagerBulk,Confirm,About,Shortcuts,Language}
 
 pub const SHORTCUT_TABS:[&str;3]=["游戏中","菜单操作","按键编辑"];
 // Each row gives one goal, the exact input, and its context or result.
@@ -257,22 +261,9 @@ pub const BACKGROUND:[(&str,&str,&str);3]=[
     ("感谢开源社区，也感谢你", "感谢 Ruffle、aweigit/ruffle-miyooflip 和 Leaf / Jawaka 的开发者。", "也感谢每一位尝试、测试和反馈的玩家。祝你玩得开心！"),
 ];
 #[derive(Clone,Debug)]
-pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,Renderer(super::graphics::Backend),Clear(usize),Language(super::i18n::Language),Quit}
-#[derive(Clone,Debug)]
-pub struct Entry {pub id:String,pub title:String,pub control_id:String}
-pub fn entries(root:&Path)->Vec<Entry>{
-    let mut v=Vec::new();
-    if let Ok(dirs)=fs::read_dir(root.join("catalog")){for d in dirs.flatten(){
-        if !d.file_type().is_ok_and(|t|t.is_file())||d.path().extension().is_none_or(|e|e!="meta"){continue;}
-        let id=d.path().file_stem().unwrap_or_default().to_string_lossy().into_owned();
-        if !id.bytes().all(|c|c.is_ascii_hexdigit()||c==b'-'){continue;}
-        if let Ok(s)=fs::read_to_string(d.path()){
-            let mut lines=s.lines();let title=lines.next().unwrap_or("Flash").to_string();
-            let control_id=lines.next().unwrap_or("").to_string();
-            if control_id.bytes().all(|c|c.is_ascii_hexdigit()) {v.push(Entry{id,title,control_id});}
-        }
-    }}v.sort_by(|a,b|a.title.cmp(&b.title));v
-}
+pub enum Command {None,Choose(usize),Copy(usize),Save,Settings,RefreshGames,Renderer(super::graphics::Backend),Clear(usize),Language(super::i18n::Language),Quit}
+pub use super::data_manager::Entry;
+pub const MANAGER_VISIBLE_ROWS:usize=7;
 // Clear is reversible: rename into a dated archive outside active data.
 pub fn archive(path:&Path,trash:&Path)->Result<bool,String>{
     safe(path)?;safe(trash)?;
@@ -296,9 +287,24 @@ pub struct Ui {
     pub language:super::i18n::Language,
 }
 impl Ui {
+    pub fn manager_game(&self)->Option<&Entry>{self.games.get(self.game_index)}
+    pub fn open_games(&mut self){self.open(Page::ManagerGames);self.selected=self.game_index.min(self.games.len());}
+    pub fn manager_parent(&mut self){
+        if self.pending<=2 {self.open(Page::ManagerGame);self.selected=self.pending.saturating_sub(1);}
+        else {self.open(Page::ManagerBulk);self.selected=self.pending.saturating_sub(3);}
+    }
+    pub fn refresh_games(&mut self,games:Vec<Entry>){
+        let key=self.manager_game().map(|g|g.key.clone());
+        self.games=games;
+        let retained=key.and_then(|key|self.games.iter().position(|g|g.key==key));
+        self.game_index=retained.unwrap_or(self.game_index.min(self.games.len().saturating_sub(1)));
+        if self.page==Page::ManagerGame&&retained.is_none(){self.open_games();}
+        else if self.page==Page::ManagerGames{self.selected=self.game_index.min(self.games.len());}
+    }
+    pub fn manager_visible_start(&self)->usize {self.selected/MANAGER_VISIBLE_ROWS*MANAGER_VISIBLE_ROWS}
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}if page==Page::Language{self.selected=usize::from(self.language==super::i18n::Language::English);}}
     pub fn heading(&self)->String{match self.page{
-        Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("快捷键说明").into()
+        Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::ManagerGames|Page::ManagerGame=>t("游戏数据").into(),Page::ManagerBulk=>t("批量清理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("快捷键说明").into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
         Page::Language=>super::i18n::Language::ALL.iter().map(|language| format!("{}{}",language.label(),if *language==self.language{"  ✓"}else{""})).chain(std::iter::once(t("返回").into())).collect(),
@@ -306,7 +312,10 @@ impl Ui {
         Page::Settings=>self.settings.rows(),
         Page::Renderer=>vec![format!("OpenGL ES                         {}",if self.actual_renderer==super::graphics::Backend::OpenGlEs{t("使用中")}else{""}),
             crate::tr!("Vulkan（实验）                   {}", "Vulkan (experimental)           {}",if self.actual_renderer==super::graphics::Backend::Vulkan{t("使用中")}else if self.renderer_failed{t("上次启动失败")}else{""}),t("返回").into()],
-        Page::Manager=>vec![crate::tr!("游戏：  ◀  {}  ▶", "Game:  ◀  {}  ▶",self.games.get(self.game_index).map(|e|e.title.as_str()).unwrap_or(t("暂无记录"))),t("清空此游戏的五个存档").into(),t("重置此游戏的按键配置").into(),t("清空所有游戏存档").into(),t("重置所有按键配置").into(),t("语言").into(),t("返回 Leaf").into()],
+        Page::Manager=>vec![t("游戏数据").into(),t("批量清理").into(),t("语言").into(),t("返回 Leaf").into()],
+        Page::ManagerGames=>self.games.iter().map(|g|g.title.clone()).chain(std::iter::once(t("返回").into())).collect(),
+        Page::ManagerGame=>vec![t("清空此游戏的全部存档").into(),t("重置此游戏的按键配置").into(),t("返回游戏列表").into()],
+        Page::ManagerBulk=>vec![t("清空所有游戏存档").into(),t("重置所有按键配置").into(),t("返回").into()],
         Page::Confirm=>vec![t("取消").into(),t("确认").into()],Page::About|Page::Shortcuts=>vec![]
     }}
     pub fn nav(&mut self,nav:super::controls::Nav)->Command{
@@ -323,21 +332,26 @@ impl Ui {
         match nav {
             Nav::Up=>self.selected=(self.selected+count-1)%count,
             Nav::Down=>self.selected=(self.selected+1)%count,
-            Nav::B=>{if self.page==Page::Language{self.open(if self.app{Page::Manager}else{Page::Home});}
+            Nav::B=>{if self.page==Page::ManagerGames{self.open(Page::Manager);}
+                else if self.page==Page::ManagerGame{self.open_games();}
+                else if self.page==Page::ManagerBulk{self.open(Page::Manager);self.selected=1;}
+                else if self.page==Page::Language{self.open(if self.app{Page::Manager}else{Page::Home});if self.app{self.selected=2;}}
                 else if self.page==Page::Renderer{self.open(Page::Settings);self.selected=3;}
-                else if self.page==Page::Confirm{self.open(if self.pending>=30{Page::Renderer}else if self.app{Page::Manager}else{Page::Saves});}
+                else if self.page==Page::Confirm{if self.app&&self.pending<10{self.manager_parent();}else{self.open(if self.pending>=30{Page::Renderer}else{Page::Saves});}}
                 else if self.app||!self.started{return Command::Quit;}else{self.open(Page::Home);}},
+            Nav::Prev|Nav::Next if self.page==Page::ManagerGames=>{
+                self.selected=if matches!(nav,Nav::Prev){self.selected.saturating_sub(MANAGER_VISIBLE_ROWS)}else{(self.selected+MANAGER_VISIBLE_ROWS).min(count-1)};
+            },
             Nav::Left|Nav::Right=>{
                 let d=if matches!(nav,Nav::Left){-1}else{1};
                 if self.page==Page::Settings&&self.selected<3{self.settings.change(self.selected,d);return Command::Settings;}
-                if self.page==Page::Manager&&self.selected==0&&!self.games.is_empty(){self.game_index=(self.game_index as i32+d).rem_euclid(self.games.len() as i32) as usize;}
             },
             Nav::Y if self.page==Page::Saves&&self.started&&self.selected<SAVE_SLOTS=>{
                 if self.selected==self.active{return Command::Save;}
                 self.pending=20+self.selected;self.open(Page::Confirm);
             },
             Nav::A=>match self.page{
-                Page::Language=>{if let Some(language)=super::i18n::Language::ALL.get(self.selected){return Command::Language(*language);}self.open(if self.app{Page::Manager}else{Page::Home});},
+                Page::Language=>{if let Some(language)=super::i18n::Language::ALL.get(self.selected){return Command::Language(*language);}self.open(if self.app{Page::Manager}else{Page::Home});if self.app{self.selected=2;}},
                 Page::Saves=>{if self.selected==SAVE_SLOTS {if self.started{self.open(Page::Home)}else{return Command::Quit;}}
                     else if self.slots[self.selected].broken {self.message=t("此槽位损坏；请先在应用中清理").into();}
                     else if !self.started{return Command::Choose(self.selected);}
@@ -350,18 +364,25 @@ impl Ui {
                         else{self.pending=30+self.selected;self.open(Page::Confirm);}},
                     _=>{self.open(Page::Settings);self.selected=3;}
                 }},
-                Page::Manager=>{if self.selected==6{return Command::Quit;}if self.selected==5{self.open(Page::Language);return Command::None;}if self.selected>0{
-                    if self.selected<=2&&self.games.is_empty(){self.message=t("暂无游戏记录").into();}else{self.pending=self.selected;self.open(Page::Confirm);}
-                }},
+                Page::Manager=>match self.selected{0=>{self.open_games();return Command::RefreshGames;},1=>self.open(Page::ManagerBulk),2=>self.open(Page::Language),_=>return Command::Quit},
+                Page::ManagerGames=>{if self.selected==self.games.len(){self.open(Page::Manager);}else{self.game_index=self.selected;self.open(Page::ManagerGame);}},
+                Page::ManagerGame=>{
+                    if self.selected==2{self.open_games();}
+                    else if self.manager_game().is_some_and(|g|if self.selected==0{g.has_saves}else{g.has_controls}){self.pending=self.selected+1;self.open(Page::Confirm);}
+                    else{self.message=t("没有需要清理的数据").into();}
+                },
+                Page::ManagerBulk=>{if self.selected==2{self.open(Page::Manager);self.selected=1;}else{self.pending=self.selected+3;self.open(Page::Confirm);}},
                 Page::Confirm=>{if self.selected==1{
                     if self.pending>=30{return Command::Renderer(super::graphics::Backend::from_byte((self.pending-30) as u8).unwrap_or_default());}
                     if self.pending>=20{return Command::Copy(self.pending-20);}
                     if self.pending>=10{return Command::Choose(self.pending-10);}
                     return Command::Clear(self.pending);
-                } self.open(if self.pending>=30{Page::Renderer}else if self.app{Page::Manager}else{Page::Saves});},
+                } if self.app&&self.pending<10{self.manager_parent();}else{self.open(if self.pending>=30{Page::Renderer}else{Page::Saves});}},
                 _=>{}
             },_=>{}
-        }Command::None
+        }
+        if self.page==Page::ManagerGames&&self.selected<self.games.len(){self.game_index=self.selected;}
+        Command::None
     }
 }
 
@@ -437,7 +458,42 @@ mod tests {
     }
     #[test] fn copy_and_clear_are_scoped_and_recoverable(){
         let mut p=progress();p.register().unwrap();p.select(0).unwrap();assert!(p.copy_to(1).is_err());assert!(p.put("save",Some(b"progress")));p.copy_to(4).unwrap();p.select(4).unwrap();assert_eq!(p.get("save"),Some(b"progress".to_vec()));
-        assert_eq!(entries(&p.root).len(),1);let trash=p.root.join("trash");assert!(archive(&p.directory(),&trash).unwrap());assert_eq!(entries(&p.root).len(),1);assert!(p.slots().iter().all(|s|s.time==0));assert_eq!(fs::read_dir(trash).unwrap().count(),1);fs::remove_dir_all(p.root).unwrap();
+        let controls=p.root.join("controls");
+        assert_eq!(super::super::data_manager::entries(&p.root,&controls,&[]).len(),1);let trash=p.root.join("trash");assert!(archive(&p.directory(),&trash).unwrap());assert!(super::super::data_manager::entries(&p.root,&controls,&[]).is_empty());assert!(p.slots().iter().all(|s|s.time==0));assert_eq!(fs::read_dir(trash).unwrap().count(),1);fs::remove_dir_all(p.root).unwrap();
+    }
+    fn manager()->Ui {
+        let mut u=Ui{app:true,..Ui::default()};
+        u.games=(0..22).map(|i|Entry{key:format!("game-{i}"),title:format!("Game {i}"),has_saves:true,has_controls:true,..Entry::default()}).collect();
+        u.open(Page::Manager);u
+    }
+    #[test] fn manager_list_pages_and_back_preserve_game_and_confirm_context(){
+        use super::super::controls::Nav;
+        let mut u=manager();assert!(matches!(u.nav(Nav::A),Command::RefreshGames));assert_eq!(u.page,Page::ManagerGames);
+        u.nav(Nav::Next);assert_eq!(u.selected,7);assert_eq!(u.manager_visible_start(),7);
+        u.nav(Nav::Next);assert_eq!(u.selected,14);u.nav(Nav::A);assert_eq!(u.game_index,14);assert_eq!(u.page,Page::ManagerGame);
+        u.nav(Nav::A);assert_eq!(u.page,Page::Confirm);assert_eq!(u.selected,0);u.nav(Nav::A);assert_eq!(u.page,Page::ManagerGame);
+        u.nav(Nav::Down);u.nav(Nav::A);assert_eq!(u.pending,2);u.nav(Nav::B);assert_eq!(u.selected,1);assert_eq!(u.page,Page::ManagerGame);
+        u.nav(Nav::B);assert_eq!(u.page,Page::ManagerGames);assert_eq!(u.selected,14);
+        u.nav(Nav::Prev);assert_eq!(u.selected,7);u.nav(Nav::B);assert_eq!(u.page,Page::Manager);
+        u.nav(Nav::A);assert_eq!(u.selected,7);u.nav(Nav::B);
+        u.selected=1;u.nav(Nav::A);assert_eq!(u.page,Page::ManagerBulk);u.selected=1;u.nav(Nav::A);assert_eq!(u.pending,4);assert_eq!(u.selected,0);
+        u.nav(Nav::B);assert_eq!(u.page,Page::ManagerBulk);assert_eq!(u.selected,1);u.nav(Nav::A);u.selected=1;assert!(matches!(u.nav(Nav::A),Command::Clear(4)));
+    }
+    #[test] fn manager_refresh_removes_empty_game_and_retains_remaining_data(){
+        use super::super::controls::Nav;
+        let mut u=manager();u.game_index=14;u.open(Page::ManagerGame);
+        let mut games=u.games.clone();games[14].has_saves=false;u.refresh_games(games);assert_eq!(u.page,Page::ManagerGame);assert_eq!(u.game_index,14);
+        u.nav(Nav::A);assert_eq!(u.page,Page::ManagerGame);assert!(!u.message.is_empty());
+        let mut games=u.games.clone();games.remove(14);u.refresh_games(games);assert_eq!(u.page,Page::ManagerGames);assert_eq!(u.selected,14);
+        u.refresh_games(vec![]);assert_eq!(u.selected,0);u.nav(Nav::Next);u.nav(Nav::Prev);assert_eq!(u.selected,0);
+        u.nav(Nav::A);assert_eq!(u.page,Page::Manager);assert!(matches!(u.nav(Nav::B),Command::Quit));
+    }
+    #[test] fn manager_labels_translate_without_translating_game_names(){
+        use super::super::i18n::{self,Language};
+        let mut u=manager();u.games[0].title="中文游戏".into();
+        i18n::set(Language::English);assert_eq!(u.rows()[0],"Game data");assert_eq!(t("（已失效）"),"(Unavailable)");
+        u.open_games();assert_eq!(u.rows()[0],"中文游戏");u.open(Page::ManagerBulk);assert_eq!(u.heading(),"Bulk cleanup");
+        i18n::set(Language::Chinese);
     }
     #[test] fn startup_cannot_bypass_slot_picker_and_overwrite_requires_confirmation(){
         use super::super::controls::Nav;

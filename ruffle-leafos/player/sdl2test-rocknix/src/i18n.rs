@@ -221,7 +221,7 @@ mod tests {
         use super::super::{controls::Nav, experience::{Command, Page, Ui}};
         for app in [false, true] {
             let mut ui = Ui{app,started:!app,language:Language::English,..Default::default()};
-            if app { ui.open(Page::Manager); ui.selected=5; ui.nav(Nav::A); }
+            if app { ui.open(Page::Manager); ui.selected=2; ui.nav(Nav::A); }
             else { ui.open(Page::Language); }
             assert_eq!(ui.page, Page::Language);
             assert_eq!(ui.selected, 1);

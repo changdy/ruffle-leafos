@@ -12,6 +12,8 @@ pub mod cursor;
 pub mod shortcuts;
 #[path = "experience.rs"]
 pub mod experience;
+#[path = "data_manager.rs"]
+pub mod data_manager;
 #[path = "graphics.rs"]
 pub mod graphics;
 #[path = "turbo.rs"]

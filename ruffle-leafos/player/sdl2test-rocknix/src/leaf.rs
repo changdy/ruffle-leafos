@@ -299,6 +299,11 @@ impl Frontend {
                     self.apply_av();self.state.experience.settings.save(&self.settings_path)?;
                     self.state.experience.message=t("已保存全局画面设置").into();
                 },
+                ExperienceCommand::RefreshGames=>{
+                    let root=self.progress.lock().unwrap().root.clone();
+                    let games=session::data_manager::entries(&root,&self.state.controls.store.root,&session::data_manager::rom_roots());
+                    self.state.experience.refresh_games(games);
+                },
                 ExperienceCommand::Renderer(backend)=>{
                     if backend!=self.state.experience.actual_renderer&&self.flush_progress(false) {
                         self.restart_renderer=Some(backend);self.quit=true;
@@ -312,16 +317,16 @@ impl Frontend {
                     let game=self.state.experience.games.get(self.state.experience.game_index).cloned();
                     let mut targets=Vec::new();
                     match kind {
-                        1=>targets.push(root.join("games").join(game.ok_or(t("未选择游戏"))?.id)),
-                        2=>{let game=game.ok_or(t("未选择游戏"))?;targets.push(controls.join("slots").join(&game.control_id));targets.push(controls.join("games").join(format!("{}.rmap",game.control_id)));targets.push(controls.join("games").join(format!("{}.rmap.bak",game.control_id)));},
+                        1=>{for id in &game.ok_or(t("未选择游戏"))?.save_ids{targets.push(root.join("games").join(id));}},
+                        2=>{for id in &game.ok_or(t("未选择游戏"))?.control_ids{targets.push(controls.join("slots").join(id));targets.push(controls.join("games").join(format!("{id}.rmap")));targets.push(controls.join("games").join(format!("{id}.rmap.bak")));}},
                         3=>targets.push(root.join("games")),
                         4=>{for name in ["slots","games","global.rmap","global.rmap.bak"] {targets.push(controls.join(name));}},
                         _=>return Err(t("未知清理操作").into())
                     }
                     let mut changed=false;for path in targets{changed|=experience::archive(&path,&trash)?;}
-                    self.state.experience.games=experience::entries(&root);
-                    self.state.experience.game_index=self.state.experience.game_index.min(self.state.experience.games.len().saturating_sub(1));
-                    self.state.experience.open(ExperiencePage::Manager);
+                    self.state.experience.manager_parent();
+                    let games=session::data_manager::entries(&root,controls,&session::data_manager::rom_roots());
+                    self.state.experience.refresh_games(games);
                     self.state.experience.message=if changed{t("已清空；旧数据已移到本地备份目录")}else{t("没有需要清理的数据")}.into();
                     println!("leaf-manager clear={kind} archived={changed}");
                 }
@@ -782,7 +787,7 @@ pub async fn run() -> Result<(), String> {
     let progress=Arc::new(Mutex::new(experience::Progress::new(storage_dir.join("slots-v1"),&bytes,
         swf_path.file_stem().unwrap_or_default().to_string_lossy().into_owned(),
         control_store.game.file_stem().unwrap_or_default().to_string_lossy().into_owned(),movie_url.path().into())));
-    if !opt.app_settings {progress.lock().unwrap().register()?;}
+    if !opt.app_settings {progress.lock().unwrap().register_path(&swf_path)?;}
     let settings_path=experience::Settings::global_path(&control_store.root);
     let mut av=experience::Settings::load(&settings_path);
     let slots=progress.lock().unwrap().slots();
@@ -912,7 +917,7 @@ pub async fn run() -> Result<(), String> {
     front.state.experience.started=!opt.app_settings&&!pick_slot;
     front.refresh_saves();
     if opt.app_settings {
-        front.state.experience.games=experience::entries(&front.progress.lock().unwrap().root);
+        front.state.experience.games=session::data_manager::entries(&front.progress.lock().unwrap().root,&front.state.controls.store.root,&session::data_manager::rom_roots());
         front.state.experience.open(ExperiencePage::Manager);front.state.paused=true;
     } else if pick_slot {front.state.experience.open(ExperiencePage::Saves);front.state.paused=true;}
     front.apply_av();
@@ -930,8 +935,7 @@ pub async fn run() -> Result<(), String> {
     let mut fps_at=Instant::now();let mut fps_frames=0u64;
     let d=Button::DPadDown;let a=Button::A;let b=Button::B;let r=Button::DPadRight;
     let experience_script:Vec<Vec<Button>>=if opt.app_settings {
-        vec![vec![],vec![d,a],vec![b],vec![d,a],vec![d,a],vec![d,d,a],vec![d,a],
-            vec![d,d,d,a],vec![d,a],vec![d,d,d,d,a],vec![d,a],vec![]]
+        vec![vec![],vec![a],vec![b],vec![d,a],vec![a],vec![b],vec![d,a],vec![b],vec![b],vec![]]
     } else {
         vec![if pick_slot{vec![a]}else{vec![]},vec![Button::Guide],vec![d,d,d,d,d,a],
             vec![r,d,r,d,a,a],vec![],vec![b,b],vec![],vec![Button::Guide],
