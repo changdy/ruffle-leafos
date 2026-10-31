@@ -167,12 +167,12 @@ mod tests {
         assert_eq!(photo_root(&cards,&mounts).unwrap(),fs::canonicalize(&primary).unwrap());
         let mounts=format!("{mounts}2 0 8:2 / {} rw - vfat /dev/two rw\n",fs::canonicalize(&second).unwrap().display());assert_eq!(photo_root(&cards,&mounts).unwrap(),fs::canonicalize(&second).unwrap());
         let same=mounts.replace("8:2","8:1");assert_eq!(photo_root(&cards,&same).unwrap(),fs::canonicalize(&primary).unwrap());
-        let first=save_photo(&primary,"../游戏:名字","20261031-101112",|f|f.write_all(b"one")).unwrap();
-        assert_eq!(first.file_name().unwrap(),".._游戏_名字-20261031-101112.png");
-        let duplicate=save_photo(&primary,"../游戏:名字","20261031-101112",|_|panic!("A duplicate must not start encoding"));
+        let first=save_photo(&primary,"../游戏:名字","2026_10_31-10_11_12",|f|f.write_all(b"one")).unwrap();
+        assert_eq!(first.file_name().unwrap(),".._游戏_名字-2026_10_31-10_11_12.png");
+        let duplicate=save_photo(&primary,"../游戏:名字","2026_10_31-10_11_12",|_|panic!("A duplicate must not start encoding"));
         assert_eq!(duplicate.unwrap_err().kind(),io::ErrorKind::AlreadyExists);assert_eq!(fs::read(&first).unwrap(),b"one");
         assert_eq!(fs::read_dir(first.parent().unwrap()).unwrap().count(),1);
-        let next=save_photo(&primary,"../游戏:名字","20261031-101113",|f|f.write_all(b"two")).unwrap();assert_ne!(first,next);assert_eq!(fs::read(next).unwrap(),b"two");fs::remove_dir_all(root).unwrap();
+        let next=save_photo(&primary,"../游戏:名字","2026_10_31-10_11_13",|f|f.write_all(b"two")).unwrap();assert_ne!(first,next);assert_eq!(fs::read(next).unwrap(),b"two");fs::remove_dir_all(root).unwrap();
     }
     #[test] fn failed_streams_preserve_cover_and_remove_partial_files() {
         let root=fixture();let path=root.join("Images/flash/game.png");fs::create_dir_all(path.parent().unwrap()).unwrap();fs::write(&path,b"old").unwrap();

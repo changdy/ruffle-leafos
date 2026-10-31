@@ -191,7 +191,7 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 封面规则核对本地 Leaf/Jawaka `internal/discovery/art_path.c`：按 ROM 存储源优先 `Images/flash/<stem>`，回退 `Roms/flash/Imgs/<stem>`；PNG、JPG、JPEG 按顺序选择，扩展名大小写按源实现排序，文件名大小写遵循存储卡文件系统。嵌套 ROM 路径不映射到嵌套 Images 目录；重复 `.swf.swf` 与 Leaf 一样再去一次内容扩展名。写入目标始终为 canonical PNG；存在 PNG 则沿用其实际扩展名拼写，存在其他格式则确认后添加高优先级 PNG，保留旧图。文件保存接口接受编码回调：先独占创建文件，再编码，避免路径错误时仍分配读回缓冲。覆盖继续使用同目录临时文件、`sync_all`、原子替换及目录同步；编码或写入失败删除当前临时文件，保留旧封面。未确认不会写已有封面。返回 Leaf 后由用户刷新游戏列表更新索引与封面缓存。
 
-普通照片使用 `SDCARD_PATH`、`SDCARD_PATHS` 和 `UMRK_SECONDARY_SDCARD_PATH`（Pocket1 默认 `/media/sdcard1`）。候选先 canonicalize，结合 Linux `/proc/self/mountinfo` 验证副卡挂载点及设备号与系统卡不同；不依据空目录或 `/mnt/external_sd` 名字猜测。没有独立已挂载副卡时使用系统卡，有副卡但写失败时明确报错。照片位于所选卡 `Pictures/Ruffle Flash/`，文件名为 `<游戏名>-YYYYMMDD-HHMMSS.png`，时间由设备 `localtime_r` 生成，不附加序号。继续使用 `create_new` 独占创建：同名已存在时在编码前返回错误，用户可隔一秒重试；失败清理当前未写完照片，不覆盖既有照片。满卡/热拔卡完整故障矩阵与真实双 TF 组合仍需独立验收。
+普通照片使用 `SDCARD_PATH`、`SDCARD_PATHS` 和 `UMRK_SECONDARY_SDCARD_PATH`（Pocket1 默认 `/media/sdcard1`）。候选先 canonicalize，结合 Linux `/proc/self/mountinfo` 验证副卡挂载点及设备号与系统卡不同；不依据空目录或 `/mnt/external_sd` 名字猜测。没有独立已挂载副卡时使用系统卡，有副卡但写失败时明确报错。照片位于所选卡 `Pictures/Ruffle Flash/`，文件名为 `<游戏名>-YYYY_MM_DD-HH_MM_SS.png`，时间由设备 `localtime_r` 生成，不附加序号。继续使用 `create_new` 独占创建：同名已存在时在编码前返回错误，用户可隔一秒重试；失败清理当前未写完照片，不覆盖既有照片。满卡/热拔卡完整故障矩阵与真实双 TF 组合仍需独立验收。
 
 ## 构建环境与命令
 

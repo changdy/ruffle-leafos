@@ -135,7 +135,7 @@ fn screenshot_timestamp() -> String {
         let now=libc::time(std::ptr::null_mut());
         let mut local:libc::tm=std::mem::zeroed();let mut text=[0u8;32];
         if !libc::localtime_r(&now,&mut local).is_null() {
-            let len=libc::strftime(text.as_mut_ptr().cast(),text.len(),c"%Y%m%d-%H%M%S".as_ptr(),&local);
+            let len=libc::strftime(text.as_mut_ptr().cast(),text.len(),c"%Y_%m_%d-%H_%M_%S".as_ptr(),&local);
             if len>0 {return String::from_utf8_lossy(&text[..len]).into_owned();}
         }
     }
