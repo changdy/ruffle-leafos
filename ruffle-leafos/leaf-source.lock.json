@@ -52,8 +52,8 @@
     "sdl2test-rocknix/src/screenshot.rs": "db8b3c4b31b0f88f0f0e6d920ef45e01035d36f19e4b6b1bc456b574bae4ed53",
     "sdl2test-rocknix/src/screenshot_png.rs": "52e12911edf4321941027e3ed9556e6dddbeb0aeff551cdd04c5ab689dc164f5",
     "render/tests/screenshot_png.rs": "221dd64635d87253df2ed209d47c439f2f929fea107a8d0c0f6fb6c0d954d030",
-    "core/src/bitmap/operations.rs": "77f7ca67280ac0613ea0963dc672183f521d1335c6233c49ef8bdd5a595305b7",
-    "core/src/bitmap/operations/copy_pixels_tests.rs": "948c2df9c14b867ccd429950d8caa9a4fabff1efdfb8a0acf849235b9a590157",
+    "core/src/bitmap/operations.rs": "f230f5ca52a3c848ca46548426c5f91485aad1f5f7fb4eb5c2021210a7c023bd",
+    "core/src/bitmap/operations/copy_pixels_tests.rs": "547f2d48a6054614df8260384526d02a774fb5983b7dcf19d745c4457ea90e7e",
     "swf/src/read.rs": "d5002c4f35ddb3953b3c6e0862b98468c73a637b69aca112dcf8552fd0c692dd",
     "swf/tests/malformed_lengths.rs": "7bff7a9caf27d871579a90bff79682d494870ee7ecea252a51bd3e6a9b88397f",
     "swf/tests/swfs/lzma-malformed-length.swf": "08bab711b6172583ff9303f080c96076d2f439679e98c400ff4828e8fbaf575c",
@@ -85,7 +85,9 @@
     "core/src/display_object/movie_clip/onload_fixtures/swfmill_root_onload/test.swf": "6d010133820ab58d78e3952e0c94e28a0df25e1729b618504069acdabd515165",
     "core/src/display_object/movie_clip/onload_tests.rs": "272ec9116d291884ed7c73c202b2c61dfd8fc0084825ede76b45925531844dcd",
     "core/src/bitmap/bitmap_data.rs": "900f78c203a9b78cf8ab7af7c2c844355efccfc11767fec36069508a73c02bc4",
-    "core/src/bitmap/bitmap_data/test_data/copypixels_blend_flash.txt": "5fe76e7c60d2cedc6f796609d9f67ac49a09084dbc60002ecc411b661412d9af"
+    "core/src/bitmap/bitmap_data/test_data/copypixels_blend_flash.txt": "5fe76e7c60d2cedc6f796609d9f67ac49a09084dbc60002ecc411b661412d9af",
+    "core/src/bitmap/operations/copy_on_cpu.rs": "0dddf71403815a287c0873adbc5c1dd7761c68b4cadb1952baf6dbe75b701e7d",
+    "core/src/bitmap/operations/test_data/copypixels_self_flash.txt": "f825a0adcc45c5410a843863205509aaa76d2584945903049cab31ba2a381d3f"
   },
   "verified_leaf": {
     "version": "0.13.0",

@@ -30,7 +30,7 @@
 | 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 02a—02c 核心回归通过，摇杆/快捷释放完整矩阵待验；[范围](validation/upstream-compatibility-20261101.md) |
 | 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
-| 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 混合精度已合入，自复制待处理；[范围](validation/upstream-compatibility-20261101.md) |
+| 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 06 | [Vector 原生调用优化](https://github.com/ruffle-rs/ruffle/pull/24660)；已合并 | 低 | 改动集中、部分操作更便宜；实际游戏收益可能很小 | 低成本验证后决定 |
 | 07 | [删除 ScopeChain 缓存](https://github.com/ruffle-rs/ruffle/pull/24193)；已合并 | 中 | 减少冗余缓存与内存，改善作用域语义；不承诺明显提速 | 移植语义测试后评估 |
 | 08 | 原生进度恢复与导入导出；参考 [#8470](https://github.com/ruffle-rs/ruffle/issues/8470)、[#22409](https://github.com/ruffle-rs/ruffle/issues/22409) | 中—高 | 直接保护长期游戏进度；大部分成本在低频文件操作和界面 | 按本地功能分小步实施 |
@@ -83,6 +83,8 @@
 - 验收：根首帧定义的 onLoad 恰好执行一次，初始化与声音正常；对照上游 root_onload、action execution order 和 issue_2870 测试，覆盖 level 加载、loadMovie 与 onEnterFrame 顺序。
 
 ### 05 BitmapData 复制与透明混合
+
+- **05b 处置：** 已移植；10 项核心回归（含 68 组 Flash 网格）通过；两后端像素范围见报告。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
 - **05a 处置：** 已移植；256 组 Flash 参考色值通过。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
