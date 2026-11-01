@@ -1,6 +1,6 @@
 # 异常 SWF 长度与预分配防护
 
-日期：2026-11-01。对应[上游实施计划 01](../upstream-roadmap.md#01-异常-swf-分配与长度防护)，本地基线 `7b7c9ed`，版本保持 0.8.3 开发预览。处置：**已移植，主机通过，ARM64 构建通过，Pocket1 实机待验**。
+日期：2026-11-01。对应[上游实施计划 01](../upstream-roadmap.md#01-异常-swf-分配与长度防护)，本地基线 `7b7c9ed`，修复提交 `df512d1`，版本保持 0.8.3 开发预览。处置：**已移植，主机、ARM64 构建及限定 Pocket1 实机验证通过**。
 
 ## 来源与修改范围
 
@@ -56,4 +56,36 @@ python scripts/build_player.py build --offline --isolated-config
 
 ARM64 check 与 generic release 构建通过，沿用既有告警；未修改版本或打包发布。候选 ELF 为本地 `build/ruffle-leaf`，SHA-256 `7a6b60259912ca070fb214551bbec83b2a897c329cff87f0b09d90dc5db41ce6`，AArch64 PIE，GLIBC 最高需求 2.35。Rust 1.94.0，release opt-level 2、无跨 crate LTO、16 个 codegen units；原始参数见 `player-build.json`，构建日志为 `build/swf-arm64-build.log`。
 
-本次 `adb devices -l` 未发现连接设备，未向设备写入或替换正式应用。尚需在有可用 ADB 的 Pocket1 上隔离验证损坏文件拒绝/容错、正常 FWS/CWS/ZWS 加载及两款随包游戏的启动、暂停恢复和正常退出；两后端与真实低内存条件也未新增验收。
+## Pocket1 隔离实机验证
+
+Pocket1 / RK3566 / Mali-G52，Linux 5.10.209、AArch64；设备 `.umrk/mlp1/release.json` 确认 Leaf **0.13.0**。在独立调试目录运行上述 `7a6b6025…` ELF，传输后核对 SHA-256；使用正式包的库、字体及 Leaf Wayland/输入链路。每个会话独立 HOME、XDG 目录、进度和按键，通过最小清单的临时工具入口启动，不带正式包 `provides` 声明。
+
+### 两后端解析夹具
+
+GLES 与 Vulkan **各 9 组**，合计 18 组，全部通过。每组显式指定后端，日志确认 `leaf-graphics actual=opengl-es/vulkan`；Vulkan 不是失败后回退的 GLES。夹具关闭音频，正常/容错场景由 5 秒诊断计时正常退出；外层 35 秒超时仅作后备，本轮没有靠超时终止才算通过的场景。
+
+| 每个后端的样本 | 数量 | 实际结果 |
+| --- | ---: | --- |
+| 正常 FWS、CWS、ZWS | 3 | 帧循环运行，退出码 0，`progress_flushed=true` |
+| LZMA 短长度、巨大长度 | 2 | 分别返回 `Malformed LZMA length` 和 LZMA 解码错误；退出码 1，无分配崩溃或进程挂起 |
+| 巨大场景、帧标签数量 | 2 | 按核心既有容错继续，脚本输出 `Start`，正常退出并提交进度；不把主机整电影解析的 tag 86 错误等同于播放器必须拒载 |
+| 正常 FWS/CWS 改声明长度为 `u32::MAX` | 2 | 长度不匹配告警后继续原有内容，正常退出并提交进度 |
+
+实机还原了同一组固定损坏样本与正常样本；超过 128 MiB 的实际正文和 257 项有效场景/标签只在主机验证，未为此向设备传入大文件。夹具未覆盖所有损坏格式、LZMA 字典或真实低内存故障矩阵。
+
+### 随包游戏的限定 GLES 检查
+
+两款设备主入口的 SHA-256 与前述主机/manifest 指纹一致。使用显式 GLES、独立新进度与配置、正常音频初始化；通过物理 evdev → Leaf 虚拟手柄 → SDL 注入输入并采集实机画面：
+
+- **死神 VS 火影 3.3 目录版**：外部资源初始化、更新说明、主模式菜单与操作教学画面可见；暂停、B 恢复、再次暂停后选择“保存并退出”通过。
+- **拳皇 Wing 1.91 单文件**：首屏更新说明可见，用摇杆鼠标及左键确认后进入开场动画；暂停、B 恢复、菜单“保存并退出”通过。初次停留在更新说明的会话也保留原始记录，不将键盘 J 输入当成鼠标确认成功。
+
+两款游戏的测试退出码均为 0，日志均含 `resume_first_dt_us=0` 和 `progress_flushed=true`。这些会话验证启动、限定画面、输入通路及暂停/退出，不包含实战、真实听感、全角色、长时、原档续玩或两款游戏的 Vulkan 验收；本次不计算 FPS、内存或加载时间改善比例。
+
+### 数据与入口收尾
+
+验证前完整备份现有配置与 SharedObject，并拉回主机核验归档 SHA-256。测试后逐文件复核：**803 个正式应用文件、499 个 Flash 游戏文件、39 个原配置文件、42 个原 SharedObject 文件**的集合与 SHA-256 均保持；正式应用未替换。测试新增数据保留在独立调试目录。
+
+临时 `RuffleSwfLengthDebug.pak` 已归档到 `Apps/` 之外；清理前备份 Leaf SQLite 数据库并拉回核对，刷新列表后核验 `apps` 与 `apps_fts` 无测试入口，其他 Apps 记录与测试前相同。结束时无测试播放器进程；同次开机前后内核日志核对未新增 OOM，不能扩大为任意低内存内容都安全。
+
+原始日志、逐文件哈希、数据库/用户数据备份、夹具结果和截图在本地忽略目录 `outputs/swf-length-guards-20261101/`；操作脚本与传输材料在 `work/swf-length-guards-20261101/`。这是该 ELF 的隔离验证，没有新增正式安装或 GitHub Release 附件验收。

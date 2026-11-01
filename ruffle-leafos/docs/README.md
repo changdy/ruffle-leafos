@@ -12,7 +12,7 @@
 | 补充资料 | 内容 |
 | --- | --- |
 | [上游修复与优化实施顺序](upstream-roadmap.md) | 面向 Pocket1，按移植难度、运行代价和实际收益排序的候选、前置条件与逐项验收方法；不代表已经完成 |
-| [异常 SWF 长度与预分配防护](validation/swf-length-guards-20261101.md) | 上游计划 01 的移植来源、损坏样本指纹、受限内存主机回归与 ARM64 构建；实机待验 |
+| [异常 SWF 长度与预分配防护](validation/swf-length-guards-20261101.md) | 上游计划 01 的来源与损坏样本、受限内存主机回归、ARM64 构建、两后端各 9 组实机解析夹具及限定 GLES 游戏启动/暂停/退出 |
 | [按键与光标](formats/controls-format-v5.md) | 当前 v5 全字段、v1—v4 兼容表及全局光标 |
 | [画面 RAV1/RAV2](formats/graphics-settings.md)、[语言](formats/language-settings.md)、[数据管理目录](formats/data-manager-catalog.md) | 字段级契约 |
 | [验证报告](validation/) | 各轮场景、二进制身份、原始数据位置和验收边界；当前结论由工程进度汇总 |
