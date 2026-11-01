@@ -6,7 +6,7 @@
   "relationship": "Leaf frontend derived from the pinned public base; does not reproduce all original leaf-12 private patches.",
   "leaf_files_sha256": {
     "Cargo.lock": "d4eb7bf07948947fcd17d3c19da737ccdbb1d770a46a5ab28797ba9f1848d3d0",
-    "core/src/player.rs": "ab3238d17798edb43ffd3f30e7d5cf107adb184f08108afed065bce682eba7a6",
+    "core/src/player.rs": "3cdbdd2356cd91f4c75cce0d464451352f96db3178f9013f8eba9af4db14dcab",
     "sdl2test-rocknix/Cargo.toml": "e3c0066ea27f4b1f58cea1dcd34a64d2571887d53c4427d4d3df57f92a8f117c",
     "sdl2test-rocknix/src/controls.rs": "b63e02073e91d3ae580fc593baa31f142b5abeff05351d3e51be509b1910fc74",
     "sdl2test-rocknix/src/cursor.rs": "7476fa43e71e59881f77145a885c68ecee6fc9dbdd06c23a58848a8982806f8a",
@@ -87,7 +87,12 @@
     "core/src/bitmap/bitmap_data.rs": "900f78c203a9b78cf8ab7af7c2c844355efccfc11767fec36069508a73c02bc4",
     "core/src/bitmap/bitmap_data/test_data/copypixels_blend_flash.txt": "5fe76e7c60d2cedc6f796609d9f67ac49a09084dbc60002ecc411b661412d9af",
     "core/src/bitmap/operations/copy_on_cpu.rs": "0dddf71403815a287c0873adbc5c1dd7761c68b4cadb1952baf6dbe75b701e7d",
-    "core/src/bitmap/operations/test_data/copypixels_self_flash.txt": "f825a0adcc45c5410a843863205509aaa76d2584945903049cab31ba2a381d3f"
+    "core/src/bitmap/operations/test_data/copypixels_self_flash.txt": "f825a0adcc45c5410a843863205509aaa76d2584945903049cab31ba2a381d3f",
+    "core/src/avm2/optimizer/type_aware.rs": "23819d9a69988951d8f746565676ba39f49fc16ad2684ef6eae453dd96acb2c7",
+    "core/src/player/vector_tests.rs": "d6afea7558b3c6d83ce2be68697fb421294cc9f0933f864d9a25ebd13e60637c",
+    "core/src/player/tests/vector-native.swf": "9186cd3ecdf6d2c73d1c480fdaee168ce7b0f54be6880ba580ee4062cb74a9d5",
+    "core/src/player/tests/VectorNativeProbe.as": "ae06dc74423d6277bbb3a131b0e16435691e52fc090b3521b856e3ebe761a8b4",
+    "core/src/player/tests/VectorCannotExtend.as": "4f1514422cc08a2651791c1386f4070ff338db879e5818d02e3d779f38b8a827"
   },
   "verified_leaf": {
     "version": "0.13.0",

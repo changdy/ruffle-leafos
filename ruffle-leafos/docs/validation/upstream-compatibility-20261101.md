@@ -59,3 +59,10 @@ Color::blend_over 改用 Flash 的 256 基整数混合，作为后续透明自�
 按 Flash 的方向规则遍历自复制；异向重叠保留 Flash 读取已覆盖像素的行为，非混合路径按行复制。完整目标覆盖仍丢弃旧目标的 GPU 回读，局部/混合/GPU-dirty 来源保持必要同步。
 
 10 项核心回归含 68 组 Flash 重叠/裁剪网格、不同 stride 邻居保留及既有免回读保护。公开 GPU 夹具扩至 18 项；两后端实际结果见本报告后续合并候选记录。
+## 06 参数化 Vector 原生调用优化
+
+来源：[上游 #24660](https://github.com/ruffle-rs/ruffle/pull/24660)，实际参考 head `c0efacf6edf604281f33a25b21d6ff63d1186fab`，2026-11-01 核对。上游已合并。
+
+静态调用判断加入参数化 Vector（本地只有 Vector 使用 class.param），保留原参数类型/数量和 fast_call 校验。
+
+1 项优化开/关实际 VM 对照，八类 Vector、29 项 length/fixed/index/增长/截断/pop/异常断言；ASC 拒绝 Vector 子类（1016）。没有 Pocket1 性能基准，不宣称整机提速。

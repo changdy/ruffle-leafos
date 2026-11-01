@@ -221,6 +221,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **05b BitmapData 重叠自复制及行复制：** 按 Flash 的方向规则遍历自复制；异向重叠保留 Flash 读取已覆盖像素的行为，非混合路径按行复制。完整目标覆盖仍丢弃旧目标的 GPU 回读，局部/混合/GPU-dirty 来源保持必要同步。
 
+**06 参数化 Vector 原生调用优化：** 静态调用判断加入参数化 Vector（本地只有 Vector 使用 class.param），保留原参数类型/数量和 fast_call 校验。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

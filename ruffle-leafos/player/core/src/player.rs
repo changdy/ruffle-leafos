@@ -3373,3 +3373,5 @@ mod mouse_hover_tests;
 mod mouse_avm1_button_tests;
 #[cfg(test)]
 mod loader_progress_tests;
+#[cfg(test)]
+mod vector_tests;

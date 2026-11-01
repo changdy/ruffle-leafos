@@ -25,6 +25,7 @@
 | AVM1 根时间轴 onLoad 顺序（上游 04） | 根首帧脚本后执行 onLoad，保留 loadMovie 顺序 | 2026-11-01：4 项上游 Flash 参考 trace 通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
 | BitmapData 透明混合整数精度（上游 05a） | 使用 Flash 的 256 基整数透明混合 | 2026-11-01：256 组 Flash 参考色值通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
 | BitmapData 重叠自复制及行复制（上游 05b） | 修正重叠复制方向并按行复制，保留完整覆盖免回读 | 2026-11-01：10 项核心回归（含 68 组 Flash 网格）通过；两后端像素范围见报告；[验证与边界](validation/upstream-compatibility-20261101.md) |
+| 参数化 Vector 原生调用优化（上游 06） | 参数化 Vector 可用原生静态调用 | 2026-11-01：优化开/关及 29 项语义断言通过；未测整机提速；[验证与边界](validation/upstream-compatibility-20261101.md) |
 
 模板管理、全局按键自动继承、旧 M+左右、游戏音量/静音、编辑页仅本次应用及恢复默认已移除。旧格式兼容范围统一见[按键契约](formats/controls-format-v5.md)；历史里程碑与需求从 Git 追溯。
 

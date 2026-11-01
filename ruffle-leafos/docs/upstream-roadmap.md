@@ -31,7 +31,7 @@
 | 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
-| 06 | [Vector 原生调用优化](https://github.com/ruffle-rs/ruffle/pull/24660)；已合并 | 低 | 改动集中、部分操作更便宜；实际游戏收益可能很小 | 低成本验证后决定 |
+| 06 | [Vector 原生调用优化](https://github.com/ruffle-rs/ruffle/pull/24660)；已合并 | 低 | 改动集中、部分操作更便宜；实际游戏收益可能很小 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 07 | [删除 ScopeChain 缓存](https://github.com/ruffle-rs/ruffle/pull/24193)；已合并 | 中 | 减少冗余缓存与内存，改善作用域语义；不承诺明显提速 | 移植语义测试后评估 |
 | 08 | 原生进度恢复与导入导出；参考 [#8470](https://github.com/ruffle-rs/ruffle/issues/8470)、[#22409](https://github.com/ruffle-rs/ruffle/issues/22409) | 中—高 | 直接保护长期游戏进度；大部分成本在低频文件操作和界面 | 按本地功能分小步实施 |
 | 09 | [位图缓存抖动](https://github.com/ruffle-rs/ruffle/pull/24992)、[矢量缓存抖动](https://github.com/ruffle-rs/ruffle/pull/25003)、[动画遮罩](https://github.com/ruffle-rs/ruffle/pull/24949)；均开放 | 中—高 | 上游明确涉及死神 2.6 菜单；本地 3.3/3.6 是否受影响需复现 | 先复现，再按依赖移植 |
@@ -95,6 +95,8 @@
 ## 06—12：以真实收益决定是否保留
 
 ### 06 Vector 原生调用优化
+
+- **06 处置：** 已移植；优化开/关及 29 项语义断言通过；未测整机提速。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
 - 本地入口：[type_aware.rs](../player/core/src/avm2/optimizer/type_aware.rs)。现有优化仅检查 `is_final()`，尚未包含参数化 Vector 的判断。
 - 实施与验收：确认本地 Vector 类型约束和 CallNative 接口匹配，测不同元素类型、长度/索引访问、异常和继承限制；再测实际战斗场景。作者未观察到真实 SWF 的明显整体收益，因此把它当低成本增量，不宣传游戏数倍提速；若依赖适配扩大，后移。
