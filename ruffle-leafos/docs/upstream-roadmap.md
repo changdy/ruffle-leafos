@@ -30,22 +30,22 @@
 | 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 02a—02c 核心回归通过，摇杆/快捷释放完整矩阵待验；[范围](validation/upstream-compatibility-20261101.md) |
 | 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
-| 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
+| 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 精度/自复制分两项提交；核心及两后端像素通过；[边界](validation/upstream-compatibility-20261101.md) |
 | 06 | [Vector 原生调用优化](https://github.com/ruffle-rs/ruffle/pull/24660)；已合并 | 低 | 改动集中、部分操作更便宜；实际游戏收益可能很小 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
-| 07 | [删除 ScopeChain 缓存](https://github.com/ruffle-rs/ruffle/pull/24193)；已合并 | 中 | 减少冗余缓存与内存，改善作用域语义；不承诺明显提速 | 移植语义测试后评估 |
-| 08 | 原生进度恢复与导入导出；参考 [#8470](https://github.com/ruffle-rs/ruffle/issues/8470)、[#22409](https://github.com/ruffle-rs/ruffle/issues/22409) | 中—高 | 直接保护长期游戏进度；大部分成本在低频文件操作和界面 | 按本地功能分小步实施 |
-| 09 | [位图缓存抖动](https://github.com/ruffle-rs/ruffle/pull/24992)、[矢量缓存抖动](https://github.com/ruffle-rs/ruffle/pull/25003)、[动画遮罩](https://github.com/ruffle-rs/ruffle/pull/24949)；均开放 | 中—高 | 上游明确涉及死神 2.6 菜单；本地 3.3/3.6 是否受影响需复现 | 先复现，再按依赖移植 |
-| 10 | [屏外静态文字剔除](https://github.com/ruffle-rs/ruffle/pull/24944)；已合并 | 低—中 | 有长列表/大量屏外文字时可省绘制；要防止错误隐藏文字 | 有场景收益再保留 |
-| 11 | [无效赋值消除 DSE](https://github.com/ruffle-rs/ruffle/pull/25035)；开放 | 中—高 | 有机会降低 AS3 解释执行量；优化阶段更贵、语义验证要求高 | 先补回归，再测真实游戏 |
-| 12 | [减少鼠标命中边界计算](https://github.com/ruffle-rs/ruffle/pull/24860)；开放 | 中—高 | 可能降低复杂显示树 CPU 成本；伴随文字尺寸时序和遍历成本 | 采样确认热点后处理 |
-| 13 | 帧时间稳定性；参考 [#22758](https://github.com/ruffle-rs/ruffle/issues/22758) | 中—高 | 可能改善平均 FPS 正常但体感不顺；不能解决脚本本身的长帧 | 先分离调度与执行耗时 |
-| 14 | [电影库 GC](https://github.com/ruffle-rs/ruffle/pull/23071)、[unloadAndStop](https://github.com/ruffle-rs/ruffle/pull/24918)、[弱引用与 GC](https://github.com/ruffle-rs/ruffle/pull/23897)；均开放 | 高 | 若持续泄漏则收益很大；当前方案有生命周期语义和停顿风险 | 定位后拆分设计，避免整包照搬 |
-| 15 | [计时器机制重写](https://github.com/ruffle-rs/ruffle/pull/24915)；开放 | 高 | 对齐到期顺序与错过周期的处理；会改变游戏逻辑时序 | 有不兼容样本时推进 |
-| 16 | [设备字体回退](https://github.com/ruffle-rs/ruffle/pull/24728)、[非 TextField 文字事件](https://github.com/ruffle-rs/ruffle/pull/24151)；均开放 | 中—高 | 改善缺字及自定义文字控件；软键盘仍需单独适配 | 按缺字/输入样本分开做 |
-| 17 | [BitmapData.draw 支持滤镜](https://github.com/ruffle-rs/ruffle/pull/21672)；开放 | 高 | 修复部分游戏缺失特效；可能增加离屏纹理、绘制和同步成本 | 明确目标游戏后推进 |
-| 18 | [sampleData 动态音频](https://github.com/ruffle-rs/ruffle/pull/25055)、[Sound.extract](https://github.com/ruffle-rs/ruffle/pull/25056)；均开放 | 高 | 让依赖自混音的内容发声；引入解码、队列和延迟成本 | 确认无声根因后推进 |
-| 19 | [深递归 StackOverflowError](https://github.com/ruffle-rs/ruffle/pull/24973)；开放 | 中—高 | 将部分进程崩溃变成脚本异常；审查指出方法调用开销增加 | 跟踪低开销方案后再评估 |
-| 20 | [wgpu 透明像素颜色矩阵](https://github.com/ruffle-rs/ruffle/pull/25047)；开放；[wgpu 批处理](https://github.com/ruffle-rs/ruffle/pull/24947)；已合并 | 前者低—中，后者高 | 在本项目主要影响实验 Vulkan；不改善默认 GLES 路径 | Vulkan 专项，两个改动独立做 |
+| 07 | [删除 ScopeChain 缓存](https://github.com/ruffle-rs/ruffle/pull/24193)；已合并 | 中 | 减少冗余缓存与内存，改善作用域语义；不承诺明显提速 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
+| 08 | 原生进度恢复与导入导出；参考 [#8470](https://github.com/ruffle-rs/ruffle/issues/8470)、[#22409](https://github.com/ruffle-rs/ruffle/issues/22409) | 中—高 | 直接保护长期游戏进度；大部分成本在低频文件操作和界面 | 本轮暂缓：备份/导入导出按本地功能设计分步做；发现真实保存失败或丢档时提前 |
+| 09 | [位图缓存抖动](https://github.com/ruffle-rs/ruffle/pull/24992)、[矢量缓存抖动](https://github.com/ruffle-rs/ruffle/pull/25003)、[动画遮罩](https://github.com/ruffle-rs/ruffle/pull/24949)；均开放 | 中—高 | 上游明确涉及死神 2.6 菜单；本地 3.3/3.6 是否受影响需复现 | 本轮暂缓：缺本地 3.3/3.6 抖动复现，先核对依赖及纹理重建代价 |
+| 10 | [屏外静态文字剔除](https://github.com/ruffle-rs/ruffle/pull/24944)；已合并 | 低—中 | 有长列表/大量屏外文字时可省绘制；要防止错误隐藏文字 | 本轮暂缓：缺默认 GLES 屏外文字热点证据，先验证裁剪/离屏兼容性 |
+| 11 | [无效赋值消除 DSE](https://github.com/ruffle-rs/ruffle/pull/25035)；开放 | 中—高 | 有机会降低 AS3 解释执行量；优化阶段更贵、语义验证要求高 | 本轮暂缓：缺真实 AS3 瓶颈及收益对照，避免增加优化阶段开销 |
+| 12 | [减少鼠标命中边界计算](https://github.com/ruffle-rs/ruffle/pull/24860)；开放 | 中—高 | 可能降低复杂显示树 CPU 成本；伴随文字尺寸时序和遍历成本 | 本轮暂缓：先采样 bounds 热点，评估新增遍历成本 |
+| 13 | 帧时间稳定性；参考 [#22758](https://github.com/ruffle-rs/ruffle/issues/22758) | 中—高 | 可能改善平均 FPS 正常但体感不顺；不能解决脚本本身的长帧 | 本轮暂缓：先分离脚本/解码/呈现与调度；启动长任务仍有已知阻塞 |
+| 14 | [电影库 GC](https://github.com/ruffle-rs/ruffle/pull/23071)、[unloadAndStop](https://github.com/ruffle-rs/ruffle/pull/24918)、[弱引用与 GC](https://github.com/ruffle-rs/ruffle/pull/23897)；均开放 | 高 | 若持续泄漏则收益很大；当前方案有生命周期语义和停顿风险 | 本轮暂缓：缺重复加载/卸载增长曲线；先定位所有权与 GC 根因 |
+| 15 | [计时器机制重写](https://github.com/ruffle-rs/ruffle/pull/24915)；开放 | 高 | 对齐到期顺序与错过周期的处理；会改变游戏逻辑时序 | 本轮暂缓：缺计时器不兼容样本，重写可能改变游戏时序 |
+| 16 | [设备字体回退](https://github.com/ruffle-rs/ruffle/pull/24728)、[非 TextField 文字事件](https://github.com/ruffle-rs/ruffle/pull/24151)；均开放 | 中—高 | 改善缺字及自定义文字控件；软键盘仍需单独适配 | 本轮暂缓：先定位实际缺字/自绘输入；中文组词另立功能设计 |
+| 17 | [BitmapData.draw 支持滤镜](https://github.com/ruffle-rs/ruffle/pull/21672)；开放 | 高 | 修复部分游戏缺失特效；可能增加离屏纹理、绘制和同步成本 | 本轮暂缓：未确认 draw 滤镜缺失阻断，需评估离屏纹理和同步代价 |
+| 18 | [sampleData 动态音频](https://github.com/ruffle-rs/ruffle/pull/25055)、[Sound.extract](https://github.com/ruffle-rs/ruffle/pull/25056)；均开放 | 高 | 让依赖自混音的内容发声；引入解码、队列和延迟成本 | 本轮暂缓：未确认动态音频依赖游戏，需评估队列/CPU/延迟成本 |
+| 19 | [深递归 StackOverflowError](https://github.com/ruffle-rs/ruffle/pull/24973)；开放 | 中—高 | 将部分进程崩溃变成脚本异常；审查指出方法调用开销增加 | 本轮暂缓：缺目标递归崩溃样本，先跟踪低开销方案 |
+| 20 | [wgpu 透明像素颜色矩阵](https://github.com/ruffle-rs/ruffle/pull/25047)；开放；[wgpu 批处理](https://github.com/ruffle-rs/ruffle/pull/24947)；已合并 | 前者低—中，后者高 | 在本项目主要影响实验 Vulkan；不改善默认 GLES 路径 | 本轮后置：实验 Vulkan 独立专项；20a 也适用于 2D，不按复杂 3D 排除 |
 
 ## 01—05：先修安全与常见兼容问题
 
@@ -88,7 +88,7 @@
 
 - **05a 处置：** 已移植；256 组 Flash 参考色值通过。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
-- 本地入口：[operations.rs](../player/core/src/bitmap/operations.rs)、[bitmap_data.rs](../player/core/src/bitmap/bitmap_data.rs)。本地仍是逐像素自复制路径，已有不同位图完整覆盖时跳过旧目标回读的修改。
+- 本地入口：[operations.rs](../player/core/src/bitmap/operations.rs)、[bitmap_data.rs](../player/core/src/bitmap/bitmap_data.rs)。本轮已改为按方向自复制及行复制，并保留不同位图完整覆盖时跳过旧目标回读。
 - 实施：移植重叠区域的 Flash 覆盖语义、可用的快速复制和混合精度修正；把本地完整覆盖免回读重新整合到最终路径，不能被上游旧的 `dest.sync()` 覆盖。
 - 验收：上下左右重叠、自复制、透明/不透明、mergeAlpha、边界裁剪、局部/整图覆盖和 GPU-dirty 来源/目标都检查真实像素；跑既有 [BitmapCopyProbe](../scripts/resources/BitmapCopyProbe.as) 并扩展缺失场景。GLES/Vulkan 分别验证；复测[死神换回合](validation/bvn33-pve-stutter-20261031.md)不能退回旧目标同步瓶颈。
 
@@ -98,12 +98,14 @@
 
 - **06 处置：** 已移植；优化开/关及 29 项语义断言通过；未测整机提速。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
-- 本地入口：[type_aware.rs](../player/core/src/avm2/optimizer/type_aware.rs)。现有优化仅检查 `is_final()`，尚未包含参数化 Vector 的判断。
+- 本地入口：[type_aware.rs](../player/core/src/avm2/optimizer/type_aware.rs)。本轮已加入 `is_final()` 或参数化 Vector 的判断，保留原参数数量与类型校验。
 - 实施与验收：确认本地 Vector 类型约束和 CallNative 接口匹配，测不同元素类型、长度/索引访问、异常和继承限制；再测实际战斗场景。作者未观察到真实 SWF 的明显整体收益，因此把它当低成本增量，不宣传游戏数倍提速；若依赖适配扩大，后移。
 
 ### 07 删除 ScopeChain 缓存
 
-- 本地入口：[scope.rs](../player/core/src/avm2/scope.rs)、相关 vtable。当前仍有 `ScopeContainer` 缓存。
+- **07 处置：** 已移植；2 项命名空间回归通过，已复现旧错误；性能收益未测。[来源与验证](validation/upstream-compatibility-20261101.md)。
+
+- 本地入口：[scope.rs](../player/core/src/avm2/scope.rs)、相关 vtable。本轮已删除 `ScopeContainer` 和多余查找缓存。
 - 实施与验收：带入 `scopes_dont_cache` 等语义测试，检查动态属性、with-scope、命名空间和作用域修改后的查找结果；记录启动分配、RSS 和脚本耗时。它首先是正确性与冗余缓存清理，不是无条件性能优化。
 
 ### 08 原生进度可恢复性与导入导出
@@ -183,6 +185,10 @@
 - **20a #25047：**可独立先做。入口：[color_matrix.wgsl](../player/render/wgpu/shaders/filter/color_matrix.wgsl)，本地仍有 alpha 为零时除法。用透明像素和颜色/alpha 偏移夹具验证真实 Vulkan 像素；上游也声明还有显示列表颜色偏移差异，不能扩大结论为滤镜完全兼容。
 - **20b #24947：**批处理是大改造，单独分支评估 API/依赖差异、绘制顺序、遮罩、混合、滤镜和位图句柄所有权；保留本地 BitmapHandle 生命周期修复、DMA-BUF 和队列同步。测真实设备 draw call、CPU、等待和内存后再决定保留。
 - 只有用户主要使用 Vulkan 或确认 Vulkan 问题阻断使用时才提前该专项；20a 的小修不需要等待 20b，也不需要整体升级 core/wgpu。
+
+## 本轮处置边界
+
+02—07 已按子问题独立移植和验证，结果见[合并候选报告](validation/upstream-compatibility-20261101.md)。08 与本地新增功能本轮暂缓；09—20 的调查或专项条件尚未满足，按总表记录后续动作，不把暂缓写成已修复或永久不适用。20a 是明确的透明像素 2D Vulkan 问题，按实验后端优先级后置；复杂 Stage3D、整包 GC/计时器/音频重写不为凑齐清单而引入。后续出现目标游戏复现、真实失档或逼近 OOM 的证据时，可按本文条件提前。
 
 ## 待复现问题与暂缓方向
 

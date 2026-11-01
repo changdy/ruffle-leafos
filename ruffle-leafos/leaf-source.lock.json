@@ -92,7 +92,13 @@
     "core/src/player/vector_tests.rs": "d6afea7558b3c6d83ce2be68697fb421294cc9f0933f864d9a25ebd13e60637c",
     "core/src/player/tests/vector-native.swf": "9186cd3ecdf6d2c73d1c480fdaee168ce7b0f54be6880ba580ee4062cb74a9d5",
     "core/src/player/tests/VectorNativeProbe.as": "ae06dc74423d6277bbb3a131b0e16435691e52fc090b3521b856e3ebe761a8b4",
-    "core/src/player/tests/VectorCannotExtend.as": "4f1514422cc08a2651791c1386f4070ff338db879e5818d02e3d779f38b8a827"
+    "core/src/player/tests/VectorCannotExtend.as": "4f1514422cc08a2651791c1386f4070ff338db879e5818d02e3d779f38b8a827",
+    "core/src/avm2/scope.rs": "7fa7d7d6ebf7585c7335e8a8dcbfd50ddf30ffd3e12a52a01f15954c1007e313",
+    "core/src/avm2/vtable.rs": "171421009c41ecd0f08fe9c49355e703b8d1dd2614159c3494ad16ffda2857bc",
+    "core/src/avm2/scope/fixtures/README.md": "2da8a85019ecc211adc0241f2e03adcb7a23054095e22b06b0e083aa6cec01c2",
+    "core/src/avm2/scope/fixtures/scopes-dont-cache-order-1.swf": "dbefcdd676b098f5f1488c505cc32f2ea9a1bd5e814dbdb770b3610d2c9db8ca",
+    "core/src/avm2/scope/fixtures/scopes-dont-cache-order-2.swf": "b2392fb1cdff77ff2af64df2772b35a5252208771e750364b5a6ea842e493912",
+    "core/src/avm2/scope/tests.rs": "d277999d7c7ca6b786f85be19ba3840c5d63d68f136c9458f9af3792f654d727"
   },
   "verified_leaf": {
     "version": "0.13.0",

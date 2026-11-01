@@ -223,6 +223,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **06 参数化 Vector 原生调用优化：** 静态调用判断加入参数化 Vector（本地只有 Vector 使用 class.param），保留原参数类型/数量和 fast_call 校验。
 
+**07 删除错误的 ScopeChain 查找缓存：** 删除 ScopeContainer 和多余 PropertyMap 缓存，改用 Gc<Vec<Scope>> 按词法顺序查找；保留 get_trait 的属性命名空间语义，删除无其他调用者的 get_trait_with_ns。
+
 ## 构建环境与命令
 
 在本工程根目录执行：
