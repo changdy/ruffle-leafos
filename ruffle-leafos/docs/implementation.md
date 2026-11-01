@@ -217,6 +217,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **04 AVM1 根时间轴 onLoad 顺序：** 仅 Stage 下 level 的首帧在脚本之后排入 Load；loadMovie 替换 clip 保持先 Load 的顺序。
 
+**05a BitmapData 透明混合整数精度：** Color::blend_over 改用 Flash 的 256 基整数混合，作为后续透明自复制的独立修复提交。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

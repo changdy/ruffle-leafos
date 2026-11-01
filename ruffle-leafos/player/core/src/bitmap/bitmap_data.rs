@@ -162,12 +162,13 @@ impl Color {
     /// * `source` - Must be in premultiplied form.
     #[must_use]
     pub fn blend_over(&self, source: &Self) -> Self {
-        let sa = source.alpha();
-
-        let r = source.red() + ((self.red() as u16 * (255 - sa as u16)) / 255) as u8;
-        let g = source.green() + ((self.green() as u16 * (255 - sa as u16)) / 255) as u8;
-        let b = source.blue() + ((self.blue() as u16 * (255 - sa as u16)) / 255) as u8;
-        let a = source.alpha() + ((self.alpha() as u16 * (255 - sa as u16)) / 255) as u8;
+        // Verified against Flash Player over the full 0..255 alpha range by
+        // upstream #24676. Flash uses a 256-based integer blend, not /255.
+        let inv_sa = 256 - source.alpha() as u16;
+        let r = source.red() + ((self.red() as u16 * inv_sa) >> 8) as u8;
+        let g = source.green() + ((self.green() as u16 * inv_sa) >> 8) as u8;
+        let b = source.blue() + ((self.blue() as u16 * inv_sa) >> 8) as u8;
+        let a = source.alpha() + ((self.alpha() as u16 * inv_sa) >> 8) as u8;
         Self::rgba(r, g, b, a)
     }
 
@@ -1033,5 +1034,31 @@ impl ThresholdOperation {
             ThresholdOperation::GreaterThan => value > masked_threshold,
             ThresholdOperation::GreaterThanOrEquals => value >= masked_threshold,
         }
+    }
+}
+
+#[cfg(test)]
+mod blend_tests {
+    use super::Color;
+
+    #[test]
+    fn blend_matches_flash_reference_color_and_alpha_pairs() {
+        // Flash Player reference output from ruffle-rs/ruffle #24676,
+        // head a211d2b00fc8bd21d50221d648c65f084edd8784:
+        // tests/tests/swfs/avm2/bitmapdata_copypixels_blend/output.txt,
+        // the complete "--- blend" table (8 x 8 alphas, 4 source colors).
+        let vectors = include_str!("bitmap_data/test_data/copypixels_blend_flash.txt");
+        let mut count = 0;
+        for line in vectors.lines().filter(|line| !line.is_empty()) {
+            let fields: Vec<_> = line.split_whitespace().collect();
+            assert_eq!(fields.len(), 5, "{line}");
+            let hex = |value| u32::from_str_radix(value, 16).unwrap();
+            let dest = Color::from(hex(fields[0])).to_premultiplied_alpha(true);
+            let source = Color::from(hex(fields[2])).to_premultiplied_alpha(true);
+            let actual = u32::from(dest.blend_over(&source).to_un_multiplied_alpha());
+            assert_eq!(actual, hex(fields[4]), "{line}");
+            count += 1;
+        }
+        assert_eq!(count, 256);
     }
 }

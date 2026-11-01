@@ -23,6 +23,7 @@
 | AVM1 未按按钮高亮残留（上游 02c） | 普通按钮忽略未从自身开始的拖动，保留菜单跟踪 | 2026-11-01：5 项 native 按钮状态回归通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
 | AS3 根电影最终 progress 与完成重入（上游 03） | 首帧监听可收到最终 progress，完成事件防重入 | 2026-11-01：2 项根电影顺序/goto 回归通过；子 Loader/分块待验；[验证与边界](validation/upstream-compatibility-20261101.md) |
 | AVM1 根时间轴 onLoad 顺序（上游 04） | 根首帧脚本后执行 onLoad，保留 loadMovie 顺序 | 2026-11-01：4 项上游 Flash 参考 trace 通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
+| BitmapData 透明混合整数精度（上游 05a） | 使用 Flash 的 256 基整数透明混合 | 2026-11-01：256 组 Flash 参考色值通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
 
 模板管理、全局按键自动继承、旧 M+左右、游戏音量/静音、编辑页仅本次应用及恢复默认已移除。旧格式兼容范围统一见[按键契约](formats/controls-format-v5.md)；历史里程碑与需求从 Git 追溯。
 

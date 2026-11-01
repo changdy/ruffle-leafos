@@ -83,7 +83,9 @@
     "core/src/display_object/movie_clip/onload_fixtures/root_onload/test.swf": "0972c9bcd6c854fc0043bba6ee8aced5894bc7165ce1aee36da72f16b055da1d",
     "core/src/display_object/movie_clip/onload_fixtures/swfmill_root_onload/output.txt": "c626f008ab1537ccc81924d2b098c9c7160a375cf5506c8cf4ee7fe542cdc7b3",
     "core/src/display_object/movie_clip/onload_fixtures/swfmill_root_onload/test.swf": "6d010133820ab58d78e3952e0c94e28a0df25e1729b618504069acdabd515165",
-    "core/src/display_object/movie_clip/onload_tests.rs": "272ec9116d291884ed7c73c202b2c61dfd8fc0084825ede76b45925531844dcd"
+    "core/src/display_object/movie_clip/onload_tests.rs": "272ec9116d291884ed7c73c202b2c61dfd8fc0084825ede76b45925531844dcd",
+    "core/src/bitmap/bitmap_data.rs": "900f78c203a9b78cf8ab7af7c2c844355efccfc11767fec36069508a73c02bc4",
+    "core/src/bitmap/bitmap_data/test_data/copypixels_blend_flash.txt": "5fe76e7c60d2cedc6f796609d9f67ac49a09084dbc60002ecc411b661412d9af"
   },
   "verified_leaf": {
     "version": "0.13.0",

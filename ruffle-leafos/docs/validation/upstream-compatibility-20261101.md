@@ -45,3 +45,10 @@
 仅 Stage 下 level 的首帧在脚本之后排入 Load；loadMovie 替换 clip 保持先 Load 的顺序。
 
 4 项上游 Flash 参考完整 trace 通过：root_onload、swfmill root_onload、action_execution_order_test4 和带外部 child.swf 的 issue_2870。前三项运行 30 帧；加载 level/_level0 替换没有新增 Flash 对照。
+## 05a BitmapData 透明混合整数精度
+
+来源：[上游 #24676](https://github.com/ruffle-rs/ruffle/pull/24676)，实际参考 head `a211d2b00fc8bd21d50221d648c65f084edd8784`，2026-11-01 核对。上游已合并。
+
+Color::blend_over 改用 Flash 的 256 基整数混合，作为后续透明自复制的独立修复提交。
+
+1 项核心测试核对 256 组固定 Flash 参考色值（多组颜色及 alpha）；未声称覆盖所有色值组合。
