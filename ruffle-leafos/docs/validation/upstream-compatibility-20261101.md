@@ -38,3 +38,10 @@
 根电影最后一次 progress 延到首帧后、init 与 complete 之间；完成标志在 progress/httpStatus 前设置。先取出长度并释放本地 RefLock 借用，再派发可重入事件。子 Loader 的原进度路径保持。
 
 2 项 Flash 参考顺序回归，覆盖首帧 stop 后监听最终进度及 progress 回调 gotoAndStop(1)，完成事件均仅一次。子 Loader/loadBytes 与分块流矩阵未新增验收。
+## 04 AVM1 根时间轴 onLoad 顺序
+
+来源：[上游 #25054](https://github.com/ruffle-rs/ruffle/pull/25054)，实际参考 head `d3c9b13d24c9303e31c7fba3150c4220f93fa6fe`，2026-11-01 核对。上游仍开放，本地适配不表示上游已合并。
+
+仅 Stage 下 level 的首帧在脚本之后排入 Load；loadMovie 替换 clip 保持先 Load 的顺序。
+
+4 项上游 Flash 参考完整 trace 通过：root_onload、swfmill root_onload、action_execution_order_test4 和带外部 child.swf 的 issue_2870。前三项运行 30 帧；加载 level/_level0 替换没有新增 Flash 对照。

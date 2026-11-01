@@ -215,6 +215,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **03 AS3 根电影最终 progress 与完成重入：** 根电影最后一次 progress 延到首帧后、init 与 complete 之间；完成标志在 progress/httpStatus 前设置。先取出长度并释放本地 RefLock 借用，再派发可重入事件。子 Loader 的原进度路径保持。
 
+**04 AVM1 根时间轴 onLoad 顺序：** 仅 Stage 下 level 的首帧在脚本之后排入 Load；loadMovie 替换 clip 保持先 Load 的顺序。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

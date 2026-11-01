@@ -29,7 +29,7 @@
 | 01 | [异常 SWF 分配与长度防护](https://github.com/ruffle-rs/ruffle/pull/23962)、[场景/帧标签预分配](https://github.com/ruffle-rs/ruffle/pull/23960)；均已合并 | 低 | 避免损坏文件触发巨额预分配/下溢；几乎不增加稳定运行开销 | 已验证合入；主机、ARM64、两后端夹具及限定 GLES 游戏启动通过；[范围](validation/swf-length-guards-20261101.md) |
 | 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 02a—02c 核心回归通过，摇杆/快捷释放完整矩阵待验；[范围](validation/upstream-compatibility-20261101.md) |
 | 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
-| 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 优先移植 |
+| 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 移植并做像素回归 |
 | 06 | [Vector 原生调用优化](https://github.com/ruffle-rs/ruffle/pull/24660)；已合并 | 低 | 改动集中、部分操作更便宜；实际游戏收益可能很小 | 低成本验证后决定 |
 | 07 | [删除 ScopeChain 缓存](https://github.com/ruffle-rs/ruffle/pull/24193)；已合并 | 中 | 减少冗余缓存与内存，改善作用域语义；不承诺明显提速 | 移植语义测试后评估 |
@@ -75,6 +75,8 @@
 - 验收：监听器能收到最终进度，事件顺序和次数匹配 Flash；回调内 goto 不递归重复完成事件；本地文件和子 SWF 资源加载都能继续。
 
 ### 04 AVM1 根时间轴 onLoad 顺序
+
+- **04 处置：** 已移植；4 项上游 Flash 参考 trace 通过。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
 - 本地入口：[movie_clip.rs](../player/core/src/display_object/movie_clip.rs) 的 `run_frame_avm1`。
 - 实施：区分 Stage 下的 level 首帧与 `loadMovie` 替换内容；不能把所有 load 事件统一延后。

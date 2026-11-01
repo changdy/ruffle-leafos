@@ -57,6 +57,9 @@ use swf::{ClipEventFlag, DefineBitsLossless, FrameLabelData, TagCode, UTF_8};
 use super::BitmapClass;
 use super::interactive::Avm2MousePick;
 
+#[cfg(test)]
+mod onload_tests;
+
 type FrameNumber = u16;
 
 /// Indication of what frame `run_frame` should jump to next.
@@ -430,8 +433,15 @@ impl<'gc> MovieClip<'gc> {
         if !self.is_action_script_3() {
             // Run my load/enterFrame clip event.
             let is_load_frame = !self.0.contains_flag(MovieClipFlags::INITIALIZED);
+            // A level's load event comes after its first frame's actions, so that
+            // `_root.onLoad` can be defined there. A clip whose content was replaced
+            // by `loadMovie` still fires its load event first.
+            let is_level_load_frame =
+                is_load_frame && matches!(self.parent(), Some(DisplayObject::Stage(_)));
             if is_load_frame {
-                self.event_dispatch(context, ClipEvent::Load);
+                if !is_level_load_frame {
+                    self.event_dispatch(context, ClipEvent::Load);
+                }
                 self.0.set_initialized(true);
             } else {
                 self.event_dispatch(context, ClipEvent::EnterFrame);
@@ -441,6 +451,10 @@ impl<'gc> MovieClip<'gc> {
             // In AVM2, SWF tags are processed at enterFrame time.
             if self.playing() {
                 self.run_frame_internal(context, true, true, false);
+            }
+
+            if is_level_load_frame {
+                self.event_dispatch(context, ClipEvent::Load);
             }
         }
     }

@@ -34,7 +34,7 @@
     "core/src/static_render_resources.rs": "1b1b1dec3f02c6561db3cdbad68fd1cde3d50a52611087e7a45eab953f37ba7f",
     "core/src/display_object.rs": "26d0688faaf6de7398c37c9231fd81b2e725047e9feb5f44f1c9d9dc9c345ae5",
     "core/src/display_object/container.rs": "73c9ddf94ca4e707d070d82eafaa035ff746952f05e0a015d011dd8426035355",
-    "core/src/display_object/movie_clip.rs": "adeeeedc141b2cf53875d322ce217be236a76f37192f490ce87b26828ca76723",
+    "core/src/display_object/movie_clip.rs": "2c813315b364dff2a31bcf6383c81294ebf519d6db27519ad05350a08aabccba",
     "render/wgpu/tests/bitmap_lifetime.rs": "400069796f754d1ca8daaa517691bee28014062310c38ab53b28528de0eb9102",
     "sdl2test-rocknix/src/i18n.rs": "9d3570e5e4e94a4e96fd636f74ab5eb41ae69173885117cb4d635eb3dbaf2ad2",
     "sdl2test-rocknix/src/translations.rs": "9b28710fd72509e74a74adbca885f9e9d86fd0bb0520f83b3fb7d3b240ae0aa5",
@@ -72,7 +72,18 @@
     "core/src/avm2/object/loaderinfo_object.rs": "8b12af1bc6942bac9ec4e241e0de10c9d4a1691e0c35beee663b666b24105bb7",
     "core/src/player/loader_progress_tests.rs": "d3e719424886eba9413197b3e5e7dabfb47ea98d6489b7adbf31883c3c0b35d1",
     "core/src/player/tests/root-progress.swf": "cea553ca1864da615fb8778195c3b61737e66646142431f67538ff8a2c0c04d8",
-    "core/src/player/tests/root-progress-goto.swf": "048fbcae92251c04f0e2eb11a9527c1edf6b273e2278e84c4f42ae613a26ad6d"
+    "core/src/player/tests/root-progress-goto.swf": "048fbcae92251c04f0e2eb11a9527c1edf6b273e2278e84c4f42ae613a26ad6d",
+    "core/src/display_object/movie_clip/onload_fixtures/action_execution_order_test4/output.txt": "3f3ea78b5827e7b99d2c13b12ff49545148d27f4feb35a27eb78115fd89a577e",
+    "core/src/display_object/movie_clip/onload_fixtures/action_execution_order_test4/test.swf": "e4fec7a944f9fbd21e272a4aeab02f164591ac4cecef5ee06f5e8c86b3471494",
+    "core/src/display_object/movie_clip/onload_fixtures/issue_2870/child.swf": "e04fc0138f5740b4e86906f39506d26bd35dbd4ed94010eee49f16adfe617d2a",
+    "core/src/display_object/movie_clip/onload_fixtures/issue_2870/output.txt": "4192dfb2c215f7189e1dd3023043f1f32f41c6a808a3de513fd2b0ef3edcd70c",
+    "core/src/display_object/movie_clip/onload_fixtures/issue_2870/test.swf": "6b584a03d746845dfb6cc6579fb8624f3bb31350e4c246910a67f1fb0accc16b",
+    "core/src/display_object/movie_clip/onload_fixtures/README.md": "e5601879ee80c46dd41aff7044ed316d65d7088f04746ee616d33cce20eddfe5",
+    "core/src/display_object/movie_clip/onload_fixtures/root_onload/output.txt": "d2a1b3b2ca074278c21f6ba6002d391bb5cb07898c20939dde28d9035b495ee3",
+    "core/src/display_object/movie_clip/onload_fixtures/root_onload/test.swf": "0972c9bcd6c854fc0043bba6ee8aced5894bc7165ce1aee36da72f16b055da1d",
+    "core/src/display_object/movie_clip/onload_fixtures/swfmill_root_onload/output.txt": "c626f008ab1537ccc81924d2b098c9c7160a375cf5506c8cf4ee7fe542cdc7b3",
+    "core/src/display_object/movie_clip/onload_fixtures/swfmill_root_onload/test.swf": "6d010133820ab58d78e3952e0c94e28a0df25e1729b618504069acdabd515165",
+    "core/src/display_object/movie_clip/onload_tests.rs": "272ec9116d291884ed7c73c202b2c61dfd8fc0084825ede76b45925531844dcd"
   },
   "verified_leaf": {
     "version": "0.13.0",
