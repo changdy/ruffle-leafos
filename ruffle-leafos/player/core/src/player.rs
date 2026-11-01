@@ -1790,6 +1790,9 @@ impl Player {
                     if let Some(down) = context.mouse_data.pressed(button)
                         && let Some(over) = context.mouse_data.hovered
                         && !released_inside
+                        // Only AVM1 can replace a held button during a timeline goto.
+                        // Dynamic AVM2 instances can share depth/id without being equal.
+                        && !down.as_displayobject().movie().is_action_script_3()
                     {
                         released_inside = Self::check_display_object_equality(
                             down.as_displayobject(),
@@ -3345,3 +3348,8 @@ pub enum PlayerMode {
     /// Represents the debug version of Flash Player, i.e. flashplayerdebugger.
     Debug,
 }
+
+#[cfg(test)]
+mod compatibility_tests;
+#[cfg(test)]
+mod mouse_click_tests;

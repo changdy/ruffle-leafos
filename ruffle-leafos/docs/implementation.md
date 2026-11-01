@@ -203,6 +203,12 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 普通照片使用 `SDCARD_PATH`、`SDCARD_PATHS` 和 `UMRK_SECONDARY_SDCARD_PATH`（Pocket1 默认 `/media/sdcard1`）。候选先 canonicalize，结合 Linux `/proc/self/mountinfo` 验证副卡挂载点及设备号与系统卡不同；不依据空目录或 `/mnt/external_sd` 名字猜测。没有独立已挂载副卡时使用系统卡，有副卡但写失败时明确报错。照片位于所选卡 `Pictures/Ruffle Flash/`，文件名为 `<游戏名>-YYYY_MM_DD-HH_MM_SS.png`，时间由设备 `localtime_r` 生成，不附加序号。继续使用 `create_new` 独占创建：同名已存在时在编码前返回错误，用户可隔一秒重试；失败清理当前未写完照片，不覆盖既有照片。满卡/热拔卡完整故障矩阵与真实双 TF 组合仍需独立验收。
 
+## 上游兼容修复与核心回归
+
+核心回归使用实际 Player 和 Null 后端，不进入正式运行路径。来源、夹具和验证边界见[兼容修复报告](validation/upstream-compatibility-20261101.md)。
+
+**02a AS3 拖出释放误点击：** 结构等价回退只用于 AVM1，动态 AS3 实例即使 depth/id 相同也保持独立。保留 AVM1 goto 重建按钮的路径。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

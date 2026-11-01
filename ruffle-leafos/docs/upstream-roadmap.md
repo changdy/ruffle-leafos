@@ -2,7 +2,7 @@
 
 整理与上游状态核对：**2026-11-01**。适用：**Ruffle Flash 0.8.3 / Miniloong Pocket 1 / leafOS**。
 
-本地评估基点：`d393ceb1fd351d9ecf130fece931f85d287afa4f`。本文维护后续实施顺序及各项处置；第 01 项已移植，通过主机、ARM64 构建及限定实机验证，其他项尚未实施。完成状态和正式验证结论统一维护在[工程进度](progress.md)，构建方法见[工程实现细节](implementation.md)。
+本地评估基点：`d393ceb1fd351d9ecf130fece931f85d287afa4f`。本文维护实施顺序及各项处置；已移植范围以总表及逐项处置为准。完成状态和正式验证结论统一维护在[工程进度](progress.md)，构建方法见[工程实现细节](implementation.md)。
 
 ## 排序依据与使用方法
 
@@ -27,7 +27,7 @@
 | 顺序 | 任务与上游来源 | 综合难度 | Pocket1 的主要收益与代价 | 当前行动 |
 | --- | --- | --- | --- | --- |
 | 01 | [异常 SWF 分配与长度防护](https://github.com/ruffle-rs/ruffle/pull/23962)、[场景/帧标签预分配](https://github.com/ruffle-rs/ruffle/pull/23960)；均已合并 | 低 | 避免损坏文件触发巨额预分配/下溢；几乎不增加稳定运行开销 | 已验证合入；主机、ARM64、两后端夹具及限定 GLES 游戏启动通过；[范围](validation/swf-length-guards-20261101.md) |
-| 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 分子项移植验证 |
+| 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 02a 已合入，02b/02c 待处理；[范围](validation/upstream-compatibility-20261101.md) |
 | 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 优先移植 |
 | 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 优先移植 |
 | 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 移植并做像素回归 |
@@ -55,6 +55,8 @@
 - 验证与来源统一见[长度防护报告](validation/swf-length-guards-20261101.md)；主机、ARM64、Pocket1 两后端各 9 组解析夹具及两款游戏的限定 GLES 启动/暂停/退出通过。实战、游戏 Vulkan、长时及真实低内存待验；128 MiB 不是解压总量限制，256 项不是条目数量上限，也不构成通用 OOM 保护。
 
 ### 02 鼠标释放、拖拽与按钮状态
+
+- **02a 处置：** 已移植；2 项 VM 回归通过；AVM1 goto 专项待验。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
 - 本地入口：[core/src/player.rs](../player/core/src/player.rs) 及 AVM1 按钮实现。按 **02a #23803 → 02b #23807 → 02c #25045** 分开验证；这是建议拆分顺序，不宣称三者存在上游依赖。
 - 实施：限制 AVM1 专用对象等价/拖拽事件逻辑的适用范围。保留 AVM1 在 goto 后重建按钮的兼容处理，以及 `trackAsMenu` 的菜单跟踪行为。
