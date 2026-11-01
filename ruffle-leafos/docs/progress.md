@@ -21,6 +21,7 @@
 | AS3 拖出释放误点击（上游 02a） | 限制 AVM1 专用对象等价回退 | 2026-11-01：2 项 VM 回归通过；AVM1 goto 专项待验；[验证与边界](validation/upstream-compatibility-20261101.md) |
 | AS3 拖动和释放的重复悬停事件（上游 02b） | 拖动及释放各派发一次 AS3 悬停事件 | 2026-11-01：3 项完整鼠标事件顺序回归通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
 | AVM1 未按按钮高亮残留（上游 02c） | 普通按钮忽略未从自身开始的拖动，保留菜单跟踪 | 2026-11-01：5 项 native 按钮状态回归通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
+| AS3 根电影最终 progress 与完成重入（上游 03） | 首帧监听可收到最终 progress，完成事件防重入 | 2026-11-01：2 项根电影顺序/goto 回归通过；子 Loader/分块待验；[验证与边界](validation/upstream-compatibility-20261101.md) |
 
 模板管理、全局按键自动继承、旧 M+左右、游戏音量/静音、编辑页仅本次应用及恢复默认已移除。旧格式兼容范围统一见[按键契约](formats/controls-format-v5.md)；历史里程碑与需求从 Git 追溯。
 

@@ -31,3 +31,10 @@
 未按普通按钮忽略拖入/拖出，trackAsMenu 动态属性覆盖 SWF 跟踪标志；新增 common string 沿用本地旧版 intern 接口。
 
 5 项真实 native 按钮状态回归，覆盖普通按钮、原按钮移出移回、SWF menu 标志及动态 true/false 覆盖。
+## 03 AS3 根电影最终 progress 与完成重入
+
+来源：[上游 #25051](https://github.com/ruffle-rs/ruffle/pull/25051)，实际参考 head `0c16e8d4e5e33d4c9003859faa223713f420e198`，2026-11-01 核对。上游仍开放，本地适配不表示上游已合并。
+
+根电影最后一次 progress 延到首帧后、init 与 complete 之间；完成标志在 progress/httpStatus 前设置。先取出长度并释放本地 RefLock 借用，再派发可重入事件。子 Loader 的原进度路径保持。
+
+2 项 Flash 参考顺序回归，覆盖首帧 stop 后监听最终进度及 progress 回调 gotoAndStop(1)，完成事件均仅一次。子 Loader/loadBytes 与分块流矩阵未新增验收。

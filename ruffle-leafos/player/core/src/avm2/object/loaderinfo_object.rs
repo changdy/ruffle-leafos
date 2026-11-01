@@ -221,7 +221,32 @@ impl<'gc> LoaderInfoObject<'gc> {
             };
 
             if should_complete {
+                // Completion handlers can run a nested frame through goto.
+                // Guard before dispatching any event to prevent re-entry.
+                self.0.complete_event_fired.set(true);
+
                 let mut activation = Activation::from_nothing(context);
+
+                // Child Loaders keep their own progress path. Only the root
+                // needs a final progress event after first-frame scripts.
+                let total_len = if self.0.loader.is_none() {
+                    match &*self.0.loaded_stream.borrow() {
+                        LoaderStream::Swf(movie, _) => Some(movie.compressed_len()),
+                        _ => None,
+                    }
+                } else {
+                    None
+                };
+                if let Some(total_len) = total_len {
+                    let progress_evt = EventObject::progress_event(
+                        &mut activation,
+                        "progress",
+                        total_len,
+                        total_len,
+                    );
+                    Avm2::dispatch_event(activation.context, progress_evt, self.into());
+                }
+
                 if from_url {
                     let http_status_evt =
                         EventObject::http_status_event(&mut activation, status, redirected);
@@ -229,7 +254,6 @@ impl<'gc> LoaderInfoObject<'gc> {
                     Avm2::dispatch_event(context, http_status_evt, self.into());
                 }
 
-                self.0.complete_event_fired.set(true);
                 let complete_evt = EventObject::bare_default_event(context, "complete");
                 Avm2::dispatch_event(context, complete_evt, self.into());
                 return true;

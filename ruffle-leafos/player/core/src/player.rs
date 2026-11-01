@@ -1982,8 +1982,14 @@ impl Player {
             {
                 let was_root_movie_loaded = root.loaded_bytes() as i32 == root.total_bytes();
                 did_finish = root.preload(context, limit);
+                let is_root_movie_loaded = root.loaded_bytes() as i32 == root.total_bytes();
 
-                if let Some(loader_info) = root.loader_info().filter(|_| !was_root_movie_loaded) {
+                // Final root progress belongs after the first frame's scripts,
+                // between init and complete, so preloaders can observe 100%.
+                if let Some(loader_info) = root
+                    .loader_info()
+                    .filter(|_| !was_root_movie_loaded && !is_root_movie_loaded)
+                {
                     let mut activation = Avm2Activation::from_nothing(context);
 
                     let progress_evt = Avm2EventObject::progress_event(
@@ -3365,3 +3371,5 @@ mod mouse_click_tests;
 mod mouse_hover_tests;
 #[cfg(test)]
 mod mouse_avm1_button_tests;
+#[cfg(test)]
+mod loader_progress_tests;

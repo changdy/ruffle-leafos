@@ -6,7 +6,7 @@
   "relationship": "Leaf frontend derived from the pinned public base; does not reproduce all original leaf-12 private patches.",
   "leaf_files_sha256": {
     "Cargo.lock": "d4eb7bf07948947fcd17d3c19da737ccdbb1d770a46a5ab28797ba9f1848d3d0",
-    "core/src/player.rs": "2c6acd9d008caf886152e281c455ffd30701cbff243b48983249c48129417aa2",
+    "core/src/player.rs": "ab3238d17798edb43ffd3f30e7d5cf107adb184f08108afed065bce682eba7a6",
     "sdl2test-rocknix/Cargo.toml": "e3c0066ea27f4b1f58cea1dcd34a64d2571887d53c4427d4d3df57f92a8f117c",
     "sdl2test-rocknix/src/controls.rs": "b63e02073e91d3ae580fc593baa31f142b5abeff05351d3e51be509b1910fc74",
     "sdl2test-rocknix/src/cursor.rs": "7476fa43e71e59881f77145a885c68ecee6fc9dbdd06c23a58848a8982806f8a",
@@ -68,7 +68,11 @@
     "core/common/src/avm_string/common.rs": "b51442bb52300ff1b86074988d47ff9e839879a2116f450219f3aeeddaf54a21",
     "core/src/display_object/avm1_button.rs": "b414f11b11fd3b1dbf67b84fb73cf253cbaff6f569acc3c25c30d9d4e4f46fb6",
     "core/src/player/mouse_avm1_button_tests.rs": "6367b699a484eb50c32b23928cc0eaf52895daa1d2056335eadc51be41899b1e",
-    "core/src/player/tests/button-drag.swf": "309b2ee911e111552824250f9817dd2c3d5934e90cb6523a0c57c8a25fa252ad"
+    "core/src/player/tests/button-drag.swf": "309b2ee911e111552824250f9817dd2c3d5934e90cb6523a0c57c8a25fa252ad",
+    "core/src/avm2/object/loaderinfo_object.rs": "8b12af1bc6942bac9ec4e241e0de10c9d4a1691e0c35beee663b666b24105bb7",
+    "core/src/player/loader_progress_tests.rs": "d3e719424886eba9413197b3e5e7dabfb47ea98d6489b7adbf31883c3c0b35d1",
+    "core/src/player/tests/root-progress.swf": "cea553ca1864da615fb8778195c3b61737e66646142431f67538ff8a2c0c04d8",
+    "core/src/player/tests/root-progress-goto.swf": "048fbcae92251c04f0e2eb11a9527c1edf6b273e2278e84c4f42ae613a26ad6d"
   },
   "verified_leaf": {
     "version": "0.13.0",

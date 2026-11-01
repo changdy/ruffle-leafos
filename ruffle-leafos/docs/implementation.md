@@ -213,6 +213,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **02c AVM1 未按按钮高亮残留：** 未按普通按钮忽略拖入/拖出，trackAsMenu 动态属性覆盖 SWF 跟踪标志；新增 common string 沿用本地旧版 intern 接口。
 
+**03 AS3 根电影最终 progress 与完成重入：** 根电影最后一次 progress 延到首帧后、init 与 complete 之间；完成标志在 progress/httpStatus 前设置。先取出长度并释放本地 RefLock 借用，再派发可重入事件。子 Loader 的原进度路径保持。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

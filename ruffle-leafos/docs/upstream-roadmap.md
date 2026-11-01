@@ -28,7 +28,7 @@
 | --- | --- | --- | --- | --- |
 | 01 | [异常 SWF 分配与长度防护](https://github.com/ruffle-rs/ruffle/pull/23962)、[场景/帧标签预分配](https://github.com/ruffle-rs/ruffle/pull/23960)；均已合并 | 低 | 避免损坏文件触发巨额预分配/下溢；几乎不增加稳定运行开销 | 已验证合入；主机、ARM64、两后端夹具及限定 GLES 游戏启动通过；[范围](validation/swf-length-guards-20261101.md) |
 | 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 02a—02c 核心回归通过，摇杆/快捷释放完整矩阵待验；[范围](validation/upstream-compatibility-20261101.md) |
-| 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 优先移植 |
+| 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 优先移植 |
 | 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 移植并做像素回归 |
 | 06 | [Vector 原生调用优化](https://github.com/ruffle-rs/ruffle/pull/24660)；已合并 | 低 | 改动集中、部分操作更便宜；实际游戏收益可能很小 | 低成本验证后决定 |
@@ -67,6 +67,8 @@
 - 验收：按下后拖出松开不误点击；移出再移入恢复正确状态，AS3 rollOver/rollOut 不重复；AVM1 普通按钮与菜单按钮分别测试。实机覆盖摇杆鼠标、M+下左键保持、暂停/切方案释放；不要只测桌面鼠标。
 
 ### 03 AS3 加载页卡死与完成事件重入
+
+- **03 处置：** 已移植；2 项根电影顺序/goto 回归通过；子 Loader/分块待验。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
 - 本地入口：[player.rs](../player/core/src/player.rs)、[loaderinfo_object.rs](../player/core/src/avm2/object/loaderinfo_object.rs)。复现“首帧 stop，监听 progress 到 100% 才 play”的 SWF。
 - 实施：对齐根电影最终 progress 与 init/complete 的顺序，完成标志在可重入事件前处理。保护分块加载及子 Loader 行为。
