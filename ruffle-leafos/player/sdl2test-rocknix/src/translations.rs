@@ -1,6 +1,7 @@
 //! English UI catalog. Keys are the original Simplified Chinese labels.
 pub fn english(text: &str) -> Option<&'static str> {
     Some(match text {
+        "保存失败；请到游戏存档，在当前槽按 Y 重试" => "Save failed. Open Game saves and press Y on the current slot to retry.",
         "截图" => "Screenshot",
         "截图作为封面" => "Use screenshot as cover",
         "保存普通照片" => "Save photo",

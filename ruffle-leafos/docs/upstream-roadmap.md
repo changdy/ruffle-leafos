@@ -33,7 +33,7 @@
 | 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 精度/自复制分两项提交；核心及两后端像素通过；[边界](validation/upstream-compatibility-20261101.md) |
 | 06 | [Vector 原生调用优化](https://github.com/ruffle-rs/ruffle/pull/24660)；已合并 | 低 | 改动集中、部分操作更便宜；实际游戏收益可能很小 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
 | 07 | [删除 ScopeChain 缓存](https://github.com/ruffle-rs/ruffle/pull/24193)；已合并 | 中 | 减少冗余缓存与内存，改善作用域语义；不承诺明显提速 | 已移植；核心回归通过，实机范围见报告；[范围](validation/upstream-compatibility-20261101.md) |
-| 08 | 原生进度恢复与导入导出；参考 [#8470](https://github.com/ruffle-rs/ruffle/issues/8470)、[#22409](https://github.com/ruffle-rs/ruffle/issues/22409) | 中—高 | 直接保护长期游戏进度；大部分成本在低频文件操作和界面 | 本轮暂缓：备份/导入导出按本地功能设计分步做；发现真实保存失败或丢档时提前 |
+| 08 | 原生进度恢复与导入导出；参考 [#8470](https://github.com/ruffle-rs/ruffle/issues/8470)、[#22409](https://github.com/ruffle-rs/ruffle/issues/22409) | 中—高 | 直接保护长期游戏进度；大部分成本在低频文件操作和界面 | 08a 已补持久失败状态与现有重试入口；完整退出选择及 08b—08d 暂缓 |
 | 09 | [位图缓存抖动](https://github.com/ruffle-rs/ruffle/pull/24992)、[矢量缓存抖动](https://github.com/ruffle-rs/ruffle/pull/25003)、[动画遮罩](https://github.com/ruffle-rs/ruffle/pull/24949)；均开放 | 中—高 | 上游明确涉及死神 2.6 菜单；本地 3.3/3.6 是否受影响需复现 | 本轮暂缓：缺本地 3.3/3.6 抖动复现，先核对依赖及纹理重建代价 |
 | 10 | [屏外静态文字剔除](https://github.com/ruffle-rs/ruffle/pull/24944)；已合并 | 低—中 | 有长列表/大量屏外文字时可省绘制；要防止错误隐藏文字 | 本轮暂缓：缺默认 GLES 屏外文字热点证据，先验证裁剪/离屏兼容性 |
 | 11 | [无效赋值消除 DSE](https://github.com/ruffle-rs/ruffle/pull/25035)；开放 | 中—高 | 有机会降低 AS3 解释执行量；优化阶段更贵、语义验证要求高 | 本轮暂缓：缺真实 AS3 瓶颈及收益对照，避免增加优化阶段开销 |
@@ -109,6 +109,8 @@
 - 实施与验收：带入 `scopes_dont_cache` 等语义测试，检查动态属性、with-scope、命名空间和作用域修改后的查找结果；记录启动分配、RSS 和脚本耗时。它首先是正确性与冗余缓存清理，不是无条件性能优化。
 
 ### 08 原生进度可恢复性与导入导出
+
+- 保存提示小步已完成：失败状态跨页保留，当前槽 Y 重试，成功后清除；完整重试/取消/明确继续退出及备份/导入导出仍待做。[验证](validation/reliability-fixes-20261101.md)。
 
 - 类型：本地功能完善，issue 提供需求参考，没有可直接移植的完整方案。入口：[experience.rs](../player/sdl2test-rocknix/src/experience.rs)、[data_manager.rs](../player/sdl2test-rocknix/src/data_manager.rs)、[leaf.rs](../player/sdl2test-rocknix/src/leaf.rs)。
 - 顺序：**08a 失败重试/取消及明确状态 → 08b 可恢复的完整备份集合 → 08c 导出 → 08d 导入**。本地已在部分退出/重启路径阻止保存失败后继续，并有有效 `.bak` 回退；先查缺口，避免重做已有逻辑。

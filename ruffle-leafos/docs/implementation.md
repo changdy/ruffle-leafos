@@ -229,6 +229,10 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 `Mapping::used_stick_axes(swapped)` 与 `filter_stick()` 统一判定当前映射使用的 X/Y 轴。Front 用实际 active 或 legacy/config snapshot 刷新 Session 的轴 mask，在恢复/映射变更时同步；归中判断与后续摇杆派发先清零未使用轴，再沿用原死区。派生 Stick held 不独立阻塞中立门，实体按键及活跃轴快照仍保护恢复。[验证范围](validation/reliability-fixes-20261101.md)。
 
+## 保存失败状态
+
+`experience::Ui` 单独记录最近进度 flush 错误，跨页和语言切换不丢失，仅实际成功 flush 清除；普通页面 message 保持独立。暂停主页和存档页预留提示行，原当前槽 Y 重试、退出/换槽/后端切换成功门保持。[验证范围](validation/reliability-fixes-20261101.md)。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

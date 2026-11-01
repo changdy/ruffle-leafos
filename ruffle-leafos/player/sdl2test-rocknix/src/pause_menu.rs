@@ -232,6 +232,16 @@ impl PauseMenu {
         let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),_=>t("操作方法见「操作说明」")};
         self.live_label_width(16,hint,20.,23.,606.,910.,false,self.palette[4]);
         }
+        if !state.controls.visible && matches!(state.experience.page,
+            crate::session::experience::Page::Home|crate::session::experience::Page::Saves) {
+            if let Some(hint)=state.experience.save_failure_hint() {
+                // Keep the warning on the pause home and save list without
+                // obscuring controls/settings operation results on other pages.
+                let mut background=self.palette[0];background[3]=1.;
+                self.quad((7.,597.,946.,34.),background,None);
+                self.live_label_width(61,&hint,20.,23.,601.,910.,false,self.palette[1]);
+            }
+        }
         } else if state.drag_locked {
             self.live_chip(61,t("左键保持 · M+十字下解除"),22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
         }

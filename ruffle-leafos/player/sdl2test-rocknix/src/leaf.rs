@@ -340,7 +340,8 @@ impl Frontend {
         let p=self.progress.lock().unwrap();
         let error=p.error.clone().or_else(||if core_ok{None}else{Some(t("Flash 进度序列化或写盘失败").into())});let has_data=p.has_data();let active=p.active.unwrap_or(0);drop(p);
         self.refresh_saves();
-        if let Some(error)=error {self.state.experience.message=crate::tr!("保存失败：{error}", "Save failed: {error}");self.toast(crate::tr!("保存失败：{error}", "Save failed: {error}"));return false;}
+        self.redraw|=self.state.experience.record_save_result(error.clone());
+        if let Some(error)=error {self.toast(crate::tr!("保存失败：{error}", "Save failed: {error}"));return false;}
         if announce {self.toast(if has_data {crate::tr!("存档 {} 的游戏内进度已保存", "In-game progress saved to slot {}",active+1)}else{t("尚无游戏内进度，请先使用游戏内保存功能").into()});}
         println!("leaf-progress flush=ok slot={} has_data={has_data}",active+1);true
     }

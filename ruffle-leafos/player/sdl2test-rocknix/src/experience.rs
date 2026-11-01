@@ -286,8 +286,21 @@ pub struct Ui {
     pub renderer_failed:bool,
     pub language:super::i18n::Language,
     pub cover_path:String,
+    // Independent of transient page messages and toast deadlines. Only an
+    // actual successful progress flush acknowledges a previous save failure.
+    pub(crate) save_error:Option<String>,
 }
 impl Ui {
+    pub fn record_save_result(&mut self,error:Option<String>)->bool {
+        let changed=self.save_error!=error;
+        self.save_error=error;
+        changed
+    }
+    pub fn save_failure_hint(&self)->Option<String> {
+        self.save_error.as_ref().map(|error|if self.page==Page::Saves {
+            crate::tr!("保存失败：{error}", "Save failed: {error}")
+        }else{t("保存失败；请到游戏存档，在当前槽按 Y 重试").into()})
+    }
     pub fn manager_game(&self)->Option<&Entry>{self.games.get(self.game_index)}
     pub fn open_games(&mut self){self.open(Page::ManagerGames);self.selected=self.game_index.min(self.games.len());}
     pub fn manager_parent(&mut self){
@@ -517,6 +530,43 @@ mod tests {
         u.started=true;u.active=0;u.open(Page::Saves);u.selected=1;assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Confirm);assert_eq!(u.selected,0);
         assert!(matches!(u.nav(Nav::A),Command::None));assert_eq!(u.page,Page::Saves);
         u.selected=1;u.nav(Nav::Y);assert_eq!(u.page,Page::Confirm);u.selected=1;assert!(matches!(u.nav(Nav::A),Command::Copy(1)));
+    }
+    #[test] fn save_failure_survives_page_changes_and_retry_request_until_success() {
+        use super::super::controls::Nav;
+        let mut u=Ui{started:true,active:2,..Ui::default()};
+        assert!(u.record_save_result(Some("card full".into())));
+        for page in [Page::Saves,Page::Settings,Page::Language,Page::Home,Page::Saves] {
+            u.open(page);
+            u.message=t("已保存全局画面设置").into();
+            assert!(u.save_failure_hint().is_some(),"page {page:?} discarded the failure");
+        }
+        assert!(u.save_failure_hint().unwrap().contains("card full"));
+        u.selected=u.active;
+        assert!(matches!(u.nav(Nav::Y),Command::Save));
+        assert!(u.save_failure_hint().is_some(),"requesting a retry is not a successful save");
+        u.nav(Nav::B);u.open(Page::Saves);
+        assert!(!u.record_save_result(Some("card full".into())));
+        assert!(u.record_save_result(Some("card read-only".into())));
+        assert!(u.save_failure_hint().unwrap().contains("card read-only"));
+        u.message=t("已保存全局画面设置").into();
+        assert!(u.record_save_result(None));
+        assert!(u.save_failure_hint().is_none());
+        assert_eq!(u.message,t("已保存全局画面设置"),"acknowledging a save must not clear unrelated page messages");
+        u.open(Page::Home);u.open(Page::Saves);
+        assert!(u.save_failure_hint().is_none());
+    }
+    #[test] fn save_failure_hint_uses_the_current_language_without_changing_the_error() {
+        use super::super::i18n::{self,Language};
+        let mut u=Ui{started:true,..Ui::default()};
+        u.record_save_result(Some("disk full".into()));
+        i18n::set(Language::English);
+        assert_eq!(u.save_failure_hint().unwrap(),"Save failed. Open Game saves and press Y on the current slot to retry.");
+        u.open(Page::Saves);
+        assert_eq!(u.save_failure_hint().unwrap(),"Save failed: disk full");
+        i18n::set(Language::Chinese);
+        assert_eq!(u.save_failure_hint().unwrap(),"保存失败：disk full");
+        u.open(Page::Home);
+        assert_eq!(u.save_failure_hint().unwrap(),"保存失败；请到游戏存档，在当前槽按 Y 重试");
     }
     #[test] fn shortcut_pages_wrap_reset_and_return_without_changing_settings_or_progress(){
         use super::super::controls::Nav;

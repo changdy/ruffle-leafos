@@ -107,6 +107,8 @@ Open **M → Mouse settings** to adjust mouse speed for the current session. Cho
 
 The player also attempts to commit progress when opening menus, exiting normally and responding to game save requests. Slot timestamps show the last data change in Beijing time (UTC+8).
 
+If saving fails, the pause home and Game saves keep a warning. Select the current slot in Game saves and press **Y** to retry. The warning clears after a successful save. Save and quit, slot changes and renderer changes stay in the current session if saving fails.
+
 Progress is identified by **SWF content**: renaming or moving the same file preserves its identity; a different game build gets separate progress. Controls use the **ROM path**, so they do not automatically follow a renamed or moved file. Back up before replacing games. Automatic migration of old `.sol` files, progress import/export and instant save states are not available yet.
 
 ## Screenshots and covers
