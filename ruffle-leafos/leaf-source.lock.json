@@ -53,7 +53,13 @@
     "sdl2test-rocknix/src/screenshot_png.rs": "52e12911edf4321941027e3ed9556e6dddbeb0aeff551cdd04c5ab689dc164f5",
     "render/tests/screenshot_png.rs": "221dd64635d87253df2ed209d47c439f2f929fea107a8d0c0f6fb6c0d954d030",
     "core/src/bitmap/operations.rs": "77f7ca67280ac0613ea0963dc672183f521d1335c6233c49ef8bdd5a595305b7",
-    "core/src/bitmap/operations/copy_pixels_tests.rs": "948c2df9c14b867ccd429950d8caa9a4fabff1efdfb8a0acf849235b9a590157"
+    "core/src/bitmap/operations/copy_pixels_tests.rs": "948c2df9c14b867ccd429950d8caa9a4fabff1efdfb8a0acf849235b9a590157",
+    "swf/src/read.rs": "d5002c4f35ddb3953b3c6e0862b98468c73a637b69aca112dcf8552fd0c692dd",
+    "swf/tests/malformed_lengths.rs": "7bff7a9caf27d871579a90bff79682d494870ee7ecea252a51bd3e6a9b88397f",
+    "swf/tests/swfs/lzma-malformed-length.swf": "08bab711b6172583ff9303f080c96076d2f439679e98c400ff4828e8fbaf575c",
+    "swf/tests/swfs/lzma-length-too-large.swf": "db24b0db5185594b0b9da3ed301d3640ae8efa963f7cdd1e3f52066481059b14",
+    "swf/tests/swfs/scene-count-too-large.swf": "ae1d3e016f2f0c3b8ad20a17705b475a3e5f1fc92d8299acb04128241d01a419",
+    "swf/tests/swfs/frame-label-count-too-large.swf": "4f2ed13f29240dcfec064d16069ca6cdeed7d93046d490abba82cece2f0ff928"
   },
   "verified_leaf": {
     "version": "0.13.0",

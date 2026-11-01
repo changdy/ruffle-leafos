@@ -2,7 +2,7 @@
 
 整理与上游状态核对：**2026-11-01**。适用：**Ruffle Flash 0.8.3 / Miniloong Pocket 1 / leafOS**。
 
-本地评估基点：`d393ceb1fd351d9ecf130fece931f85d287afa4f`。本文是后续实施计划，当前各项均未因本次调研而完成移植、编译或实机验收。完成状态和正式验证结论仍统一维护在[工程进度](progress.md)，构建方法见[工程实现细节](implementation.md)。
+本地评估基点：`d393ceb1fd351d9ecf130fece931f85d287afa4f`。本文维护后续实施顺序及各项处置；第 01 项已移植并完成主机验证与 ARM64 构建，实机待验，其他项尚未实施。完成状态和正式验证结论统一维护在[工程进度](progress.md)，构建方法见[工程实现细节](implementation.md)。
 
 ## 排序依据与使用方法
 
@@ -26,7 +26,7 @@
 
 | 顺序 | 任务与上游来源 | 综合难度 | Pocket1 的主要收益与代价 | 当前行动 |
 | --- | --- | --- | --- | --- |
-| 01 | [异常 SWF 分配与长度防护](https://github.com/ruffle-rs/ruffle/pull/23962)、[场景/帧标签预分配](https://github.com/ruffle-rs/ruffle/pull/23960)；均已合并 | 低 | 避免损坏文件触发巨额分配/下溢；几乎不增加稳定运行开销 | 优先移植 |
+| 01 | [异常 SWF 分配与长度防护](https://github.com/ruffle-rs/ruffle/pull/23962)、[场景/帧标签预分配](https://github.com/ruffle-rs/ruffle/pull/23960)；均已合并 | 低 | 避免损坏文件触发巨额预分配/下溢；几乎不增加稳定运行开销 | 主机通过，ARM64 已构建，实机待验；[记录](validation/swf-length-guards-20261101.md) |
 | 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 分子项移植验证 |
 | 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 优先移植 |
 | 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 优先移植 |
@@ -51,9 +51,8 @@
 
 ### 01 异常 SWF 分配与长度防护
 
-- 本地入口：[swf/src/read.rs](../player/swf/src/read.rs)。现有 LZMA 长度直接减 8，场景/帧标签数量直接用于预分配，仍与上游修复前路径对应。
-- 实施：移植 checked subtraction 和初始容量限制，保留正常解码行为；带入上游损坏样本及断言。上游 128 MiB 是初始容量上限，不能误写为所有 SWF 的解压总量限制，也不能因此拒绝正常大文件。
-- 验收：损坏长度、巨大声明数量返回可控错误或按既有容错继续，不因头字段直接申请巨额内存；正常 FWS/CWS/ZWS 样本及两款随包游戏仍可加载。恶意样本先在有资源限制的主机进程中运行，确认路径后再做隔离实机测试。
+- 处置：已在 [swf/src/read.rs](../player/swf/src/read.rs) 移植 checked subtraction、128 MiB 初始解压容量与 256 项场景/帧标签初始容量，保留正常解码与容错行为；上游四个损坏样本和超过初始容量的有效内容已加入回归。
+- 验证与来源统一见[长度防护报告](validation/swf-length-guards-20261101.md)；主机通过、ARM64 已构建，Pocket1 隔离加载与两款真实游戏运行仍待验。128 MiB 不是解压总量限制，256 项不是条目数量上限，也不构成通用 OOM 保护。
 
 ### 02 鼠标释放、拖拽与按钮状态
 

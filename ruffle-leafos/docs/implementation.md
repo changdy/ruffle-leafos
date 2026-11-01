@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.8.3 开发预览**，整理于 2026-10-31。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.8.3 开发预览**，整理于 2026-11-01。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 ## 命名与兼容标识
 
@@ -72,6 +72,10 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 菜单术语按实际功能统一：鼠标设置 / Mouse settings 包含速度与光标外观；操作说明 / Controls guide 覆盖组合键、菜单和编辑操作；Flash 画质 / Flash quality 对应 `StageQuality`；渲染接口 / Graphics API 对应 GLES/Vulkan。界面用“游戏内进度 / In-game progress”称呼 SharedObject 数据，英文槽位统一为 Slot；键盘功能键也通过同一翻译表显示退格 / Backspace、空格 / Space、确认 / Confirm。存档页提示依据所选项目区分当前槽、其他槽、损坏槽和返回行，与 `Ui::nav` 的保存、切槽、复制及返回行为保持一致。
 
 ## 渲染资源与内存
+
+### SWF 长度与初始预分配
+
+`swf/src/read.rs` 移植上游 #23962 / #23960：LZMA 的文件声明长度先 `checked_sub(8)`，不足 8 返回解析错误；通用解压缓冲和 LZMA 中间缓冲的初始容量最多 128 MiB，场景与帧标签数组的初始容量最多 256 项。后续仍按实际内容增长，保持错误长度流的既有容错，不把这些初始值作为解压总量或合法条目数上限。此检查不限制 LZMA 字典、总 RSS 或其他解析分配，也不保证任意损坏/高压缩内容不会 OOM。来源与验证见[长度防护报告](validation/swf-length-guards-20261101.md)。
 
 ### 受限内存下的静态绘图资源
 
@@ -210,6 +214,7 @@ python scripts/test_session.py
 python -m unittest discover -s scripts -p test_language.py -v
 python scripts/test_renderer.py
 python scripts/test_renderer.py --suite screenshot
+python scripts/test_swf.py
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py
 python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuild --include-source
@@ -224,6 +229,8 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuil
 `test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
 
 `test_renderer.py --suite screenshot` 使用已有渲染库依赖编译前端的实际 PNG 编码模块，验证奇数高度翻转、RGB 像素还原、难压缩全屏的有界输出以及短写/满卡错误传播；没有 SDL/GPU 依赖，不构成实机渲染或完整 OOM 验收。
+
+`test_swf.py` 在 Windows GNU 主机离线编译并实际执行 `swf` 的单元与集成测试；先用等待输入的子进程完成 Windows Job Object 分配，再启动测试，每个测试进程树限制 512 MiB 提交内存和 180 秒，串行运行用例。覆盖上游损坏样本、正常 FWS/CWS/ZWS、超过 128 MiB 的有效流、超过 256 项的场景/帧标签及两款随包游戏与资源的主机解析；结果写入 `build/swf-test-report.json`。测试限额不进入正式播放器，也不代表 Pocket1 游戏运行验收。
 
 `test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。静态资源用例可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。Rust测试框架与应用ELF的系统要求可能不同；既有测试框架需要GLIBC 2.39，仅在隔离目录通过SDK匹配的加载器、libc/libm执行，没有替换设备系统库。当前静态资源测试与隔离运行边界见[缓存验证报告](validation/resource-cache-20261030.md)。
 
