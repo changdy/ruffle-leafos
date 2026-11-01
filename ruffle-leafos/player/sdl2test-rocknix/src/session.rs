@@ -204,6 +204,7 @@ pub struct Session {
     pub ledger: InputLedger,
     held: BTreeSet<Source>,
     wait_neutral: bool,
+    stick_axes: (bool,bool),
 }
 
 impl Session {
@@ -221,7 +222,7 @@ impl Session {
             profile: 0, preview_profile: 0, drag_locked: false,
             use_cfg: true, preview_use_cfg: true,
             stick: (0, 0), ledger: InputLedger::default(),
-            held: BTreeSet::new(), wait_neutral: true,
+            held: BTreeSet::new(), wait_neutral: true, stick_axes: (true,true),
         }
     }
 
@@ -264,9 +265,23 @@ impl Session {
     }
 
     pub fn refresh_neutral(&mut self) {
-        if self.held.is_empty() && stick_vector(self.stick.0, self.stick.1).is_none() {
+        // Stick sources are derived from the physical axis snapshot. Requiring
+        // their key-up here can deadlock: update_stick releases them only after
+        // allow_game_input becomes true. Real buttons/keys still need release.
+        let buttons_released=self.held.iter().all(|source|matches!(source,Source::Stick(_)));
+        let stick=(if self.stick_axes.0 {self.stick.0} else {0},
+                   if self.stick_axes.1 {self.stick.1} else {0});
+        if buttons_released && stick_vector(stick.0,stick.1).is_none() {
             self.wait_neutral = false;
         }
+    }
+
+    /// Cache the effective mapping for immediate key-up checks as well as the
+    /// next main-loop snapshot. Changing which axes are used re-arms the gate.
+    pub fn refresh_neutral_for_axes(&mut self, used: (bool,bool)) {
+        if self.stick_axes!=used {self.wait_neutral=true;}
+        self.stick_axes=used;
+        self.refresh_neutral();
     }
 
     pub fn game_press(&mut self, source: Source, action: Action) -> Vec<Transition> {
@@ -610,5 +625,99 @@ mod tests {
             assert!((cursor.0 - 100.0 - speed.pixels_per_second() * 0.05).abs() < 0.01);
             assert_eq!(move_cursor((10.0, 10.0), (1000, -1000), 1.0, speed, bounds), (10.0, 10.0));
         }
+    }
+
+    #[test]
+    fn unused_stick_axes_do_not_block_resume_but_physical_buttons_still_do() {
+        let mut s=Session::new(InputMode::Hybrid);
+        let mut mapping=controls::Mapping::group(2);
+        mapping.buttons[0]=profiles::Binding::Key(32);
+        s.stick=(i16::MIN,i16::MAX);
+        s.open_menu();s.resume();
+        s.refresh_neutral_for_axes(mapping.used_stick_axes(false));
+        assert!(s.allow_game_input());
+        assert_eq!(s.game_press(Source::Controller(0),Action::Key(32)),vec![Transition{action:Action::Key(32),down:true}]);
+        s.resync_held([Source::Controller(0)]);
+        s.refresh_neutral_for_axes(mapping.used_stick_axes(false));
+        assert!(!s.allow_game_input());
+        s.release(Source::Controller(0));
+        assert!(s.allow_game_input());
+    }
+
+    #[test]
+    fn single_active_axis_keeps_its_deadzone_despite_noise_on_an_unused_axis() {
+        let mut mapping=controls::Mapping::group(2);
+        mapping.stick=profiles::Stick::Custom;
+        mapping.axes[2]=profiles::Binding::Pointer(2);
+        let used=mapping.used_stick_axes(false);
+        assert_eq!(used,(true,false));
+        let mut s=Session::new(InputMode::Hybrid);
+        for disabled_y in [i16::MIN,0,i16::MAX] {
+            s.require_neutral();s.stick=(1000,disabled_y);
+            s.refresh_neutral_for_axes(used);
+            assert!(s.allow_game_input());
+            let filtered=mapping.filter_stick(s.stick);
+            assert!(stick_vector(filtered.0,filtered.1).is_none());
+            for active_x in [-10000,10000] {
+                s.require_neutral();s.stick=(active_x,disabled_y);
+                s.refresh_neutral_for_axes(used);
+                assert!(!s.allow_game_input());
+            }
+        }
+        mapping.axes[2]=profiles::Binding::None;
+        mapping.axes[1]=profiles::Binding::Key(115);
+        assert_eq!(mapping.used_stick_axes(false),(false,true));
+        s.require_neutral();s.stick=(i16::MAX,-10000);
+        s.refresh_neutral_for_axes(mapping.used_stick_axes(false));
+        assert!(!s.allow_game_input());
+        s.stick.1=1000;s.refresh_neutral();
+        assert!(s.allow_game_input());
+    }
+
+    #[test]
+    fn neutral_mask_uses_effective_directions_including_legacy_swaps() {
+        let mut mapping=controls::Mapping::group(2);
+        mapping.buttons[12]=profiles::Binding::Key(97);
+        let mut s=Session::new(InputMode::Hybrid);
+        s.stick=(20000,0);
+        s.refresh_neutral_for_axes(mapping.used_stick_axes(false));
+        assert!(s.allow_game_input());
+        s.toggle_directions();
+        s.refresh_neutral_for_axes(mapping.used_stick_axes(s.directions_swapped));
+        assert!(!s.allow_game_input());
+        assert_eq!(mapping.used_stick_axes(true),mapping.directions(true).used_stick_axes(false));
+        s.stick=(0,20000);s.refresh_neutral();
+        assert!(s.allow_game_input());
+
+        // Frontend legacy/config snapshots always have default pointer axes,
+        // but their real D-pad bindings can be empty or single-axis mappings.
+        let mut legacy=controls::Mapping::group(0);
+        legacy.buttons[10..14].fill(profiles::Binding::None);
+        assert_eq!(legacy.used_stick_axes(false),(true,true));
+        assert_eq!(legacy.used_stick_axes(true),(false,false));
+        legacy.buttons[10]=profiles::Binding::Key(119);
+        assert_eq!(legacy.used_stick_axes(true),(false,true));
+        s.require_neutral();s.stick=(0,20000);
+        s.refresh_neutral_for_axes(legacy.used_stick_axes(true));
+        assert!(!s.allow_game_input());
+    }
+
+    #[test]
+    fn derived_stick_sources_do_not_deadlock_the_neutral_gate_or_release_live_keys_early() {
+        let mut s=Session::new(InputMode::Hybrid);
+        s.mark_down(Source::Stick(0));
+        s.ledger.press(Source::Stick(0),Action::Key(119));
+        s.stick=(0,-20000);
+        s.refresh_neutral_for_axes((true,true));
+        assert!(!s.allow_game_input());
+        s.stick=(0,0);s.refresh_neutral();
+        assert!(s.allow_game_input());
+        // The normal stick update still owns and emits the pending key-up.
+        assert!(s.ledger.is_down(Action::Key(119)));
+        assert_eq!(s.release(Source::Stick(0)),vec![Transition{action:Action::Key(119),down:false}]);
+        s.mark_down(Source::Keyboard(13));s.require_neutral();s.refresh_neutral();
+        assert!(!s.allow_game_input());
+        s.release(Source::Keyboard(13));
+        assert!(s.allow_game_input());
     }
 }

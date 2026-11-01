@@ -26,6 +26,17 @@ pub struct Mapping {
 
 
 impl Mapping {
+    /// Physical X/Y axes that can produce an action with the effective mapping.
+    /// Direction swapping makes the D-pad bindings the stick bindings.
+    pub fn used_stick_axes(&self, swapped: bool) -> (bool, bool) {
+        let directions=if swapped {&self.buttons[10..14]} else {&self.axes[..4]};
+        (directions[2]!=Binding::None || directions[3]!=Binding::None,
+         directions[0]!=Binding::None || directions[1]!=Binding::None)
+    }
+    pub fn filter_stick(&self, stick: (i16,i16)) -> (i16,i16) {
+        let (x,y)=self.used_stick_axes(false);
+        (if x {stick.0} else {0},if y {stick.1} else {0})
+    }
     pub fn directions(&self, swapped: bool) -> Self {
         let mut mapping=self.clone();
         if swapped {

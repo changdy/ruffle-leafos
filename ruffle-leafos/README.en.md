@@ -53,7 +53,7 @@ You can also [make a cover from a screenshot](#screenshots-and-covers) while pla
 | Adjust volume | Physical volume buttons; M + volume adjusts Leaf brightness |
 | Open built-in help | M → Controls guide; Left / Right or L1/R1 switches help groups |
 
-Shortcuts do not also open the pause menu, and holding them does not repeatedly switch profiles. Release the buttons and center the stick before resuming play.
+Shortcuts do not also open the pause menu, and holding them does not repeatedly switch profiles. Release the physical buttons and center the stick axes that have actions in the current profile before resuming play. Unmapped axes do not block resuming when deflected.
 
 ## Control profiles
 

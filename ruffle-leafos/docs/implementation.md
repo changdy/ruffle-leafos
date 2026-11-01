@@ -225,6 +225,10 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **07 删除错误的 ScopeChain 查找缓存：** 删除 ScopeContainer 和多余 PropertyMap 缓存，改用 Gc<Vec<Scope>> 按词法顺序查找；保留 get_trait 的属性命名空间语义，删除无其他调用者的 get_trait_with_ns。
 
+## 有效摇杆轴与中立门
+
+`Mapping::used_stick_axes(swapped)` 与 `filter_stick()` 统一判定当前映射使用的 X/Y 轴。Front 用实际 active 或 legacy/config snapshot 刷新 Session 的轴 mask，在恢复/映射变更时同步；归中判断与后续摇杆派发先清零未使用轴，再沿用原死区。派生 Stick held 不独立阻塞中立门，实体按键及活跃轴快照仍保护恢复。[验证范围](validation/reliability-fixes-20261101.md)。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

@@ -443,6 +443,17 @@ impl Frontend {
         let mut mapping = Mapping::group(0); mapping.buttons=buttons; mapping.speed=self.state.mouse_speed; mapping
     }
 
+    fn refresh_neutral(&mut self) {
+        let used=if let Some(mapping)=&self.state.controls.active {
+            mapping.used_stick_axes(self.state.directions_swapped)
+        } else {
+            // Legacy/config fallback dispatches snapshot().directions(...),
+            // including the real D-pad bindings after direction swapping.
+            self.snapshot().used_stick_axes(self.state.directions_swapped)
+        };
+        self.state.refresh_neutral_for_axes(used);
+    }
+
     fn stick_kind(&self) -> Stick { self.state.controls.active.as_ref().map(|m| if m.has_pointer() {Stick::Mouse} else {m.stick}).unwrap_or(Stick::Mouse) }
 
     fn toast(&mut self, message: String) { println!("leaf-toast {message}"); self.state.toast=Some((message,Instant::now())); self.redraw=true; }
@@ -456,6 +467,7 @@ impl Frontend {
         self.state.mode=mapping.mode; self.state.preview_mode=mapping.mode;
         self.state.mouse_speed=mapping.speed; self.state.preview_mouse_speed=mapping.speed;
         self.state.use_cfg=false; self.state.preview_use_cfg=false; self.redraw=true;
+        self.state.refresh_neutral_for_axes(mapping.used_stick_axes(self.state.directions_swapped));
         println!("leaf-controls applied source={} mapping={mapping:?}",self.state.controls.source);
     }
     fn switch_slot(&mut self, slot: usize) {
@@ -493,6 +505,7 @@ impl Frontend {
                 Command::SwapDirections => {
                     self.cancel_repeats();
                     let released=self.state.toggle_directions();self.emit(released,false);
+                    self.refresh_neutral();
                     self.toast(if self.state.directions_swapped {t("十字键 ↔ 摇杆：已互换（本次）")} else {t("十字键 ↔ 摇杆：已恢复")}.into());
                 },
                 Command::Drag => { if self.can_game_input() {let transitions=self.state.toggle_drag(); self.emit(transitions,false); self.toast(if self.state.drag_locked {t("鼠标左键保持：开")} else {t("鼠标左键保持：关")}.into());} }
@@ -566,12 +579,13 @@ impl Frontend {
     fn menu_result(&mut self, result: MenuResult) {
         match result {
             MenuResult::Resume => {
+                self.refresh_neutral();
                 self.active.player.lock().unwrap().set_is_playing(true);
                 self.resumed = true;
                 println!("leaf-session resume mode={:?} waiting_for_neutral=true ticks={} mouse_speed={:?}", self.state.mode, self.ticks, self.state.mouse_speed);
             }
             MenuResult::Quit => {if self.flush_progress(false){self.quit=true;}},
-            MenuResult::ModeChanged(mode) => { self.cursor_idle.reveal(self.started.elapsed()); self.state.controls.active = None; self.state.controls.source = t("仅本次").into(); println!("leaf-session mode_applied={mode:?} scope=session"); },
+            MenuResult::ModeChanged(mode) => { self.cursor_idle.reveal(self.started.elapsed()); self.state.controls.active = None; self.state.controls.source = t("仅本次").into(); self.refresh_neutral(); println!("leaf-session mode_applied={mode:?} scope=session"); },
             MenuResult::MouseSpeedChanged(speed) => {
                 self.state.mouse_speed=speed;self.state.preview_mouse_speed=speed;
                 if let Some(mapping) = &mut self.state.controls.active { mapping.speed = speed; self.state.controls.source = t("仅本次（速度已改）").into(); }
@@ -583,6 +597,7 @@ impl Frontend {
                     self.state.mode = mapping.mode; self.state.preview_mode = mapping.mode;
                 } else { self.state.controls.active = None; self.state.controls.source = t("仅本次").into(); }
                 let released = self.state.ledger.release_all(); self.emit(released, false);
+                self.refresh_neutral();
                 println!("leaf-session profile_applied={} scope=session use_cfg={}", profiles::profile(index).map(|p| p.id).unwrap_or("legacy"), self.state.use_cfg);
             }
             MenuResult::OpenControls => { let actual = self.snapshot(); self.state.controls.begin(actual); }
@@ -798,10 +813,53 @@ impl Frontend {
         }
     }
 
+    fn self_test_neutral_axes(&mut self) -> Result<(),String> {
+        let original=self.snapshot();let original_stick=self.state.stick;
+        let original_swap=self.state.directions_swapped;
+        self.state.directions_swapped=false;
+        let mut mapping=original.clone();mapping.stick=Stick::None;
+        mapping.axes[..4].fill(Binding::None);
+        self.state.stick=(i16::MIN,i16::MAX);
+        self.state.controls.active=Some(mapping.clone());self.apply_mapping(mapping.clone());
+        self.open_menu();
+        let resume=self.state.resume();self.menu_result(resume);
+        if !self.can_game_input() {return Err("Disabled stick axes blocked same-frame menu resume".into());}
+
+        mapping.stick=Stick::Custom;mapping.axes[2]=Binding::Pointer(2);
+        self.state.stick=(1000,i16::MAX);
+        self.state.controls.active=Some(mapping.clone());self.apply_mapping(mapping.clone());
+        if !self.can_game_input() {return Err("Unused axis noise changed the active axis neutral deadzone".into());}
+        let pointer=self.cursor;self.update_stick(1./60.);
+        if self.cursor!=pointer {return Err("Unused axis noise moved the pointer inside the active axis deadzone".into());}
+        self.state.stick.0=20000;self.state.require_neutral();self.refresh_neutral();
+        if self.can_game_input() {return Err("A mapped deflected axis bypassed the neutral gate".into());}
+        self.state.stick.0=0;self.refresh_neutral();
+        if !self.can_game_input() {return Err("An active axis did not recover after centering".into());}
+
+        mapping.axes[..4].fill(Binding::None);
+        mapping.buttons[10..14].fill(Binding::None);mapping.buttons[12]=Binding::Key(97);
+        self.state.controls.active=Some(mapping);self.state.directions_swapped=true;
+        self.state.stick=(20000,0);self.state.require_neutral();self.refresh_neutral();
+        if self.can_game_input() {return Err("Swapped D-pad mapping was ignored by the stick neutral gate".into());}
+
+        // Exercise the real fallback snapshot path, including a legacy profile
+        // whose D-pad is unmapped, then one whose D-pad maps both physical axes.
+        self.state.controls.active=None;self.state.profile=7;self.state.use_cfg=false;
+        self.state.stick=(i16::MAX,i16::MIN);self.refresh_neutral();
+        if !self.can_game_input() {return Err("Unmapped legacy fallback axes blocked the neutral gate".into());}
+        self.state.profile=1;self.refresh_neutral();
+        if self.can_game_input() {return Err("Mapped legacy fallback axes bypassed the neutral gate".into());}
+        self.state.directions_swapped=original_swap;self.state.stick=original_stick;
+        self.state.controls.active=Some(original.clone());self.apply_mapping(original);
+        println!("leaf-stick neutral_axes=passed disabled_drift=true active_axis=true unused_noise=true swapped=true legacy_fallback=true same_frame_resume=true");
+        Ok(())
+    }
+
     fn update_stick(&mut self, seconds: f32) {
         if !self.can_game_input() || self.menu_held {return;}
         let mapping=self.snapshot().directions(self.state.directions_swapped);
-        let (x,y)=session::stick_vector(self.state.stick.0,self.state.stick.1).unwrap_or((0.,0.));
+        let stick=mapping.filter_stick(self.state.stick);
+        let (x,y)=session::stick_vector(stick.0,stick.1).unwrap_or((0.,0.));
         let strengths=[(-y).max(0.),y.max(0.),(-x).max(0.),x.max(0.)];
         let mut pointer=(0f32,0f32);
         let mut slow=false; let mut fast=false;
@@ -1067,7 +1125,7 @@ pub async fn run() -> Result<(), String> {
         let elapsed = now.duration_since(clock);
         clock = now;
         if front.started.elapsed() < Duration::from_millis(500) { front.state.require_neutral(); }
-        else { front.state.refresh_neutral(); }
+        else { front.refresh_neutral(); }
         if opt.diagnostic_seconds.is_some_and(|seconds| front.started.elapsed() >= Duration::from_secs(seconds)) { break; }
         if opt.self_test_experience&&experience_phase<experience_script.len()&&front.started.elapsed().as_secs_f32()>=1.+experience_phase as f32*0.7 {
             if experience_phase==0&&pick_slot&&front.ticks!=0{return Err("Slot picker advanced the Flash VM before selection".into());}
@@ -1091,6 +1149,7 @@ pub async fn run() -> Result<(), String> {
             front.move_pointer((420.,300.));script_phase+=1;
         } else if opt.self_test_slots && script_phase==ui_phases+2 && idle_start.is_some_and(|at:Instant|at.elapsed()>=Duration::from_millis(4400)) {
             if !front.cursor_visible {return Err("Moved pointer did not reappear".into());}
+            front.self_test_neutral_axes()?;
             let mut mapping=front.snapshot();mapping.stick=Stick::Custom;
             mapping.axes=[Binding::Key(119),Binding::Key(115),Binding::Pointer(2),Binding::Pointer(3),Binding::RightClick];
             front.state.controls.active=Some(mapping.clone());front.apply_mapping(mapping);axis_start=front.cursor;script_phase+=1;
