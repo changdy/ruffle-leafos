@@ -6,7 +6,7 @@
   "relationship": "Leaf frontend derived from the pinned public base; does not reproduce all original leaf-12 private patches.",
   "leaf_files_sha256": {
     "Cargo.lock": "d4eb7bf07948947fcd17d3c19da737ccdbb1d770a46a5ab28797ba9f1848d3d0",
-    "core/src/player.rs": "a4951024d4f775276bb46b980980e4a9ae6f11e23bc112bbd4153c94247275bd",
+    "core/src/player.rs": "694658f81eff5a7936a445dffad027e6b4cdef147e312c89558854a4dda6ad01",
     "sdl2test-rocknix/Cargo.toml": "e3c0066ea27f4b1f58cea1dcd34a64d2571887d53c4427d4d3df57f92a8f117c",
     "sdl2test-rocknix/src/controls.rs": "b63e02073e91d3ae580fc593baa31f142b5abeff05351d3e51be509b1910fc74",
     "sdl2test-rocknix/src/cursor.rs": "7476fa43e71e59881f77145a885c68ecee6fc9dbdd06c23a58848a8982806f8a",
@@ -63,7 +63,8 @@
     "core/src/player/compatibility_tests.rs": "d4a87556048c243b586f679644080c08db9f875ab4d4b731935eb0c28cb92bf9",
     "core/src/player/mouse_click_tests.rs": "d71e671f8f200824b84e83ffc7524272abba19adeb5adc03b11d1e102938a99c",
     "core/src/player/tests/MouseEventsProbe.as": "97d21b8a5cf142b8f84d6fbd63679972f28f2b3053516b658dc98cb9b9e55ea3",
-    "core/src/player/tests/mouse-events.swf": "da1396976b31889ce02711c5511d80336c6f8d28d789becdde4774b00c4f05c1"
+    "core/src/player/tests/mouse-events.swf": "da1396976b31889ce02711c5511d80336c6f8d28d789becdde4774b00c4f05c1",
+    "core/src/player/mouse_hover_tests.rs": "2bd7f37d97ca5a12997a4f54be9418daa78a2360a073d4ab142988360901cd6c"
   },
   "verified_leaf": {
     "version": "0.13.0",

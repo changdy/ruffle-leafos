@@ -19,6 +19,7 @@
 | 构建与打包 | 锁定依赖、ARM64 构建、版本触发发布、两款定制游戏校验与安装路径 | [发布验证](validation/release-0.6.9-20261025.json)、[游戏收录](../games/README.md)；全新机器演练未完成 |
 | 异常 SWF 长度与预分配（上游计划 01） | 检查 LZMA 长度减法；解压缓冲和场景/帧标签仅限制初始容量，允许有效内容继续增长 | 2026-11-01：86 项既有 SWF 测试、7 项新增回归、93 个随包游戏/资源 SWF 主机解析及 ARM64 check/release 通过。Pocket1 / Leaf 0.13.0 的 GLES、Vulkan 各 9 组解析夹具及两款随包游戏的限定 GLES 启动、暂停恢复、菜单退出通过；原数据哈希保持、测试入口/索引已清理。实战、游戏 Vulkan、长时与真实低内存仍待验；[验证记录](validation/swf-length-guards-20261101.md) |
 | AS3 拖出释放误点击（上游 02a） | 限制 AVM1 专用对象等价回退 | 2026-11-01：2 项 VM 回归通过；AVM1 goto 专项待验；[验证与边界](validation/upstream-compatibility-20261101.md) |
+| AS3 拖动和释放的重复悬停事件（上游 02b） | 拖动及释放各派发一次 AS3 悬停事件 | 2026-11-01：3 项完整鼠标事件顺序回归通过；[验证与边界](validation/upstream-compatibility-20261101.md) |
 
 模板管理、全局按键自动继承、旧 M+左右、游戏音量/静音、编辑页仅本次应用及恢复默认已移除。旧格式兼容范围统一见[按键契约](formats/controls-format-v5.md)；历史里程碑与需求从 Git 追溯。
 

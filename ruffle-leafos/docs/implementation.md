@@ -209,6 +209,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **02a AS3 拖出释放误点击：** 结构等价回退只用于 AVM1，动态 AS3 实例即使 depth/id 相同也保持独立。保留 AVM1 goto 重建按钮的路径。
 
+**02b AS3 拖动和释放的重复悬停事件：** 按住时的 DragOver/DragOut 仅用于 AVM1；AVM2 复用 roll 路径。本地另将释放后的补发 RollOver 限于 AVM1，避免 roll 层被 LCA 抑制后仍重复 mouseOver；光标更新保留。
+
 ## 构建环境与命令
 
 在本工程根目录执行：

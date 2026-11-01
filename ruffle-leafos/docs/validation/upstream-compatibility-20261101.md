@@ -17,3 +17,10 @@
 结构等价回退只用于 AVM1，动态 AS3 实例即使 depth/id 相同也保持独立。保留 AVM1 goto 重建按钮的路径。
 
 2 项实际 VM 鼠标回归：另一 Sprite 上释放不 click，原处释放仍 click。AVM1 goto 重建按钮专项待验。
+## 02b AS3 拖动和释放的重复悬停事件
+
+来源：[上游 #23807](https://github.com/ruffle-rs/ruffle/pull/23807)，实际参考 head `9ce50747410a0983871508e012f47017a301682c`，2026-11-01 核对。上游仍开放，本地适配不表示上游已合并。
+
+按住时的 DragOver/DragOut 仅用于 AVM1；AVM2 复用 roll 路径。本地另将释放后的补发 RollOver 限于 AVM1，避免 roll 层被 LCA 抑制后仍重复 mouseOver；光标更新保留。
+
+3 项实际 VM 回归检查完整 mouseOver/mouseOut/rollOver/rollOut 顺序、拖出移回、普通悬停和移到另一实例后松开。

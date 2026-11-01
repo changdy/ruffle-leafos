@@ -1632,7 +1632,11 @@ impl Player {
                 // and fires "drag" events.
                 if context.input.is_mouse_down(MouseButton::Left) {
                     context.mouse_data.hovered = new_over_object;
-                    if let Some(down_object) = context.mouse_data.pressed {
+                    // AVM2 already receives roll events below. Drag events map to
+                    // those same events there, so dispatch them only for AVM1.
+                    if let Some(down_object) = context.mouse_data.pressed
+                        && !down_object.as_displayobject().movie().is_action_script_3()
+                    {
                         if InteractiveObject::option_ptr_eq(
                             context.mouse_data.pressed,
                             cur_over_object,
@@ -1835,12 +1839,16 @@ impl Player {
                             // The new object is rolled over immediately.
                             if let Some(over_object) = context.mouse_data.hovered {
                                 new_cursor = over_object.mouse_cursor(context);
-                                events.push((
-                                    over_object,
-                                    ClipEvent::RollOver {
-                                        from: cur_over_object,
-                                    },
-                                ));
+                                // AVM2 already rolled over while dragging. Repeating
+                                // this event on release would dispatch mouseOver again.
+                                if !over_object.as_displayobject().movie().is_action_script_3() {
+                                    events.push((
+                                        over_object,
+                                        ClipEvent::RollOver {
+                                            from: cur_over_object,
+                                        },
+                                    ));
+                                }
                             } else {
                                 new_cursor = MouseCursor::Arrow;
                             }
@@ -3353,3 +3361,5 @@ pub enum PlayerMode {
 mod compatibility_tests;
 #[cfg(test)]
 mod mouse_click_tests;
+#[cfg(test)]
+mod mouse_hover_tests;
