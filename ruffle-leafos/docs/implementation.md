@@ -254,7 +254,9 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuil
 
 `build_player.py` 默认 `--tuning generic`，保留此前的通用 ARM64、release opt-level 2、关闭跨 crate LTO 与 16 个 codegen units。可显式选择实验性 `--tuning pocket1`：Rust ARM64 目标使用 `-Ctarget-cpu=cortex-a55`，release 使用 opt-level 3、ThinLTO，仍为 16 个 codegen units；本轮未证明稳定游戏提速，因此不改变默认构建或自动发布参数。该候选只针对 RK3566 的 Pocket1，不能当成通用 ARM64 发行版。切换参数会重新编译受影响的目标依赖；上面两条 build 命令是两种选择，普通构建只需第一条。debug 不启用 release 优化，但 CPU 选择仍生效。脚本只在子进程环境移除优先级更高的全局 `RUSTFLAGS` / `CARGO_ENCODED_RUSTFLAGS`，不改用户全局配置。C/汇编依赖、系统库和预编译标准库不在本轮重新定向构建范围内。
 
-成功构建同时生成 `build/player-build.json`，记录二进制 SHA-256、Rust 版本、目标 CPU、tuning、实际 profile 与 release 参数。打包要求此记录存在且 SHA-256 与 `build/ruffle-leaf` 一致，并写入包内 `build-manifest.json` 的 `player_build`；已有旧 ELF 需先重新执行构建脚本。本地打包目前分别校验 ELF 与当前源码锁，尚未绑定构建时源码摘要；修改源码或更新来源锁后应先重建，不能仅凭两项校验通过认定现成 ELF 对应新源码。编译优化的实测方法、结果与局限见 [Pocket1 验证记录](validation/pocket1-build-20261028.md)。
+成功构建同时生成 `build/player-build.json`，记录二进制 SHA-256、Rust 版本、目标 CPU、tuning、实际 profile 与 release 参数。打包要求此记录存在且 SHA-256 与 `build/ruffle-leaf` 一致，并写入包内 `build-manifest.json` 的 `player_build`；已有旧 ELF 需先重新执行构建脚本。构建记录另含实际输入路径/SHA 清单与总摘要：Cargo 前后比较一致才发布新 ELF/记录；打包重新比较当前输入、暂存 ELF 和可选源码暂存树。旧记录缺少摘要、编译失败或输入改变均要求重新构建，不能只更新来源锁继续打包。覆盖与排除范围、已有外部工具信任边界见[可靠性验证](validation/reliability-fixes-20261101.md)。编译优化的实测方法、结果与局限见 [Pocket1 验证记录](validation/pocket1-build-20261028.md)。
+
+`player-build.json.source_inputs` 使用 `schema_version=1`、相对路径到 SHA-256 的 `files_sha256` 清单及规范化清单总摘要 `sha256`。`python -m unittest discover -s scripts -p test_build_inputs.py -v` 验证过期记录、源码变更及打包复制竞态，自动 Release 在 ARM64 构建前执行同一套回归；配置已接入，本轮未新增线上 runner 执行验收。
 
 `test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
 

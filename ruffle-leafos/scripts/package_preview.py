@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / 'adapter/scripts'))
 from elf_info import inspect
 from make_demo import make_movie
 from build import zip_tree
+from build_inputs import require_unchanged_inputs, snapshot_inputs, verify_player_build
 
 
 def sha(path):
@@ -61,9 +62,10 @@ def main():
     assert version == tomllib.loads((ROOT / 'player/sdl2test-rocknix/Cargo.toml').read_text(encoding='utf8'))['package']['version']
     binary = ROOT / 'build/ruffle-leaf'
     build_metadata = ROOT / 'build/player-build.json'
-    assert build_metadata.is_file(), 'missing player build metadata; rebuild with build_player.py'
+    if not build_metadata.is_file():
+        raise ValueError('missing player build metadata; rebuild with build_player.py')
     build_info = json.loads(build_metadata.read_text(encoding='utf8'))
-    assert build_info['binary_sha256'] == sha(binary), 'build metadata does not match player; rebuild with build_player.py'
+    verify_player_build(ROOT, binary, build_info)
     info = inspect(binary)
     assert info['machine'] == 183 and info['type'] == 3, 'need AArch64 PIE'
     assert sha(binary) != 'b3ecd3094f678a9be3e99602267f345191e02653a023ca6005fe3b0cf5aab342', 'source runtime required'
@@ -89,6 +91,9 @@ def main():
     (frontend / 'lib').mkdir(exist_ok=True)
     (frontend / 'res').mkdir(exist_ok=True)
     shutil.copyfile(binary, frontend / 'bin/ruffle')
+    if sha(frontend / 'bin/ruffle') != build_info['binary_sha256']:
+        raise ValueError('staged player ELF does not match build metadata; rerun after rebuilding')
+    require_unchanged_inputs(build_info['source_inputs'], snapshot_inputs(ROOT))
     for rel in ['lib/libSDL2-2.0.so.0', 'lib/libasound.so.2', 'res/menu-font.ttf']:
         shutil.copyfile(ROOT / 'runtime/leaf-12' / rel, frontend / rel)
     shim = ROOT / 'build/libruffle_probe.so'
@@ -191,6 +196,7 @@ def main():
     }
     (pak / 'build-manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     archive = output / f'ruffle-leafos-{version}.zip'
+    verify_player_build(ROOT, binary, build_info)
     zip_tree(stage, archive)
     with zipfile.ZipFile(archive) as z:
         assert z.testzip() is None
@@ -210,6 +216,8 @@ def main():
             destination = source_stage / 'vendor/jawaka' / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / 'vendor/jawaka' / relative, destination)
+        require_unchanged_inputs(build_info['source_inputs'], snapshot_inputs(source_stage))
+        verify_player_build(ROOT, binary, build_info)
         zip_tree(source_stage, output / f'ruffle-leafos-{version}-source.zip')
     (output / 'build-report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     (ROOT / 'build/package-stage-path.txt').write_text(str(stage), encoding='utf8')

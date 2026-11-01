@@ -1,13 +1,14 @@
 """Build the pinned Ruffle player without changing global compiler settings."""
 from pathlib import Path
 import argparse
-import hashlib
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+
+from build_inputs import invalidate_build_metadata, require_unchanged_inputs, sha256_file, snapshot_inputs
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
@@ -24,6 +25,8 @@ parser.add_argument('--package', choices=['sdl2test-rocknix', 'ruffle_core'], de
 args = parser.parse_args()
 if args.package == 'ruffle_core' and args.action != 'test':
     parser.error('--package ruffle_core requires the test action')
+if args.action == 'build':
+    invalidate_build_metadata(ROOT)
 local = ROOT / 'workspace.local.json'
 settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
 cache = Path(settings.get('host_tool_cache', ROOT.parent / 'work' / 'toolchains'))
@@ -115,24 +118,36 @@ if args.isolated_config:
     working_directory = Path(ROOT.anchor)
 print(f'Player tuning={args.tuning} target_cpu={target_cpu} release_opt_level={release_opt_level} release_lto={release_lto} release_codegen_units=16', flush=True)
 print(' '.join(command), flush=True)
+source_inputs = snapshot_inputs(ROOT) if args.action == 'build' else None
 result = subprocess.run(command, cwd=working_directory, env=env)
 if result.returncode:
     raise SystemExit(result.returncode)
 if args.action == 'build':
     profile = 'debug' if args.debug else 'release'
     binary = build / 'cargo' / 'aarch64-unknown-linux-gnu' / profile / 'sdl2test-rocknix'
-    shutil.copyfile(binary, build / 'ruffle-leaf')
     sys.path.insert(0, str(ROOT / 'adapter' / 'scripts'))
     from elf_info import inspect
-    info = inspect(build / 'ruffle-leaf')
-    (build / 'player-elf.json').write_text(json.dumps(info, indent=2) + '\n', encoding='utf8')
+    info = inspect(binary)
     build_info = {
-        'binary_sha256': hashlib.sha256((build / 'ruffle-leaf').read_bytes()).hexdigest(),
+        'binary_sha256': sha256_file(binary),
+        'source_inputs': source_inputs,
         'target': 'aarch64-unknown-linux-gnu', 'profile': profile,
         'tuning': args.tuning, 'target_cpu': target_cpu,
         'release_opt_level': int(release_opt_level), 'release_lto': release_lto,
         'release_codegen_units': 16,
         'rustc': subprocess.check_output([str(rust / 'bin/rustc.exe'), '--version'], env=env, text=True).strip(),
     }
+    # Validate everything before replacing the last successful local ELF.
+    # An interrupted copy cannot leave a partially overwritten player.
+    candidate = build / f'ruffle-leaf.{os.getpid()}.pending'
+    try:
+        shutil.copyfile(binary, candidate)
+        if sha256_file(candidate) != build_info['binary_sha256']:
+            raise ValueError('player ELF changed while copying; rebuild with build_player.py')
+        require_unchanged_inputs(source_inputs, snapshot_inputs(ROOT))
+        candidate.replace(build / 'ruffle-leaf')
+    finally:
+        candidate.unlink(missing_ok=True)
+    (build / 'player-elf.json').write_text(json.dumps(info, indent=2) + '\n', encoding='utf8')
     (build / 'player-build.json').write_text(json.dumps(build_info, indent=2) + '\n', encoding='utf8')
     print(json.dumps({'binary': str(build / 'ruffle-leaf'), 'elf': info}, indent=2), flush=True)
