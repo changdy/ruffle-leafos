@@ -27,7 +27,7 @@
 | 顺序 | 任务与上游来源 | 综合难度 | Pocket1 的主要收益与代价 | 当前行动 |
 | --- | --- | --- | --- | --- |
 | 01 | [异常 SWF 分配与长度防护](https://github.com/ruffle-rs/ruffle/pull/23962)、[场景/帧标签预分配](https://github.com/ruffle-rs/ruffle/pull/23960)；均已合并 | 低 | 避免损坏文件触发巨额预分配/下溢；几乎不增加稳定运行开销 | 已验证合入；主机、ARM64、两后端夹具及限定 GLES 游戏启动通过；[范围](validation/swf-length-guards-20261101.md) |
-| 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 02a/02b 已合入，02c 待处理；[范围](validation/upstream-compatibility-20261101.md) |
+| 02 | [AS3 拖出误点击](https://github.com/ruffle-rs/ruffle/pull/23803)、[重复悬停事件](https://github.com/ruffle-rs/ruffle/pull/23807)、[AVM1 按钮高亮残留](https://github.com/ruffle-rs/ruffle/pull/25045)；均开放 | 低—中 | 改善摇杆鼠标、左键保持和拖拽的正确性；运行代价小 | 02a—02c 核心回归通过，摇杆/快捷释放完整矩阵待验；[范围](validation/upstream-compatibility-20261101.md) |
 | 03 | [AS3 根电影最终 progress 事件](https://github.com/ruffle-rs/ruffle/pull/25051)；开放 | 低—中 | 解除一类永久停在加载页的问题；主要发生在加载阶段 | 优先移植 |
 | 04 | [AVM1 根时间轴 onLoad 顺序](https://github.com/ruffle-rs/ruffle/pull/25054)；开放 | 低—中 | 修复初始化/声音代码漏执行；主要改变首次加载时序 | 优先移植 |
 | 05 | [BitmapData 自复制与混合精度](https://github.com/ruffle-rs/ruffle/pull/24676)；已合并 | 中 | 修复重叠复制画面错误，并优化部分 CPU 复制；需保护本地免回读路径 | 移植并做像素回归 |
@@ -55,6 +55,8 @@
 - 验证与来源统一见[长度防护报告](validation/swf-length-guards-20261101.md)；主机、ARM64、Pocket1 两后端各 9 组解析夹具及两款游戏的限定 GLES 启动/暂停/退出通过。实战、游戏 Vulkan、长时及真实低内存待验；128 MiB 不是解压总量限制，256 项不是条目数量上限，也不构成通用 OOM 保护。
 
 ### 02 鼠标释放、拖拽与按钮状态
+
+- **02c 处置：** 已移植；5 项 native 按钮状态回归通过。[来源与验证](validation/upstream-compatibility-20261101.md)。
 
 - **02b 处置：** 已移植；3 项完整鼠标事件顺序回归通过。[来源与验证](validation/upstream-compatibility-20261101.md)。
 

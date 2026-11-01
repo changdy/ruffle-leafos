@@ -289,6 +289,7 @@ define_common_strings! {
     str_toString: b"toString",
     str_toXMLString: b"toXMLString",
     str_track: b"track",
+    str_trackAsMenu: b"trackAsMenu",
     str_traits: b"traits",
     str_transform: b"transform",
     str_true: b"true",

@@ -24,3 +24,10 @@
 按住时的 DragOver/DragOut 仅用于 AVM1；AVM2 复用 roll 路径。本地另将释放后的补发 RollOver 限于 AVM1，避免 roll 层被 LCA 抑制后仍重复 mouseOver；光标更新保留。
 
 3 项实际 VM 回归检查完整 mouseOver/mouseOut/rollOver/rollOut 顺序、拖出移回、普通悬停和移到另一实例后松开。
+## 02c AVM1 未按按钮高亮残留
+
+来源：[上游 #25045](https://github.com/ruffle-rs/ruffle/pull/25045)，实际参考 head `e900266e092bd8e0a83b463dc1dd3031e2cefda3`，2026-11-01 核对。上游仍开放，本地适配不表示上游已合并。
+
+未按普通按钮忽略拖入/拖出，trackAsMenu 动态属性覆盖 SWF 跟踪标志；新增 common string 沿用本地旧版 intern 接口。
+
+5 项真实 native 按钮状态回归，覆盖普通按钮、原按钮移出移回、SWF menu 标志及动态 true/false 覆盖。

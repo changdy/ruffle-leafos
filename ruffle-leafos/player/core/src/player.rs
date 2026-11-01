@@ -3363,3 +3363,5 @@ mod compatibility_tests;
 mod mouse_click_tests;
 #[cfg(test)]
 mod mouse_hover_tests;
+#[cfg(test)]
+mod mouse_avm1_button_tests;

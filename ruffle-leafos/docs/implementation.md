@@ -211,6 +211,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 **02b AS3 拖动和释放的重复悬停事件：** 按住时的 DragOver/DragOut 仅用于 AVM1；AVM2 复用 roll 路径。本地另将释放后的补发 RollOver 限于 AVM1，避免 roll 层被 LCA 抑制后仍重复 mouseOver；光标更新保留。
 
+**02c AVM1 未按按钮高亮残留：** 未按普通按钮忽略拖入/拖出，trackAsMenu 动态属性覆盖 SWF 跟踪标志；新增 common string 沿用本地旧版 intern 接口。
+
 ## 构建环境与命令
 
 在本工程根目录执行：
