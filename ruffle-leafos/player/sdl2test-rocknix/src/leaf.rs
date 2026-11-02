@@ -934,8 +934,20 @@ pub async fn run() -> Result<(), String> {
     if opt.self_test_experience && (opt.storage_dir.is_none()||opt.controls_dir.is_none()) {
         return Err("Experience self-test requires explicit isolated --storage-dir and --controls-dir".into());
     }
-    let swf_path = opt.swf.canonicalize().map_err(|e| format!("Cannot open SWF: {e}"))?;
-    let keymap = keycodes::KeyMap::load_for_swf(&swf_path);
+    let rom_path = opt.swf.canonicalize().map_err(|e| format!("Cannot open game: {e}"))?;
+    let controls_root = opt.controls_dir.clone().or_else(|| std::env::var_os("RUFFLE_CONTROLS_DIR").map(PathBuf::from))
+        .unwrap_or_else(|| std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config/ruffle-leaf")).join("controls"));
+    let language_path=session::i18n::path(&controls_root);
+    let language_error=session::i18n::initialize(&language_path).err();
+    if let Some(error)=&language_error{eprintln!("leaf-language initialization_save_failed={error}");}
+    let swf_path = if rom_path.extension().is_some_and(|ext|ext.eq_ignore_ascii_case("zip")) {
+        let cache=std::env::var_os("XDG_CACHE_HOME").map(PathBuf::from)
+            .unwrap_or_else(||controls_root.parent().unwrap_or(&controls_root).join("cache")).join("zip-games");
+        let path=crate::zip_loading::prepare(rom_path.clone(),cache,opt.fullscreen)?;
+        println!("leaf-zip prepared={} main={}",rom_path.display(),path.display());path
+    } else {rom_path.clone()};
+    let keymap = keycodes::KeyMap::load_for_swf(&rom_path);
     let bytes = std::fs::read(&swf_path).map_err(|e| format!("Cannot read SWF: {e}"))?;
     let movie_url = Url::from_file_path(&swf_path).map_err(|_| "Cannot form a file URL for the selected game")?;
     let storage_dir = opt.storage_dir.clone().or_else(|| std::env::var_os("RUFFLE_STORAGE_DIR").map(PathBuf::from))
@@ -943,21 +955,17 @@ pub async fn run() -> Result<(), String> {
         .unwrap_or_else(|| PathBuf::from("./shared_objects"));
     std::fs::create_dir_all(&storage_dir).map_err(|e| format!("Cannot create game storage: {e}"))?;
     println!("leaf-runtime source=v0.7.1@89a7049+leaf-frontend storage={}", storage_dir.display());
-    let controls_root = opt.controls_dir.clone().or_else(|| std::env::var_os("RUFFLE_CONTROLS_DIR").map(PathBuf::from))
-        .unwrap_or_else(|| std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config/ruffle-leaf")).join("controls"));
     if opt.self_test_slots && opt.controls_dir.is_none() { return Err("Controls self-test requires an explicit isolated --controls-dir".into()); }
     if opt.self_test_slots && controls_root.exists() && std::fs::read_dir(&controls_root).map_err(|e| e.to_string())?.next().is_some() {
         return Err("Controls self-test requires an empty isolated controls directory".into());
     }
-    let language_path=session::i18n::path(&controls_root);
-    let language_error=session::i18n::initialize(&language_path).err();
-    if let Some(error)=&language_error{eprintln!("leaf-language initialization_save_failed={error}");}
-    let control_store = controls::Store::new(controls_root, &swf_path);
+    let control_store = if rom_path != swf_path {
+        controls::Store::for_archive(controls_root,&rom_path,&swf_path,&storage_dir,&bytes)
+    } else {controls::Store::new(controls_root,&rom_path)};
     let progress=Arc::new(Mutex::new(experience::Progress::new(storage_dir.join("slots-v1"),&bytes,
-        swf_path.file_stem().unwrap_or_default().to_string_lossy().into_owned(),
+        rom_path.file_stem().unwrap_or_default().to_string_lossy().into_owned(),
         control_store.game.file_stem().unwrap_or_default().to_string_lossy().into_owned(),movie_url.path().into())));
-    if !opt.app_settings {progress.lock().unwrap().register_path(&swf_path)?;}
+    if !opt.app_settings {progress.lock().unwrap().register_path(&rom_path)?;}
     let settings_path=experience::Settings::global_path(&control_store.root);
     let mut av=experience::Settings::load(&settings_path);
     let slots=progress.lock().unwrap().slots();
@@ -1076,7 +1084,7 @@ pub async fn run() -> Result<(), String> {
     let swap = std::env::var("RUFFLE_SWAP_AB").map(|s| s == "1").unwrap_or(true);
     let mut front = Frontend {
         keyboard_request,keyboard_seen:0,keyboard_target:None,
-        progress,settings_path,movie_size,movie_path:swf_path.clone(),screenshot:None,cover:None,display_size:size,restart_slot:None,restart_renderer:None,
+        progress,settings_path,movie_size,movie_path:rom_path.clone(),screenshot:None,cover:None,display_size:size,restart_slot:None,restart_renderer:None,
         menu_device:session::shortcuts::Device::new(), chords:session::shortcuts::Chords::default(), menu_held:false, repeater:Repeater::default(), system_volume:session::system_volume::Monitor::new(), blocked:Default::default(),
         language_path,
         state: Session::new(mode), active: ActivePlayer { id, player }, keymap, cursor: bounds.center(), cursor_idle: cursor::Idle::default(), cursor_visible: false, bounds,

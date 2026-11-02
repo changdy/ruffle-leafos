@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.8.4 开发预览**，整理于 2026-11-02。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.8.5 开发预览**，整理于 2026-11-02。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 Ruffle 共享核心、SWF/FLV、字符串、前端工具、视频及官方渲染模块统一采用官方稳定版 [v0.7.1](https://github.com/ruffle-rs/ruffle/releases/tag/v0.7.1)，提交 `89a7049965f3090e706265670df309a5128233ac`。Leaf 前端和原有兼容、内存及存档扩展继续保留；应用版本与上游 Ruffle 版本分别标识。原 `ruffle-miyooflip` 是前端和部分补丁的历史来源，已不作为当前共享核心基线。本轮范围、补丁保留及验证边界见[稳定版升级记录](validation/ruffle-stable-20261102.md)。
 
@@ -276,7 +276,7 @@ python scripts/test_renderer.py --suite screenshot
 python scripts/test_swf.py
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.4-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.5-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。
@@ -330,7 +330,9 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、仅包内保留的自有探针资源、三款定制游戏及许可组成。随包 `README.md` / `README.en.md` 使用当前项目中英文使用指南，支持文档与截图一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、中英文指南、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
 
-`package_preview.py` 的 `bundle_games` 从 `games/manifest.json` 读取游戏入口和全部文件 SHA-256，先检查 `games/flash/` 的文件集合、逐文件字节及主入口，再完整复制到 `Roms/flash/`，保留死神 3.3 的 398 个、3.6 的 554 个外部资源。两个目录使用 `_assets/`，主文件及资源字节保持旧版；`game_assets.rs` 经选中主文件的 `navigator::LinuxNavigatorInterface` 将该游戏根下 `assets/` 请求映射到 `_assets/`，保留逻辑 URL，不修改核心或其他目录游戏。存在 `_assets/` 时整树优先，缺项明确失败；旧 `assets/` 布局继续直读。Leaf 的递归扫描跳过点号/下划线前缀；打包检查可见 SWF 与三个入口集合完全相等，探针不再写入 ROM 目录。缺失、多余或内容变化均停止打包。`build-manifest.json` / `build-report.json` 的 `bundled_games` 记录名称、入口、来源名称和主文件指纹，包内 `provenance/bundled-games.json` 保留完整文件清单；`games/README.md` 随应用附带。`python -m unittest discover -s scripts -p test_package_preview.py -v` 检查错误输入、资源误暴露及三款真实游戏的完整安装路径，GitHub release job 在构建后执行同一回归。
+`package_preview.py` 的 `bundle_games` 先校验 `games/manifest.json` 的全部 959 个源文件及 SHA-256；拳皇作为 SWF，死神 3.3 / 3.6 分别打成 ZIP，恢复归档内的原始 `assets/` 相对路径。打包逐项验证主 SWF 和资源内容，Leaf 只看到三个游戏文件。清单记录安装路径、归档入口和主文件指纹；包内 `provenance/bundled-games.json` 保留源清单。旧 `assets/`、`_assets/` 目录布局仍可读取。
+
+Leaf 将 ZIP 原样交给播放器。`zip_game.rs` 流式计算 ZIP 的 SHA-256，先解压到临时目录，成功后原子发布到 `$XDG_CACHE_HOME/zip-games/<SHA-256>/`；按最浅层 SWF 选择入口，同层多个时使用与 ZIP 同名的 SWF，否则报错。限制 10,000 项和 4 GiB 解压总量，拒绝不安全路径、符号链接与大小写冲突。复用时核验所有文件存在和大小、主 SWF 的 CRC，不能发现其他资源的同大小损坏；退出后可删除缓存重新解压。`zip_loading.rs` 在后台准备期间显示文字及进度条，失败显示提示。主 SWF 内容用于原生进度身份，ZIP 路径用于封面与目录；旧目录控制方案只有在目录记录确认内容及路径身份匹配且 ZIP 没有独立方案时才复用。`python scripts/test_zip_game.py` 检查提取、缓存及异常 ZIP；`python -m unittest discover -s scripts -p test_package_preview.py -v` 验证源与安装归档，发布工作流执行这两项。
 
 死神单文件实验可在仓库根目录执行以下命令，输出路径须尚不存在：
 
@@ -341,7 +343,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_package_bvn_single_
 
 脚本固定已审查的主文件 SHA-256，校验 manifest 中 398 个资源的集合和字节，用确定性 ZIP（DEFLATE，附 FZip 兼容 Adler-32 字段）替换 `DefineBinaryData` 222 的空 ZIP，恢复 `bleachvsnaruto.initlize` 中停用的 19 字节 `ZipAssetLoader` 安装指令。外层为 FWS，不再压缩已经压缩的资源包；完成后从输出 SWF 提取资源逐项复核。
 
-[bvn_single_boot.py](../scripts/bvn_single_boot.py) 还修改 `MainGame.loadGameBack` 和 `EffectModel.cacheEffects`，将原特效对象按原枚举顺序交给 [RuffleSingleSwfBoot.as](../scripts/resources/RuffleSingleSwfBoot.as)，每次计时器执行一个原始 `cacheBitmapData`，全部完成后再调用原启动回调。原缓存方法、特效帧、战斗逻辑及画质默认值保持。原 ABC 只追加一个类名字符串和 QName，旧索引保持；新增 helper ABC 在原主 ABC 前定义。工具使用 Python 标准库、固定 Ruffle ASC、已构建的 `playerglobal_import.abc` 和 `workspace.local.json` 中的 JDK，与软键盘夹具共用当前 playerglobal 选择函数，不依赖历史游戏副本。正式安装包继续使用目录版；单文件的额外内存与实机范围见[验证报告](validation/bvn33-single-swf-20261031.md)。
+[bvn_single_boot.py](../scripts/bvn_single_boot.py) 还修改 `MainGame.loadGameBack` 和 `EffectModel.cacheEffects`，将原特效对象按原枚举顺序交给 [RuffleSingleSwfBoot.as](../scripts/resources/RuffleSingleSwfBoot.as)，每次计时器执行一个原始 `cacheBitmapData`，全部完成后再调用原启动回调。原缓存方法、特效帧、战斗逻辑及画质默认值保持。原 ABC 只追加一个类名字符串和 QName，旧索引保持；新增 helper ABC 在原主 ABC 前定义。工具使用 Python 标准库、固定 Ruffle ASC、已构建的 `playerglobal_import.abc` 和 `workspace.local.json` 中的 JDK，与软键盘夹具共用当前 playerglobal 选择函数，不依赖历史游戏副本。正式安装包现使用 ZIP；单文件的额外内存与实机范围见[验证报告](validation/bvn33-single-swf-20261031.md)。
 
 主机测试与静态校验后，还需按改动执行真机隔离验证、正式 Flash/Apps 通路、用户数据前后比对、安装文件指纹核对。开发时复用当前会话提供的 ADB 地址连接、截图和读取日志，不将临时地址视为固定配置。隔离验证使用单独数据目录，完整流程与具体发布结论查对应[进度及证据](progress.md)。
 
@@ -360,7 +362,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_package_bvn_single_
 
 构建在 `windows-2022` 上执行，复用现有 Windows GNU → ARM64 路线。[setup_release_tools.py](../scripts/setup_release_tools.py) 按已有工具锁下载并逐个校验 Rust 1.95.0（含 GNU 主机和 ARM64 标准库）、w64devkit 2.1.0、Zig 0.14.1 和 ARM GNU 14.2 SDK，在工程 `.tools/` 中解包，并生成忽略的 `workspace.local.json`。Python 3.12、Node.js 22、JDK 17 由工作流准备，7-Zip 由 runner 提供。工具和 Cargo 下载缓存分别保存在 `.tools/` 和根目录 `work/toolchains/cargo-home/`；每次仍从源码编译播放器，不缓存成品播放器。
 
-完整流水线依次执行：发布脚本回归、ARM64 release 编译、主机输入/状态回归、随包游戏完整性与安装路径回归、诊断库编译与测试、现有打包脚本的 ELF/GLIBC/源码/清单/ZIP 校验。自动打包不加 `--include-source`，只向 Release 附加一个 `ruffle-leafos-<版本>.zip`；GitHub 自带的 Source code 下载由平台生成。ZIP 顶层直接是 `Apps/`、`Roms/`、`Images/`，不含本机配置、SDK、构建缓存或外层版本目录。
+完整流水线依次执行：发布脚本回归、ARM64 release 编译、主机输入/状态与 ZIP 回归、随包游戏完整性与安装路径回归、诊断库编译与测试、现有打包脚本的 ELF/GLIBC/源码/清单/ZIP 校验。自动打包不加 `--include-source`，只向 Release 附加一个 `ruffle-leafos-<版本>.zip`；GitHub 自带的 Source code 下载由平台生成。ZIP 顶层直接是 `Apps/`、`Roms/`、`Images/`，不含本机配置、SDK、构建缓存或外层版本目录。
 
 流程使用仓库自带的 `GITHUB_TOKEN`，仅发布 job 申请 `contents: write`，不需要单独配置 PAT。自动创建 `v<版本>` tag，绑定实际构建的提交；当前均以开发预览（Prerelease）发布。说明中写入完整构建 SHA 及链接、上一可达 `v主.次.修订` tag 之后的 commit SHA/标题/作者、比较链接、安装方法和 ZIP SHA-256；首次发布列出全部历史。CI 说明明确标注未进行实机验证。
 

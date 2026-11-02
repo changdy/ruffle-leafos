@@ -18,7 +18,7 @@ A Flash player built for leafOS on the Miniloong Pocket 1, powered by Ruffle.
 | --- | --- |
 | ![The King of Fighters Wing 1.91 running on Pocket1](ruffle-leafos/docs/images/game-kof.png) | ![Bleach vs Naruto 3.3 running on Pocket1](ruffle-leafos/docs/images/game-bvn.png) |
 
-**Current version: 0.8.4 development preview.** Currently supports **Miniloong Pocket 1 / leafOS** only, with device checks on Leaf 0.13.0. Compatibility and performance vary by game, and development is ongoing.
+**Current version: 0.8.5 development preview.** Currently supports **Miniloong Pocket 1 / leafOS** only, with device checks on Leaf 0.13.0. Compatibility and performance vary by game, and development is ongoing.
 
 ## Made for handheld play
 
@@ -46,13 +46,13 @@ The result should look like this. Do not add an extra version folder around thes
 ```text
 System SD card/
 ├─ Apps/mlp1/RuffleProbe.pak/   ← Player and Flash Data Manager
-├─ Roms/flash/                 ← Flash games (.swf)
+├─ Roms/flash/                 ← Flash games (.swf / .zip)
 └─ Images/flash/               ← Game covers
 ```
 
-The current packaging process includes custom editions of *The King of Fighters Wing 1.91*, *Bleach vs Naruto 3.3* and *Bleach vs Naruto 3.6*. Choose the main SWF whose filename contains **`-定制版`**. Keep Bleach vs Naruto’s `_assets/` folder beside its main file; Leaf skips this private resource directory. When upgrading an old directory edition, back up and move the old game folder outside `Roms/`, copy the complete replacement to the same path, then refresh the game list. Merging leaves the old `assets/` movies visible. See [bundled game details](ruffle-leafos/games/README.md) (Chinese).
+The package includes custom editions of *The King of Fighters Wing 1.91*, *Bleach vs Naruto 3.3* and *Bleach vs Naruto 3.6*. KOF is an SWF; each Bleach game is a ZIP containing all resources. The player shows loading progress while preparing its cache on first launch. To upgrade a directory edition, back up and move the old game folder outside `Roms/`, copy the new ZIP and refresh the game list. See [bundled game details](ruffle-leafos/games/README.md) (Chinese).
 
-To add your own games, put `.swf` files in `Roms/flash/`. Keep the full folder structure for games with external resources. [Adding games and covers →](ruffle-leafos/README.en.md#adding-games-and-covers)
+To add your own games, put `.swf` or complete game `.zip` files in `Roms/flash/`. [Adding games and covers →](ruffle-leafos/README.en.md#adding-games-and-covers)
 
 ## Essential controls
 

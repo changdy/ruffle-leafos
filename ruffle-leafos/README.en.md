@@ -15,17 +15,17 @@ Play local Flash games with the buttons and stick on your **Miniloong Pocket 1 /
 
 **The two entry points serve different purposes:** the Flash category launches games; **Flash Data Manager** in Apps manages progress, controls and interface language. Leaf may display the Apps launcher as **Flash 数据管理**. The installation folder keeps its existing `RuffleProbe.pak` name.
 
-Starting with 0.8.4, the package includes three custom games. Older archives may have different contents.
+The package includes three custom games. Older archives may have different contents.
 
 | Game | Main file to select inside `Roms/flash/` |
 | --- | --- |
 | The King of Fighters Wing 1.91 | `拳皇Wing1.91-定制版.swf` |
-| Bleach vs Naruto 3.3 | `死神VS火影3.3-定制版/死神VS火影3.3-定制版.swf` |
-| Bleach vs Naruto 3.6 | `死神VS火影3.6-定制版/死神VS火影3.6-定制版.swf` |
+| Bleach vs Naruto 3.3 | `死神VS火影3.3-定制版.zip` |
+| Bleach vs Naruto 3.6 | `死神VS火影3.6-定制版.zip` |
 
-For Bleach vs Naruto, keep the entire game directory, including the adjacent `_assets/` folder. The player reads these private resources, while Leaf lists only the main SWF. New progress starts with the game’s internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Bundled games and sources](games/README.md) (Chinese)
+The Bleach vs Naruto ZIPs include the game and all resources; do not extract them manually. On first launch the player shows a loading screen while extracting to its cache; later launches can reuse the cache. New progress starts with the game’s internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Bundled games and sources](games/README.md) (Chinese)
 
-**Upgrading an older directory edition:** back up and move the old `死神VS火影3.3-定制版/` folder (and any manually installed 3.6 folder with the same name) outside `Roms/`, then copy the complete replacement to the same path and refresh Leaf’s game list. Merging folders leaves old `assets/` movies visible as games. Main SWF bytes and paths retain their existing identities; keep progress and control files in place. You can also move the old `Leaf-GPU-Probe.swf` diagnostic demo out of `Roms/flash/`.
+**Upgrading an older directory edition:** back up and move the old same-name game folders outside `Roms/`, copy the new ZIP files and refresh Leaf’s game list. The main SWF bytes are unchanged, so native progress keeps its content identity. Existing controls are reused when the old catalog confirms the matching game. You can also move the old `Leaf-GPU-Probe.swf` diagnostic demo out of `Roms/flash/`.
 
 On Pocket1, Bleach vs Naruto 3.3 takes about half a minute to initialize its effects at startup. Short Menu (M) presses and opening the player menu may be delayed during initialization; wait until it finishes before continuing. To return to Leaf, hold Menu to use the system return function.
 
@@ -33,11 +33,11 @@ Use **OpenGL ES** for Bleach vs Naruto 3.3 on Pocket1. Vulkan may end the sessio
 
 ## Adding games and covers
 
-Put your own `.swf` files in **`Roms/flash/`** and refresh Leaf’s game list. If a game uses external images, sounds or resource SWFs, copy its full directory without changing relative paths. Extract ZIP game archives first.
+Put your own `.swf` or `.zip` files in **`Roms/flash/`** and refresh Leaf’s game list. For a directory game, place its main SWF and all resources in a ZIP while preserving their relative paths. Stored and DEFLATE ZIPs are supported; encrypted archives, symbolic links and unsafe paths are rejected.
 
-For games using an adjacent `assets/` folder, you can rename it to `_assets/`: Ruffle Flash 0.8.4 and later resolves the original resource requests there, keeping resource SWFs out of Leaf’s game list. Preserve other folder layouts as provided by the game.
+The player selects the shallowest SWF in the ZIP. If several SWFs share that depth, name the ZIP after the main SWF. First launch needs free space for extraction; the cache is in `.userdata/mlp1/ruffle-probe/cache/zip-games/`. You can delete it after exiting the player; the next launch extracts it again. Existing `assets/` and `_assets/` directory layouts continue to work.
 
-Put covers in **`Images/flash/`**, using the main SWF’s filename without its extension. Covers go directly in that folder even when the game is in a subfolder. For example:
+Put covers in **`Images/flash/`**, using the selected SWF or ZIP filename without its extension. Covers go directly in that folder even when the game is in a subfolder. For example:
 
 ```text
 Roms/flash/My Game/My Game.swf
@@ -118,7 +118,7 @@ The player also attempts to commit progress when opening menus, exiting normally
 
 If saving fails, the pause home and Game saves keep a warning. Select the current slot in Game saves and press **Y** to retry. The warning clears after a successful save. Menu actions for saving and quitting, changing slots or changing renderers stay in the current session if saving fails.
 
-Progress is identified by **SWF content**: renaming or moving the same file preserves its identity; a different game build gets separate progress. Controls use the **ROM path**, so they do not automatically follow a renamed or moved file. Back up before replacing games. Automatic migration of old `.sol` files, progress import/export and instant save states are not available yet.
+Progress is identified by **SWF content**: renaming or moving the same file preserves its identity; a different game build gets separate progress. Controls use the **ROM path**, so they generally do not follow a renamed or moved file. When upgrading an old directory to a same-name ZIP, its controls are reused if the old catalog confirms matching content and control identity and the ZIP has no profile yet. Back up before replacing games. Automatic migration of old `.sol` files, progress import/export and instant save states are not available yet.
 
 ## Screenshots and covers
 

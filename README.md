@@ -18,7 +18,7 @@
 | --- | --- |
 | ![Pocket1 上运行的拳皇 Wing 1.91 对战画面](ruffle-leafos/docs/images/game-kof.png) | ![Pocket1 上运行的死神 VS 火影 3.3 对战画面](ruffle-leafos/docs/images/game-bvn.png) |
 
-**当前版本：0.8.4 开发预览。** 当前仅支持 **Miniloong Pocket 1 / leafOS**，已在 Leaf 0.13.0 上验证。游戏兼容性和流畅度取决于具体内容，仍在持续完善。
+**当前版本：0.8.5 开发预览。** 当前仅支持 **Miniloong Pocket 1 / leafOS**，已在 Leaf 0.13.0 上验证。游戏兼容性和流畅度取决于具体内容，仍在持续完善。
 
 ## 为掌机游玩准备的功能
 
@@ -46,13 +46,13 @@
 ```text
 系统 SD 卡/
 ├─ Apps/mlp1/RuffleProbe.pak/   ← 播放器与“Flash 数据管理”入口
-├─ Roms/flash/                 ← Flash 游戏（.swf）
+├─ Roms/flash/                 ← Flash 游戏（.swf / .zip）
 └─ Images/flash/               ← 游戏封面
 ```
 
-当前打包流程收录《拳皇 Wing 1.91》《死神 VS 火影 3.3》和《死神 VS 火影 3.6》三款定制版，进入游戏时选择名称含 **`-定制版`** 的主 SWF。死神的 `_assets/` 必须与主文件一起保留；Leaf 不扫描该私有资源目录。升级旧目录版时须先备份并将旧游戏目录移出 `Roms/`，再完整复制新版到相同路径并刷新列表，避免遗留 `assets/` 继续显示。详见[随包游戏说明](ruffle-leafos/games/README.md)。
+当前打包收录《拳皇 Wing 1.91》《死神 VS 火影 3.3》和《死神 VS 火影 3.6》三款定制版。拳皇为 SWF，死神为包含完整资源的 ZIP；首次启动会显示加载进度并创建缓存。升级旧目录版时先备份并将旧游戏目录移出 `Roms/`，再复制新版 ZIP 并刷新列表。详见[随包游戏说明](ruffle-leafos/games/README.md)。
 
-你也可以把自己的 `.swf` 放入 `Roms/flash/`；带外部资源的游戏请保留完整目录。[查看添加游戏与封面的方法 →](ruffle-leafos/README.md#添加游戏与封面)
+你也可以把自己的 `.swf` 或完整游戏 `.zip` 放入 `Roms/flash/`。[查看添加游戏与封面的方法 →](ruffle-leafos/README.md#添加游戏与封面)
 
 ## 先记住这几个操作
 

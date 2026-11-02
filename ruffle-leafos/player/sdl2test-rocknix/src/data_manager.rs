@@ -143,7 +143,7 @@ fn relative_movie(path: &str) -> Option<&str> {
 }
 
 fn permitted(path: &Path, roots: &[PathBuf]) -> bool {
-    plain_absolute(path) && path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("swf"))
+    plain_absolute(path) && path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("swf") || e.eq_ignore_ascii_case("zip"))
         && roots.iter().any(|root| plain_absolute(root) && path.strip_prefix(root).is_ok_and(|p| {
             !p.as_os_str().is_empty() && p.components().all(|c| matches!(c, Component::Normal(_)))
         }))
@@ -157,7 +157,13 @@ fn path_identity(path: &Path) -> Option<String> {
 }
 
 fn matching_path(path: &Path, id: &str, roots: &[PathBuf]) -> bool {
-    permitted(path, roots) && path_identity(path).is_some_and(|identity| format!("{:016x}", hash(identity.as_bytes())) == id)
+    if !permitted(path,roots) {return false;}
+    let matches=|p:&Path|path_identity(p).is_some_and(|identity|format!("{:016x}",hash(identity.as_bytes()))==id);
+    if matches(path) {return true;}
+    if !path.extension().is_some_and(|ext|ext.eq_ignore_ascii_case("zip")) {return false;}
+    let (Some(parent),Some(stem))=(path.parent(),path.file_stem()) else{return false};
+    let mut name=stem.to_os_string();name.push(".swf");
+    matches(&parent.join(stem).join(name))
 }
 
 fn identity_paths(identity: &str, id: &str, roots: &[PathBuf]) -> Vec<PathBuf> {
@@ -378,6 +384,29 @@ mod tests {
         let list = f.list();
         assert!(!list[0].unavailable);
         assert_eq!(list[0].movie_path.as_ref().unwrap(), &f.roms.join("游戏 空格.swf"));
+    }
+
+    #[test]
+    fn zip_catalog_path_is_available_when_the_archive_exists() {
+        let f = Fixture::new();
+        let id = f.save(b"zip", "slot-1.rls");
+        f.meta(&id, "游戏.zip", true);
+        assert!(f.list()[0].unavailable);
+        f.write(&f.roms.join("游戏.zip"), b"ZIP");
+        let list=f.list();
+        assert!(!list[0].unavailable);
+        assert_eq!(list[0].movie_path.as_ref().unwrap(), &f.roms.join("游戏.zip"));
+    }
+
+    #[test]
+    fn zip_catalog_accepts_the_verified_directory_control_identity() {
+        let f=Fixture::new();let id=f.save(b"directory game", "slot-1.rls");
+        f.mapping("game/game.swf",false,false);
+        let zip=f.roms.join("game.zip");f.write(&zip,b"ZIP");
+        let record=format!("game\n{}\n{}\n",f.control_id("game/game.swf"),encode_movie_path(&zip).unwrap());
+        f.write(&f.progress.join("catalog").join(format!("{id}.meta")),record.as_bytes());
+        let list=f.list();assert_eq!(list.len(),1);assert!(list[0].has_controls && list[0].has_saves);
+        assert!(!list[0].unavailable);assert_eq!(list[0].movie_path.as_ref(),Some(&zip));
     }
 
     #[test]

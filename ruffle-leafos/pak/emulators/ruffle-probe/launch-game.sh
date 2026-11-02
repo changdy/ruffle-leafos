@@ -14,7 +14,7 @@ else
     SWF="$1"
     case "$SWF" in /*) ;; *) ruffle_die '游戏路径必须为绝对路径' ;; esac
 fi
-case "$SWF" in *.[sS][wW][fF]) ;; *) ruffle_die '选中的文件不是 SWF' ;; esac
+case "$SWF" in *.[sS][wW][fF]|*.[zZ][iI][pP]) ;; *) ruffle_die '选中的文件不是 SWF 或 ZIP' ;; esac
 [ -f "$SWF" ] && [ -r "$SWF" ] || ruffle_die '游戏文件不存在或不可读'
 # Resolve the file itself, not only its parent: reject symlink escapes.
 SWF="$(readlink -f -- "$SWF")" || ruffle_die '无法解析游戏路径'
@@ -87,7 +87,7 @@ if [ -n "${JAWAKA_INPUT_VIRTUAL_EVENT:-}" ]; then export SDL_JOYSTICK_DEVICE="$J
 unset RUFFLE_RETURN_TO_MENU_FILE
 [ ! -L "$LOG_FILE" ] && [ ! -L "$LOG_FILE.previous" ] || ruffle_die '日志目标不能是符号链接'
 if [ -f "$LOG_FILE" ]; then mv -f -- "$LOG_FILE" "$LOG_FILE.previous" || ruffle_die '无法轮换日志'; fi
-printf 'ruffle-leaf 0.8.4\nswf=%s\nmode=%s\nvideo=%s\nwayland=%s\nsdl=%s\n' \
+printf 'ruffle-leaf 0.8.5\nswf=%s\nmode=%s\nvideo=%s\nwayland=%s\nsdl=%s\n' \
     "$SWF" "$SESSION_MODE" "$SDL_VIDEODRIVER" "$WAYLAND_DISPLAY" "$SDL_LIB" >"$LOG_FILE" || ruffle_die '无法写入启动日志'
 printf 'bundled_cjk_font=%s\n' "$RUFFLE_FONT_FILE" >>"$LOG_FILE"
 printf 'audio_route=%s\n' "$RUFFLE_AUDIO_ROUTE" >>"$LOG_FILE"

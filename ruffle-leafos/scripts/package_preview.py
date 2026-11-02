@@ -54,8 +54,48 @@ def bundle_games(stage, games_root=ROOT / 'games'):
                and not any(part.startswith(('.', '_')) for part in Path(name).parts)}
     if visible != {game['entrypoint'] for game in manifest['games']}:
         raise ValueError('bundled game list differs from entrypoints; keep resource SWFs in _assets')
-    shutil.copytree(source, stage / 'Roms/flash', dirs_exist_ok=True)
-    return manifest['games']
+    target = stage / 'Roms/flash'
+    target.mkdir(parents=True, exist_ok=True)
+    bundled = []
+    for game in manifest['games']:
+        entry = Path(game['entrypoint'])
+        info = dict(game)
+        if entry.parent == Path('.'):
+            shutil.copyfile(source / entry, target / entry.name)
+            info['install_path'] = entry.name
+        else:
+            # Each directory game becomes one Leaf-visible archive. Keep the
+            # main SWF bytes and restore the original logical assets/ paths.
+            if len(entry.parts) != 2:
+                raise ValueError('directory game entrypoint must be one level deep')
+            archive_name = game['name'] + '.zip'
+            members = {entry.name: source / entry}
+            prefix = entry.parts[0] + '/_assets/'
+            for relative, path in files.items():
+                if relative.startswith(prefix):
+                    members['assets/' + relative[len(prefix):]] = path
+            if len(members) == 1:
+                raise ValueError('directory game has no bundled assets: ' + game['name'])
+            with zipfile.ZipFile(target / archive_name, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+                for relative, path in sorted(members.items()):
+                    member = zipfile.ZipInfo(relative, date_time=(1980, 1, 1, 0, 0, 0))
+                    member.compress_type = zipfile.ZIP_DEFLATED
+                    member.external_attr = 0o100644 << 16
+                    with path.open('rb') as src, archive.open(member, 'w') as dst:
+                        shutil.copyfileobj(src, dst, 1024 * 1024)
+            with zipfile.ZipFile(target / archive_name) as archive:
+                if archive.testzip() is not None:
+                    raise ValueError('corrupt game archive: ' + archive_name)
+                if set(archive.namelist()) != set(members):
+                    raise ValueError('game archive member set mismatch: ' + archive_name)
+                for relative, path in members.items():
+                    with archive.open(relative) as member:
+                        if hashlib.sha256(member.read()).hexdigest() != sha(path):
+                            raise ValueError('game archive checksum mismatch: ' + relative)
+            info['install_path'] = archive_name
+            info['archive_main'] = entry.name
+        bundled.append(info)
+    return bundled
 
 
 def main():
@@ -192,7 +232,7 @@ def main():
                   'per-button 5/10/15 Hz hold turbo, 8ms release target with 2ms headroom below 10ms, deadline-aware loop sleep and shared-key ownership',
                   'queued physical Menu taps independent of virtual Guide release state',
                   'asynchronous real Leaf volume/brightness feedback without double-applying hardware keys',
-                  'three bundled games with directory-game resources in private _assets trees, preserving movie/control/progress identities',
+                  'three bundled games, with original assets paths in ZIP archives and content-based progress identity',
                   'Simplified Chinese and English UI with persisted LeafOS first-launch detection, immediate language switching and CJK font fallback',
                   'Catastrophe-derived gamepad keyboard on editable Flash focus, transactional Unicode edits, masked passwords, native text restrictions/events and neutral input resume',
                   'pause lifecycle, input ownership, neutral gate and checked SharedObject flush'],

@@ -59,6 +59,11 @@ with tempfile.TemporaryDirectory(prefix='wrapper-', dir=ROOT/'build') as tempora
         assert f'flash_root={(roms/folder).resolve().as_posix()}\n' in result.stdout, result.stdout
         assert not (base/'PWNED').exists(), 'path was treated as shell code'
         count += 1
+        archive = games/'游戏.ZIP'; archive.write_bytes(b'ZIP fixture')
+        zipped = invoke([unix_argument(archive)])
+        assert zipped.returncode == 0, zipped.stderr
+        assert f'argument={archive.resolve().as_posix()}\n' in zipped.stdout
+        count += 1
         for argv in ([], ['relative.swf'], [unix_argument(game), '--extra']):
             assert invoke(argv).returncode != 0; count += 1
         assert invoke([unix_argument(game)], {'ROMS_PATH': ''}).returncode != 0; count += 1

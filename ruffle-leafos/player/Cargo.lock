@@ -4029,13 +4029,14 @@ dependencies = [
 
 [[package]]
 name = "sdl2test-rocknix"
-version = "0.8.4"
+version = "0.8.5"
 dependencies = [
  "ab_glyph",
  "ash",
  "async-task",
  "bytemuck",
  "clap",
+ "crc32fast",
  "glow 0.14.2",
  "libc",
  "libloading",
@@ -4050,12 +4051,14 @@ dependencies = [
  "ruffle_video_external",
  "ruffle_video_software",
  "sdl2",
+ "sha2",
  "thiserror 1.0.69",
  "tokio",
  "tracing-subscriber",
  "ttf-parser",
  "url",
  "wgpu",
+ "zip",
 ]
 
 [[package]]

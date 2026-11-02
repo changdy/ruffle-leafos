@@ -281,6 +281,28 @@ impl Store {
         let game = root.join("games").join(format!("{hash:016x}.rmap"));
         Self { root, identity, game }
     }
+    /// Retain a previous directory game's controls only when its catalog
+    /// binds this exact SWF content and its old path to the same control ID.
+    pub fn for_archive(root:PathBuf,rom:&Path,main:&Path,storage:&Path,bytes:&[u8])->Self {
+        let current=Self::new(root.clone(),rom);
+        let has_data=|s:&Self|s.game.exists() || s.game.with_extension("rmap.bak").exists() || s.game_dir().is_dir();
+        if has_data(&current) {return current;}
+        let Some(stem)=rom.file_stem() else {return current};
+        if main.file_stem()!=Some(stem) || main.extension().is_none_or(|ext|ext!="swf") {return current;}
+        let Some(parent)=rom.parent() else {return current};
+        let Some(filename)=main.file_name() else {return current};
+        let previous_path=parent.join(stem).join(filename);
+        let previous=Self::new(root,&previous_path);
+        if !has_data(&previous) {return current;}
+        let catalog=storage.join("slots-v1/catalog").join(format!("{}.meta",super::experience::game_id(bytes)));
+        let Ok(text)=fs::read_to_string(catalog) else {return current};
+        if text.len()>8192 {return current;}
+        let mut lines=text.lines();let _title=lines.next();let id=lines.next();let path=lines.next();
+        let old_path=super::data_manager::encode_movie_path(&previous_path);
+        let zip_path=super::data_manager::encode_movie_path(rom);
+        let old_id=previous.game.file_stem().and_then(|v|v.to_str());
+        if id==old_id && (path==old_path.as_deref() || path==zip_path.as_deref()) {previous} else {current}
+    }
     fn game_dir(&self) -> PathBuf { self.root.join("slots").join(self.game.file_stem().unwrap_or_default()) }
     pub fn game_slot(&self, slot: usize) -> PathBuf { self.game_dir().join(format!("slot-{:02}.rmap",slot+1)) }
     pub fn cursor_path(&self) -> PathBuf { self.root.join("cursor.conf") }
@@ -623,6 +645,26 @@ mod tests {
         fn record(&self, base: usize, game: bool) -> Record { Record { name: "测试配置".into(), identity: if game {self.0.identity.clone()} else {String::new()}, mapping: Mapping::builtin(base) } }
     }
     impl Drop for Fixture { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0.root); } }
+
+    #[test]
+    fn zip_reuses_directory_controls_only_for_catalogued_same_content() {
+        let f=Fixture::new();let root=f.0.root.clone();let storage=root.join("storage");
+        let rom=root.join("Roms").join("flash").join("game.zip");
+        let old=root.join("Roms").join("flash").join("game").join("game.swf");
+        let previous=Store::new(root.clone(),&old);let current=Store::new(root.clone(),&rom);
+        let record=Record{name:"old".into(),identity:previous.identity.clone(),mapping:Mapping::group(0)};
+        previous.save(&previous.game_slot(0),&record).unwrap();
+        let id=super::super::experience::game_id(b"same game");
+        let catalog=storage.join("slots-v1/catalog").join(format!("{id}.meta"));
+        fs::create_dir_all(catalog.parent().unwrap()).unwrap();
+        let control_id=previous.game.file_stem().unwrap().to_str().unwrap();
+        fs::write(&catalog,format!("game\n{control_id}\n{}\n",super::super::data_manager::encode_movie_path(&old).unwrap())).unwrap();
+        assert_eq!(Store::for_archive(root.clone(),&rom,Path::new("/cache/game.swf"),&storage,b"same game").identity,previous.identity);
+        assert_eq!(Store::for_archive(root.clone(),&rom,Path::new("/cache/game.swf"),&storage,b"different").identity,current.identity);
+        let record=Record{name:"new".into(),identity:current.identity.clone(),mapping:Mapping::group(1)};
+        current.save(&current.game_slot(0),&record).unwrap();
+        assert_eq!(Store::for_archive(root,&rom,Path::new("/cache/game.swf"),&storage,b"same game").identity,current.identity);
+    }
 
     #[test]
     fn all_builtin_templates_roundtrip_without_losing_actions() {

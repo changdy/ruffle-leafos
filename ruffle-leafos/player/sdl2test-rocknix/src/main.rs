@@ -261,6 +261,8 @@ struct Opt {
 mod session;
 mod pause_menu;
 mod screenshot_png;
+mod zip_game;
+mod zip_loading;
 mod leaf;
 mod performance;
 

@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+import zipfile
 
 from package_preview import ROOT, bundle_games
 
@@ -50,19 +51,22 @@ class BundledGamesTests(unittest.TestCase):
         self.assertEqual([g['name'] for g in games], ['拳皇Wing1.91-定制版', '死神VS火影3.3-定制版', '死神VS火影3.6-定制版'])
         manifest = json.loads((ROOT / 'games/manifest.json').read_text(encoding='utf8'))
         installed = self.stage / 'Roms/flash'
-        actual = {p.relative_to(installed).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
-                  for p in installed.rglob('*') if p.is_file()}
-        self.assertEqual(actual, manifest['files_sha256'])
-        self.assertEqual(len(actual), 959)
+        actual = {p.relative_to(installed).as_posix() for p in installed.rglob('*') if p.is_file()}
+        self.assertEqual(actual, {g['install_path'] for g in games})
         for game in games:
-            self.assertTrue((installed / game['entrypoint']).is_file())
-        self.assertEqual(len(list((installed / '死神VS火影3.3-定制版/_assets').rglob('*.*'))), 398)
-        self.assertEqual(len(list((installed / '死神VS火影3.6-定制版/_assets').rglob('*.*'))), 554)
-        # Reproduce Leaf's recursive dot/underscore exclusion: only the three
-        # launch movies may reach its game and search indexes.
-        visible = {p.relative_to(installed).as_posix() for p in installed.rglob('*.swf')
-                   if not any(part.startswith(('.', '_')) for part in p.relative_to(installed).parts)}
-        self.assertEqual(visible, {g['entrypoint'] for g in games})
+            output = installed / game['install_path']
+            if output.suffix == '.swf':
+                self.assertEqual(hashlib.sha256(output.read_bytes()).hexdigest(), game['main_sha256'])
+                continue
+            source_prefix = game['name'] + '/_assets/'
+            expected = {'assets/' + path[len(source_prefix):]: digest
+                        for path, digest in manifest['files_sha256'].items() if path.startswith(source_prefix)}
+            expected[game['archive_main']] = game['main_sha256']
+            with zipfile.ZipFile(output) as archive:
+                self.assertIsNone(archive.testzip())
+                self.assertEqual({name: hashlib.sha256(archive.read(name)).hexdigest()
+                                  for name in archive.namelist()}, expected)
+            self.assertEqual(len(expected)-1, 398 if '3.3' in game['name'] else 554)
 
     def test_exposed_resource_movie_is_rejected(self):
         extra = self.games / 'flash/测试-定制版/assets/fighter.swf'
