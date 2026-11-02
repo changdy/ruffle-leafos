@@ -120,7 +120,7 @@ def compile_boot() -> bytes:
         shutil.copyfile(Path(__file__).parent / 'resources/RuffleSingleSwfBoot.as', source)
         (folder / 'playerglobal.abc').write_bytes(playerglobal_abc())
         result = subprocess.run([
-            str(java), '-classpath', str(ROOT / 'player/core/build_playerglobal/asc.jar'),
+            str(java), '-classpath', str(ROOT / 'player/tools/asc/asc.jar'),
             'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-import', str(folder / 'playerglobal.abc'),
             '-outdir', str(folder), str(source),
         ], capture_output=True, timeout=60)

@@ -1,6 +1,6 @@
 use crate::Error;
 use crate::buffer_pool::PoolEntry;
-use crate::utils::BufferDimensions;
+use crate::utils::{BufferDimensions, remove_srgb};
 use ruffle_render::bitmap::PixelRegion;
 use std::fmt::Debug;
 use std::ops::Deref;
@@ -23,7 +23,10 @@ pub trait RenderTarget: Debug + 'static {
 
     fn height(&self) -> u32;
 
-    fn get_next_texture(&mut self) -> Result<Self::Frame, wgpu::SurfaceError>;
+    /// Returns the frame to render into, or `None` if no frame could be
+    /// acquired - in which case the caller should skip this frame, and
+    /// may attempt to recreate the swap chain via [`RenderTarget::resize`].
+    fn get_next_texture(&mut self) -> Option<Self::Frame>;
 
     fn submit<I: IntoIterator<Item = wgpu::CommandBuffer>>(
         &self,
@@ -63,10 +66,10 @@ impl SwapChainTarget {
         (width, height): (u32, u32),
         device: &wgpu::Device,
     ) -> Self {
-        // Ideally we want to use an RGBA non-sRGB surface format, because Flash colors and
-        // blending are done in sRGB space -- we don't want the GPU to adjust the colors.
-        // Some platforms may only support an sRGB surface, in which case we will draw to an
-        // intermediate linear buffer and then copy to the sRGB surface.
+        // Flash colors and blending are done in sRGB space -- we don't want the GPU to
+        // adjust the colors. We prefer a non-sRGB surface format directly, but on platforms
+        // that only expose sRGB surface formats we view the surface texture as its non-sRGB
+        // counterpart so writes skip the linear->sRGB encode step.
         let capabilities = surface.get_capabilities(adapter);
         let format = capabilities
             .formats
@@ -82,15 +85,21 @@ impl SwapChainTarget {
             // No surface (rendering to texture), default to linear RBGA.
             .unwrap_or(wgpu::TextureFormat::Rgba8Unorm);
 
+        let linear_format = remove_srgb(format);
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
+            color_space: wgpu::SurfaceColorSpace::Auto,
             width,
             height,
             present_mode: wgpu::PresentMode::Fifo,
             desired_maximum_frame_latency: 2,
             alpha_mode: capabilities.alpha_modes[0],
-            view_formats: vec![format],
+            view_formats: if linear_format == format {
+                vec![format]
+            } else {
+                vec![format, linear_format]
+            },
         };
         surface.configure(device, &surface_config);
         Self {
@@ -110,7 +119,7 @@ impl RenderTarget for SwapChainTarget {
     }
 
     fn format(&self) -> wgpu::TextureFormat {
-        self.surface_config.format
+        remove_srgb(self.surface_config.format)
     }
 
     fn width(&self) -> u32 {
@@ -121,10 +130,27 @@ impl RenderTarget for SwapChainTarget {
         self.surface_config.height
     }
 
-    fn get_next_texture(&mut self) -> Result<Self::Frame, wgpu::SurfaceError> {
-        let texture = self.window_surface.get_current_texture()?;
-        let view = texture.texture.create_view(&Default::default());
-        Ok(SwapChainTargetFrame { texture, view })
+    fn get_next_texture(&mut self) -> Option<Self::Frame> {
+        let texture = match self.window_surface.get_current_texture() {
+            wgpu::CurrentSurfaceTexture::Success(surface_texture) => surface_texture,
+            // The texture is still usable - no reason to waste an already
+            // acquired frame. Ideally the surface should also be reconfigured
+            // before the next acquire; we don't currently do that (matching
+            // pre-wgpu-29 behavior, which never checked the suboptimal flag).
+            wgpu::CurrentSurfaceTexture::Suboptimal(surface_texture) => surface_texture,
+            state => {
+                tracing::warn!("Couldn't acquire surface texture: {:?}", state);
+                return None;
+            }
+        };
+        let view_format = remove_srgb(self.surface_config.format);
+
+        let view = texture.texture.create_view(&wgpu::TextureViewDescriptor {
+            format: Some(view_format),
+            ..Default::default()
+        });
+
+        Some(SwapChainTargetFrame { texture, view })
     }
 
     #[instrument(level = "debug", skip_all)]
@@ -136,7 +162,7 @@ impl RenderTarget for SwapChainTarget {
         frame: Self::Frame,
     ) -> wgpu::SubmissionIndex {
         let index = queue.submit(command_buffers);
-        frame.texture.present();
+        queue.present(frame.texture);
         index
     }
 }
@@ -265,8 +291,8 @@ impl RenderTarget for TextureTarget {
         self.size.height
     }
 
-    fn get_next_texture(&mut self) -> Result<Self::Frame, wgpu::SurfaceError> {
-        Ok(TextureTargetFrame(
+    fn get_next_texture(&mut self) -> Option<Self::Frame> {
+        Some(TextureTargetFrame(
             self.texture.create_view(&Default::default()),
         ))
     }

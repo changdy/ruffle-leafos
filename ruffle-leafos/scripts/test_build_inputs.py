@@ -28,13 +28,14 @@ class BuildInputsTests(unittest.TestCase):
         for relative in FIXED_INPUTS:
             self.write(relative, b'fixed input\n')
         self.inputs = {
+            'adapter/rust-toolchain.lock.json': b'{"rust_version":"1.95.0"}\n',
             'player/Cargo.toml': b'[workspace]\n',
             'player/Cargo.lock': b'cargo dependency lock\n',
             'player/.cargo/config.toml': b'[build]\njobs = 4\n',
             'player/core/build.rs': b'fn main() {}\n',
             'player/core/src/player.rs': b'pub struct Player;\n',
             'player/core/src/avm2/globals/Object.as': b'public class Object {}\n',
-            'player/core/build_playerglobal/asc.jar': b'original compiler jar\0',
+            'player/tools/asc/asc.jar': b'original compiler jar\0',
             'player/render/wgpu/shaders/filter.wgsl': b'fn shader() {}\n',
             'player/core/assets/font.ttf': b'embedded font\0',
             'player/core/src/player/tests/probe.swf': b'FWS embedded fixture\0',

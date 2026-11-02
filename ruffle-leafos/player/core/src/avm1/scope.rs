@@ -3,6 +3,7 @@
 use crate::avm1::activation::Activation;
 use crate::avm1::callable_value::CallableValue;
 use crate::avm1::error::Error;
+use crate::avm1::object::stage_object::resolve_path_property;
 use crate::avm1::property::Attribute;
 use crate::avm1::{Object, Value};
 use crate::display_object::TDisplayObject;
@@ -113,7 +114,7 @@ impl<'gc> Scope<'gc> {
 
     /// Produces first the scope itself, then its ancestors
     pub fn ancestors(scope: Gc<'gc, Scope<'gc>>) -> impl Iterator<Item = Gc<'gc, Scope<'gc>>> {
-        core::iter::successors(Some(scope), |scope| scope.parent())
+        core::iter::successors(Some(scope), |scope| scope.parent)
     }
 
     /// Returns the class.
@@ -131,44 +132,32 @@ impl<'gc> Scope<'gc> {
         name: AvmString<'gc>,
         activation: &mut Activation<'_, 'gc>,
     ) -> Result<CallableValue<'gc>, Error<'gc>> {
-        self.resolve_recursive(name, activation, true)
-    }
+        let mut scope = self;
+        loop {
+            // The current target (`this` if it's a clip, otherwise the caller's target) stands in
+            // for a removed clip that no longer takes part in variable resolution.
+            let values = match scope.values.as_display_object() {
+                Some(clip) if clip.avm1_removed() => activation.target_clip_or_root().object1(),
+                _ => Some(scope.values),
+            };
 
-    /// Recursively resolve a value on the scope chain
-    /// See [`Scope::resolve`] for details
-    fn resolve_recursive(
-        &self,
-        name: AvmString<'gc>,
-        activation: &mut Activation<'_, 'gc>,
-        top_level: bool,
-    ) -> Result<CallableValue<'gc>, Error<'gc>> {
-        if self.locals().has_property(activation, name) {
-            return self
-                .locals()
-                .get(name, activation)
-                .map(|v| CallableValue::Callable(self.locals_cell(), v));
-        }
-        if let Some(scope) = self.parent() {
-            let res = scope.resolve(name, activation)?;
-
-            // If we failed to find the value in the scope chain, but it *would* resolve on `self.locals()` if it wasn't
-            // a removed clip, then try resolving on root instead
-            if top_level
-                && matches!(res, CallableValue::UnCallable(Value::Undefined))
-                && self.locals().has_own_property(activation, name)
+            if let Some(values) = values
+                && values.has_property(activation, name)
             {
-                return activation
-                    .base_clip()
-                    .avm1_root()
-                    .object1_or_bare(activation.gc())
+                return values
                     .get(name, activation)
-                    .map(|v| CallableValue::Callable(self.locals_cell(), v));
+                    .map(|v| CallableValue::Callable(values, v));
             }
 
-            Ok(res)
-        } else {
-            Ok(CallableValue::UnCallable(Value::Undefined))
+            let Some(parent) = scope.parent else { break };
+            scope = Gc::as_ref(parent);
         }
+
+        debug_assert_eq!(scope.class, ScopeClass::Global);
+        // Resolve path properties (`_global`, `_root`, `_levelN`, etc.) when the scope chain has no clip at all (playerglobal).
+        let value = resolve_path_property(activation.target_clip_or_root(), name, activation)
+            .unwrap_or(Value::Undefined);
+        Ok(CallableValue::UnCallable(value))
     }
 
     /// Update a particular value in the scope chain.
@@ -186,8 +175,7 @@ impl<'gc> Scope<'gc> {
         let removed = self
             .values
             .as_display_object()
-            .map(|o| o.avm1_removed())
-            .unwrap_or_default();
+            .is_some_and(|o| o.avm1_removed());
 
         if !removed
             && (self.class == ScopeClass::Target || self.locals().has_property(activation, name))
@@ -195,14 +183,12 @@ impl<'gc> Scope<'gc> {
             // Value found on this object, so overwrite it.
             // Or we've hit the executing movie clip, so create it here.
             self.locals().set(name, value, activation)
-        } else if let Some(scope) = self.parent() {
+        } else if let Some(parent) = self.parent {
             // Traverse the scope chain in search of the value.
-            scope.set(name, value, activation)
+            parent.set(name, value, activation)
         } else {
-            // This probably shouldn't happen -- all AVM1 code runs in reference to some MovieClip,
-            // so we should always have a MovieClip scope.
-            // Define on the top-level scope.
-            debug_assert!(false, "Scope::set: No top-level movie clip scope");
+            debug_assert_eq!(self.class, ScopeClass::Global);
+            // This should only happen for playerglobals; define it on the top level scope.
             self.locals().set(name, value, activation)
         }
     }
@@ -249,8 +235,8 @@ impl<'gc> Scope<'gc> {
             return self.locals().delete(activation, name);
         }
 
-        if let Some(scope) = self.parent() {
-            return scope.delete(activation, name);
+        if let Some(parent) = self.parent {
+            return parent.delete(activation, name);
         }
 
         false

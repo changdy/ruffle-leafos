@@ -192,7 +192,7 @@ def main():
                     'broad experimental Vulkan visual/performance/power/stability matrix and further synchronization optimization',
                     'Chinese composition/IME and broad custom game text-input compatibility', 'full VM instant savestates',
                     'legacy loose .sol migration', 'power-loss/reboot storage matrix', 'suspend recovery'],
-        'device_validation': 'See docs/validation/soft-keyboard-20261028.md for keyboard/runtime checks and installation scope; automated packaging alone does not verify hardware',
+        'device_validation': 'See docs/progress.md for current acceptance and binary identities; automated packaging does not verify hardware, and earlier device reports apply only to their recorded binaries',
     }
     (pak / 'build-manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     archive = output / f'ruffle-leafos-{version}.zip'

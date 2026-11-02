@@ -1,6 +1,6 @@
 """Generate original AVM1/AVM2 input fixtures for --self-test-keyboard.
 
-Requires a completed player build (playerglobal.swf) and the configured JDK.
+Requires a completed current core build (debug or release) and the configured JDK.
 Generated SWF/ABC files belong in ignored build/output directories.
 """
 from pathlib import Path
@@ -9,7 +9,6 @@ import json
 import struct
 import subprocess
 import sys
-import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'adapter/scripts'))
@@ -67,19 +66,31 @@ def avm1(output):
     write_movie(output / 'Keyboard-AVM1.swf', tags)
 
 
+def playerglobal_import_path(build_root=None):
+    """Select the newest completed current-format ARM64 core globals build.
+
+    The raw import ABC precedes native-table rewriting in v0.7.1. Never
+    extract the old playerglobal.swf: a leftover old release build would
+    otherwise silently compile new fixtures against the pre-upgrade API.
+    """
+    build_root = Path(build_root) if build_root is not None else ROOT / 'build/cargo/aarch64-unknown-linux-gnu'
+    candidates = []
+    for profile in ('debug', 'release'):
+        for abc in (build_root / profile / 'build').glob('ruffle_core-*/out/playerglobal_import.abc'):
+            movie = abc.with_name('playerglobal_avm2.swf')
+            if (movie.is_file() and abc.stat().st_size > 0
+                    and movie.stat().st_mtime_ns >= abc.stat().st_mtime_ns):
+                candidates.append(abc)
+    if not candidates:
+        raise RuntimeError('No completed current playerglobal_import.abc / playerglobal_avm2.swf pair; '
+                           'run build_player.py check or build with the current source first')
+    return max(candidates, key=lambda path: (path.stat().st_mtime_ns, path.as_posix()))
+
+
 def playerglobal_abc():
-    path = next((ROOT / 'build/cargo/aarch64-unknown-linux-gnu/release/build').glob('ruffle_core-*/out/playerglobal.swf'))
-    data = path.read_bytes()
-    if data[:3] == b'CWS': data = data[:8] + zlib.decompress(data[8:])
-    at = 8 + (5 + (data[8] >> 3)*4 + 7)//8 + 4
-    result = b''
-    while at < len(data):
-        header = struct.unpack_from('<H', data, at)[0]; at += 2
-        size = header & 63
-        if size == 63: size = struct.unpack_from('<I', data, at)[0]; at += 4
-        payload = data[at:at+size]; at += size
-        if header >> 6 == 82: result += payload[payload.index(b'\0', 4)+1:]
-    return result
+    path = playerglobal_import_path()
+    print('Using ASC import ' + str(path), file=sys.stderr)
+    return path.read_bytes()
 
 
 def avm2(output):
@@ -119,7 +130,7 @@ public class KeyboardProbe extends MovieClip {
     settings_path = ROOT / 'workspace.local.json'
     settings = json.loads(settings_path.read_text()) if settings_path.exists() else {}
     java = Path(settings.get('jdk', 'C:/Users/changdy/.jdks/azul-17.0.19-1')) / 'bin/java.exe'
-    subprocess.run([str(java), '-classpath', str(ROOT / 'player/core/build_playerglobal/asc.jar'),
+    subprocess.run([str(java), '-classpath', str(ROOT / 'player/tools/asc/asc.jar'),
                     'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-import', str(output / 'playerglobal.abc'),
                     '-outdir', str(output), str(source)], check=True)
     abc = source.with_suffix('.abc').read_bytes()

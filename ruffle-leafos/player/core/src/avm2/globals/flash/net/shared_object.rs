@@ -1,6 +1,7 @@
 //! `flash.net.SharedObject` builtin/prototype
 
 use crate::avm2::error::make_error_2130;
+use crate::avm2::function::FunctionArgs;
 use crate::avm2::object::{ScriptObject, SharedObjectObject};
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::{Activation, Error, Object, Value};
@@ -37,7 +38,7 @@ fn new_lso<'gc>(
 pub fn get_local<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     // TODO: It appears that Flash does some kind of escaping here:
     // the name "foo\uD800" correspond to a file named "fooE#FB#FB#D.sol".
@@ -149,10 +150,10 @@ pub fn get_local<'gc>(
     let mut data = None;
 
     // Load the data object from storage if it existed prior
-    if let Some(saved) = activation.context.storage.get(&full_name) {
-        if let Ok(lso) = flash_lso::read::Reader::default().parse(&saved) {
-            data = crate::avm2::amf::deserialize_lso(activation, &lso)?.into();
-        }
+    if let Some(saved) = activation.context.storage.get(&full_name)
+        && let Ok(lso) = flash_lso::read::Reader::default().parse(&saved)
+    {
+        data = crate::avm2::amf::deserialize_lso(activation, &lso)?.into();
     }
 
     let data = if let Some(data) = data {
@@ -176,7 +177,7 @@ pub fn get_local<'gc>(
 pub fn get_data<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -188,7 +189,7 @@ pub fn get_data<'gc>(
 pub fn flush<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -225,7 +226,7 @@ pub fn flush_impl<'gc>(
 pub fn get_size<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -240,14 +241,14 @@ pub fn get_size<'gc>(
         Ok(0.into())
     } else {
         let bytes = flash_lso::write::write_to_bytes(&mut lso).unwrap_or_default();
-        Ok(bytes.len().into())
+        Ok(Value::from_usize_lossy(bytes.len()))
     }
 }
 
 pub fn close<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     avm2_stub_method!(activation, "flash.net.SharedObject", "close");
     Ok(Value::Undefined)
@@ -256,7 +257,7 @@ pub fn close<'gc>(
 pub fn clear<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -275,7 +276,7 @@ pub fn clear<'gc>(
 pub fn get_object_encoding<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     avm2_stub_getter!(activation, "flash.net.SharedObject", "objectEncoding");
     Ok(0.into())
@@ -284,7 +285,7 @@ pub fn get_object_encoding<'gc>(
 pub fn set_object_encoding<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     avm2_stub_setter!(activation, "flash.net.SharedObject", "objectEncoding");
     Ok(Value::Undefined)

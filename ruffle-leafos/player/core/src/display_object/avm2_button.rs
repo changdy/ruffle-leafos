@@ -18,7 +18,7 @@ use crate::frame_lifecycle::{
     broadcast_frame_constructed, broadcast_frame_exited, catchup_display_object_to_frame,
 };
 use crate::prelude::*;
-use crate::tag_utils::{SwfMovie, SwfSlice};
+use crate::tag_utils::SwfMovie;
 use crate::vminterface::Instantiator;
 use core::fmt;
 use either::Either;
@@ -102,7 +102,7 @@ pub struct Avm2ButtonData<'gc> {
 impl<'gc> Avm2Button<'gc> {
     pub fn from_swf_tag(
         button: &swf::Button,
-        source_movie: &SwfSlice,
+        movie: Arc<SwfMovie>,
         context: &mut UpdateContext<'gc>,
         construct_blank_states: bool,
     ) -> Self {
@@ -113,7 +113,7 @@ impl<'gc> Avm2Button<'gc> {
                 shared: Gc::new(
                     context.gc(),
                     ButtonShared {
-                        swf: source_movie.movie.clone(),
+                        swf: movie,
                         id: button.id,
                         cell: RefCell::new(ButtonSharedMut {
                             records: button.records.clone(),
@@ -154,7 +154,11 @@ impl<'gc> Avm2Button<'gc> {
             actions: Vec::new(),
         };
 
-        Self::from_swf_tag(&button_record, &movie.into(), context, false)
+        Self::from_swf_tag(&button_record, movie, context, false)
+    }
+
+    pub fn instantiate(self, mc: &Mutation<'gc>) -> Self {
+        Self(Gc::new(mc, (*self.0).clone()))
     }
 
     pub fn set_sounds(self, sounds: swf::ButtonSounds) {
@@ -415,10 +419,6 @@ impl<'gc> TDisplayObject<'gc> for Avm2Button<'gc> {
         HasPrefixField::as_prefix_gc(self.raw_interactive())
     }
 
-    fn instantiate(self, mc: &Mutation<'gc>) -> DisplayObject<'gc> {
-        Self(Gc::new(mc, (*self.0).clone())).into()
-    }
-
     fn id(self) -> CharacterId {
         self.0.shared.id
     }
@@ -570,6 +570,7 @@ impl<'gc> TDisplayObject<'gc> for Avm2Button<'gc> {
         let current_state = self.get_state_child(self.0.state.get().into());
 
         if let Some(state) = current_state {
+            state.pre_render(context);
             state.render(context);
         }
     }

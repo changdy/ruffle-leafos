@@ -17,7 +17,7 @@ def build(output: Path):
     settings_path = ROOT / 'workspace.local.json'
     settings = json.loads(settings_path.read_text(encoding='utf8')) if settings_path.exists() else {}
     java = Path(settings.get('jdk', 'C:/Users/changdy/.jdks/azul-17.0.19-1')) / 'bin/java.exe'
-    subprocess.run([str(java), '-classpath', str(ROOT / 'player/core/build_playerglobal/asc.jar'),
+    subprocess.run([str(java), '-classpath', str(ROOT / 'player/tools/asc/asc.jar'),
                     'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-import', str(output / 'playerglobal.abc'),
                     '-outdir', str(output), str(source)], check=True)
     content = tag(82, struct.pack('<I', 0) + b'bitmap-copy-probe\0' + source.with_suffix('.abc').read_bytes())

@@ -1,6 +1,8 @@
 # 工程实现细节
 
-适用 **0.8.3 开发预览**，整理于 2026-11-01。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.8.3 开发预览**，整理于 2026-11-02。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+
+Ruffle 共享核心、SWF/FLV、字符串、前端工具、视频及官方渲染模块统一采用官方稳定版 [v0.7.1](https://github.com/ruffle-rs/ruffle/releases/tag/v0.7.1)，提交 `89a7049965f3090e706265670df309a5128233ac`。Leaf 前端和原有兼容、内存及存档扩展继续保留；应用版本与上游 Ruffle 版本分别标识。原 `ruffle-miyooflip` 是前端和部分补丁的历史来源，已不作为当前共享核心基线。本轮范围、补丁保留及验证边界见[稳定版升级记录](validation/ruffle-stable-20261102.md)。
 
 ## 命名与兼容标识
 
@@ -15,7 +17,7 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 | 路径 | 职责 |
 | --- | --- |
 | [player/sdl2test-rocknix/src/](../player/sdl2test-rocknix/src/) | 本项目掌机前端：输入、菜单、映射、光标、原生进度和音画 |
-| [player/core/](../player/core/) | 固定 Ruffle core 及少量核心接口改动；其余 workspace 成员保留依赖关系 |
+| [player/core/](../player/core/) | 官方 Ruffle v0.7.1 核心及保留的 Leaf 核心扩展；其余 workspace 成员保留依赖关系 |
 | [pak/](../pak/) | Leaf 清单、Flash/Apps 启动、路径、主题和诊断脚本 |
 | [games/](../games/README.md) | 版本化的两款定制游戏、完整外部资源及 SHA-256 清单；安装到 `Roms/flash/` |
 | [scripts/](../scripts/) | 构建、主机回归、诊断和打包 |
@@ -26,11 +28,11 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 
 游戏由 [pak.json](../pak/pak.json) 的 `ruffle_probe` 路径核心进入 [launch-game.sh](../pak/emulators/ruffle-probe/launch-game.sh)，校验所选卡内 SWF 路径、设置包外数据目录和音视频环境，再运行源码构建的播放器。Apps 经 [launch.sh](../pak/launch.sh) 进入同一播放器的数据管理模式；不推进演示 SWF。
 
-启动器优先预加载 Leaf 系统 SDL2，以获得设备上的 Wayland 支持；随包 SDL2 作为后备。CPAL/ALSA 在可用时接 Leaf PulseAudio，已有用户 ALSA 配置优先。窗口和菜单使用 SDL/Wayland/GLES，Flash 绘制可选择现有 GLES 或实验性 Vulkan；已经验证的设备版本见进度文档。
+启动器优先预加载 Leaf 系统 SDL2，以获得设备上的 Wayland 支持；随包 SDL2 作为后备。CPAL/ALSA 在可用时接 Leaf PulseAudio，已有用户 ALSA 配置优先。CPAL 随官方基线使用 0.16，继续支持 F32/F64/I16/U16 输出和暂停/恢复；初始化失败仍由前端回退静音。前端工具关闭默认系统 TLS，显式启用 Rust TLS，避免引入目标系统 OpenSSL 要求。窗口和菜单使用 SDL/Wayland/GLES，Flash 绘制可选择现有 GLES 或实验性 Vulkan；已经验证的设备版本见进度文档。
 
 画面设置使用 `experience::Settings::global_path` 返回的固定 `audiovisual/global.rav`，所有游戏共用缩放、画质、FPS 和渲染偏好；旧内容身份文件保留但不读取或自动迁移。没有全局配置时统一使用默认值。画面设置中的“渲染接口”进入 `experience::Page::Renderer`，以 `actual_renderer` 标识实际后端。选择不同接口进入默认取消的确认页；确认后先检查当前原生进度提交，退出循环再次提交成功才写入全局 RAV2 偏好并 exec 重启。保留当前进度槽，清除旧 `--renderer` 命令行覆盖，重启前销毁播放器、菜单、GL 上下文和窗口。保存失败不进入重启，不把菜单文字当成实际切换。
 
-Vulkan 复用官方 Ruffle `nightly-2026-03-15` 的 `render/wgpu/`，提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856`；该版本 `RenderBackend` 接口与本项目基线一致，54 个导入文件的构建 SHA-256 固定于 [ruffle-wgpu.lock.json](../vendor/ruffle-wgpu.lock.json)，其中 `local_patches` 另存本地修改文件的原始上游 SHA-256 与用途，不批量升级 Ruffle core。workspace 仅启用 wgpu 的本机 Vulkan/WGSL 功能。通过公开 HAL 导入接口创建逻辑设备，在上游同等 limits/features 基础上增加 DRM format modifier 扩展，并拒绝 CPU adapter。
+Vulkan 使用同一官方 Ruffle v0.7.1 的 `render/wgpu/` 和 wgpu 30；当前共享渲染接口与核心同步，原先独立导入的 2026-03-15 后端已升级。[ruffle-wgpu.lock.json](../vendor/ruffle-wgpu.lock.json) 固定构建字节、本地修改的原始上游 SHA-256 与用途。workspace 仅启用 wgpu 的本机 Vulkan/WGSL 功能，noop 仅供主机测试。Leaf 通过公开 HAL 导入接口创建逻辑设备，在上游同等 limits/features 基础上增加 DRM format modifier 扩展，并拒绝 CPU adapter。
 
 Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 导入和 Vulkan 外部内存扩展。[vulkan_backend.rs](../player/sdl2test-rocknix/src/vulkan_backend.rs) 从 `/dev/dri/renderD128` 的 GBM 分配线性 ABGR8888 缓冲区，以明确 modifier/plane layout 导入 Vulkan，在官方 `WgpuRenderBackend` 的自定义 `RenderTarget` 中绘制，再以 EGLImage 作为 GLES 纹理完成全屏呈现；现有 `PauseMenu` 继续叠加菜单、光标和提示。显示链路没有逐帧 CPU 像素读回，不需要替换系统 GPU 驱动或 WSI layer。直接导出 Vulkan 分配再交 EGL 的方案在当前驱动上失败，因此使用共享 GBM 分配。
 
@@ -80,6 +82,8 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 ### 受限内存下的静态绘图资源
 
 `core/src/display_object/graphic.rs` 在首次实际显示时创建静态 `ShapeHandle`，在所有实例间共享；屏外剔除、形状命中检测和预加载不触发 GPU 上传。`core/src/character.rs` 的位图库通过弱引用复用仍存活的纹理，压缩 SWF 素材继续保留，可重新解码。
+
+v0.7.1 的缩放细分缓存继续使用上游 `TessellationCache` 选择合适的形状变体；每个静态变体改由独立 `StaticRenderResource` 持有句柄，并登记到同一个弱引用活动队列。基础及缩放变体共用原闲置字节/条目预算和内存压力退让；被回收的变体从缩放索引移除，再次显示时按实际缩放重新细分。索引不额外保留第二份强句柄，避免新上游缓存绕过既有 Pocket1 预算。
 
 Vulkan 的待完成绘制和最终形状均保留原 `BitmapHandle`，使位图库弱引用在其他形状仍使用同一位图时继续命中；只保留 `TextureView`/bind group 无法保住该句柄。最后一个形状或帧命令释放后，句柄仍可回收并重新加载。直接 BitmapData 的自有 bind-group 缓存不持有自身句柄，避免 Arc 自循环。主机回归使用 wgpu noop 后端，仅验证实际 wgpu 对象的所有权，不验收 Vulkan 像素、同步或性能。
 
@@ -207,6 +211,8 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 核心回归使用实际 Player 和 Null 后端，不进入正式运行路径。来源、夹具和验证边界见[兼容修复报告](validation/upstream-compatibility-20261101.md)。
 
+以下说明是当前保留的行为契约；进入 v0.7.1 的修复沿用官方实现，其余保留适配补丁和既有回归，不重复叠加旧版接口。2026-11-01 报告只证明当时的二进制；升级后的执行结果单独见[稳定版升级记录](validation/ruffle-stable-20261102.md)。
+
 **02a AS3 拖出释放误点击：** 结构等价回退只用于 AVM1，动态 AS3 实例即使 depth/id 相同也保持独立。保留 AVM1 goto 重建按钮的路径。
 
 **02b AS3 拖动和释放的重复悬停事件：** 按住时的 DragOver/DragOut 仅用于 AVM1；AVM2 复用 roll 路径。本地另将释放后的补发 RollOver 限于 AVM1，避免 roll 层被 LCA 抑制后仍重复 mouseOver；光标更新保留。
@@ -241,6 +247,7 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 python scripts/build_player.py build --offline --isolated-config
 python scripts/build_player.py build --offline --isolated-config --tuning pocket1
 python scripts/test_session.py
+python scripts/test_core.py
 python -m unittest discover -s scripts -p test_language.py -v
 python scripts/test_renderer.py
 python scripts/test_renderer.py --suite screenshot
@@ -260,20 +267,24 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuil
 
 `test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
 
+`test_core.py` 在 Windows GNU 主机编译并实际执行 `ruffle_core --lib --tests` 单元及集成测试，使用与 Pocket1 播放器相同的 audio/symphonia/mp3/nellymoser/lzma/default_compatibility_rules/default_font 特性，串行运行并写入 `build/core-test-report.json`。实际 Player、VM、事件、存储和静态缓存使用 Null 后端，包含本地兼容修复回归，以及独立的公开 Player API AVM1 存档集成测试；通过不等于设备输入、GPU 像素、音频听感或游戏性能验收。它与只编译 ARM64 测试的 `build_player.py test --package ruffle_core` 分开记录。
+
+原创 AS3 夹具生成器统一调用 `player/tools/asc/asc.jar`。`make_keyboard_fixtures.py::playerglobal_import_path()` 在 ARM64 debug/release 的核心构建目录选择最新非空 `playerglobal_import.abc`，要求同目录的新版 `playerglobal_avm2.swf` 已生成完成；不回退旧 `playerglobal.swf`，也不从改写过 native table 的 SWF 反提取导入库。`python -m unittest discover -s scripts -p test_playerglobal_fixture_inputs.py -v` 覆盖旧产物拒绝、双 profile 选择与空/未完成输出拒绝。存档兼容回归分别固定旧 AMF3 和 AMF0 writer 字节，通过实际 AVM2/AVM1 读取、改写、checked flush、拒写保留、重试和新 Player 重开；来源、重建及边界见 [AVM2/AMF3 夹具](../player/core/src/player/tests/shared-object-README.md)和 [AVM1/AMF0 夹具](../player/core/tests/fixtures/shared-object-avm1-README.md)。AVM1 SWF 使用原创动作流生成，不依赖 ASC/playerglobal。
+
 `test_renderer.py --suite screenshot` 使用已有渲染库依赖编译前端的实际 PNG 编码模块，验证奇数高度翻转、RGB 像素还原、难压缩全屏的有界输出以及短写/满卡错误传播；没有 SDL/GPU 依赖，不构成实机渲染或完整 OOM 验收。
 
 `test_swf.py` 在 Windows GNU 主机离线编译并实际执行 `swf` 的单元与集成测试；先用等待输入的子进程完成 Windows Job Object 分配，再启动测试，每个测试进程树限制 512 MiB 提交内存和 180 秒，串行运行用例。覆盖上游损坏样本、正常 FWS/CWS/ZWS、超过 128 MiB 的有效流、超过 256 项的场景/帧标签及两款随包游戏与资源的主机解析；结果写入 `build/swf-test-report.json`。测试限额不进入正式播放器，也不代表 Pocket1 游戏运行验收。
 
-`test --package ruffle_core` 只编译 ARM64 release 核心单元测试，不自动执行。静态资源用例可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行。Rust测试框架与应用ELF的系统要求可能不同；既有测试框架需要GLIBC 2.39，仅在隔离目录通过SDK匹配的加载器、libc/libm执行，没有替换设备系统库。当前静态资源测试与隔离运行边界见[缓存验证报告](validation/resource-cache-20261030.md)。
+`test --package ruffle_core` 以 `--lib --tests --no-run` 编译 ARM64 release 核心单元及集成测试，不自动执行。静态资源用例可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行，AVM1 旧档位于独立 `shared_object_avm1-<hash>` 测试 ELF。Rust测试框架与应用ELF的系统要求可能不同；既有测试框架需要GLIBC 2.39，仅在隔离目录通过SDK匹配的加载器、libc/libm执行，没有替换设备系统库。当前静态资源测试与隔离运行边界见[缓存验证报告](validation/resource-cache-20261030.md)，本次目标测试编译结果另见[升级记录](validation/ruffle-stable-20261102.md)。
 
-依赖 Git、Python、Node.js、JDK 17、Rust 1.94.0（Windows GNU 主机及 `aarch64-unknown-linux-gnu` 标准库）、w64devkit 2.1.0、Zig 0.14.1、ARM GNU 14.2 SDK。版本与下载校验见 [Rust 工具锁](../adapter/rust-toolchain.lock.json)、[工具来源锁](../adapter/references.lock.json)和 [ARM SDK 锁](../arm-gnu.lock.json)。
+依赖 Git、Python、Node.js、JDK 17、Rust 1.95.0（Windows GNU 主机及 `aarch64-unknown-linux-gnu` 标准库）、w64devkit 2.1.0、Zig 0.14.1、ARM GNU 14.2 SDK。v0.7.1 的 gc-arena 0.7 使用 Rust 1.95 才稳定的 `ptr::as_ref_unchecked`；按实际编译所需固定该最小足够稳定版本。版本与下载校验见 [Rust 工具锁](../adapter/rust-toolchain.lock.json)、[工具来源锁](../adapter/references.lock.json)和 [ARM SDK 锁](../arm-gnu.lock.json)。
 
 本工作区默认复用 `../work/toolchains/` 的 Rust、w64devkit 和 Cargo 缓存。迁移到其他机器时，在工程根目录配置 `workspace.local.json`（不打入发布包）：
 
 ```json
 {
   "host_tool_cache": "D:/tools/ruffle-host",
-  "rust": "D:/tools/rust-1.94.0",
+  "rust": "D:/tools/rust-1.95.0",
   "host_gcc": "D:/tools/w64devkit",
   "zig": "D:/tools/zig-0.14.1/zig.exe",
   "jdk": "D:/tools/jdk-17"
@@ -291,6 +302,8 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 [package_preview.py](../scripts/package_preview.py) 校验清单版本与 Cargo 版本一致、锁定源码 SHA-256、AArch64 PIE、所需 GLIBC 不高于 2.38，并禁止用原始 leaf-12 播放器冒充源码构建结果。诊断库检查 AArch64 与动态依赖；清单使用固定 Leaf CONTENT-1 契约校验，Shell 文件需 LF，ZIP 内执行位和完整性需通过。
 
+`build_diagnostics.py` 将实际 SDL 拦截与 metrics C 模块连同模拟 SDL 编译为 WASM，在 Node.js 中验证原事件字节、NULL poll、退出探针、context/swap 转发和计时直方图；随后重建 AArch64 诊断 `.so` 并核对 ELF、导出符号和动态依赖。本轮执行与安装/源码 ZIP 的最终构建身份见[稳定版升级记录](validation/ruffle-stable-20261102.md)，不把模拟 SDL 通过当作设备输入或 GPU 验收。
+
 新生成的安装归档名为 `ruffle-leafos-<版本>.zip`，源码归档为 `ruffle-leafos-<版本>-source.zip`；旧交付目录及历史归档保留原名。
 
 安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源、两款定制游戏及许可组成。随包 `README.md` / `README.en.md` 使用当前项目中英文使用指南，支持文档与截图一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、中英文指南、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
@@ -306,7 +319,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_package_bvn_single_
 
 脚本固定已审查的主文件 SHA-256，校验 manifest 中 398 个资源的集合和字节，用确定性 ZIP（DEFLATE，附 FZip 兼容 Adler-32 字段）替换 `DefineBinaryData` 222 的空 ZIP，恢复 `bleachvsnaruto.initlize` 中停用的 19 字节 `ZipAssetLoader` 安装指令。外层为 FWS，不再压缩已经压缩的资源包；完成后从输出 SWF 提取资源逐项复核。
 
-[bvn_single_boot.py](../scripts/bvn_single_boot.py) 还修改 `MainGame.loadGameBack` 和 `EffectModel.cacheEffects`，将原特效对象按原枚举顺序交给 [RuffleSingleSwfBoot.as](../scripts/resources/RuffleSingleSwfBoot.as)，每次计时器执行一个原始 `cacheBitmapData`，全部完成后再调用原启动回调。原缓存方法、特效帧、战斗逻辑及画质默认值保持。原 ABC 只追加一个类名字符串和 QName，旧索引保持；新增 helper ABC 在原主 ABC 前定义。工具使用 Python 标准库、固定 Ruffle ASC、已构建的 `playerglobal.swf` 和 `workspace.local.json` 中的 JDK，与软键盘夹具共用 playerglobal 提取函数，不依赖历史游戏副本。正式安装包继续使用目录版；单文件的额外内存与实机范围见[验证报告](validation/bvn33-single-swf-20261031.md)。
+[bvn_single_boot.py](../scripts/bvn_single_boot.py) 还修改 `MainGame.loadGameBack` 和 `EffectModel.cacheEffects`，将原特效对象按原枚举顺序交给 [RuffleSingleSwfBoot.as](../scripts/resources/RuffleSingleSwfBoot.as)，每次计时器执行一个原始 `cacheBitmapData`，全部完成后再调用原启动回调。原缓存方法、特效帧、战斗逻辑及画质默认值保持。原 ABC 只追加一个类名字符串和 QName，旧索引保持；新增 helper ABC 在原主 ABC 前定义。工具使用 Python 标准库、固定 Ruffle ASC、已构建的 `playerglobal_import.abc` 和 `workspace.local.json` 中的 JDK，与软键盘夹具共用当前 playerglobal 选择函数，不依赖历史游戏副本。正式安装包继续使用目录版；单文件的额外内存与实机范围见[验证报告](validation/bvn33-single-swf-20261031.md)。
 
 主机测试与静态校验后，还需按改动执行真机隔离验证、正式 Flash/Apps 通路、用户数据前后比对、安装文件指纹核对。开发时复用当前会话提供的 ADB 地址连接、截图和读取日志，不将临时地址视为固定配置。隔离验证使用单独数据目录，完整流程与具体发布结论查对应[进度及证据](progress.md)。
 
@@ -323,7 +336,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_package_bvn_single_
 
 [release.py](../scripts/release.py) 在编译前检查版本一致性、源码锁和已有 tag。版本未变化时跳过构建；版本变化但锁未更新时明确失败。`v<版本>` 已指向其他提交时拒绝覆盖，必须升新版本。相同提交重跑时允许继续；已发布的 Release 保留原附件，上传中断留下的草稿可补传并发布。发布使用 GitHub concurrency，每次只运行一个工作流，保留正在进行的构建；多次快速推送时 GitHub 只保留最新的待运行请求。
 
-构建在 `windows-2022` 上执行，复用现有 Windows GNU → ARM64 路线。[setup_release_tools.py](../scripts/setup_release_tools.py) 按已有工具锁下载并逐个校验 Rust 1.94.0（含 GNU 主机和 ARM64 标准库）、w64devkit 2.1.0、Zig 0.14.1 和 ARM GNU 14.2 SDK，在工程 `.tools/` 中解包，并生成忽略的 `workspace.local.json`。Python 3.12、Node.js 22、JDK 17 由工作流准备，7-Zip 由 runner 提供。工具和 Cargo 下载缓存分别保存在 `.tools/` 和根目录 `work/toolchains/cargo-home/`；每次仍从源码编译播放器，不缓存成品播放器。
+构建在 `windows-2022` 上执行，复用现有 Windows GNU → ARM64 路线。[setup_release_tools.py](../scripts/setup_release_tools.py) 按已有工具锁下载并逐个校验 Rust 1.95.0（含 GNU 主机和 ARM64 标准库）、w64devkit 2.1.0、Zig 0.14.1 和 ARM GNU 14.2 SDK，在工程 `.tools/` 中解包，并生成忽略的 `workspace.local.json`。Python 3.12、Node.js 22、JDK 17 由工作流准备，7-Zip 由 runner 提供。工具和 Cargo 下载缓存分别保存在 `.tools/` 和根目录 `work/toolchains/cargo-home/`；每次仍从源码编译播放器，不缓存成品播放器。
 
 完整流水线依次执行：发布脚本回归、ARM64 release 编译、主机输入/状态回归、随包游戏完整性与安装路径回归、诊断库编译与测试、现有打包脚本的 ELF/GLIBC/源码/清单/ZIP 校验。自动打包不加 `--include-source`，只向 Release 附加一个 `ruffle-leafos-<版本>.zip`；GitHub 自带的 Source code 下载由平台生成。ZIP 顶层直接是 `Apps/`、`Roms/`、`Images/`，不含本机配置、SDK、构建缓存或外层版本目录。
 
@@ -341,8 +354,9 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 
 | 保留内容 | 来源与保留理由 |
 | --- | --- |
-| Ruffle 与前端基线 | aweigit/ruffle-miyooflip 提交 `3bc39c5e0fdbc9fcde92681706395f6ef70f991b`，本项目变动及指纹见 [leaf-source.lock.json](../leaf-source.lock.json)。已移除独立 Miyoo Flip 前端 `sdl2test-flip` 及其构建入口；保留 Pocket1 前端、共享核心、其他现存 Cargo workspace 成员、共享头文件、构建资源和测试 SWF/ZIP，上游来源与许可不变，不凭扩展名删除测试数据 |
-| 官方 wgpu 后端 | Ruffle 提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856` 的 54 个导入文件；[来源锁](../vendor/ruffle-wgpu.lock.json) 固定构建字节、本地修改的原始指纹与双许可，打包验证并随包附带来源锁 |
+| 当前 Ruffle 基线 | 官方 `ruffle-rs/ruffle` 稳定版 v0.7.1，提交 `89a7049965f3090e706265670df309a5128233ac`；[leaf-source.lock.json](../leaf-source.lock.json) 记录来源及本地构建输入指纹。核心、共享库及官方渲染模块一起升级，保留 Pocket1 前端、其他现存 Cargo workspace 成员、共享头文件、构建资源和测试 SWF/ZIP，不凭扩展名删除测试数据 |
+| 前端历史来源 | `aweigit/ruffle-miyooflip@3bc39c5e0fdbc9fcde92681706395f6ef70f991b`；必要 VM/加载/音频差异及 Leaf 定制随本次迁移核对。`adapter/player-source.lock.json` 继续描述原始来源，不覆写成新核心来源；已删除的 `sdl2test-flip` 前端保持移除 |
+| 官方 wgpu 后端 | 与核心同一 Ruffle v0.7.1 提交，使用 wgpu 30；[来源锁](../vendor/ruffle-wgpu.lock.json) 固定构建字节、本地修改的原始指纹与双许可，打包验证并随包附带来源锁。GBM/DMA-BUF/EGL 显示桥继续由本项目维护 |
 | Jawaka 参考 | 提交 `915c48595fbd20ec56a9d23b2fc1f39a4f6f8803`，仅保留七个菜单/主题/设置/许可文件；[来源与逐文件指纹](../vendor/jawaka.lock.json) |
 | Leaf 契约 | [references.lock.json](../adapter/references.lock.json) 固定的 leaf-contracts 提交；schema、校验器与测试夹具是版本化契约输入 |
 | 原始 leaf-12 | 用户提供的原始播放器、库、字体及来源清单；[runtime.lock.json](../adapter/runtime.lock.json) 固定指纹。原始播放器用于对照与早期 adapter 校验，当前安装包使用新构建播放器 |
@@ -350,7 +364,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 | adapter | C 诊断/输入库及其测试由当前工程复用；旧封装、来源审计与早期包保留用于回归和追溯，历史行为以其原文版本为准 |
 | 定制游戏 | 2026-10-28 按用户要求收录掌机两份优化副本，统一 `-定制版` 名称；主 SWF 和资源保持设备字节，来源、指纹和第三方权利说明见 [games/](../games/README.md) |
 
-原始 leaf-12 并非所有私有补丁均有公开源码；本工程基于固定公开基线重做 Leaf 前端，不声称能字节一致复现原包。第三方许可见[声明](THIRD_PARTY.md)。
+原始 leaf-12 并非所有私有补丁均有公开源码；Leaf 前端最初基于固定公开 fork 重做，此后保留定制并迁移到官方稳定核心，不声称能字节一致复现原包。第三方许可见[声明](THIRD_PARTY.md)。
 
 Git 收录项目源码、必要资源与测试、配置、文档、依赖锁和明确用途的固定输入。`outputs/`、`work/`、`adb-tools/`、`flash-transfer/`、工程 `.tools/` 与 `build/`、所有 target/构建缓存、本机 `workspace.local.json`、环境文件和编辑器缓存均由根 [.gitignore](../../.gitignore) 排除。不要全局忽略 `.so`、`.jar`、`.zip` 或 `.swf`：其中有必要依赖与测试夹具。
 

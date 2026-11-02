@@ -27,6 +27,7 @@ pub(super) fn player_for_swf(data: &[u8]) -> (Arc<Mutex<Player>>, TraceLog) {
         data,
         "file:///compatibility-test.swf".to_owned(),
         None,
+        None,
     ).unwrap();
     let trace = TraceLog::default();
     let player = PlayerBuilder::new()

@@ -302,21 +302,39 @@ impl<'gc> ClassObject<'gc> {
             .c_class()
             .expect("ClassObject should have an i_class");
 
-        // Bind all the methods that are declared on the i_class and c_class
-        i_class.bind_methods(activation, MethodAssociation::classbound(i_class, false))?;
-        c_class.bind_methods(activation, MethodAssociation::classbound(c_class, false))?;
-
-        i_class
+        let instance_init = i_class
             .instance_init()
-            .expect("Cannot create ClassObject for Class without init")
-            .associate(activation, MethodAssociation::classbound(i_class, false))?;
+            .expect("Cannot create ClassObject for Class without init");
+
+        let class_init = c_class
+            .instance_init()
+            .expect("c_class always has initializer");
+
+        let class_class = activation.avm2().classes().class;
+        let superclass_object = self.superclass_object();
+
+        // Bind all the methods that are declared on the i_class and c_class
+        i_class.bind_methods(
+            activation,
+            MethodAssociation::classbound(i_class, superclass_object, false),
+        )?;
+        c_class.bind_methods(
+            activation,
+            MethodAssociation::classbound(c_class, Some(class_class), false),
+        )?;
+
+        // Bind the instance initializer
+        instance_init.associate(
+            activation,
+            MethodAssociation::classbound(i_class, superclass_object, false),
+        )?;
 
         // The class initializer (but not the instance initializer) is always
         // in "interpreter mode"
-        c_class
-            .instance_init()
-            .expect("c_class always has initializer")
-            .associate(activation, MethodAssociation::classbound(c_class, true))?;
+        class_init.associate(
+            activation,
+            MethodAssociation::classbound(c_class, Some(class_class), true),
+        )?;
 
         Ok(())
     }
@@ -426,7 +444,7 @@ impl<'gc> ClassObject<'gc> {
     ) -> Result<Value<'gc>, Error<'gc>> {
         let property = self.instance_vtable().get_trait(multiname);
         match property {
-            Some(Property::Slot { slot_id }) | Some(Property::ConstSlot { slot_id }) => {
+            Some(Property::Slot { slot_id } | Property::ConstSlot { slot_id }) => {
                 let func = receiver.get_slot(slot_id);
 
                 func.call(activation, receiver.into(), arguments)
@@ -488,7 +506,7 @@ impl<'gc> ClassObject<'gc> {
         let property = self.instance_vtable().get_trait(multiname);
 
         match property {
-            Some(Property::Slot { slot_id }) | Some(Property::ConstSlot { slot_id }) => {
+            Some(Property::Slot { slot_id } | Property::ConstSlot { slot_id }) => {
                 Ok(receiver.get_slot(slot_id))
             }
             Some(Property::Method { disp_id }) => {
@@ -574,7 +592,7 @@ impl<'gc> ClassObject<'gc> {
 
                 Ok(())
             }
-            Some(Property::ConstSlot { .. }) | Some(Property::Virtual { set: None, .. }) => {
+            Some(Property::ConstSlot { .. } | Property::Virtual { set: None, .. }) => {
                 if activation.is_interpreter() {
                     Err(error::make_reference_error(
                         activation,
@@ -687,7 +705,6 @@ impl<'gc> ClassObject<'gc> {
         arguments: FunctionArgs<'_, 'gc>,
     ) -> Result<Value<'gc>, Error<'gc>> {
         if let Some(call_handler) = self.call_handler() {
-            let arguments = &arguments.to_slice();
             call_handler(activation, self.into(), arguments)
         } else if arguments.len() == 1 {
             arguments
@@ -712,7 +729,6 @@ impl<'gc> ClassObject<'gc> {
         arguments: FunctionArgs<'_, 'gc>,
     ) -> Result<Value<'gc>, Error<'gc>> {
         if let Some(custom_constructor) = self.custom_constructor() {
-            let arguments = &arguments.to_slice();
             custom_constructor(activation, arguments)
         } else {
             let instance_allocator = self.instance_allocator();

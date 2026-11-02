@@ -1,12 +1,13 @@
 //! `flash.display.DisplayObjectContainer` builtin/prototype
 
+use crate::avm2::function::FunctionArgs;
 use swf::Point;
 use swf::Twips;
 
 use crate::avm2::activation::Activation;
 use crate::avm2::error::{
-    make_error_2006, make_error_2024, make_error_2025, make_error_2150, make_error_2180,
-    make_error_3783,
+    Error2006Type, make_error_2006, make_error_2024, make_error_2025, make_error_2150,
+    make_error_2180, make_error_3783,
 };
 use crate::avm2::globals::slots::flash_geom_point as point_slots;
 use crate::avm2::object::{Object, TObject as _};
@@ -16,7 +17,9 @@ use crate::avm2::{ArrayObject, ArrayStorage, Error};
 use crate::avm2_stub_method;
 use crate::context::UpdateContext;
 use crate::display_object::HitTestOptions;
-use crate::display_object::{DisplayObject, TDisplayObject, TDisplayObjectContainer};
+use crate::display_object::{
+    DisplayObject, DisplayObjectContainer, TDisplayObject, TDisplayObjectContainer,
+};
 use std::cmp::min;
 
 /// Validate if we can add a child to a parent at a given index.
@@ -58,7 +61,7 @@ fn validate_add_operation<'gc>(
     }
 
     if proposed_index > ctr.num_children() {
-        return Err(make_error_2006(activation));
+        return Err(make_error_2006(activation, Error2006Type::RangeError));
     }
 
     Ok(())
@@ -89,11 +92,11 @@ fn validate_remove_operation<'gc>(
 
 /// Remove an element from it's parent display list.
 fn remove_child_from_displaylist<'gc>(context: &mut UpdateContext<'gc>, child: DisplayObject<'gc>) {
-    if let Some(parent) = child.parent() {
-        if let Some(mut ctr) = parent.as_container() {
-            child.set_placed_by_avm2_script(true);
-            ctr.remove_child(context, child);
-        }
+    if let Some(parent) = child.parent()
+        && let Some(mut ctr) = parent.as_container()
+    {
+        child.set_placed_by_avm2_script(true);
+        ctr.remove_child(context, child);
     }
 }
 
@@ -114,7 +117,7 @@ pub(super) fn add_child_to_displaylist<'gc>(
 pub fn get_child_at<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -126,7 +129,7 @@ pub fn get_child_at<'gc>(
         return if let Some(child) = dobj.child_by_index(index as usize) {
             Ok(child.object2_or_null())
         } else {
-            Err(make_error_2006(activation))
+            Err(make_error_2006(activation, Error2006Type::RangeError))
         };
     }
 
@@ -137,7 +140,7 @@ pub fn get_child_at<'gc>(
 pub fn get_child_by_name<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -160,24 +163,24 @@ pub fn get_child_by_name<'gc>(
 pub fn add_child<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if let Some(ctr) = parent.as_container() {
-            let child = args
-                .get_object(activation, 0, "child")?
-                .as_display_object()
-                .expect("Child must be a display object");
+    if let Some(parent) = this.as_display_object()
+        && let Some(ctr) = parent.as_container()
+    {
+        let child = args
+            .get_object(activation, 0, "child")?
+            .as_display_object()
+            .expect("Child must be a display object");
 
-            let target_index = ctr.num_children();
+        let target_index = ctr.num_children();
 
-            validate_add_operation(activation, parent, child, target_index)?;
-            add_child_to_displaylist(activation.context, parent, child, target_index);
+        validate_add_operation(activation, parent, child, target_index)?;
+        add_child_to_displaylist(activation.context, parent, child, target_index);
 
-            return Ok(child.object2_or_null());
-        }
+        return Ok(child.object2_or_null());
     }
 
     Ok(Value::Null)
@@ -187,7 +190,7 @@ pub fn add_child<'gc>(
 pub fn add_child_at<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -211,7 +214,7 @@ pub fn add_child_at<'gc>(
 pub fn remove_child<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -234,7 +237,7 @@ pub fn remove_child<'gc>(
 pub fn get_num_children<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -242,7 +245,7 @@ pub fn get_num_children<'gc>(
         .as_display_object()
         .and_then(|this| this.as_container())
     {
-        return Ok(parent.num_children().into());
+        return Ok(Value::from_usize_lossy(parent.num_children()));
     }
 
     Ok(0.into())
@@ -252,22 +255,21 @@ pub fn get_num_children<'gc>(
 pub fn contains<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if parent.as_container().is_some() {
-            if let Some(child) = args.get_object(activation, 0, "child")?.as_display_object() {
-                let mut maybe_child_parent = Some(child);
-                while let Some(child_parent) = maybe_child_parent {
-                    if DisplayObject::ptr_eq(child_parent, parent) {
-                        return Ok(true.into());
-                    }
-
-                    maybe_child_parent = child_parent.parent();
-                }
+    if let Some(parent) = this.as_display_object()
+        && parent.as_container().is_some()
+        && let Some(child) = args.get_object(activation, 0, "child")?.as_display_object()
+    {
+        let mut maybe_child_parent = Some(child);
+        while let Some(child_parent) = maybe_child_parent {
+            if DisplayObject::ptr_eq(child_parent, parent) {
+                return Ok(true.into());
             }
+
+            maybe_child_parent = child_parent.parent();
         }
     }
 
@@ -278,19 +280,19 @@ pub fn contains<'gc>(
 pub fn get_child_index<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if let Some(ctr) = parent.as_container() {
-            let target_child = args.get_object(activation, 0, "child")?.as_display_object();
+    if let Some(parent) = this.as_display_object()
+        && let Some(ctr) = parent.as_container()
+    {
+        let target_child = args.get_object(activation, 0, "child")?.as_display_object();
 
-            if let Some(target_child) = target_child {
-                for (i, child) in ctr.iter_render_list().enumerate() {
-                    if DisplayObject::ptr_eq(child, target_child) {
-                        return Ok(i.into());
-                    }
+        if let Some(target_child) = target_child {
+            for (i, child) in ctr.iter_render_list().enumerate() {
+                if DisplayObject::ptr_eq(child, target_child) {
+                    return Ok(Value::from_usize_lossy(i));
                 }
             }
         }
@@ -303,25 +305,25 @@ pub fn get_child_index<'gc>(
 pub fn remove_child_at<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if let Some(mut ctr) = parent.as_container() {
-            let target_child = args.get_i32(0);
+    if let Some(parent) = this.as_display_object()
+        && let Some(mut ctr) = parent.as_container()
+    {
+        let target_child = args.get_i32(0);
 
-            if target_child >= ctr.num_children() as i32 || target_child < 0 {
-                return Err(make_error_2006(activation));
-            }
-
-            let child = ctr.child_by_index(target_child as usize).unwrap();
-            child.set_placed_by_avm2_script(true);
-
-            ctr.remove_child(activation.context, child);
-
-            return Ok(child.object2_or_null());
+        if target_child >= ctr.num_children() as i32 || target_child < 0 {
+            return Err(make_error_2006(activation, Error2006Type::RangeError));
         }
+
+        let child = ctr.child_by_index(target_child as usize).unwrap();
+        child.set_placed_by_avm2_script(true);
+
+        ctr.remove_child(activation.context, child);
+
+        return Ok(child.object2_or_null());
     }
 
     Ok(Value::Null)
@@ -331,36 +333,36 @@ pub fn remove_child_at<'gc>(
 pub fn remove_children<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if let Some(mut ctr) = parent.as_container() {
-            let from = args.get_i32(0);
-            let to = args.get_i32(1);
+    if let Some(parent) = this.as_display_object()
+        && let Some(mut ctr) = parent.as_container()
+    {
+        let from = args.get_i32(0);
+        let to = args.get_i32(1);
 
-            // Flash special-cases `to==i32::MAX` to not throw an error,
-            // even if `from` is not in range
-            // https://github.com/ruffle-rs/ruffle/issues/11382
+        // Flash special-cases `to==i32::MAX` to not throw an error,
+        // even if `from` is not in range
+        // https://github.com/ruffle-rs/ruffle/issues/11382
 
-            if (from >= ctr.num_children() as i32 || from < 0) && to != i32::MAX {
-                return Err(make_error_2006(activation));
-            }
-
-            if (to >= ctr.num_children() as i32 || to < 0) && to != i32::MAX {
-                return Err(make_error_2006(activation));
-            }
-
-            if from > to {
-                return Err(make_error_2006(activation));
-            }
-
-            ctr.remove_range(
-                activation.context,
-                from as usize..min(ctr.num_children(), to as usize + 1),
-            );
+        if (from >= ctr.num_children() as i32 || from < 0) && to != i32::MAX {
+            return Err(make_error_2006(activation, Error2006Type::RangeError));
         }
+
+        if (to >= ctr.num_children() as i32 || to < 0) && to != i32::MAX {
+            return Err(make_error_2006(activation, Error2006Type::RangeError));
+        }
+
+        if from > to {
+            return Err(make_error_2006(activation, Error2006Type::RangeError));
+        }
+
+        ctr.remove_range(
+            activation.context,
+            from as usize..min(ctr.num_children(), to as usize + 1),
+        );
     }
 
     Ok(Value::Undefined)
@@ -370,7 +372,7 @@ pub fn remove_children<'gc>(
 pub fn set_child_index<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -397,32 +399,32 @@ pub fn set_child_index<'gc>(
 pub fn swap_children_at<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if let Some(mut ctr) = parent.as_container() {
-            let index0 = args.get_i32(0);
-            let index1 = args.get_i32(1);
-            let bounds = ctr.num_children();
+    if let Some(parent) = this.as_display_object()
+        && let Some(mut ctr) = parent.as_container()
+    {
+        let index0 = args.get_i32(0);
+        let index1 = args.get_i32(1);
+        let bounds = ctr.num_children();
 
-            if index0 < 0 || index0 as usize >= bounds {
-                return Err(make_error_2006(activation));
-            }
-
-            if index1 < 0 || index1 as usize >= bounds {
-                return Err(make_error_2006(activation));
-            }
-
-            let child0 = ctr.child_by_index(index0 as usize).unwrap();
-            let child1 = ctr.child_by_index(index1 as usize).unwrap();
-
-            child0.set_placed_by_avm2_script(true);
-            child1.set_placed_by_avm2_script(true);
-
-            ctr.swap_at_index(activation.context, index0 as usize, index1 as usize);
+        if index0 < 0 || index0 as usize >= bounds {
+            return Err(make_error_2006(activation, Error2006Type::RangeError));
         }
+
+        if index1 < 0 || index1 as usize >= bounds {
+            return Err(make_error_2006(activation, Error2006Type::RangeError));
+        }
+
+        let child0 = ctr.child_by_index(index0 as usize).unwrap();
+        let child1 = ctr.child_by_index(index1 as usize).unwrap();
+
+        child0.set_placed_by_avm2_script(true);
+        child1.set_placed_by_avm2_script(true);
+
+        ctr.swap_at_index(activation.context, index0 as usize, index1 as usize);
     }
 
     Ok(Value::Undefined)
@@ -432,37 +434,37 @@ pub fn swap_children_at<'gc>(
 pub fn swap_children<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if let Some(mut ctr) = parent.as_container() {
-            let child0 = args
-                .get_object(activation, 0, "child")?
-                .as_display_object()
-                .expect("Child must be a display object");
+    if let Some(parent) = this.as_display_object()
+        && let Some(mut ctr) = parent.as_container()
+    {
+        let child0 = args
+            .get_object(activation, 0, "child")?
+            .as_display_object()
+            .expect("Child must be a display object");
 
-            let index0 = ctr
-                .iter_render_list()
-                .position(|a| DisplayObject::ptr_eq(a, child0))
-                .ok_or(make_error_2025(activation))?;
+        let index0 = ctr
+            .iter_render_list()
+            .position(|a| DisplayObject::ptr_eq(a, child0))
+            .ok_or(make_error_2025(activation))?;
 
-            let child1 = args
-                .get_object(activation, 1, "child")?
-                .as_display_object()
-                .expect("Child must be a display object");
+        let child1 = args
+            .get_object(activation, 1, "child")?
+            .as_display_object()
+            .expect("Child must be a display object");
 
-            let index1 = ctr
-                .iter_render_list()
-                .position(|a| DisplayObject::ptr_eq(a, child1))
-                .ok_or(make_error_2025(activation))?;
+        let index1 = ctr
+            .iter_render_list()
+            .position(|a| DisplayObject::ptr_eq(a, child1))
+            .ok_or(make_error_2025(activation))?;
 
-            child0.set_placed_by_avm2_script(true);
-            child1.set_placed_by_avm2_script(true);
+        child0.set_placed_by_avm2_script(true);
+        child1.set_placed_by_avm2_script(true);
 
-            ctr.swap_at_index(activation.context, index0, index1);
-        }
+        ctr.swap_at_index(activation.context, index0, index1);
     }
 
     Ok(Value::Undefined)
@@ -472,24 +474,34 @@ pub fn swap_children<'gc>(
 pub fn stop_all_movie_clips<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(parent) = this.as_display_object() {
-        if let Some(mc) = parent.as_movie_clip() {
-            mc.stop(activation.context);
-        }
+    if let Some(parent) = this.as_display_object()
+        && let Some(container) = parent.as_container()
+    {
+        fn stop_recursive<'gc>(
+            context: &mut UpdateContext<'gc>,
+            container: DisplayObjectContainer<'gc>,
+        ) {
+            if let Some(mc) = DisplayObject::from(container).as_movie_clip() {
+                mc.stop(context);
+            }
 
-        if let Some(ctr) = parent.as_container() {
-            for child in ctr.iter_render_list() {
-                if child.as_container().is_some() {
-                    if let Some(child_this) = child.object2() {
-                        stop_all_movie_clips(activation, child_this.into(), &[])?;
-                    }
+            for child in container.iter_render_list() {
+                // NOTE: FP segfaults here if `child.object2().is_none()` (i.e.
+                // a descendant of the object that `stopAllMovieClips` was
+                // initially called on does not yet have its AVM2 object
+                // constructed)
+
+                if let Some(child_container) = child.as_container() {
+                    stop_recursive(context, child_container);
                 }
             }
         }
+
+        stop_recursive(activation.context, container);
     }
 
     Ok(Value::Undefined)
@@ -498,7 +510,7 @@ pub fn stop_all_movie_clips<'gc>(
 pub fn get_objects_under_point<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let thisobj = this.as_object().unwrap();
 
@@ -527,7 +539,7 @@ pub fn get_objects_under_point<'gc>(
     while let Some(child) = children.pop() {
         let obj = child.object2();
         if let Some(obj) = obj {
-            let obj = Object::StageObject(obj);
+            let obj: Object<'gc> = obj.into();
 
             if obj != thisobj && child.hit_test_shape(activation.context, point, options) {
                 under_point.push(Some(obj.into()));
@@ -549,7 +561,7 @@ pub fn get_objects_under_point<'gc>(
 pub fn are_inaccessible_objects_under_point<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     avm2_stub_method!(
         activation,
@@ -562,7 +574,7 @@ pub fn are_inaccessible_objects_under_point<'gc>(
 pub fn get_mouse_children<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -578,7 +590,7 @@ pub fn get_mouse_children<'gc>(
 pub fn set_mouse_children<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -597,7 +609,7 @@ pub fn set_mouse_children<'gc>(
 pub fn get_tab_children<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -614,7 +626,7 @@ pub fn get_tab_children<'gc>(
 pub fn set_tab_children<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

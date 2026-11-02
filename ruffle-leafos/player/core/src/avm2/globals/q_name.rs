@@ -1,19 +1,19 @@
 //! `QName` impl
 
+use crate::avm2::function::FunctionArgs;
 use ruffle_macros::istr;
 
-use crate::avm2::Error;
-use crate::avm2::Namespace;
 use crate::avm2::activation::Activation;
 use crate::avm2::api_version::ApiVersion;
-use crate::avm2::object::{Object, QNameObject};
+use crate::avm2::object::QNameObject;
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::value::Value;
+use crate::avm2::{Error, Multiname, Namespace};
 
 pub fn call_handler<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     if let Some(arg0) = args.get_optional(0).filter(|_| args.len() == 1) {
         // 1. If Namespace is not specified and Type(Name) is Object and Name.[[Class]] == “QName”
@@ -29,29 +29,24 @@ pub fn call_handler<'gc>(
         .avm2()
         .classes()
         .qname
-        .construct(activation, args)
+        .construct_with_args(activation, args)
 }
 
 /// Implements a custom constructor for `QName`.
 pub fn q_name_constructor<'gc>(
     activation: &mut Activation<'_, 'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
-    let this = QNameObject::new_empty(activation);
-
-    let namespace = if args.len() >= 2 {
+    let (namespace, local_name) = if args.len() >= 2 {
         let ns_arg = args.get_value(0);
-        let mut local_arg = args.get_value(1);
+        let local_arg = args.get_value(1);
 
-        if matches!(local_arg, Value::Undefined) {
-            local_arg = istr!("").into();
-        }
-
+        // Parse the namespace
         let api_version = activation.avm2().root_api_version;
 
         let namespace = match ns_arg {
-            Value::Object(Object::NamespaceObject(ns)) => Some(ns.namespace()),
-            Value::Object(Object::QNameObject(qname)) => qname
+            Value::Object(o) if let Some(ns) = o.as_namespace_object() => Some(ns.namespace()),
+            Value::Object(o) if let Some(qname) = o.as_qname_object() => qname
                 .uri(activation.strings())
                 .map(|uri| Namespace::package(uri, ApiVersion::AllVersions, activation.strings())),
             Value::Null => None,
@@ -67,47 +62,55 @@ pub fn q_name_constructor<'gc>(
             )),
         };
 
-        if let Value::Object(Object::QNameObject(qname)) = local_arg {
-            this.set_local_name(activation.gc(), qname.local_name(activation.strings()));
-        } else {
-            this.set_local_name(activation.gc(), local_arg.coerce_to_string(activation)?);
-        }
+        // Parse the local name
+        let local_name = match local_arg {
+            Value::Object(o) if let Some(qname) = o.as_qname_object() => {
+                qname.local_name(activation.strings())
+            }
+            Value::Undefined => istr!(""),
+            other => other.coerce_to_string(activation)?,
+        };
 
-        namespace
+        (namespace, Some(local_name))
     } else {
         let qname_arg = args.get_optional(0).unwrap_or(Value::Undefined);
-        if let Value::Object(Object::QNameObject(qname_obj)) = qname_arg {
-            this.init_name(activation.gc(), qname_obj.name().clone());
-            return Ok(this.into());
+        if let Some(qname_obj) = qname_arg.as_object().and_then(|o| o.as_qname_object()) {
+            let new_qname = QNameObject::from_name(activation, qname_obj.name().clone());
+            return Ok(new_qname.into());
         }
 
-        let local = if qname_arg == Value::Undefined {
+        let local = if matches!(qname_arg, Value::Undefined) {
             istr!("")
         } else {
             qname_arg.coerce_to_string(activation)?
         };
 
         if &*local != b"*" {
-            this.set_local_name(activation.gc(), local);
-            Some(activation.avm2().find_public_namespace())
+            (Some(activation.avm2().find_public_namespace()), Some(local))
         } else {
-            None
+            (None, None)
         }
     };
 
+    let mut multiname = Multiname::any();
+
     if let Some(namespace) = namespace {
-        this.set_namespace(activation.gc(), namespace);
-        this.set_is_qname(activation.gc(), true);
+        multiname.set_single_namespace(namespace);
+        multiname.set_is_qname(true);
+    }
+    if let Some(local_name) = local_name {
+        multiname.set_local_name(local_name);
     }
 
-    Ok(this.into())
+    let created_qname = QNameObject::from_name(activation, multiname);
+    Ok(created_qname.into())
 }
 
 /// Implements `QName.localName`'s getter
 pub fn get_local_name<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -122,7 +125,7 @@ pub fn get_local_name<'gc>(
 pub fn get_uri<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -139,7 +142,7 @@ pub fn get_uri<'gc>(
 pub fn to_string<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

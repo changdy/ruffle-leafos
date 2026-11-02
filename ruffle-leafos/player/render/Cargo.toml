@@ -15,8 +15,9 @@ ruffle_wstr = { path = "../wstr" }
 swf = { path = "../swf"}
 pixel_bender = { path = "pixel_bender"}
 tracing = { workspace = true }
-gif = "0.14.1"
-png = "0.18.1"
+gif = "0.14.2"
+png = { workspace = true }
+image = { workspace = true }
 flate2 = { workspace = true }
 smallvec = { workspace = true }
 lyon = { version = "1.0.1", optional = true }
@@ -26,13 +27,15 @@ wasm-bindgen = { workspace = true, optional = true }
 enum-map = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 clap = { workspace = true, optional = true }
-h263-rs-yuv = { git = "https://github.com/ruffle-rs/h263-rs", rev = "b3f905511acc7b80861dac45fdc5ca913b6029e5"}
+h263-rs-yuv = { git = "https://github.com/ruffle-rs/h263-rs", rev = "27ee833ca97aadd2a14cf0b3b4ec8b53f31ff6bd" }
 num-traits = { workspace = true }
 num-derive = { workspace = true }
 byteorder = { workspace = true }
 wgpu = { workspace = true, optional = true }
 indexmap = { workspace = true }
 naga-agal = { path = "naga-agal" }
+jpegxr = { workspace = true, optional = true }
+guillotiere = "0.7.0"
 
 # This crate has a `compile_error!` on apple platforms
 [target.'cfg(not(target_vendor = "apple"))'.dependencies.renderdoc]
@@ -52,3 +55,4 @@ tessellator = ["lyon"]
 web = ["wasm-bindgen"]
 wgpu = ["dep:wgpu"]
 serde = ["dep:serde"]
+jpegxr = ["dep:jpegxr", "image/tiff"]

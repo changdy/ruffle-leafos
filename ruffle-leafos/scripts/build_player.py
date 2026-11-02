@@ -21,7 +21,7 @@ parser.add_argument('--debug', action='store_true')
 parser.add_argument('--tuning', choices=['generic', 'pocket1'], default='generic',
                     help='generic (default): existing opt-level 2/no cross-crate LTO; pocket1: experimental Cortex-A55, release opt-level 3 and ThinLTO')
 parser.add_argument('--package', choices=['sdl2test-rocknix', 'ruffle_core'], default='sdl2test-rocknix',
-                    help='Use ruffle_core with test to compile ARM64 core unit tests')
+                    help='Use ruffle_core with test to compile ARM64 core unit and integration tests')
 args = parser.parse_args()
 if args.package == 'ruffle_core' and args.action != 'test':
     parser.error('--package ruffle_core requires the test action')
@@ -30,7 +30,8 @@ if args.action == 'build':
 local = ROOT / 'workspace.local.json'
 settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
 cache = Path(settings.get('host_tool_cache', ROOT.parent / 'work' / 'toolchains'))
-rust = Path(settings.get('rust', cache / 'rust-1.94.0'))
+rust_version = json.loads((ROOT / 'adapter/rust-toolchain.lock.json').read_text(encoding='utf8'))['rust_version']
+rust = Path(settings.get('rust', cache / ('rust-' + rust_version)))
 mingw = Path(settings.get('host_gcc', cache / 'w64devkit'))
 lock = json.loads((ROOT / 'arm-gnu.lock.json').read_text(encoding='utf8'))
 cross = ROOT / lock['root']
@@ -97,7 +98,7 @@ cargo = rust / 'bin' / 'cargo.exe'
 command = [str(cargo), args.action, '--locked', '--target', 'aarch64-unknown-linux-gnu',
            '-p', args.package, '-j', str(args.jobs)]
 if args.package == 'ruffle_core':
-    command += ['--lib', '--release', '--features',
+    command += ['--lib', '--tests', '--release', '--features',
                 'audio,symphonia,mp3,nellymoser,lzma,default_compatibility_rules,default_font']
 if args.offline:
     command.append('--offline')

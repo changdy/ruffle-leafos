@@ -94,7 +94,7 @@ package {
                 }
 
                 if (!(this is String)) {
-                    throw new TypeError("Error #1004: Method String.prototype.toString was invoked on an incompatible object.", 1004);
+                    Error.throwError(TypeError, 1004, "String.prototype.toString");
                 }
 
                 return this;
@@ -106,7 +106,7 @@ package {
                 }
 
                 if (!(this is String)) {
-                    throw new TypeError("Error #1004: Method String.prototype.valueOf was invoked on an incompatible object.", 1004);
+                    Error.throwError(TypeError, 1004, "String.prototype.valueOf");
                 }
 
                 return this;
@@ -154,6 +154,7 @@ package {
 
         AS3 native function concat(...rest):String;
 
+        [Ruffle(FastCall)]
         AS3 native function indexOf(str:String = "undefined", index:Number = 0):int;
 
         AS3 native function lastIndexOf(str:String = "undefined", index:Number = 2147483647.0):int;

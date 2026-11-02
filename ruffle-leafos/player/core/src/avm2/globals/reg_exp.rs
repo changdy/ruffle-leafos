@@ -1,11 +1,12 @@
 //! `RegExp` impl
 
+use crate::avm2::function::FunctionArgs;
 use ruffle_macros::istr;
 
 use crate::avm2::Error;
 use crate::avm2::activation::Activation;
 use crate::avm2::error::make_error_1100;
-use crate::avm2::object::{ArrayObject, Object, TObject as _};
+use crate::avm2::object::{ArrayObject, TObject as _};
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::regexp::RegExpFlags;
 use crate::avm2::value::Value;
@@ -17,20 +18,22 @@ pub use crate::avm2::object::reg_exp_allocator;
 pub fn init<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
     if let Some(mut regexp) = this.as_regexp_mut(activation.gc()) {
-        let source: AvmString<'gc> = match args.get_value(0) {
+        let source = match args.get_value(0) {
             Value::Undefined => istr!(""),
-            Value::Object(Object::RegExpObject(o)) => {
+            Value::Object(o) if let Some(re) = o.as_regexp_object() => {
                 if !matches!(args.get_value(1), Value::Undefined) {
                     return Err(make_error_1100(activation));
                 }
-                let other = o.regexp();
+
+                let other = re.regexp();
                 regexp.set_source(other.source());
                 regexp.set_flags(other.flags());
+
                 return Ok(Value::Undefined);
             }
             arg => arg.coerce_to_string(activation)?,
@@ -64,23 +67,23 @@ pub fn init<'gc>(
 pub fn call_handler<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this_class = activation.avm2().classes().regexp;
 
-    if let Some(arg) = args.get_optional(0).filter(|_| args.len() == 1) {
-        if arg.as_object().and_then(|o| o.as_regexp_object()).is_some() {
-            return Ok(arg);
-        }
+    if let Some(arg) = args.get_optional(0).filter(|_| args.len() == 1)
+        && arg.as_object().and_then(|o| o.as_regexp_object()).is_some()
+    {
+        return Ok(arg);
     }
-    this_class.construct(activation, args)
+    this_class.construct_with_args(activation, args)
 }
 
 /// Implements `RegExp.dotall`
 pub fn get_dotall<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -95,7 +98,7 @@ pub fn get_dotall<'gc>(
 pub fn get_extended<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -110,7 +113,7 @@ pub fn get_extended<'gc>(
 pub fn get_global<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -125,7 +128,7 @@ pub fn get_global<'gc>(
 pub fn get_ignore_case<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -140,7 +143,7 @@ pub fn get_ignore_case<'gc>(
 pub fn get_multiline<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -155,12 +158,12 @@ pub fn get_multiline<'gc>(
 pub fn get_last_index<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
     if let Some(re) = this.as_regexp() {
-        return Ok(re.last_index().into());
+        return Ok(Value::from_usize_lossy(re.last_index()));
     }
 
     Ok(Value::Undefined)
@@ -170,7 +173,7 @@ pub fn get_last_index<'gc>(
 pub fn set_last_index<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -187,7 +190,7 @@ pub fn set_last_index<'gc>(
 pub fn get_source<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -202,7 +205,7 @@ pub fn get_source<'gc>(
 pub fn exec<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -255,7 +258,7 @@ pub fn exec<'gc>(
 pub fn test<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

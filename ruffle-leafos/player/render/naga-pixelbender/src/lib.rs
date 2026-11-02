@@ -69,7 +69,7 @@ pub struct ShaderBuilder<'a> {
     // update the components specified in the destination write mask
     float_registers: Vec<Option<Handle<Expression>>>,
 
-    /// Like float_registesr but with vec4i
+    /// Like float_registers but with vec4i
     int_registers: Vec<Option<Handle<Expression>>>,
 
     // A stack of if/else blocks, using to push statements
@@ -240,6 +240,7 @@ impl ShaderBuilder<'_> {
                 interpolation: Some(naga::Interpolation::Perspective),
                 sampling: Some(naga::Sampling::Center),
                 blend_src: None,
+                per_primitive: false,
             }),
         });
 
@@ -250,6 +251,7 @@ impl ShaderBuilder<'_> {
                 interpolation: None,
                 sampling: None,
                 blend_src: None,
+                per_primitive: false,
             }),
         });
 
@@ -270,6 +272,7 @@ impl ShaderBuilder<'_> {
                         Span::UNDEFINED,
                     ),
                     init: None,
+                    memory_decorations: naga::MemoryDecorations::empty(),
                 },
                 Span::UNDEFINED,
             );
@@ -354,6 +357,7 @@ impl ShaderBuilder<'_> {
                 }),
                 ty: vec4f,
                 init: None,
+                memory_decorations: naga::MemoryDecorations::empty(),
             },
             Span::UNDEFINED,
         );
@@ -441,6 +445,9 @@ impl ShaderBuilder<'_> {
             workgroup_size: [0; 3],
             workgroup_size_overrides: None,
             function: builder.func,
+            mesh_info: None,
+            task_payload: None,
+            incoming_ray_payload: None,
         });
 
         Ok(NagaModules {
@@ -540,6 +547,7 @@ impl ShaderBuilder<'_> {
                             }),
                             ty: self.image2d,
                             init: None,
+                            memory_decorations: naga::MemoryDecorations::empty(),
                         },
                         Span::UNDEFINED,
                     );
@@ -580,6 +588,7 @@ impl ShaderBuilder<'_> {
                     Span::UNDEFINED,
                 ),
                 init: None,
+                memory_decorations: naga::MemoryDecorations::empty(),
             },
             Span::UNDEFINED,
         );
@@ -604,6 +613,7 @@ impl ShaderBuilder<'_> {
                     Span::UNDEFINED,
                 ),
                 init: None,
+                memory_decorations: naga::MemoryDecorations::empty(),
             },
             Span::UNDEFINED,
         );
@@ -1288,6 +1298,39 @@ impl ShaderBuilder<'_> {
                             arg2: None,
                             arg3: None,
                         }),
+                        Opcode::Sign => {
+                            // FP returns 0 for sign(NaN). Avoid relying on the
+                            // backend's sign() semantics (which may propagate NaN)
+                            // by computing it as (x > 0) - (x < 0).
+
+                            let gt_zero = self.evaluate_expr(Expression::Binary {
+                                op: BinaryOperator::Greater,
+                                left: src,
+                                right: self.zerovec4f,
+                            });
+                            let lt_zero = self.evaluate_expr(Expression::Binary {
+                                op: BinaryOperator::Less,
+                                left: src,
+                                right: self.zerovec4f,
+                            });
+
+                            let gt_f = self.evaluate_expr(Expression::As {
+                                expr: gt_zero,
+                                kind: ScalarKind::Float,
+                                convert: Some(4),
+                            });
+                            let lt_f = self.evaluate_expr(Expression::As {
+                                expr: lt_zero,
+                                kind: ScalarKind::Float,
+                                convert: Some(4),
+                            });
+
+                            self.evaluate_expr(Expression::Binary {
+                                op: BinaryOperator::Subtract,
+                                left: gt_f,
+                                right: lt_f,
+                            })
+                        }
                         _ => {
                             panic!("Unimplemented opcode {opcode:?}");
                         }
@@ -1537,9 +1580,9 @@ impl ShaderBuilder<'_> {
     ) -> Handle<Expression> {
         if matches!(
             reg.channels.as_slice(),
-            [PixelBenderRegChannel::M2x2]
-                | [PixelBenderRegChannel::M3x3]
-                | [PixelBenderRegChannel::M4x4]
+            [PixelBenderRegChannel::M2x2
+                | PixelBenderRegChannel::M3x3
+                | PixelBenderRegChannel::M4x4]
         ) {
             assert_eq!(
                 reg.kind,
@@ -1634,9 +1677,9 @@ impl ShaderBuilder<'_> {
     fn emit_dest_store(&mut self, expr: Handle<Expression>, dst: &PixelBenderReg) {
         if matches!(
             dst.channels.as_slice(),
-            [PixelBenderRegChannel::M2x2]
-                | [PixelBenderRegChannel::M3x3]
-                | [PixelBenderRegChannel::M4x4]
+            [PixelBenderRegChannel::M2x2
+                | PixelBenderRegChannel::M3x3
+                | PixelBenderRegChannel::M4x4]
         ) {
             // If we're writing to a 2x2 matrix, load the individual values from the matrix,
             // and construct a vec4f containing all of them (a 2x2 matrix is stored as a single vec4f)

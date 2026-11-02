@@ -2,7 +2,7 @@ use std::cell::{Cell, RefCell};
 use std::sync::{Arc, Weak};
 
 use ruffle_render::backend::RenderBackend;
-use ruffle_render::bitmap::{Bitmap, BitmapFormat, BitmapHandle, BitmapHandleImpl, BitmapSize, BitmapSource, PixelSnapping};
+use ruffle_render::bitmap::{Bitmap, BitmapFormat, BitmapHandle, BitmapHandleImpl, BitmapSize, BitmapSource, PixelRegion, PixelSnapping};
 use ruffle_render::commands::{CommandHandler, CommandList};
 use ruffle_render::shape_utils::{DistilledShape, DrawCommand, DrawPath, FillRule};
 use ruffle_render::transform::Transform;
@@ -35,13 +35,13 @@ impl BitmapSource for WeakBitmapSource {
 }
 
 fn renderer() -> WgpuRenderBackend<TextureTarget> {
-    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: wgpu::Backends::NOOP,
         backend_options: wgpu::BackendOptions {
-            noop: wgpu::NoopBackendOptions { enable: true },
+            noop: wgpu::NoopBackendOptions { enable: true, ..Default::default() },
             ..Default::default()
         },
-        ..Default::default()
+        ..wgpu::InstanceDescriptor::new_without_display_handle()
     });
     let adapter = futures::executor::block_on(instance.request_adapter(&Default::default())).unwrap();
     let (device, queue) = futures::executor::block_on(adapter.request_device(&Default::default())).unwrap();
@@ -117,7 +117,8 @@ fn direct_bitmap_bindings_do_not_keep_their_own_handle_alive() {
     let bitmap = source.bitmap_handle(1, &mut renderer).unwrap();
     let weak = Arc::downgrade(&bitmap.0);
     let mut commands = CommandList::new();
-    commands.render_bitmap(bitmap, Transform::default(), true, PixelSnapping::Never);
+    commands.render_bitmap(bitmap, Transform::default(), true, PixelSnapping::Never,
+        PixelRegion::for_whole_size(1, 1));
     renderer.submit_frame(Color::TRANSPARENT, commands, vec![]);
     assert!(weak.upgrade().is_none(), "a bitmap's own bind-group cache must not create an Arc cycle");
 }

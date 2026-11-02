@@ -1,10 +1,9 @@
 use crate::filters::{FilterVertex, Filters};
 use crate::layouts::BindLayouts;
-use crate::pipelines::VERTEX_BUFFERS_DESCRIPTION_POS;
+use crate::pipelines::VERTEX_BUFFERS_DESCRIPTION_POS_UV;
 use crate::shaders::Shaders;
 use crate::{
-    BitmapSamplers, Pipelines, PosColorVertex, PosVertex, TextureTransforms,
-    create_buffer_with_data,
+    BitmapSamplers, Pipelines, PosColorVertex, PosUvVertex, PosVertex, create_buffer_with_data,
 };
 use fnv::FnvHashMap;
 use std::fmt::Debug;
@@ -22,7 +21,6 @@ pub struct Descriptors {
     pub bind_layouts: BindLayouts,
     pub quad: Quad,
     copy_pipeline: Mutex<FnvHashMap<(u32, wgpu::TextureFormat), wgpu::RenderPipeline>>,
-    copy_srgb_pipeline: Mutex<FnvHashMap<(u32, wgpu::TextureFormat), wgpu::RenderPipeline>>,
     pub shaders: Shaders,
     pipelines: Mutex<FnvHashMap<(u32, wgpu::TextureFormat), Arc<Pipelines>>>,
     pub filters: Filters,
@@ -60,79 +58,10 @@ impl Descriptors {
             bind_layouts,
             quad,
             copy_pipeline: Default::default(),
-            copy_srgb_pipeline: Default::default(),
             shaders,
             pipelines: Default::default(),
             filters,
         }
-    }
-
-    pub fn copy_srgb_pipeline(
-        &self,
-        format: wgpu::TextureFormat,
-        msaa_sample_count: u32,
-    ) -> wgpu::RenderPipeline {
-        let mut pipelines = self
-            .copy_srgb_pipeline
-            .lock()
-            .expect("Pipelines should not be already locked");
-        pipelines
-            .entry((msaa_sample_count, format))
-            .or_insert_with(|| {
-                let copy_texture_pipeline_layout =
-                    &self
-                        .device
-                        .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                            label: create_debug_label!("Copy sRGB pipeline layout").as_deref(),
-                            bind_group_layouts: &[
-                                &self.bind_layouts.globals,
-                                &self.bind_layouts.transforms,
-                                &self.bind_layouts.bitmap,
-                            ],
-                            push_constant_ranges: &[],
-                        });
-                self.device
-                    .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                        label: create_debug_label!("Copy sRGB pipeline").as_deref(),
-                        layout: Some(copy_texture_pipeline_layout),
-                        vertex: wgpu::VertexState {
-                            module: &self.shaders.copy_srgb_shader,
-                            entry_point: Some("main_vertex"),
-                            buffers: &VERTEX_BUFFERS_DESCRIPTION_POS,
-                            compilation_options: Default::default(),
-                        },
-                        fragment: Some(wgpu::FragmentState {
-                            module: &self.shaders.copy_srgb_shader,
-                            entry_point: Some("main_fragment"),
-                            targets: &[Some(wgpu::ColorTargetState {
-                                format,
-                                // All of our blending has been done by now, so we want
-                                // to overwrite the target pixels without any blending
-                                blend: Some(wgpu::BlendState::REPLACE),
-                                write_mask: Default::default(),
-                            })],
-                            compilation_options: Default::default(),
-                        }),
-                        primitive: wgpu::PrimitiveState {
-                            topology: wgpu::PrimitiveTopology::TriangleList,
-                            strip_index_format: None,
-                            front_face: wgpu::FrontFace::Ccw,
-                            cull_mode: None,
-                            polygon_mode: wgpu::PolygonMode::default(),
-                            unclipped_depth: false,
-                            conservative: false,
-                        },
-                        depth_stencil: None,
-                        multisample: wgpu::MultisampleState {
-                            count: msaa_sample_count,
-                            mask: !0,
-                            alpha_to_coverage_enabled: false,
-                        },
-                        multiview: None,
-                        cache: None,
-                    })
-            })
-            .clone()
     }
 
     pub fn copy_pipeline(
@@ -153,11 +82,11 @@ impl Descriptors {
                         .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                             label: create_debug_label!("Copy pipeline layout").as_deref(),
                             bind_group_layouts: &[
-                                &self.bind_layouts.globals,
-                                &self.bind_layouts.transforms,
-                                &self.bind_layouts.bitmap,
+                                Some(&self.bind_layouts.globals),
+                                None,
+                                Some(&self.bind_layouts.bitmap),
                             ],
-                            push_constant_ranges: &[],
+                            immediate_size: 0,
                         });
                 self.device
                     .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -166,7 +95,7 @@ impl Descriptors {
                         vertex: wgpu::VertexState {
                             module: &self.shaders.copy_shader,
                             entry_point: Some("main_vertex"),
-                            buffers: &VERTEX_BUFFERS_DESCRIPTION_POS,
+                            buffers: &VERTEX_BUFFERS_DESCRIPTION_POS_UV,
                             compilation_options: Default::default(),
                         },
                         fragment: Some(wgpu::FragmentState {
@@ -196,7 +125,7 @@ impl Descriptors {
                             mask: !0,
                             alpha_to_coverage_enabled: false,
                         },
-                        multiview: None,
+                        multiview_mask: None,
                         cache: None,
                     })
             })
@@ -225,12 +154,12 @@ impl Descriptors {
 
 pub struct Quad {
     pub vertices_pos: wgpu::Buffer,
+    pub vertices_pos_uv: wgpu::Buffer,
     pub vertices_pos_color: wgpu::Buffer,
     pub filter_vertices: wgpu::Buffer,
     pub indices: wgpu::Buffer,
     pub indices_line: wgpu::Buffer,
     pub indices_line_rect: wgpu::Buffer,
-    pub texture_transforms: wgpu::Buffer,
 }
 
 impl Quad {
@@ -247,6 +176,24 @@ impl Quad {
             },
             PosVertex {
                 position: [0.0, 1.0],
+            },
+        ];
+        let vertices_pos_uv = [
+            PosUvVertex {
+                position: [0.0, 0.0],
+                uv: [0.0, 0.0, 1.0],
+            },
+            PosUvVertex {
+                position: [1.0, 0.0],
+                uv: [1.0, 0.0, 1.0],
+            },
+            PosUvVertex {
+                position: [1.0, 1.0],
+                uv: [1.0, 1.0, 1.0],
+            },
+            PosUvVertex {
+                position: [0.0, 1.0],
+                uv: [0.0, 1.0, 1.0],
             },
         ];
         let vertices_pos_color = [
@@ -296,6 +243,13 @@ impl Quad {
             create_debug_label!("Quad vbo (pos)"),
         );
 
+        let vbo_pos_uv = create_buffer_with_data(
+            device,
+            bytemuck::cast_slice(&vertices_pos_uv),
+            wgpu::BufferUsages::VERTEX,
+            create_debug_label!("Quad vbo (pos & uv)"),
+        );
+
         let vbo_pos_color = create_buffer_with_data(
             device,
             bytemuck::cast_slice(&vertices_pos_color),
@@ -329,28 +283,14 @@ impl Quad {
             create_debug_label!("Line rect ibo"),
         );
 
-        let tex_transforms = create_buffer_with_data(
-            device,
-            bytemuck::cast_slice(&[TextureTransforms {
-                u_matrix: [
-                    [1.0, 0.0, 0.0, 0.0],
-                    [0.0, 1.0, 0.0, 0.0],
-                    [0.0, 0.0, 1.0, 0.0],
-                    [0.0, 0.0, 0.0, 1.0],
-                ],
-            }]),
-            wgpu::BufferUsages::UNIFORM,
-            create_debug_label!("Quad tex transforms"),
-        );
-
         Self {
             vertices_pos: vbo_pos,
+            vertices_pos_uv: vbo_pos_uv,
             vertices_pos_color: vbo_pos_color,
             filter_vertices: vbo_filter,
             indices: ibo,
             indices_line: ibo_line,
             indices_line_rect: ibo_line_rect,
-            texture_transforms: tex_transforms,
         }
     }
 }

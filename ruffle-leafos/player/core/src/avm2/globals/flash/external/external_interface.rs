@@ -1,4 +1,5 @@
 use crate::avm2::error::make_error_2067;
+use crate::avm2::function::FunctionArgs;
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::{Activation, Error, Value};
 use crate::external::{Callback, ExternalInterface, Value as ExternalValue};
@@ -7,7 +8,7 @@ use crate::string::AvmString;
 pub fn call<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let name = args.get_string(activation, 0);
     check_available(activation)?;
@@ -34,7 +35,7 @@ fn check_available<'gc>(activation: &mut Activation<'_, 'gc>) -> Result<(), Erro
 pub fn get_available<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     Ok(activation.context.external_interface.available().into())
 }
@@ -42,24 +43,32 @@ pub fn get_available<'gc>(
 pub fn add_callback<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let name = args.get_string(activation, 0);
-    let method = args.get_function(activation, 1, "closure")?;
+    let callback = args.try_get_function(1);
 
     check_available(activation)?;
 
-    activation
-        .context
-        .external_interface
-        .add_callback(name.to_string(), Callback::Avm2 { method });
+    if let Some(method) = callback {
+        activation
+            .context
+            .external_interface
+            .add_callback(name.to_string(), Callback::Avm2 { method });
+    } else {
+        activation
+            .context
+            .external_interface
+            .remove_callback(name.to_string());
+    }
+
     Ok(Value::Undefined)
 }
 
 pub fn get_object_id<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     if let Some(id) = activation.context.external_interface.get_id() {
         Ok(AvmString::new_utf8(activation.gc(), id).into())

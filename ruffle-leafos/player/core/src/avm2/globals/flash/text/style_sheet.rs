@@ -1,3 +1,4 @@
+use crate::avm2::function::FunctionArgs;
 use crate::avm2::object::{ScriptObject, TObject as _};
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::{Activation, Error, Value};
@@ -10,7 +11,7 @@ pub use crate::avm2::object::style_sheet_allocator;
 pub fn inner_parse_css<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let document = args.get_string(activation, 0);
     let result = ScriptObject::new_object(activation.context);
@@ -41,16 +42,16 @@ pub fn inner_parse_css<'gc>(
 pub fn inner_parse_color<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let input = args.get_string(activation, 0);
 
     if let Some(stripped) = input.strip_prefix(WStr::from_units(b"#")) {
         let stripped = stripped.trim_end();
-        if stripped.len() <= 6 {
-            if let Ok(number) = u32::from_str_radix(&stripped.to_string(), 16) {
-                return Ok(number.into());
-            }
+        if stripped.len() <= 6
+            && let Ok(number) = u32::from_str_radix(&stripped.to_string(), 16)
+        {
+            return Ok(number.into());
         }
     }
 
@@ -60,7 +61,7 @@ pub fn inner_parse_color<'gc>(
 pub fn inner_parse_font_family<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let input = args.get_string(activation, 0);
     let parsed_font_list = crate::html::parse_font_list(input.as_wstr());
@@ -73,7 +74,7 @@ pub fn inner_parse_font_family<'gc>(
 pub fn clear_internal<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -89,7 +90,7 @@ pub fn clear_internal<'gc>(
 pub fn set_style_internal<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

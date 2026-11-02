@@ -18,7 +18,7 @@ def build(output: Path):
     for name, filename in [('RootProgressProbe', 'root-progress.swf'), ('RootProgressGotoProbe', 'root-progress-goto.swf')]:
         source = output / (name + '.as')
         shutil.copyfile(ROOT / 'scripts/resources' / source.name, source)
-        subprocess.run([str(java), '-classpath', str(ROOT / 'player/core/build_playerglobal/asc.jar'),
+        subprocess.run([str(java), '-classpath', str(ROOT / 'player/tools/asc/asc.jar'),
                         'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-import', str(output / 'playerglobal.abc'),
                         '-outdir', str(output), str(source)], check=True)
         content = tag(82, struct.pack('<I', 0) + name.encode() + b'\0' + source.with_suffix('.abc').read_bytes())

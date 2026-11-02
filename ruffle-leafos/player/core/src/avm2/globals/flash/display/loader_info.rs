@@ -4,6 +4,7 @@ use crate::avm2::Error;
 use crate::avm2::activation::Activation;
 use crate::avm2::bytearray::Endian;
 use crate::avm2::error::make_error_2099;
+use crate::avm2::function::FunctionArgs;
 use crate::avm2::object::{DomainObject, LoaderStream, ScriptObject, TObject as _};
 use crate::avm2::value::Value;
 use crate::display_object::TDisplayObject;
@@ -18,7 +19,7 @@ use url::Url;
 pub fn get_action_script_version<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -41,7 +42,7 @@ pub fn get_action_script_version<'gc>(
 pub fn get_application_domain<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -80,15 +81,17 @@ pub fn get_application_domain<'gc>(
 pub fn get_bytes_total<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
     if let Some(loader_stream) = this.as_loader_info_object().map(|o| o.loader_stream()) {
         match &*loader_stream {
-            LoaderStream::NotYetLoaded(swf, _, _) => return Ok(swf.compressed_len().into()),
+            LoaderStream::NotYetLoaded(swf, _, _) => {
+                return Ok(Value::from_usize_lossy(swf.compressed_len()));
+            }
             LoaderStream::Swf(movie, _) => {
-                return Ok(movie.compressed_len().into());
+                return Ok(Value::from_usize_lossy(movie.compressed_len()));
             }
         }
     }
@@ -100,7 +103,7 @@ pub fn get_bytes_total<'gc>(
 pub fn get_bytes_loaded<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -109,13 +112,13 @@ pub fn get_bytes_loaded<'gc>(
     match &*loader_stream {
         LoaderStream::NotYetLoaded(swf, None, _) => {
             if loader_info.errored() {
-                return Ok(swf.compressed_len().into());
+                return Ok(Value::from_usize_lossy(swf.compressed_len()));
             }
             Ok(0.into())
         }
         LoaderStream::Swf(swf, root) | LoaderStream::NotYetLoaded(swf, Some(root), _) => {
             if root.as_bitmap().is_some() {
-                return Ok(swf.compressed_len().into());
+                return Ok(Value::from_usize_lossy(swf.compressed_len()));
             }
             Ok(root
                 .as_movie_clip()
@@ -130,7 +133,7 @@ pub fn get_bytes_loaded<'gc>(
 pub fn get_content<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -152,7 +155,7 @@ pub fn get_content<'gc>(
 pub fn get_content_type<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -160,6 +163,7 @@ pub fn get_content_type<'gc>(
         let content_type = match loader_info.content_type_hide_before_init() {
             ContentType::Swf => "application/x-shockwave-flash",
             ContentType::Jpeg => "image/jpeg",
+            ContentType::JpegXr => "image/jpegxr",
             ContentType::Png => "image/png",
             ContentType::Gif => "image/gif",
             ContentType::Unknown => return Ok(Value::Null),
@@ -175,7 +179,7 @@ pub fn get_content_type<'gc>(
 pub fn get_frame_rate<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -197,7 +201,7 @@ pub fn get_frame_rate<'gc>(
 pub fn get_height<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -219,7 +223,7 @@ pub fn get_height<'gc>(
 pub fn get_is_url_inaccessible<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     avm2_stub_getter!(activation, "flash.display.LoaderInfo", "isURLInaccessible");
     Ok(false.into())
@@ -229,7 +233,7 @@ pub fn get_is_url_inaccessible<'gc>(
 pub fn get_same_domain<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -252,7 +256,7 @@ pub fn get_same_domain<'gc>(
 pub fn get_child_allows_parent<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -268,12 +272,11 @@ pub fn get_child_allows_parent<'gc>(
                 let loader = loader.display_object();
                 let parent_movie = loader.movie();
 
-                if let Ok(child_url) = Url::parse(root.url()) {
-                    if let Ok(parent_url) = Url::parse(parent_movie.url()) {
-                        if child_url.host() == parent_url.host() {
-                            return Ok(true.into());
-                        }
-                    }
+                if let Ok(child_url) = Url::parse(root.url())
+                    && let Ok(parent_url) = Url::parse(parent_movie.url())
+                    && child_url.host() == parent_url.host()
+                {
+                    return Ok(true.into());
                 }
                 Ok(false.into())
             } else {
@@ -293,7 +296,7 @@ pub fn get_child_allows_parent<'gc>(
 pub fn get_parent_allows_child<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -309,12 +312,11 @@ pub fn get_parent_allows_child<'gc>(
                 let loader = loader.display_object();
                 let parent_movie = loader.movie();
 
-                if let Ok(child_url) = Url::parse(root.url()) {
-                    if let Ok(parent_url) = Url::parse(parent_movie.url()) {
-                        if child_url.host() == parent_url.host() {
-                            return Ok(true.into());
-                        }
-                    }
+                if let Ok(child_url) = Url::parse(root.url())
+                    && let Ok(parent_url) = Url::parse(parent_movie.url())
+                    && child_url.host() == parent_url.host()
+                {
+                    return Ok(true.into());
                 }
                 Ok(false.into())
             } else {
@@ -333,7 +335,7 @@ pub fn get_parent_allows_child<'gc>(
 pub fn get_swf_version<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -355,7 +357,7 @@ pub fn get_swf_version<'gc>(
 pub fn get_url<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -378,7 +380,7 @@ pub fn get_url<'gc>(
 pub fn get_width<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -400,7 +402,7 @@ pub fn get_width<'gc>(
 pub fn get_bytes<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -484,7 +486,7 @@ pub fn get_bytes<'gc>(
 pub fn get_loader<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -499,7 +501,7 @@ pub fn get_loader<'gc>(
 pub fn get_loader_url<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -520,7 +522,7 @@ pub fn get_loader_url<'gc>(
 pub fn get_parameters<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -549,7 +551,7 @@ pub fn get_parameters<'gc>(
 pub fn get_shared_events<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -563,7 +565,7 @@ pub fn get_shared_events<'gc>(
 pub fn get_uncaught_error_events<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

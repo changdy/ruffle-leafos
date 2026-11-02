@@ -46,6 +46,26 @@ fn whole_copy_replaces_stale_pixels_and_discards_pending_readback() {
 }
 
 #[test]
+fn whole_transparent_copy_to_opaque_dest_discards_readback_and_unpremultiplies() {
+    let arena = gc_arena::Arena::<gc_arena::Rootable![()]>::new(|_| ());
+    arena.mutate(|mc, _| {
+        let source = BitmapData::new(mc, 2, 2, true, 0x80ff0000);
+        let dest = BitmapData::new(mc, 2, 2, false, 0xffaabbcc);
+        let dropped = gpu_modified(mc, dest);
+        let whole = PixelRegion::for_whole_size(2, 2);
+        let mut renderer = renderer();
+        copy_on_cpu(mc, &mut renderer, source, dest, whole, whole, false);
+        assert!(dropped.get(), "the replaced GPU result must not be read back");
+        let pixels = dest.read_area(whole, &mut renderer);
+        for y in 0..2 {
+            for x in 0..2 {
+                assert_eq!(u32::from(pixels.get_pixel32_raw(x, y)), 0xffff0000);
+            }
+        }
+    });
+}
+
+#[test]
 fn opaque_copy_can_replace_the_whole_destination_without_blending() {
     let arena = gc_arena::Arena::<gc_arena::Rootable![()]>::new(|_| ());
     arena.mutate(|mc, _| {

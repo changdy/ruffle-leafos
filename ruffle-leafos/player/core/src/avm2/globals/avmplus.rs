@@ -1,4 +1,5 @@
 use crate::avm2::class::Class;
+use crate::avm2::function::FunctionArgs;
 pub use crate::avm2::globals::flash::utils::get_qualified_class_name;
 pub use crate::avm2::globals::flash::utils::get_qualified_superclass_name;
 use crate::avm2::metadata::Metadata;
@@ -19,7 +20,7 @@ use ruffle_macros::istr;
 pub fn describe_type_json<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let flags = DescribeTypeFlags::from_bits(args.get_u32(1)).expect("Invalid flags!");
 
@@ -166,15 +167,13 @@ fn describe_internal_body<'gc>(
     let mut skip_ns: Vec<Namespace<'_>> = Vec::new();
     if let Some(super_vtable) = super_vtable {
         for (_, ns, prop) in super_vtable.resolved_traits().iter() {
-            if !ns.as_uri(&mut context.strings).is_empty() {
-                if let Property::Method { .. } = prop {
-                    if !skip_ns
-                        .iter()
-                        .any(|other_ns| other_ns.exact_version_match(ns))
-                    {
-                        skip_ns.push(ns);
-                    }
-                }
+            if !ns.as_uri(&mut context.strings).is_empty()
+                && let Property::Method { .. } = prop
+                && !skip_ns
+                    .iter()
+                    .any(|other_ns| other_ns.exact_version_match(ns))
+            {
+                skip_ns.push(ns);
             }
         }
     }
@@ -373,16 +372,16 @@ fn describe_internal_body<'gc>(
 
                 let metadata_object = ArrayObject::empty(context);
 
-                if let Some(get_disp_id) = get {
-                    if let Some(metadata) = vtable.get_metadata_for_disp(*get_disp_id) {
-                        write_metadata(metadata_object, metadata, context);
-                    }
+                if let Some(get_disp_id) = get
+                    && let Some(metadata) = vtable.get_metadata_for_disp(*get_disp_id)
+                {
+                    write_metadata(metadata_object, metadata, context);
                 }
 
-                if let Some(set_disp_id) = set {
-                    if let Some(metadata) = vtable.get_metadata_for_disp(*set_disp_id) {
-                        write_metadata(metadata_object, metadata, context);
-                    }
+                if let Some(set_disp_id) = set
+                    && let Some(metadata) = vtable.get_metadata_for_disp(*set_disp_id)
+                {
+                    write_metadata(metadata_object, metadata, context);
                 }
 
                 if flags.contains(DescribeTypeFlags::INCLUDE_METADATA)

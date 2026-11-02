@@ -26,9 +26,8 @@ pub fn copy_on_cpu<'gc>(
         && !blend
         && dest_region == PixelRegion::for_whole_size(dest.width(), dest.height())
     {
-        // A complete replacement never reads the previous destination pixels.
-        // Keep the local full-overwrite optimization: discard its pending
-        // GPU readback, just as a full fillRect does.
+        // A complete replacement does not need the previous destination pixels.
+        // Discard stale GPU data and its pending readback, as full fillRect does.
         dest.overwrite_cpu_pixels_from_gpu(context).0
     } else {
         dest.sync(renderer)
@@ -93,7 +92,7 @@ pub fn copy_on_cpu<'gc>(
                     // above, so the dest is opaque here.
                     debug_assert!(opaque);
                     for (dest, src) in dest_row.iter_mut().zip(src_row) {
-                        *dest = src.with_alpha(255);
+                        *dest = src.to_un_multiplied_alpha().with_alpha(255);
                     }
                 }
             }

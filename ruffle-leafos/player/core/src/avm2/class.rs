@@ -9,6 +9,7 @@ use crate::avm2::error::{
     Error1014Type, make_error_1014, make_error_1053, make_error_1059, make_error_1060,
     make_error_1103, make_error_1107, make_error_1110, make_error_1111,
 };
+use crate::avm2::function::FunctionArgs;
 use crate::avm2::method::{Method, MethodAssociation, NativeMethodImpl};
 use crate::avm2::object::{ClassObject, Object, scriptobject_allocator};
 use crate::avm2::script::TranslationUnit;
@@ -75,7 +76,7 @@ pub struct Allocator(pub AllocatorFn);
 /// This function should be passed an Activation, and the arguments passed to the
 /// constructor, and will return an Object.
 pub type CustomConstructorFn =
-    for<'gc> fn(&mut Activation<'_, 'gc>, &[Value<'gc>]) -> Result<Value<'gc>, Error<'gc>>;
+    for<'gc> fn(&mut Activation<'_, 'gc>, FunctionArgs<'_, 'gc>) -> Result<Value<'gc>, Error<'gc>>;
 
 #[derive(Clone, Copy)]
 pub struct CustomConstructor(pub CustomConstructorFn);
@@ -655,7 +656,7 @@ impl<'gc> Class<'gc> {
                                 (TraitKind::Getter { .. }, TraitKind::Setter { .. }) => continue,
                                 (TraitKind::Setter { .. }, TraitKind::Getter { .. }) => continue,
 
-                                (_, TraitKind::Const { .. }) | (_, TraitKind::Slot { .. }) => {
+                                (_, TraitKind::Const { .. } | TraitKind::Slot { .. }) => {
                                     did_override = true;
 
                                     // Const/Var traits override anything in avmplus
@@ -948,14 +949,15 @@ impl<'gc> Class<'gc> {
     pub fn for_catch(
         activation: &mut Activation<'_, 'gc>,
         variable_name: QName<'gc>,
+        target_class: Option<Class<'gc>>,
     ) -> Result<Class<'gc>, Error<'gc>> {
         // Yes, the name of the class is the variable's name
         let mut i_class = ClassData::empty(variable_name);
         i_class.attributes = Cell::new(ClassAttributes::FINAL | ClassAttributes::SEALED);
-        // TODO make the slot typed
-        let domain = activation.avm2().playerglobals_domain;
-        let traits: Box<[_]> = Box::new([Trait::from_const(variable_name, None, None, domain)]);
+
+        let traits: Box<[_]> = Box::new([Trait::new_slot(variable_name, target_class)]);
         i_class.traits = OnceLock::from(traits);
+
         let i_class = Class(Gc::new(activation.gc(), i_class));
         i_class.init_vtable(activation)?;
 

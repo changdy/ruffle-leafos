@@ -19,7 +19,7 @@ pub use crate::avm2::object::array_allocator;
 pub fn init_custom_prototype<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
     let this = this.as_class_object().unwrap();
@@ -35,25 +35,25 @@ pub fn init_custom_prototype<'gc>(
 pub fn array_initializer<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
     if let Some(mut array) = this.as_array_storage_mut(activation.gc()) {
-        if args.len() == 1 {
-            if let Some(expected_len) = args.get_optional(0).and_then(|v| v.try_as_f64()) {
-                if expected_len < 0.0 || expected_len.is_nan() || expected_len.fract() != 0.0 {
-                    return Err(make_error_1005(activation, expected_len));
-                }
-
-                array.set_length(expected_len as usize);
-
-                return Ok(Value::Undefined);
+        if args.len() == 1
+            && let Some(expected_len) = args.get_optional(0).and_then(|v| v.try_as_f64())
+        {
+            if expected_len < 0.0 || expected_len.is_nan() || expected_len.fract() != 0.0 {
+                return Err(make_error_1005(activation, expected_len));
             }
+
+            array.set_length(expected_len as usize);
+
+            return Ok(Value::Undefined);
         }
 
         for (i, arg) in args.iter().enumerate() {
-            array.set(i, *arg);
+            array.set(i, arg);
         }
     }
 
@@ -64,12 +64,12 @@ pub fn array_initializer<'gc>(
 pub fn get_length<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
     if let Some(array) = this.as_array_storage() {
-        return Ok(array.length().into());
+        return Ok(Value::from_usize_lossy(array.length()));
     }
 
     Ok(Value::Undefined)
@@ -79,7 +79,7 @@ pub fn get_length<'gc>(
 pub fn set_length<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -103,7 +103,7 @@ pub fn build_array<'gc>(
 pub fn concat<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -120,7 +120,7 @@ pub fn concat<'gc>(
         {
             base_array.append(&other_array);
         } else {
-            base_array.push(*arg);
+            base_array.push(arg);
         }
     }
 
@@ -154,7 +154,7 @@ pub fn resolve_array_hole<'gc>(
 pub fn join<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -310,7 +310,7 @@ impl<'gc> ArrayIter<'gc> {
 pub fn for_each<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -333,7 +333,7 @@ pub fn for_each<'gc>(
 pub fn map<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -359,7 +359,7 @@ pub fn map<'gc>(
 pub fn filter<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -390,7 +390,7 @@ pub fn filter<'gc>(
 pub fn every<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -418,7 +418,7 @@ pub fn every<'gc>(
 pub fn some<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -447,7 +447,7 @@ pub fn some<'gc>(
 pub fn _index_of<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -463,8 +463,8 @@ pub fn _index_of<'gc>(
 
         for (i, val) in array.iter().enumerate() {
             let val = resolve_array_hole(activation, this, i, val)?;
-            if i >= from_index && val == search_val {
-                return Ok(i.into());
+            if i >= from_index && val.strict_eq(&search_val) {
+                return Ok(Value::from_usize_lossy(i));
             }
         }
 
@@ -478,7 +478,7 @@ pub fn _index_of<'gc>(
 pub fn _last_index_of<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -494,8 +494,8 @@ pub fn _last_index_of<'gc>(
 
         for (i, val) in array.iter().enumerate().rev() {
             let val = resolve_array_hole(activation, this, i, val)?;
-            if i <= from_index && val == search_val {
-                return Ok(i.into());
+            if i <= from_index && val.strict_eq(&search_val) {
+                return Ok(Value::from_usize_lossy(i));
             }
         }
 
@@ -509,7 +509,7 @@ pub fn _last_index_of<'gc>(
 pub fn pop<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -524,15 +524,15 @@ pub fn pop<'gc>(
 pub fn push<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
     if let Some(mut array) = this.as_array_storage_mut(activation.gc()) {
         for arg in args {
-            array.push(*arg)
+            array.push(arg)
         }
-        return Ok(array.length().into());
+        return Ok(Value::from_usize_lossy(array.length()));
     }
 
     Ok(Value::Undefined)
@@ -541,7 +541,7 @@ pub fn push<'gc>(
 pub fn reverse<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -578,7 +578,7 @@ pub fn reverse<'gc>(
 pub fn shift<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -593,15 +593,15 @@ pub fn shift<'gc>(
 pub fn unshift<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
     if let Some(mut array) = this.as_array_storage_mut(activation.gc()) {
         for arg in args.iter().rev() {
-            array.unshift(*arg)
+            array.unshift(arg)
         }
-        return Ok(array.length().into());
+        return Ok(Value::from_usize_lossy(array.length()));
     }
 
     Ok(Value::Undefined)
@@ -627,7 +627,7 @@ pub fn resolve_index<'gc>(
 pub fn slice<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -660,35 +660,47 @@ pub fn slice<'gc>(
 pub fn splice<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    let Some(mut array_storage) = this.as_array_storage_mut(activation.gc()) else {
+    let Some(array_object) = this.as_array_object() else {
         return Ok(Value::Undefined);
     };
-    let array_length = array_storage.length();
+
     let Some(start) = args.get_optional(0) else {
         return Ok(Value::Undefined);
     };
 
+    let array_length = array_object.storage().length();
+
     let actual_start = resolve_index(activation, start, array_length)?;
     let delete_count = args
         .get_optional(1)
-        .unwrap_or_else(|| array_length.into())
+        .unwrap_or_else(|| Value::from_usize_lossy(array_length))
         .coerce_to_i32(activation)?
         .max(0);
 
-    let args_slice = if args.len() > 2 { &args[2..] } else { &[] };
+    let args_slice: &[Value<'gc>] = if args.len() > 2 {
+        &args.get_slice_from(2..).to_slice()
+    } else {
+        &[]
+    };
 
     // FIXME Flash does not iterate over those elements like we do, it's too
     //   inefficient. Flash probably iterates through set properties only.
     for i in actual_start..array_length {
-        let item = array_storage.get(i);
-        array_storage.set(i, resolve_array_hole(activation, this, i, item)?);
+        let item = array_object.storage().get(i);
+        let resolved = resolve_array_hole(activation, this, i, item)?;
+        array_object.storage_mut(activation.gc()).set(i, resolved);
     }
 
-    let ret = array_storage.splice(actual_start, delete_count as usize, args_slice);
+    let ret = array_object.storage_mut(activation.gc()).splice(
+        actual_start,
+        delete_count as usize,
+        args_slice,
+    );
+
     Ok(build_array(activation, ret))
 }
 
@@ -696,13 +708,11 @@ pub fn splice<'gc>(
 pub fn insert_at<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
-    splice(
-        activation,
-        this,
-        &[args.get_value(0), 0.into(), args.get_value(1)],
-    )
+    let args = &[args.get_value(0), 0.into(), args.get_value(1)];
+
+    splice(activation, this, FunctionArgs::from_slice(args))
 }
 
 bitflags! {
@@ -969,7 +979,11 @@ fn sort_postprocess<'gc>(
         if options.contains(SortOptions::RETURN_INDEXED_ARRAY) {
             return Ok(build_array(
                 activation,
-                values.iter().map(|&(i, _)| i).collect(),
+                values
+                    .iter()
+                    .map(|&(i, _)| i)
+                    .map(Value::from_usize_lossy)
+                    .collect(),
             ));
         } else {
             if let Some(mut old_array) = this.as_array_storage_mut(activation.gc()) {
@@ -1028,7 +1042,7 @@ fn extract_array_values<'gc>(
 pub fn sort<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1191,7 +1205,7 @@ fn extract_maybe_array_sort_options<'gc>(
 pub fn sort_on<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1264,7 +1278,7 @@ pub fn sort_on<'gc>(
 pub fn remove_at<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

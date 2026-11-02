@@ -28,7 +28,7 @@ def main():
         abc = source.with_suffix('.abc')
         abc.unlink(missing_ok=True)
         result = subprocess.run(
-            [str(java), '-classpath', str(ROOT / 'player/core/build_playerglobal/asc.jar'),
+            [str(java), '-classpath', str(ROOT / 'player/tools/asc/asc.jar'),
              'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-import',
              str(output / 'playerglobal.abc'), '-outdir', str(output), str(source)],
             check=True, capture_output=True, text=True,

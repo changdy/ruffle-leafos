@@ -7,6 +7,7 @@ fn run_vector_probe(optimized: bool) -> Vec<String> {
         include_bytes!("tests/vector-native.swf"),
         "file:///vector-native.swf".to_string(),
         None,
+        None,
     )
     .unwrap();
     let trace = TraceLog::default();

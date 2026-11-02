@@ -2316,12 +2316,13 @@ impl GlRenderBackend {
         &mut self,
         shape: DistilledShape,
         bitmap_source: &dyn BitmapSource,
+        scale: f32,
     ) -> Result<Mesh, GlError> {
         use ruffle_render::tessellator::DrawType as TessDrawType;
 
         let lyon_mesh = self
             .shape_tessellator
-            .tessellate_shape(shape, bitmap_source);
+            .tessellate_shape_with_scale(shape, bitmap_source, scale);
 
         let mut draws = Vec::with_capacity(lyon_mesh.draws.len());
         let mut cache_bytes = 0u64;
@@ -3416,8 +3417,17 @@ impl RenderBackend for GlRenderBackend {
         shape: DistilledShape,
         bitmap_source: &dyn BitmapSource,
     ) -> ShapeHandle {
+        self.register_shape_with_scale(shape, bitmap_source, 1.0)
+    }
+
+    fn register_shape_with_scale(
+        &mut self,
+        shape: DistilledShape,
+        bitmap_source: &dyn BitmapSource,
+        scale: f32,
+    ) -> ShapeHandle {
         self.collect_released_resources();
-        let mesh = Arc::new(match self.register_shape_internal(shape, bitmap_source) {
+        let mesh = Arc::new(match self.register_shape_internal(shape, bitmap_source, scale) {
             Ok(mesh) => mesh,
             Err(e) => {
                 log::error!("Couldn't register shape: {e:?}");
@@ -3725,20 +3735,28 @@ impl CommandHandler for GlRenderBackend {
         transform: Transform,
         smoothing: bool,
         pixel_snapping: PixelSnapping,
+        region: PixelRegion,
     ) {
-        self.set_stencil_state();
         let entry = as_registry_data(&bitmap);
-        let quad = &self.bitmap_quad_draws;
-        let draw = &quad[0];
-        let bitmap_matrix = if let DrawType::Bitmap(BitmapDraw { matrix, .. }) = &draw.draw_type {
-            matrix
-        } else {
-            unreachable!()
-        };
+        let texture_width = entry.width.get() as f32;
+        let texture_height = entry.height.get() as f32;
+        if region.width() == 0 || region.height() == 0 || texture_width == 0.0 || texture_height == 0.0 {
+            return;
+        }
+        self.set_stencil_state();
+        let draw = &self.bitmap_quad_draws[0];
+        // A region selects source pixels (including glyphs in a shared atlas).
+        // Place only that rectangle at the command's destination origin; its
+        // source offset affects UVs, never the destination translation.
+        let bitmap_matrix = [
+            [region.width() as f32 / texture_width, 0.0, 0.0],
+            [0.0, region.height() as f32 / texture_height, 0.0],
+            [region.x_min as f32 / texture_width, region.y_min as f32 / texture_height, 1.0],
+        ];
 
         let mut matrix = transform.matrix;
         pixel_snapping.apply(&mut matrix);
-        matrix *= Matrix::scale(entry.width.get() as f32, entry.height.get() as f32);
+        matrix *= Matrix::scale(region.width() as f32, region.height() as f32);
 
         let world_matrix = [
             [matrix.a, matrix.b, 0.0, 0.0],
@@ -3779,7 +3797,7 @@ impl CommandHandler for GlRenderBackend {
             self.add_color = Some(add_color);
         }
 
-        program.uniform_matrix3fv(&self.gl, ShaderUniform::TextureMatrix, bitmap_matrix);
+        program.uniform_matrix3fv(&self.gl, ShaderUniform::TextureMatrix, &bitmap_matrix);
 
         self.bind_texture_2d(entry.texture);
         program.uniform1i(&self.gl, ShaderUniform::BitmapTexture, 0);

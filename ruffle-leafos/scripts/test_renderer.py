@@ -12,7 +12,8 @@ args = parser.parse_args()
 local = ROOT / 'workspace.local.json'
 settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
 cache = Path(settings.get('host_tool_cache', ROOT.parent / 'work/toolchains'))
-rust = Path(settings.get('rust', cache / 'rust-1.94.0'))
+rust_version = json.loads((ROOT / 'adapter/rust-toolchain.lock.json').read_text(encoding='utf8'))['rust_version']
+rust = Path(settings.get('rust', cache / ('rust-' + rust_version)))
 mingw = Path(settings.get('host_gcc', cache / 'w64devkit'))
 build = ROOT / 'build'
 linker = build / 'host-link.cmd'

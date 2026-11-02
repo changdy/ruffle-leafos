@@ -8,6 +8,7 @@ use crate::avm2::error::{
     make_error_2027,
 };
 use crate::avm2::filters::FilterAvm2Ext;
+use crate::avm2::function::FunctionArgs;
 use crate::avm2::globals::flash::display::display_object::object_to_rectangle;
 use crate::avm2::globals::flash::geom::transform::object_to_color_transform;
 use crate::avm2::globals::flash::geom::transform::object_to_matrix;
@@ -90,7 +91,7 @@ pub fn fill_bitmap_data_from_symbol<'gc>(
 pub fn init<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
     let bitmap_data_obj = this.as_bitmap_data_object().unwrap();
@@ -152,7 +153,7 @@ pub fn init<'gc>(
 pub fn get_width<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -168,7 +169,7 @@ pub fn get_width<'gc>(
 pub fn get_height<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -184,7 +185,7 @@ pub fn get_height<'gc>(
 pub fn get_transparent<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -200,7 +201,7 @@ pub fn get_transparent<'gc>(
 pub fn scroll<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -225,7 +226,7 @@ pub fn scroll<'gc>(
 pub fn copy_pixels<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -303,7 +304,7 @@ pub fn copy_pixels<'gc>(
 pub fn get_pixels<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -334,7 +335,7 @@ pub fn get_pixels<'gc>(
 pub fn copy_pixels_to_byte_array<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -361,7 +362,7 @@ pub fn copy_pixels_to_byte_array<'gc>(
 pub fn get_vector<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -392,7 +393,7 @@ pub fn get_vector<'gc>(
 pub fn get_pixel<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -411,7 +412,7 @@ pub fn get_pixel<'gc>(
 pub fn get_pixel32<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -430,7 +431,7 @@ pub fn get_pixel32<'gc>(
 pub fn set_pixel<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -455,7 +456,7 @@ pub fn set_pixel<'gc>(
 pub fn set_pixel32<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -483,7 +484,7 @@ pub fn set_pixel32<'gc>(
 pub fn set_pixels<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -517,7 +518,7 @@ pub fn set_pixels<'gc>(
 pub fn set_vector<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -573,7 +574,7 @@ pub fn set_vector<'gc>(
 pub fn copy_channel<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -619,25 +620,25 @@ pub fn copy_channel<'gc>(
 pub fn flood_fill<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            let x = args.get_u32(0);
-            let y = args.get_u32(1);
-            let color = args.get_u32(2);
+    if let Some(bitmap_data) = this.as_bitmap_data()
+        && !bitmap_data.disposed()
+    {
+        let x = args.get_u32(0);
+        let y = args.get_u32(1);
+        let color = args.get_u32(2);
 
-            operations::flood_fill(
-                activation.gc(),
-                activation.context.renderer,
-                bitmap_data,
-                x,
-                y,
-                color,
-            );
-        }
+        operations::flood_fill(
+            activation.gc(),
+            activation.context.renderer,
+            bitmap_data,
+            x,
+            y,
+            color,
+        );
     }
 
     Ok(Value::Undefined)
@@ -646,7 +647,7 @@ pub fn flood_fill<'gc>(
 pub fn noise<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -677,35 +678,35 @@ pub fn noise<'gc>(
 pub fn color_transform<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            // TODO: Re-use `object_to_rectangle` in `movie_clip.rs`.
-            let rectangle = args.get_object(activation, 0, "rect")?;
-            let (x, y, width, height) = get_rectangle_x_y_width_height(activation, rectangle)?;
+    if let Some(bitmap_data) = this.as_bitmap_data()
+        && !bitmap_data.disposed()
+    {
+        // TODO: Re-use `object_to_rectangle` in `movie_clip.rs`.
+        let rectangle = args.get_object(activation, 0, "rect")?;
+        let (x, y, width, height) = get_rectangle_x_y_width_height(activation, rectangle)?;
 
-            let x_min = x.max(0) as u32;
-            let x_max = (x + width) as u32;
-            let y_min = y.max(0) as u32;
-            let y_max = (y + height) as u32;
+        let x_min = x.max(0) as u32;
+        let x_max = (x + width) as u32;
+        let y_min = y.max(0) as u32;
+        let y_max = (y + height) as u32;
 
-            let color_transform = args.get_object(activation, 1, "colorTransform")?;
-            let color_transform = object_to_color_transform(color_transform);
+        let color_transform = args.get_object(activation, 1, "colorTransform")?;
+        let color_transform = object_to_color_transform(color_transform);
 
-            operations::color_transform(
-                activation.gc(),
-                activation.context.renderer,
-                bitmap_data,
-                x_min,
-                y_min,
-                x_max,
-                y_max,
-                &color_transform,
-            );
-        }
+        operations::color_transform(
+            activation.gc(),
+            activation.context.renderer,
+            bitmap_data,
+            x_min,
+            y_min,
+            x_max,
+            y_max,
+            &color_transform,
+        );
     }
 
     Ok(Value::Undefined)
@@ -714,42 +715,40 @@ pub fn color_transform<'gc>(
 pub fn get_color_bounds_rect<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            let find_color = args.get_bool(2);
+    let Some(bitmap_data) = this.as_bitmap_data().filter(|d| !d.disposed()) else {
+        return Ok(Value::Undefined);
+    };
 
-            let mask = args.get_u32(0);
-            let color = args.get_u32(1);
+    let find_color = args.get_bool(2);
 
-            let (x, y, w, h) = operations::color_bounds_rect(
-                activation.context.renderer,
-                bitmap_data,
-                find_color,
-                mask,
-                color,
-            );
+    let mask = args.get_u32(0);
+    let color = args.get_u32(1);
 
-            let rect = activation
-                .avm2()
-                .classes()
-                .rectangle
-                .construct(activation, &[x.into(), y.into(), w.into(), h.into()])?;
+    let (x, y, w, h) = operations::color_bounds_rect(
+        activation.context.renderer,
+        bitmap_data,
+        find_color,
+        mask,
+        color,
+    );
 
-            return Ok(rect);
-        }
-    }
+    let rect = activation
+        .avm2()
+        .classes()
+        .rectangle
+        .construct(activation, &[x.into(), y.into(), w.into(), h.into()])?;
 
-    Ok(Value::Undefined)
+    Ok(rect)
 }
 
 pub fn lock<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     // `BitmapData.lock` tells Flash Player to temporarily stop updating the player's
     // dirty region for any Bitmap stage instances displaying this BitmapData.
@@ -768,7 +767,7 @@ pub fn lock<'gc>(
 pub fn unlock<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     // No effect (see comments for `lock`).
     Ok(Value::Undefined)
@@ -777,142 +776,143 @@ pub fn unlock<'gc>(
 pub fn hit_test<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            let first_point = args.get_object(activation, 0, "firstPoint")?;
-            let top_left = (
-                first_point
-                    .get_slot(point_slots::X)
-                    .coerce_to_i32(activation)?,
-                first_point
-                    .get_slot(point_slots::Y)
-                    .coerce_to_i32(activation)?,
-            );
-            let source_threshold = args.get_u32(1).clamp(0, u8::MAX.into()) as u8;
-            let compare_object = args.get_value(2);
-            let point_class = activation.avm2().classes().point.inner_class_definition();
-            let rectangle_class = activation
-                .avm2()
-                .classes()
-                .rectangle
-                .inner_class_definition();
+    let Some(bitmap_data) = this.as_bitmap_data().filter(|d| !d.disposed()) else {
+        return Ok(false.into());
+    };
 
-            let Value::Object(compare_object) = compare_object else {
-                // This is the error message Flash Player produces. Even though it's misleading.
-                return Err(make_error_2005(activation, 0, "BitmapData"));
-            };
+    let first_point = args.get_object(activation, 0, "firstPoint")?;
+    let top_left = (
+        first_point
+            .get_slot(point_slots::X)
+            .coerce_to_i32(activation)?,
+        first_point
+            .get_slot(point_slots::Y)
+            .coerce_to_i32(activation)?,
+    );
+    let source_threshold = args.get_u32(1).clamp(0, u8::MAX.into()) as u8;
+    let compare_object = args.get_value(2);
+    let point_class = activation.avm2().classes().point.inner_class_definition();
+    let rectangle_class = activation
+        .avm2()
+        .classes()
+        .rectangle
+        .inner_class_definition();
 
-            if compare_object.is_of_type(point_class) {
-                let test_point = (
-                    compare_object
-                        .get_slot(point_slots::X)
-                        .coerce_to_i32(activation)?
-                        - top_left.0,
-                    compare_object
-                        .get_slot(point_slots::Y)
-                        .coerce_to_i32(activation)?
-                        - top_left.1,
-                );
-                return Ok(Value::Bool(operations::hit_test_point(
-                    activation.context.renderer,
-                    bitmap_data,
-                    source_threshold,
-                    test_point,
-                )));
-            } else if compare_object.is_of_type(rectangle_class) {
-                let test_point = (
-                    compare_object
-                        .get_slot(rectangle_slots::X)
-                        .coerce_to_i32(activation)?
-                        - top_left.0,
-                    compare_object
-                        .get_slot(rectangle_slots::Y)
-                        .coerce_to_i32(activation)?
-                        - top_left.1,
-                );
-                let size = (
-                    compare_object
-                        .get_slot(rectangle_slots::WIDTH)
-                        .coerce_to_i32(activation)?,
-                    compare_object
-                        .get_slot(rectangle_slots::HEIGHT)
-                        .coerce_to_i32(activation)?,
-                );
-                return Ok(Value::Bool(operations::hit_test_rectangle(
-                    activation.context.renderer,
-                    bitmap_data,
-                    source_threshold,
-                    test_point,
-                    size,
-                )));
-            } else if let Some(other_bmd) = compare_object.as_bitmap_data() {
-                other_bmd.check_valid(activation)?;
-                let second_point = args.get_object(activation, 3, "secondBitmapDataPoint")?;
-                let second_point = (
-                    second_point
-                        .get_slot(point_slots::X)
-                        .coerce_to_i32(activation)?,
-                    second_point
-                        .get_slot(point_slots::Y)
-                        .coerce_to_i32(activation)?,
-                );
-                let second_threshold = args.get_u32(4).clamp(0, u8::MAX.into()) as u8;
+    let Value::Object(compare_object) = compare_object else {
+        // This is the error message Flash Player produces. Even though it's misleading.
+        return Err(make_error_2005(activation, 0, "BitmapData"));
+    };
 
-                let result = operations::hit_test_bitmapdata(
-                    activation.context.renderer,
-                    bitmap_data,
-                    top_left,
-                    source_threshold,
-                    other_bmd,
-                    second_point,
-                    second_threshold,
-                );
-                return Ok(Value::Bool(result));
-            } else if let Some(bitmap) = compare_object
-                .as_display_object()
-                .and_then(|dobj| dobj.as_bitmap())
-            {
-                let other_bmd = bitmap.bitmap_data();
-                other_bmd.check_valid(activation)?;
-                let second_point = args.get_object(activation, 3, "secondBitmapDataPoint")?;
-                let second_point = (
-                    second_point
-                        .get_slot(point_slots::X)
-                        .coerce_to_i32(activation)?,
-                    second_point
-                        .get_slot(point_slots::Y)
-                        .coerce_to_i32(activation)?,
-                );
-                let second_threshold = args.get_u32(4).clamp(0, u8::MAX.into()) as u8;
+    if compare_object.is_of_type(point_class) {
+        let test_point = (
+            compare_object
+                .get_slot(point_slots::X)
+                .coerce_to_i32(activation)?
+                - top_left.0,
+            compare_object
+                .get_slot(point_slots::Y)
+                .coerce_to_i32(activation)?
+                - top_left.1,
+        );
 
-                return Ok(Value::Bool(operations::hit_test_bitmapdata(
-                    activation.context.renderer,
-                    bitmap_data,
-                    top_left,
-                    source_threshold,
-                    other_bmd,
-                    second_point,
-                    second_threshold,
-                )));
-            } else {
-                // This is the error message Flash Player produces. Even though it's misleading.
-                return Err(make_error_2005(activation, 0, "BitmapData"));
-            }
-        }
+        Ok(Value::Bool(operations::hit_test_point(
+            activation.context.renderer,
+            bitmap_data,
+            source_threshold,
+            test_point,
+        )))
+    } else if compare_object.is_of_type(rectangle_class) {
+        let test_point = (
+            compare_object
+                .get_slot(rectangle_slots::X)
+                .coerce_to_i32(activation)?
+                - top_left.0,
+            compare_object
+                .get_slot(rectangle_slots::Y)
+                .coerce_to_i32(activation)?
+                - top_left.1,
+        );
+        let size = (
+            compare_object
+                .get_slot(rectangle_slots::WIDTH)
+                .coerce_to_i32(activation)?,
+            compare_object
+                .get_slot(rectangle_slots::HEIGHT)
+                .coerce_to_i32(activation)?,
+        );
+
+        Ok(Value::Bool(operations::hit_test_rectangle(
+            activation.context.renderer,
+            bitmap_data,
+            source_threshold,
+            test_point,
+            size,
+        )))
+    } else if let Some(other_bmd) = compare_object.as_bitmap_data() {
+        other_bmd.check_valid(activation)?;
+        let second_point = args.get_object(activation, 3, "secondBitmapDataPoint")?;
+        let second_point = (
+            second_point
+                .get_slot(point_slots::X)
+                .coerce_to_i32(activation)?,
+            second_point
+                .get_slot(point_slots::Y)
+                .coerce_to_i32(activation)?,
+        );
+        let second_threshold = args.get_u32(4).clamp(0, u8::MAX.into()) as u8;
+
+        let result = operations::hit_test_bitmapdata(
+            activation.context.renderer,
+            bitmap_data,
+            top_left,
+            source_threshold,
+            other_bmd,
+            second_point,
+            second_threshold,
+        );
+
+        Ok(Value::Bool(result))
+    } else if let Some(bitmap) = compare_object
+        .as_display_object()
+        .and_then(|dobj| dobj.as_bitmap())
+    {
+        let other_bmd = bitmap.bitmap_data();
+        other_bmd.check_valid(activation)?;
+        let second_point = args.get_object(activation, 3, "secondBitmapDataPoint")?;
+        let second_point = (
+            second_point
+                .get_slot(point_slots::X)
+                .coerce_to_i32(activation)?,
+            second_point
+                .get_slot(point_slots::Y)
+                .coerce_to_i32(activation)?,
+        );
+        let second_threshold = args.get_u32(4).clamp(0, u8::MAX.into()) as u8;
+
+        Ok(Value::Bool(operations::hit_test_bitmapdata(
+            activation.context.renderer,
+            bitmap_data,
+            top_left,
+            source_threshold,
+            other_bmd,
+            second_point,
+            second_threshold,
+        )))
+    } else {
+        // This is the error message Flash Player produces. Even though it's misleading.
+        Err(make_error_2005(activation, 0, "BitmapData"))
     }
-
-    Ok(false.into())
 }
 
 /// Implements `BitmapData.draw`
 pub fn draw<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -985,7 +985,7 @@ pub fn draw<'gc>(
 pub fn draw_with_quality<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1061,7 +1061,7 @@ pub fn draw_with_quality<'gc>(
 pub fn fill_rect<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1091,7 +1091,7 @@ pub fn fill_rect<'gc>(
 pub fn dispose<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1107,7 +1107,7 @@ pub fn dispose<'gc>(
 pub fn get_rect<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1129,7 +1129,7 @@ pub fn get_rect<'gc>(
 pub fn apply_filter<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1208,20 +1208,20 @@ pub fn apply_filter<'gc>(
 pub fn clone<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            let new_bitmap_data =
-                bitmap_data.clone_data(activation.context.gc_context, activation.context.renderer);
+    if let Some(bitmap_data) = this.as_bitmap_data()
+        && !bitmap_data.disposed()
+    {
+        let new_bitmap_data =
+            bitmap_data.clone_data(activation.context.gc_context, activation.context.renderer);
 
-            let new_bitmap_data_object =
-                BitmapDataObject::from_bitmap_data(activation.context, new_bitmap_data);
+        let new_bitmap_data_object =
+            BitmapDataObject::from_bitmap_data(activation.context, new_bitmap_data);
 
-            return Ok(new_bitmap_data_object.into());
-        }
+        return Ok(new_bitmap_data_object.into());
     }
     Ok(Value::Undefined)
 }
@@ -1230,7 +1230,7 @@ pub fn clone<'gc>(
 pub fn palette_map<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1300,67 +1300,58 @@ pub fn palette_map<'gc>(
 pub fn perlin_noise<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            let base_x = args.get_f64(0);
-            let base_y = args.get_f64(1);
-            let num_octaves = args.get_u32(2) as usize;
-            let seed = args.get_i32(3) as i64;
-            let stitch = args.get_bool(4);
-            let fractal_noise = args.get_bool(5);
-            let channel_options = ChannelOptions::from_bits_truncate(args.get_i32(6) as u8);
-            let grayscale = args.get_bool(7);
-            let offsets = args.try_get_object(8);
+    if let Some(bitmap_data) = this.as_bitmap_data()
+        && !bitmap_data.disposed()
+    {
+        let base_x = args.get_f64(0);
+        let base_y = args.get_f64(1);
+        let num_octaves = args.get_u32(2) as usize;
+        let seed = args.get_i32(3) as i64;
+        let stitch = args.get_bool(4);
+        let fractal_noise = args.get_bool(5);
+        let channel_options = ChannelOptions::from_bits_truncate(args.get_i32(6) as u8);
+        let grayscale = args.get_bool(7);
+        let offsets = args.try_get_object(8);
 
-            let point_class = activation.avm2().classes().point.inner_class_definition();
+        let point_class = activation.avm2().classes().point.inner_class_definition();
 
-            let octave_offsets: Result<Vec<_>, Error<'gc>> = (0..num_octaves)
-                .map(|i| {
-                    if let Some(offsets) = offsets {
-                        if let Some(offsets) = offsets.as_array_storage() {
-                            if let Some(Value::Object(point)) = offsets.get(i) {
-                                if point.is_of_type(point_class) {
-                                    let x = point
-                                        .get_slot(point_slots::X)
-                                        .coerce_to_number(activation)?;
-                                    let y = point
-                                        .get_slot(point_slots::Y)
-                                        .coerce_to_number(activation)?;
+        let octave_offsets: Result<Vec<_>, Error<'gc>> = (0..num_octaves)
+            .map(|i| {
+                if let Some(offsets) = offsets
+                    && let Some(offsets) = offsets.as_array_storage()
+                    && let Some(Value::Object(point)) = offsets.get(i)
+                    && point.is_of_type(point_class)
+                {
+                    let x = point
+                        .get_slot(point_slots::X)
+                        .coerce_to_number(activation)?;
+                    let y = point
+                        .get_slot(point_slots::Y)
+                        .coerce_to_number(activation)?;
 
-                                    Ok((x, y))
-                                } else {
-                                    Ok((0.0, 0.0))
-                                }
-                            } else {
-                                Ok((0.0, 0.0))
-                            }
-                        } else {
-                            Ok((0.0, 0.0))
-                        }
-                    } else {
-                        Ok((0.0, 0.0))
-                    }
-                })
-                .collect();
-            let octave_offsets = octave_offsets?;
+                    Ok((x, y))
+                } else {
+                    Ok((0.0, 0.0))
+                }
+            })
+            .collect();
 
-            operations::perlin_noise(
-                activation.gc(),
-                bitmap_data,
-                (base_x, base_y),
-                num_octaves,
-                seed,
-                stitch,
-                fractal_noise,
-                channel_options,
-                grayscale,
-                octave_offsets,
-            );
-        }
+        operations::perlin_noise(
+            activation.gc(),
+            bitmap_data,
+            (base_x, base_y),
+            num_octaves,
+            seed,
+            stitch,
+            fractal_noise,
+            channel_options,
+            grayscale,
+            octave_offsets?,
+        );
     }
 
     Ok(Value::Undefined)
@@ -1370,57 +1361,57 @@ pub fn perlin_noise<'gc>(
 pub fn threshold<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            let src_bitmap = args.get_object(activation, 0, "sourceBitmapData")?;
-            let source_rect = args.get_object(activation, 1, "sourceRect")?;
-            let dest_point = args.get_object(activation, 2, "destPoint")?;
-            let dest_point = (
-                dest_point
-                    .get_slot(point_slots::X)
-                    .coerce_to_i32(activation)?,
-                dest_point
-                    .get_slot(point_slots::Y)
-                    .coerce_to_i32(activation)?,
-            );
-            let operation = args.get_string_non_null(activation, 3, "operationStr")?;
-            let threshold = args.get_u32(4);
-            let color = args.get_u32(5);
-            let mask = args.get_u32(6);
-            let copy_source = args.get_bool(7);
+    if let Some(bitmap_data) = this.as_bitmap_data()
+        && !bitmap_data.disposed()
+    {
+        let src_bitmap = args.get_object(activation, 0, "sourceBitmapData")?;
+        let source_rect = args.get_object(activation, 1, "sourceRect")?;
+        let dest_point = args.get_object(activation, 2, "destPoint")?;
+        let dest_point = (
+            dest_point
+                .get_slot(point_slots::X)
+                .coerce_to_i32(activation)?,
+            dest_point
+                .get_slot(point_slots::Y)
+                .coerce_to_i32(activation)?,
+        );
+        let operation = args.get_string_non_null(activation, 3, "operationStr")?;
+        let threshold = args.get_u32(4);
+        let color = args.get_u32(5);
+        let mask = args.get_u32(6);
+        let copy_source = args.get_bool(7);
 
-            let operation = if let Some(operation) = ThresholdOperation::from_wstr(&operation) {
-                operation
-            } else {
-                // It's wrong but this is what Flash says.
-                return Err(make_error_2005(activation, 0, "Operation"));
-            };
+        let operation = if let Some(operation) = ThresholdOperation::from_wstr(&operation) {
+            operation
+        } else {
+            // It's wrong but this is what Flash says.
+            return Err(make_error_2005(activation, 0, "Operation"));
+        };
 
-            let (src_min_x, src_min_y, src_width, src_height) =
-                get_rectangle_x_y_width_height(activation, source_rect)?;
+        let (src_min_x, src_min_y, src_width, src_height) =
+            get_rectangle_x_y_width_height(activation, source_rect)?;
 
-            if let Some(src_bitmap) = src_bitmap.as_bitmap_data() {
-                src_bitmap.check_valid(activation)?;
+        if let Some(src_bitmap) = src_bitmap.as_bitmap_data() {
+            src_bitmap.check_valid(activation)?;
 
-                return Ok(operations::threshold(
-                    activation.gc(),
-                    activation.context.renderer,
-                    bitmap_data,
-                    src_bitmap,
-                    (src_min_x, src_min_y, src_width, src_height),
-                    dest_point,
-                    operation,
-                    threshold,
-                    color,
-                    mask,
-                    copy_source,
-                )
-                .into());
-            }
+            return Ok(operations::threshold(
+                activation.gc(),
+                activation.context.renderer,
+                bitmap_data,
+                src_bitmap,
+                (src_min_x, src_min_y, src_width, src_height),
+                dest_point,
+                operation,
+                threshold,
+                color,
+                mask,
+                copy_source,
+            )
+            .into());
         }
     }
 
@@ -1431,7 +1422,7 @@ pub fn threshold<'gc>(
 pub fn compare<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1498,7 +1489,7 @@ pub fn compare<'gc>(
 pub fn pixel_dissolve<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1556,51 +1547,51 @@ pub fn pixel_dissolve<'gc>(
 pub fn merge<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
-    if let Some(bitmap_data) = this.as_bitmap_data() {
-        if !bitmap_data.disposed() {
-            let src_bitmap = args.get_object(activation, 0, "sourceBitmapData")?;
+    if let Some(bitmap_data) = this.as_bitmap_data()
+        && !bitmap_data.disposed()
+    {
+        let src_bitmap = args.get_object(activation, 0, "sourceBitmapData")?;
 
-            let (src_min_x, src_min_y, src_width, src_height) = {
-                let source_rect = args.get_object(activation, 1, "sourceRect")?;
-                get_rectangle_x_y_width_height(activation, source_rect)?
-            };
+        let (src_min_x, src_min_y, src_width, src_height) = {
+            let source_rect = args.get_object(activation, 1, "sourceRect")?;
+            get_rectangle_x_y_width_height(activation, source_rect)?
+        };
 
-            let dest_point = {
-                let dest_point = args.get_object(activation, 2, "destPoint")?;
+        let dest_point = {
+            let dest_point = args.get_object(activation, 2, "destPoint")?;
 
-                let x = dest_point
-                    .get_slot(point_slots::X)
-                    .coerce_to_i32(activation)?;
+            let x = dest_point
+                .get_slot(point_slots::X)
+                .coerce_to_i32(activation)?;
 
-                let y = dest_point
-                    .get_slot(point_slots::Y)
-                    .coerce_to_i32(activation)?;
+            let y = dest_point
+                .get_slot(point_slots::Y)
+                .coerce_to_i32(activation)?;
 
-                (x, y)
-            };
+            (x, y)
+        };
 
-            let red_mult = args.get_i32(3);
-            let green_mult = args.get_i32(4);
-            let blue_mult = args.get_i32(5);
-            let alpha_mult = args.get_i32(6);
+        let red_mult = args.get_i32(3);
+        let green_mult = args.get_i32(4);
+        let blue_mult = args.get_i32(5);
+        let alpha_mult = args.get_i32(6);
 
-            if let Some(src_bitmap) = src_bitmap.as_bitmap_data() {
-                if !src_bitmap.disposed() {
-                    operations::merge(
-                        activation.gc(),
-                        activation.context.renderer,
-                        bitmap_data,
-                        src_bitmap,
-                        (src_min_x, src_min_y, src_width, src_height),
-                        dest_point,
-                        (red_mult, green_mult, blue_mult, alpha_mult),
-                    );
-                }
-            }
+        if let Some(src_bitmap) = src_bitmap.as_bitmap_data()
+            && !src_bitmap.disposed()
+        {
+            operations::merge(
+                activation.gc(),
+                activation.context.renderer,
+                bitmap_data,
+                src_bitmap,
+                (src_min_x, src_min_y, src_width, src_height),
+                dest_point,
+                (red_mult, green_mult, blue_mult, alpha_mult),
+            );
         }
     }
 

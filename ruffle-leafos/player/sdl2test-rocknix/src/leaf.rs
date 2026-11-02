@@ -933,7 +933,7 @@ pub async fn run() -> Result<(), String> {
         .or_else(|| std::env::var_os("SAVES_PATH").map(|p| PathBuf::from(p).join("ruffle-leaf/shared_objects")))
         .unwrap_or_else(|| PathBuf::from("./shared_objects"));
     std::fs::create_dir_all(&storage_dir).map_err(|e| format!("Cannot create game storage: {e}"))?;
-    println!("leaf-runtime source=3bc39c5+leaf-frontend storage={}", storage_dir.display());
+    println!("leaf-runtime source=v0.7.1@89a7049+leaf-frontend storage={}", storage_dir.display());
     let controls_root = opt.controls_dir.clone().or_else(|| std::env::var_os("RUFFLE_CONTROLS_DIR").map(PathBuf::from))
         .unwrap_or_else(|| std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config/ruffle-leaf")).join("controls"));
@@ -1039,7 +1039,7 @@ pub async fn run() -> Result<(), String> {
         .with_storage(Box::new(NativeStorage(progress.clone())))
         .with_navigator(navigator).with_log(FileLogBackend::new(Some(Path::new("flashlog.txt"))))
         .with_video(SoftwareVideoBackend::new()).build();
-    let movie = SwfMovie::from_data(&bytes, movie_url.to_string(), None).map_err(|e| format!("Invalid SWF: {e}"))?;
+    let movie = SwfMovie::from_data(&bytes, movie_url.to_string(), None, None).map_err(|e| format!("Invalid SWF: {e}"))?;
     let movie_size = (movie.width().to_pixels().round() as u32, movie.height().to_pixels().round() as u32);
     {
         let mut p = player.lock().unwrap();

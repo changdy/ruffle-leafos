@@ -1,8 +1,10 @@
-use crate::avm2::error::{Error, make_error_2136};
+use crate::avm2::error::{Error, Error2006Type, make_error_2006, make_error_2136};
+use crate::avm2::function::FunctionArgs;
 use crate::avm2::globals::flash::display::display_object::initialize_for_allocator;
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::{Activation, ClassObject, Object, Value};
 use crate::avm2_stub_method;
+use crate::bitmap::is_size_valid;
 use crate::display_object::Video;
 
 pub fn video_allocator<'gc>(
@@ -46,9 +48,9 @@ pub fn video_allocator<'gc>(
 
 /// Implements `flash.media.Video`'s `init` method, which is called from the constructor
 pub fn init<'gc>(
-    _activation: &mut Activation<'_, 'gc>,
+    activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -56,7 +58,22 @@ pub fn init<'gc>(
         let width = args.get_i32(0);
         let height = args.get_i32(1);
 
-        video.set_size(width, height);
+        if width < 0 || height < 0 {
+            return Err(make_error_2006(activation, Error2006Type::RangeError));
+        }
+
+        // Per Adobe docs, 0 falls back to the default dimensions.
+        let (final_w, final_h) = if width == 0 || height == 0 {
+            (320, 240)
+        } else {
+            let swf_version = activation.caller_movie_or_root().version();
+            if !is_size_valid(swf_version, width as u32, height as u32) {
+                return Err(make_error_2006(activation, Error2006Type::RangeError));
+            }
+            (width, height)
+        };
+
+        video.set_size(final_w, final_h);
     }
 
     Ok(Value::Undefined)
@@ -65,7 +82,7 @@ pub fn init<'gc>(
 pub fn attach_net_stream<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

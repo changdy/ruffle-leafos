@@ -245,8 +245,6 @@ impl VertexAttributeFormat {
 pub struct ShaderConfig<'a> {
     pub shader_type: ShaderType,
     pub vertex_attributes: &'a [Option<VertexAttributeFormat>; 8],
-    #[expect(dead_code)] // set but never read
-    pub sampler_configs: &'a [SamplerConfig; 8],
     pub version: AgalVersion,
 }
 
@@ -473,12 +471,10 @@ impl<'a> NagaBuilder<'a> {
     pub fn build_module(
         parsed: &ParsedBytecode,
         vertex_attributes: &[Option<VertexAttributeFormat>; MAX_VERTEX_ATTRIBUTES],
-        sampler_configs: &[SamplerConfig; 8],
     ) -> Result<Module> {
         let mut builder = NagaBuilder::new(ShaderConfig {
             shader_type: parsed.shader_type,
             vertex_attributes,
-            sampler_configs,
             version: parsed.version,
         });
 
@@ -625,6 +621,7 @@ impl<'a> NagaBuilder<'a> {
                             interpolation: None,
                             sampling: None,
                             blend_src: None,
+                            per_primitive: false,
                         }),
                         offset: 0,
                     }],
@@ -648,6 +645,7 @@ impl<'a> NagaBuilder<'a> {
                         interpolation: None,
                         sampling: None,
                         blend_src: None,
+                        per_primitive: false,
                     }),
                 });
             }
@@ -699,6 +697,7 @@ impl<'a> NagaBuilder<'a> {
                     Span::UNDEFINED,
                 ),
                 init: None,
+                memory_decorations: naga::MemoryDecorations::empty(),
             },
             Span::UNDEFINED,
         );
@@ -761,6 +760,7 @@ impl<'a> NagaBuilder<'a> {
                     interpolation: None,
                     sampling: None,
                     blend_src: None,
+                    per_primitive: false,
                 }),
             });
 
@@ -857,6 +857,7 @@ impl<'a> NagaBuilder<'a> {
                         Dimension::Cube => self.imagecube,
                     },
                     init: None,
+                    memory_decorations: naga::MemoryDecorations::empty(),
                 },
                 Span::UNDEFINED,
             );
@@ -877,6 +878,7 @@ impl<'a> NagaBuilder<'a> {
                         Span::UNDEFINED,
                     ),
                     init: None,
+                    memory_decorations: naga::MemoryDecorations::empty(),
                 },
                 Span::UNDEFINED,
             );
@@ -1793,6 +1795,9 @@ impl<'a> NagaBuilder<'a> {
             workgroup_size: [0; 3],
             workgroup_size_overrides: None,
             function: self.func,
+            mesh_info: None,
+            task_payload: None,
+            incoming_ray_payload: None,
         };
 
         self.module.entry_points.push(entry_point);

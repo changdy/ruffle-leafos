@@ -13,11 +13,11 @@ use crate::avm2::error::{
 };
 use crate::avm2::function::FunctionArgs;
 use crate::avm2::method::{Method, NativeMethodImpl, ResolvedParamConfig};
+use crate::avm2::object::TObject;
 use crate::avm2::object::{
     ArrayObject, ByteArrayObject, ClassObject, FunctionObject, NamespaceObject, ScriptObject,
     XmlListObject,
 };
-use crate::avm2::object::{Object, TObject};
 use crate::avm2::op::{LookupSwitch, Op};
 use crate::avm2::scope::{Scope, ScopeChain, search_scope_stack};
 use crate::avm2::script::Script;
@@ -30,7 +30,6 @@ use crate::tag_utils::SwfMovie;
 use gc_arena::Gc;
 use ruffle_macros::istr;
 use std::cell::Cell;
-use std::cmp::{Ordering, min};
 use std::sync::Arc;
 use swf::avm2::types::MethodFlags as AbcMethodFlags;
 
@@ -189,10 +188,10 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
             let mut proto = Some(global);
             while let Some(current_proto) = proto {
-                if let Some(current_proto) = current_proto.as_object() {
-                    if current_proto.base().has_own_dynamic_property(name) {
-                        return Ok(Some(global));
-                    }
+                if let Some(current_proto) = current_proto.as_object()
+                    && current_proto.base().has_own_dynamic_property(name)
+                {
+                    return Ok(Some(global));
                 }
 
                 proto = current_proto.proto(self).map(|o| o.into());
@@ -202,71 +201,73 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         }
     }
 
-    /// Statically resolve all of the parameters for a native method.
+    /// Constrain all non-variadic user-provided arguments to a function call
+    /// to the types and count declared in the signature, then place them on
+    /// this Activation's stack frame.
     ///
-    /// This function makes no attempt to enforce a given method's parameter
-    /// count limits or to package variadic arguments.
-    ///
-    /// The returned list of parameters will be coerced to the stated types in
-    /// the signature, with missing parameters filled in with defaults.
-    pub fn resolve_parameters(
+    /// This method will:
+    ///  - Ensure that there aren't too many arguments
+    ///  - Ensure that all arguments are of the correct type
+    ///  - Ensure that all required parameters have been provided
+    ///  - Subtitute default parameters for parameters that are missing
+    fn coerce_and_setup_arguments(
         &mut self,
         method: Method<'gc>,
-        user_arguments: FunctionArgs<'_, 'gc>,
         signature: &[ResolvedParamConfig<'gc>],
-    ) -> Result<Vec<Value<'gc>>, Error<'gc>> {
-        let mut arguments_list = Vec::new();
-        for (arg, param_config) in user_arguments.iter().zip(signature.iter()) {
+        user_arguments: FunctionArgs<'_, 'gc>,
+    ) -> Result<(), Error<'gc>> {
+        if user_arguments.len() > signature.len() && !method.is_variadic() && !method.is_unchecked()
+        {
+            return Err(make_error_1063(self, method, user_arguments.len()));
+        }
+
+        // Statically verify all non-variadic, provided parameters.
+        for (i, param_config) in signature.iter().enumerate().take(user_arguments.len()) {
+            let arg = user_arguments.get_at(i);
+
             let coerced_arg = if let Some(param_class) = param_config.param_type {
                 arg.coerce_to_type(self, param_class)?
             } else {
                 arg
             };
 
-            arguments_list.push(coerced_arg);
+            self.push_stack(coerced_arg);
         }
 
-        match user_arguments.len().cmp(&signature.len()) {
-            Ordering::Greater => {
-                let user_arguments = &user_arguments.to_slice();
-                // Variadic parameters exist, just push them into the list
-                arguments_list.extend_from_slice(&user_arguments[signature.len()..])
-            }
-            Ordering::Less => {
-                // Apply remaining default parameters
-                for param_config in signature[user_arguments.len()..].iter() {
-                    let arg = if let Some(default_value) = &param_config.default_value {
-                        *default_value
-                    } else {
-                        return Err(make_error_1063(self, method, user_arguments.len()));
-                    };
+        // Now add missing arguments
+        if user_arguments.len() < signature.len() {
+            // Apply remaining default parameters
+            for param_config in signature[user_arguments.len()..].iter() {
+                let arg = if let Some(default_value) = &param_config.default_value {
+                    *default_value
+                } else if method.is_unchecked() {
+                    Value::Undefined
+                } else {
+                    return Err(make_error_1063(self, method, user_arguments.len()));
+                };
 
-                    let coerced_arg = if let Some(param_class) = param_config.param_type {
-                        arg.coerce_to_type(self, param_class)?
-                    } else {
-                        arg
-                    };
+                let coerced_arg = if let Some(param_class) = param_config.param_type {
+                    arg.coerce_to_type(self, param_class)?
+                } else {
+                    arg
+                };
 
-                    arguments_list.push(coerced_arg);
-                }
+                self.push_stack(coerced_arg);
             }
-            _ => {}
         }
 
-        Ok(arguments_list)
+        Ok(())
     }
 
-    /// Create an `arguments` or `rest` object for a given method. This function
-    /// expects the rest of the arguments to already be on the AVM stack.
-    #[inline(never)]
-    fn create_varargs_object(
+    /// Collects all arguments passed to this `Activation` into a `Vec`. This
+    /// function expects the rest of the arguments to already be on the AVM
+    /// stack.
+    pub fn collect_all_arguments(
         &mut self,
-        method: Method<'gc>,
         signature: &[ResolvedParamConfig<'gc>],
         user_arguments: FunctionArgs<'_, 'gc>,
-        callee: Option<FunctionObject<'gc>>,
-    ) -> ArrayObject<'gc> {
-        let mut all_arguments = Vec::new();
+    ) -> Vec<Value<'gc>> {
+        let mut all_arguments = Vec::with_capacity(user_arguments.len());
 
         // Unfortunately we need to allocate now: we need to put all the
         // arguments we just processed into a Vec, so `arguments` or `rest`
@@ -284,6 +285,21 @@ impl<'a, 'gc> Activation<'a, 'gc> {
             let arg = user_arguments.get_at(i);
             all_arguments.push(arg);
         }
+
+        all_arguments
+    }
+
+    /// Create an `arguments` or `rest` object for a given method. This function
+    /// expects the rest of the arguments to already be on the AVM stack.
+    #[inline(never)]
+    fn create_varargs_object(
+        &mut self,
+        method: Method<'gc>,
+        signature: &[ResolvedParamConfig<'gc>],
+        user_arguments: FunctionArgs<'_, 'gc>,
+        callee: Option<FunctionObject<'gc>>,
+    ) -> ArrayObject<'gc> {
+        let all_arguments = self.collect_all_arguments(signature, user_arguments);
 
         let args_array = if method.method().flags.contains(AbcMethodFlags::NEED_REST) {
             if let Some(rest_args) = all_arguments.get(signature.len()..) {
@@ -341,7 +357,6 @@ impl<'a, 'gc> Activation<'a, 'gc> {
             .expect("Cannot execute non-native method without body");
 
         let num_locals = body.num_locals as usize;
-        let has_rest_or_args = method.is_variadic();
 
         if let Some(bound_class) = method.bound_class() {
             assert!(this.is_of_type(bound_class));
@@ -364,51 +379,12 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
         let signature = method.resolved_param_config();
 
-        if user_arguments.len() > signature.len() && !has_rest_or_args && !method.is_unchecked() {
-            return Err(make_error_1063(self, method, user_arguments.len()));
-        }
-
-        // Create locals
+        // Set up the local registers with the receiver and arguments
         self.push_stack(this);
+        self.coerce_and_setup_arguments(method, signature, user_arguments)?;
 
-        // Statically verify all non-variadic, provided parameters.
-        let static_arg_count = min(user_arguments.len(), signature.len());
-        for (i, param_config) in signature.iter().enumerate().take(static_arg_count) {
-            let arg = user_arguments.get_at(i);
-
-            let coerced_arg = if let Some(param_class) = param_config.param_type {
-                arg.coerce_to_type(self, param_class)?
-            } else {
-                arg
-            };
-
-            self.push_stack(coerced_arg);
-        }
-
-        // Now add missing arguments
-        if user_arguments.len() < signature.len() {
-            // Apply remaining default parameters
-            for param_config in signature[user_arguments.len()..].iter() {
-                let arg = if let Some(default_value) = &param_config.default_value {
-                    *default_value
-                } else if method.is_unchecked() {
-                    Value::Undefined
-                } else {
-                    return Err(make_error_1063(self, method, user_arguments.len()));
-                };
-
-                let coerced_arg = if let Some(param_class) = param_config.param_type {
-                    arg.coerce_to_type(self, param_class)?
-                } else {
-                    arg
-                };
-
-                self.push_stack(coerced_arg);
-            }
-        }
-
-        // Finally, handle variadic arguments
-        if has_rest_or_args {
+        // Handle variadic arguments
+        if method.is_variadic() {
             let args_object = self.create_varargs_object(method, signature, user_arguments, callee);
 
             self.push_stack(args_object);
@@ -433,26 +409,33 @@ impl<'a, 'gc> Activation<'a, 'gc> {
     /// activation as the method or script that called them. You must use this
     /// function to construct a new activation for the builtin so that it can
     /// properly supercall.
-    pub fn from_builtin(
-        context: &'a mut UpdateContext<'gc>,
-        bound_superclass_object: Option<ClassObject<'gc>>,
+    #[expect(clippy::too_many_arguments)]
+    pub fn init_from_builtin(
+        &mut self,
+        method: Method<'gc>,
         outer: ScopeChain<'gc>,
+        user_arguments: FunctionArgs<'_, 'gc>,
+        stack_frame: StackFrame<'a, 'gc>,
+        bound_superclass_object: Option<ClassObject<'gc>>,
         caller_domain: Option<Domain<'gc>>,
         caller_movie: Option<Arc<SwfMovie>>,
         caller_dxns: Option<AvmString<'gc>>,
-    ) -> Self {
-        Self {
-            num_locals: 0,
-            outer,
-            caller_domain,
-            caller_movie,
-            bound_superclass_object,
-            stack: StackFrame::empty(),
-            scope_depth: context.avm2.scope_stack.len(),
-            is_interpreter: false,
-            default_xml_namespace: caller_dxns,
-            context,
-        }
+    ) -> Result<(), Error<'gc>> {
+        self.outer = outer;
+        self.caller_domain = caller_domain;
+        self.caller_movie = caller_movie;
+        self.bound_superclass_object = bound_superclass_object;
+        self.stack = stack_frame;
+        self.scope_depth = self.context.avm2.scope_stack.len();
+        self.default_xml_namespace = caller_dxns;
+
+        method.resolve_info(self)?;
+
+        let signature = method.resolved_param_config();
+
+        self.coerce_and_setup_arguments(method, signature, user_arguments)?;
+
+        Ok(())
     }
 
     /// Call the superclass's instance initializer.
@@ -663,7 +646,6 @@ impl<'a, 'gc> Activation<'a, 'gc> {
                 Op::PushInt { value } => self.op_push_int(*value),
                 Op::PushNamespace { namespace } => self.op_push_namespace(*namespace),
                 Op::PushNull => self.op_push_null(),
-                Op::PushShort { value } => self.op_push_short(*value),
                 Op::PushString { string } => self.op_push_string(*string),
                 Op::PushTrue => self.op_push_true(),
                 Op::PushUint { value } => self.op_push_uint(*value),
@@ -713,7 +695,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
                 Op::GetSuper { multiname } => self.op_get_super(*multiname),
                 Op::SetSuper { multiname } => self.op_set_super(*multiname),
                 Op::In => self.op_in(),
-                Op::PushScope => self.op_push_scope(),
+                Op::PushScope { .. } => self.op_push_scope(),
                 Op::NewCatch { index } => self.op_newcatch(method, *index),
                 Op::PushWith => self.op_push_with(),
                 Op::PopScope => self.op_pop_scope(),
@@ -726,6 +708,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
                 Op::GetDescendants { multiname } => self.op_get_descendants(*multiname),
                 Op::GetSlot { index } => self.op_get_slot(*index),
                 Op::SetSlot { index } => self.op_set_slot(*index),
+                Op::SetSlotCoerceI { index } => self.op_set_slot_coerce_i(*index),
                 Op::SetSlotNoCoerce { index } => self.op_set_slot_no_coerce(*index),
                 Op::SetGlobalSlot { index } => self.op_set_global_slot(*index),
                 Op::Construct { num_args } => self.op_construct(*num_args),
@@ -753,7 +736,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
                 Op::CoerceUSwapPop => self.op_coerce_u_swap_pop(),
                 Op::ConvertO => self.op_convert_o(),
                 Op::ConvertS => self.op_convert_s(),
-                Op::Add => self.op_add(),
+                Op::Add { .. } => self.op_add(),
                 Op::AddI => self.op_add_i(),
                 Op::BitAnd => self.op_bitand(),
                 Op::BitNot => self.op_bitnot(),
@@ -775,7 +758,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
                 Op::Negate => self.op_negate(),
                 Op::NegateI => self.op_negate_i(),
                 Op::RShift => self.op_rshift(),
-                Op::Subtract => self.op_subtract(),
+                Op::Subtract { .. } => self.op_subtract(),
                 Op::SubtractI => self.op_subtract_i(),
                 Op::Swap => self.op_swap(),
                 Op::URShift => self.op_urshift(),
@@ -924,7 +907,10 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
                 if matches {
                     #[cfg(feature = "avm_debug")]
-                    tracing::info!(target: "avm_caught", "Caught exception: {:?}", original_error);
+                    {
+                        let stringified = original_error.to_string(self);
+                        tracing::warn!("Caught exception: {}", stringified);
+                    }
 
                     self.reset_stack();
                     self.push_stack(error);
@@ -977,11 +963,6 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     fn op_push_null(&mut self) -> Result<(), Error<'gc>> {
         self.push_stack(Value::Null);
-        Ok(())
-    }
-
-    fn op_push_short(&mut self, value: i16) -> Result<(), Error<'gc>> {
-        self.push_stack(value);
         Ok(())
     }
 
@@ -1090,11 +1071,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         num_args: u32,
         push_return_value: bool,
     ) -> Result<(), Error<'gc>> {
-        let mut args_buf = [Value::Undefined; 2];
-        let args = &mut args_buf[..num_args as usize];
-        for arg in args.iter_mut().rev() {
-            *arg = self.pop_stack();
-        }
+        let args = self.get_args(num_args);
 
         let receiver = self.pop_stack().null_check(self, None)?;
 
@@ -1161,12 +1138,16 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let bound_class = method
             .bound_class()
             .expect("Verifier ensures callstatic methods are classbound");
+
         let receiver = receiver.coerce_to_type(self, bound_class)?;
 
-        // TODO: What scope should the function be executed with?
+        let superclass_object = method.default_superclass_object();
+
+        // TODO: Use the correct scope
         let scope = self.create_scopechain();
 
-        let function = FunctionObject::from_method(self.context, method, scope, None, None);
+        let function =
+            FunctionObject::from_method(self.context, method, scope, None, superclass_object);
         let value = function.call(self, receiver, args)?;
 
         self.push_stack(value);
@@ -1260,14 +1241,14 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         if let Value::Object(object) = object_value {
             match name_value {
                 Value::Integer(_) | Value::Number(_) => {
-                    if let Some(index) = name_value.try_as_index() {
-                        if let Some(value) = object.get_index_property(index) {
-                            let _ = self.pop_stack();
-                            let _ = self.pop_stack();
-                            self.push_stack(value);
+                    if let Some(index) = name_value.try_as_index()
+                        && let Some(value) = object.get_index_property(index)
+                    {
+                        let _ = self.pop_stack();
+                        let _ = self.pop_stack();
+                        self.push_stack(value);
 
-                            return Ok(());
-                        }
+                        return Ok(());
                     }
                 }
                 Value::Object(name_object) => {
@@ -1335,14 +1316,14 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         if let Value::Object(object) = object_value {
             match name_value {
                 Value::Integer(_) | Value::Number(_) => {
-                    if let Some(index) = name_value.try_as_index() {
-                        if let Some(result) = object.set_index_property(self, index, value) {
-                            let _ = self.pop_stack();
-                            let _ = self.pop_stack();
-                            let _ = self.pop_stack();
+                    if let Some(index) = name_value.try_as_index()
+                        && let Some(result) = object.set_index_property(self, index, value)
+                    {
+                        let _ = self.pop_stack();
+                        let _ = self.pop_stack();
+                        let _ = self.pop_stack();
 
-                            return result;
-                        }
+                        return result;
                     }
                 }
                 Value::Object(name_object) => {
@@ -1410,28 +1391,33 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
             let name_value = self.stack.peek(0);
             let object = self.stack.peek(1);
-            if let Some(name_object) = name_value.as_object() {
-                if let Some(dictionary) = object.as_object().and_then(|o| o.as_dictionary_object())
-                {
-                    let _ = self.pop_stack();
-                    let _ = self.pop_stack();
-                    dictionary.delete_property_by_object(name_object, self.gc());
+            if let Some(name_object) = name_value.as_object()
+                && let Some(dictionary) = object.as_object().and_then(|o| o.as_dictionary_object())
+            {
+                let _ = self.pop_stack();
+                let _ = self.pop_stack();
+                dictionary.delete_property_by_object(name_object, self.gc());
 
-                    self.push_stack(true);
-                    return Ok(());
-                }
+                self.push_stack(true);
+                return Ok(());
             }
         }
 
         // main path for dynamic names
         if multiname.has_lazy_name() {
             let name_value = self.stack.peek(0);
-            if matches!(name_value, Value::Object(Object::XmlListObject(_))) {
+
+            if name_value
+                .as_object()
+                .and_then(|o| o.as_xml_list_object())
+                .is_some()
+            {
                 // ECMA-357 11.3.1 The delete Operator
                 // If the type of the operand is XMLList, then a TypeError exception is thrown.
                 return Err(make_error_1119(self));
             }
         }
+
         let multiname = multiname.fill_with_runtime_params(self)?;
         let object = self.pop_stack().null_check(self, Some(&multiname))?;
 
@@ -1495,12 +1481,12 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
         let has_prop = match value {
             Value::Object(obj) => {
-                if let Some(dictionary) = obj.as_dictionary_object() {
-                    if let Some(name_object) = name_value.as_object() {
-                        self.push_stack(dictionary.has_property_by_object(name_object));
+                if let Some(dictionary) = obj.as_dictionary_object()
+                    && let Some(name_object) = name_value.as_object()
+                {
+                    self.push_stack(dictionary.has_property_by_object(name_object));
 
-                        return Ok(());
-                    }
+                    return Ok(());
                 }
 
                 let name = name_value.coerce_to_string(self)?;
@@ -1689,6 +1675,21 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         Ok(())
     }
 
+    fn op_set_slot_coerce_i(&mut self, index: usize) -> Result<(), Error<'gc>> {
+        let value = self.pop_stack();
+        let object = self
+            .pop_stack()
+            .null_check(self, None)?
+            .as_object()
+            .expect("Cannot set_slot on primitive");
+
+        let value = value.coerce_to_i32(self)?;
+
+        object.set_slot_no_coerce(index, value.into(), self.gc());
+
+        Ok(())
+    }
+
     fn op_set_slot_no_coerce(&mut self, index: usize) -> Result<(), Error<'gc>> {
         let value = self.pop_stack();
         let object = self
@@ -1833,7 +1834,7 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let base_class = base_value.coerce_to_type(self, class_class)?;
 
         let base_class = match base_class {
-            Value::Object(Object::ClassObject(c)) => Some(c),
+            Value::Object(o) if let Some(class_obj) = o.as_class_object() => Some(class_obj),
             Value::Null => None,
             _ => unreachable!("Coercion to Class must return Class or null"),
         };
@@ -1998,8 +1999,15 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let value1 = self.pop_stack();
 
         let sum_value = match (value1, value2) {
-            // note: with not-yet-guaranteed assumption that Integer < 1<<28, this won't overflow.
-            (Value::Integer(n1), Value::Integer(n2)) => (n1 + n2).into(),
+            (Value::Integer(n1), Value::Integer(n2)) => {
+                if let Some(res) = n1.checked_add(n2) {
+                    res.into()
+                } else {
+                    ((n1 as i64 + n2 as i64) as f64).into()
+                }
+            }
+            (Value::Integer(n1), Value::Number(n2)) => (n1 as f64 + n2).into(),
+            (Value::Number(n1), Value::Integer(n2)) => (n1 + n2 as f64).into(),
             (Value::Number(n1), Value::Number(n2)) => (n1 + n2).into(),
             (Value::String(s), value2) => Value::String(AvmString::concat(
                 self.gc(),
@@ -2050,10 +2058,20 @@ impl<'a, 'gc> Activation<'a, 'gc> {
     }
 
     fn op_add_i(&mut self) -> Result<(), Error<'gc>> {
-        let value2 = self.pop_stack().coerce_to_i32(self)?;
-        let value1 = self.pop_stack().coerce_to_i32(self)?;
+        let value2 = self.pop_stack();
+        let value1 = self.pop_stack();
 
-        self.push_stack(value1.wrapping_add(value2));
+        let sum_value = match (value1, value2) {
+            (Value::Integer(n1), Value::Integer(n2)) => n1.wrapping_add(n2),
+            (value1, value2) => {
+                let value1 = value1.coerce_to_i32(self)?;
+                let value2 = value2.coerce_to_i32(self)?;
+
+                value1.wrapping_add(value2)
+            }
+        };
+
+        self.push_stack(sum_value);
 
         Ok(())
     }
@@ -2111,8 +2129,9 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     fn op_decrement(&mut self) -> Result<(), Error<'gc>> {
         let value = self.pop_stack().coerce_to_number(self)?;
+        let result = Value::from(value - 1.0);
 
-        self.push_stack(value - 1.0);
+        self.push_stack(result.try_promote_number());
 
         Ok(())
     }
@@ -2128,8 +2147,9 @@ impl<'a, 'gc> Activation<'a, 'gc> {
     fn op_divide(&mut self) -> Result<(), Error<'gc>> {
         let value2 = self.pop_stack().coerce_to_number(self)?;
         let value1 = self.pop_stack().coerce_to_number(self)?;
+        let result = Value::from(value1 / value2);
 
-        self.push_stack(value1 / value2);
+        self.push_stack(result.try_promote_number());
 
         Ok(())
     }
@@ -2152,8 +2172,9 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     fn op_increment(&mut self) -> Result<(), Error<'gc>> {
         let value = self.pop_stack().coerce_to_number(self)?;
+        let result = Value::from(value + 1.0);
 
-        self.push_stack(value + 1.0);
+        self.push_stack(result.try_promote_number());
 
         Ok(())
     }
@@ -2192,11 +2213,11 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         // to help int-indexing.
         // Once we get a generic implicit double->int conversion,
         // we can reevaluate whether this path is needed.
-        if let (Value::Integer(n1), Value::Integer(n2)) = (value1, value2) {
-            if let Some(result) = n1.checked_mul(n2) {
-                self.push_stack(result);
-                return Ok(());
-            }
+        if let (Value::Integer(n1), Value::Integer(n2)) = (value1, value2)
+            && let Some(result) = n1.checked_mul(n2)
+        {
+            self.push_stack(result);
+            return Ok(());
         }
         let value2 = value2.coerce_to_number(self)?;
         let value1 = value1.coerce_to_number(self)?;
@@ -2244,8 +2265,15 @@ impl<'a, 'gc> Activation<'a, 'gc> {
         let value1 = self.pop_stack();
 
         let sub_value: Value<'gc> = match (value1, value2) {
-            // note: with not-yet-guaranteed assumption that Integer < 1<<28, this won't underflow.
-            (Value::Integer(n1), Value::Integer(n2)) => (n1 - n2).into(),
+            (Value::Integer(n1), Value::Integer(n2)) => {
+                if let Some(res) = n1.checked_sub(n2) {
+                    res.into()
+                } else {
+                    ((n1 as i64 - n2 as i64) as f64).into()
+                }
+            }
+            (Value::Integer(n1), Value::Number(n2)) => (n1 as f64 - n2).into(),
+            (Value::Number(n1), Value::Integer(n2)) => (n1 - n2 as f64).into(),
             (Value::Number(n1), Value::Number(n2)) => (n1 - n2).into(),
             _ => {
                 let value2 = value2.coerce_to_number(self)?;
@@ -2260,10 +2288,20 @@ impl<'a, 'gc> Activation<'a, 'gc> {
     }
 
     fn op_subtract_i(&mut self) -> Result<(), Error<'gc>> {
-        let value2 = self.pop_stack().coerce_to_i32(self)?;
-        let value1 = self.pop_stack().coerce_to_i32(self)?;
+        let value2 = self.pop_stack();
+        let value1 = self.pop_stack();
 
-        self.push_stack(value1.wrapping_sub(value2));
+        let sum_value = match (value1, value2) {
+            (Value::Integer(n1), Value::Integer(n2)) => n1.wrapping_sub(n2),
+            (value1, value2) => {
+                let value1 = value1.coerce_to_i32(self)?;
+                let value2 = value2.coerce_to_i32(self)?;
+
+                value1.wrapping_sub(value2)
+            }
+        };
+
+        self.push_stack(sum_value);
 
         Ok(())
     }
@@ -2589,26 +2627,22 @@ impl<'a, 'gc> Activation<'a, 'gc> {
             Value::Object(o) => {
                 let classes = self.avm2().class_defs();
 
-                match o {
-                    Object::FunctionObject(_) => {
-                        if o.instance_class() == classes.function {
-                            istr!(self, "function")
-                        } else {
-                            // Subclasses always have a typeof = "object"
-                            istr!(self, "object")
-                        }
+                if o.as_function_object().is_some() {
+                    if o.instance_class() == classes.function {
+                        istr!(self, "function")
+                    } else {
+                        // Subclasses always have a typeof = "object"
+                        istr!(self, "object")
                     }
-                    Object::XmlObject(_) | Object::XmlListObject(_) => {
-                        if o.instance_class() == classes.xml_list
-                            || o.instance_class() == classes.xml
-                        {
-                            istr!(self, "xml")
-                        } else {
-                            // Subclasses always have a typeof = "object"
-                            istr!(self, "object")
-                        }
+                } else if o.as_xml_object().is_some() || o.as_xml_list_object().is_some() {
+                    if o.instance_class() == classes.xml_list || o.instance_class() == classes.xml {
+                        istr!(self, "xml")
+                    } else {
+                        // Subclasses always have a typeof = "object"
+                        istr!(self, "object")
                     }
-                    _ => istr!(self, "object"),
+                } else {
+                    istr!(self, "object")
                 }
             }
             Value::String(_) => istr!(self, "string"),
@@ -2646,10 +2680,10 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     /// Implements `Op::EscXElem`
     fn op_esc_elem(&mut self) -> Result<(), Error<'gc>> {
+        // We explicitly call toXMLString on Xml/XmlListObject since the toString of these objects have special handling for simple content, which is not used here.
         let r = match self.pop_stack() {
-            // We explicitly call toXMLString on Xml/XmlListObject since the toString of these objects have special handling for simple content, which is not used here.
-            Value::Object(Object::XmlObject(x)) => x.as_xml_string(self),
-            Value::Object(Object::XmlListObject(x)) => x.as_xml_string(self),
+            Value::Object(o) if let Some(x) = o.as_xml_object() => x.as_xml_string(self),
+            Value::Object(o) if let Some(x) = o.as_xml_list_object() => x.as_xml_string(self),
             // contrary to the avmplus documentation, this escapes the value on the top of the stack using EscapeElementValue from ECMA-357 *NOT* EscapeAttributeValue.
             x => AvmString::new(self.gc(), escape_element_value(x.coerce_to_string(self)?)),
         };
@@ -2702,13 +2736,13 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     /// Implements `Op::Si8`
     fn op_si8(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_i32(self)?;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let val = self.pop_stack().coerce_to_i32(self)? as i8;
         let mut dm = self.domain_memory().storage_mut();
-
-        let Ok(address) = usize::try_from(address) else {
-            return Err(make_error_1506(self));
-        };
 
         if address >= dm.len() {
             return Err(make_error_1506(self));
@@ -2721,79 +2755,87 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     /// Implements `Op::Si16`
     fn op_si16(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_i32(self)?;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let val = self.pop_stack().coerce_to_i32(self)? as i16;
         let mut dm = self.domain_memory().storage_mut();
 
-        let Ok(address) = usize::try_from(address) else {
-            return Err(make_error_1506(self));
-        };
         if address > dm.len() - 2 {
             return Err(make_error_1506(self));
         }
         dm.write_at_nongrowing(&val.to_le_bytes(), address)
-            .map_err(|e| e.to_avm(self))?;
+            .expect("Already performed bounds check");
 
         Ok(())
     }
 
     /// Implements `Op::Si32`
     fn op_si32(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_i32(self)?;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let val = self.pop_stack().coerce_to_i32(self)?;
         let mut dm = self.domain_memory().storage_mut();
 
-        let Ok(address) = usize::try_from(address) else {
-            return Err(make_error_1506(self));
-        };
         if address > dm.len() - 4 {
             return Err(make_error_1506(self));
         }
         dm.write_at_nongrowing(&val.to_le_bytes(), address)
-            .map_err(|e| e.to_avm(self))?;
+            .expect("Already performed bounds check");
 
         Ok(())
     }
 
     /// Implements `Op::Sf32`
     fn op_sf32(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_i32(self)?;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let val = self.pop_stack().coerce_to_number(self)? as f32;
         let mut dm = self.domain_memory().storage_mut();
 
-        let Ok(address) = usize::try_from(address) else {
-            return Err(make_error_1506(self));
-        };
         if address > dm.len() - 4 {
             return Err(make_error_1506(self));
         }
         dm.write_at_nongrowing(&val.to_le_bytes(), address)
-            .map_err(|e| e.to_avm(self))?;
+            .expect("Already performed bounds check");
 
         Ok(())
     }
 
     /// Implements `Op::Sf64`
     fn op_sf64(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_i32(self)?;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let val = self.pop_stack().coerce_to_number(self)?;
         let mut dm = self.domain_memory().storage_mut();
 
-        let Ok(address) = usize::try_from(address) else {
-            return Err(make_error_1506(self));
-        };
         if address > dm.len() - 8 {
             return Err(make_error_1506(self));
         }
         dm.write_at_nongrowing(&val.to_le_bytes(), address)
-            .map_err(|e| e.to_avm(self))?;
+            .expect("Already performed bounds check");
 
         Ok(())
     }
 
     /// Implements `Op::Li8`
     fn op_li8(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_u32(self)? as usize;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let dm = self.domain_memory().storage();
 
         let val = dm.get(address);
@@ -2809,14 +2851,20 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     /// Implements `Op::Li16`
     fn op_li16(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_u32(self)? as usize;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let dm = self.domain_memory().storage();
 
         if address > dm.len() - 2 {
             return Err(make_error_1506(self));
         }
 
-        let val = dm.read_at(2, address).map_err(|e| e.to_avm(self))?;
+        let val = dm
+            .read_at(2, address)
+            .expect("Already performed bounds check");
         self.push_stack(u16::from_le_bytes(val.try_into().unwrap()));
 
         Ok(())
@@ -2824,28 +2872,40 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     /// Implements `Op::Li32`
     fn op_li32(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_u32(self)? as usize;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let dm = self.domain_memory().storage();
 
         if address > dm.len() - 4 {
             return Err(make_error_1506(self));
         }
 
-        let val = dm.read_at(4, address).map_err(|e| e.to_avm(self))?;
+        let val = dm
+            .read_at(4, address)
+            .expect("Already performed bounds check");
         self.push_stack(i32::from_le_bytes(val.try_into().unwrap()));
         Ok(())
     }
 
     /// Implements `Op::Lf32`
     fn op_lf32(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_u32(self)? as usize;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let dm = self.domain_memory().storage();
 
         if address > dm.len() - 4 {
             return Err(make_error_1506(self));
         }
 
-        let val = dm.read_at(4, address).map_err(|e| e.to_avm(self))?;
+        let val = dm
+            .read_at(4, address)
+            .expect("Already performed bounds check");
         self.push_stack(f32::from_le_bytes(val.try_into().unwrap()));
 
         Ok(())
@@ -2853,14 +2913,20 @@ impl<'a, 'gc> Activation<'a, 'gc> {
 
     /// Implements `Op::Lf64`
     fn op_lf64(&mut self) -> Result<(), Error<'gc>> {
-        let address = self.pop_stack().coerce_to_u32(self)? as usize;
+        // Negative addresses will be coerced to >i32::MAX, which is guaranteed
+        // to be out-of-bounds of the domain memory by a check in
+        // `Domain::set_domain_memory`.
+        let address = self.pop_stack().coerce_to_i32(self)? as usize;
+
         let dm = self.domain_memory().storage();
 
         if address > dm.len() - 8 {
             return Err(make_error_1506(self));
         }
 
-        let val = dm.read_at(8, address).map_err(|e| e.to_avm(self))?;
+        let val = dm
+            .read_at(8, address)
+            .expect("Already performed bounds check");
         self.push_stack(f64::from_le_bytes(val.try_into().unwrap()));
         Ok(())
     }

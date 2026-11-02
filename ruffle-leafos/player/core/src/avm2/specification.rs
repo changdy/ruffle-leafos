@@ -12,7 +12,6 @@ use serde::Serialize;
 use std::borrow::Cow;
 use std::fs::File;
 use std::path::Path;
-use std::process::exit;
 
 // This function is used in macros and they require such signature with &bool.
 #[allow(clippy::trivially_copy_pass_by_ref)]
@@ -286,10 +285,9 @@ impl Definition {
             .super_class_name()
             .as_ref()
             .and_then(|n| n.local_name())
+            && &super_name != b"Object"
         {
-            if &super_name != b"Object" {
-                definition.classinfo.get_or_insert_default().extends = Some(super_name.to_string());
-            }
+            definition.classinfo.get_or_insert_default().extends = Some(super_name.to_string());
         }
 
         let prototype = class_object.prototype();
@@ -305,6 +303,33 @@ impl Definition {
             };
             if &name != b"constructor" {
                 Self::add_prototype_value(name, value.value, &mut definition.prototype, activation);
+            }
+        }
+
+        // Some builtin classes (e.g. `Error`) construct their prototype as a typed
+        // instance of their own class, so that assignments like `prototype.name =
+        // "Error"` in the static initializer resolve through the VTable to a slot
+        // rather than the dynamic property map walked above. Walk those slots too,
+        // so such properties aren't misreported as unimplemented.
+        if prototype.instance_class() == i_class {
+            for class_trait in i_class.traits() {
+                if !class_trait.name().namespace().is_public() {
+                    continue;
+                }
+                if let TraitKind::Slot { default_value, .. } = class_trait.kind() {
+                    let trait_name = class_trait.name().local_name();
+                    if let Ok(current_value) =
+                        Value::from(prototype).get_public_property(trait_name, activation)
+                        && !current_value.strict_eq(default_value)
+                    {
+                        Self::add_prototype_value(
+                            trait_name,
+                            current_value,
+                            &mut definition.prototype,
+                            activation,
+                        );
+                    }
+                }
             }
         }
 
@@ -365,16 +390,28 @@ impl Definition {
             let trait_name = class_trait.name().local_name().to_string();
             match class_trait.kind() {
                 TraitKind::Slot {
-                    type_name,
+                    slot_type,
                     default_value,
                     ..
                 } => {
                     output.get_or_insert_default().variables.insert(
                         trait_name,
                         VariableInfo {
-                            type_info: type_name
-                                .and_then(|m| m.local_name())
-                                .map(|n| n.to_string()),
+                            type_info: slot_type.get_local_name().map(|n| n.to_string()),
+                            value: format_value(default_value),
+                            stubbed: false,
+                        },
+                    );
+                }
+                TraitKind::Const {
+                    slot_type,
+                    default_value,
+                    ..
+                } => {
+                    output.get_or_insert_default().constants.insert(
+                        trait_name,
+                        VariableInfo {
+                            type_info: slot_type.get_local_name().map(|n| n.to_string()),
                             value: format_value(default_value),
                             stubbed: false,
                         },
@@ -424,22 +461,6 @@ impl Definition {
                     );
                 }
                 TraitKind::Class { .. } => {}
-                TraitKind::Const {
-                    type_name,
-                    default_value,
-                    ..
-                } => {
-                    output.get_or_insert_default().constants.insert(
-                        trait_name,
-                        VariableInfo {
-                            type_info: type_name
-                                .and_then(|m| m.local_name())
-                                .map(|n| n.to_string()),
-                            value: format_value(default_value),
-                            stubbed: false,
-                        },
-                    );
-                }
             }
         }
     }
@@ -497,5 +518,4 @@ pub fn capture_specification(context: &mut UpdateContext, output: &Path) {
     }
     serde_json::to_writer_pretty(&File::create(output).unwrap(), &definitions).unwrap();
     tracing::info!("Wrote stub report to {output:?}");
-    exit(0);
 }

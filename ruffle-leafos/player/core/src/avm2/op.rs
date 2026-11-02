@@ -11,7 +11,11 @@ use std::cell::Cell;
 #[derive(Clone, Collect, Copy, Debug)]
 #[collect(no_drop)]
 pub enum Op<'gc> {
-    Add,
+    Add {
+        /// Whether the two inputs to this op are both guaranteed to be
+        /// integers. This field is used in the optimizer.
+        inputs_integral: bool,
+    },
     AddI,
     ApplyType {
         num_types: u32,
@@ -267,9 +271,10 @@ pub enum Op<'gc> {
         namespace: Namespace<'gc>,
     },
     PushNull,
-    PushScope,
-    PushShort {
-        value: i16,
+    PushScope {
+        // Whether the input to this op is guaranteed to be not-null. This field
+        // is used in the optimizer.
+        input_not_null: bool,
     },
     PushString {
         string: AvmAtom<'gc>,
@@ -309,6 +314,10 @@ pub enum Op<'gc> {
         // note: 0-indexed, as opposed to FP.
         index: usize,
     },
+    SetSlotCoerceI {
+        // note: 0-indexed, as opposed to FP.
+        index: usize,
+    },
     SetSlotNoCoerce {
         // note: 0-indexed, as opposed to FP.
         index: usize,
@@ -325,7 +334,10 @@ pub enum Op<'gc> {
     StoreLocal {
         index: u32,
     },
-    Subtract,
+    Subtract {
+        /// See comment on `Op::Add`
+        inputs_integral: bool,
+    },
     SubtractI,
     Swap,
     Sxi1,
@@ -365,7 +377,6 @@ impl Op<'_> {
                 | Op::PushInt { .. }
                 | Op::PushNamespace { .. }
                 | Op::PushNull
-                | Op::PushShort { .. }
                 | Op::PushString { .. }
                 | Op::PushTrue
                 | Op::PushUint { .. }
@@ -382,11 +393,15 @@ impl Op<'_> {
 
     pub fn is_nop(&self) -> bool {
         if cfg!(feature = "avm_debug") {
-            matches!(self, Op::Nop)
+            matches!(self, Op::Nop | Op::CoerceA)
         } else {
             matches!(
                 self,
-                Op::Nop | Op::Debug { .. } | Op::DebugFile { .. } | Op::DebugLine { .. }
+                Op::Nop
+                    | Op::CoerceA
+                    | Op::Debug { .. }
+                    | Op::DebugFile { .. }
+                    | Op::DebugLine { .. }
             )
         }
     }
@@ -403,7 +418,6 @@ impl Op<'_> {
                 | Op::PushNull
                 | Op::PushDouble { .. }
                 | Op::PushInt { .. }
-                | Op::PushShort { .. }
                 | Op::PushUint { .. }
                 | Op::GetLocal { .. }
                 | Op::Dup

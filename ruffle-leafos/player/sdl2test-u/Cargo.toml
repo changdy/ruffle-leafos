@@ -23,7 +23,7 @@ ruffle_core = { path = "../core", features = [
 ruffle_common = { path = "../core/common" }
 ruffle_video_software = { path = "../video/software" }
 ruffle_video_external = { path = "../video/external" }
-ruffle_frontend_utils = { path = "../frontend-utils" , features = ["cpal", "navigator", "fs"]}
+ruffle_frontend_utils = { path = "../frontend-utils", default-features = false, features = ["cpal", "navigator", "fs", "rustls-tls"] }
 ruffle_render = { path = "../render", features = ["clap"] }
 
 log = { workspace = true, features = ["release_max_level_error"]} 

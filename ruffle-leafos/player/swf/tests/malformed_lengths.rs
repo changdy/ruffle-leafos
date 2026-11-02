@@ -26,9 +26,38 @@ fn lzma_short_lengths_return_invalid_data() {
 
 #[cfg(feature = "lzma")]
 #[test]
-fn lzma_huge_length_returns_error() {
-    let bytes = include_bytes!("swfs/lzma-length-too-large.swf");
-    assert!(swf::decompress_swf(bytes.as_slice()).is_err());
+fn inflated_lzma_lengths_preserve_valid_end_marked_content() {
+    // This fixture has a complete 43-byte LZMA body with an end marker; only
+    // the SWF's declared length is inflated. Restore its actual 8 + 43 length
+    // for the reference, and also exercise an ordinary unmodified LZMA movie.
+    let inflated_fixture = include_bytes!("swfs/lzma-length-too-large.swf");
+    let mut corrected = inflated_fixture.to_vec();
+    corrected[4..8].copy_from_slice(&51u32.to_le_bytes());
+    for original in [corrected.as_slice(), include_bytes!("swfs/lzma.swf").as_slice()] {
+        let expected = swf::decompress_swf(original).unwrap();
+        let mut inflated = original.to_vec();
+        inflated[4..8].copy_from_slice(&u32::MAX.to_le_bytes());
+        let actual = swf::decompress_swf(inflated.as_slice()).unwrap();
+        assert_eq!(actual.data, expected.data);
+        assert!(actual.data.capacity() <= MAX_INITIAL_CAPACITY,
+            "a declared length must not request a multi-GiB initial allocation");
+        assert_eq!(
+            swf::parse_swf(&actual).unwrap().tags,
+            swf::parse_swf(&expected).unwrap().tags
+        );
+    }
+}
+
+#[cfg(feature = "lzma")]
+#[test]
+fn invalid_lzma_properties_return_error() {
+    let mut bytes = include_bytes!("swfs/lzma-length-too-large.swf").to_vec();
+    bytes[4..8].copy_from_slice(&51u32.to_le_bytes());
+    bytes[12] = u8::MAX; // Invalid lc/lp/pb property byte, not a length mismatch.
+    assert!(matches!(
+        swf::decompress_swf(bytes.as_slice()),
+        Err(Error::InvalidData(_))
+    ));
 }
 
 #[test]

@@ -65,7 +65,7 @@ fn assert_trace(bytes: &[u8], expected: &str, frames: usize, child: bool) {
         "file:///avm1-onload/test.swf".to_string()
     };
     let log = TraceLog::default();
-    let movie = SwfMovie::from_data(bytes, url, None).unwrap();
+    let movie = SwfMovie::from_data(bytes, url, None, None).unwrap();
     let player = builder
         .with_movie(movie)
         .with_log(log.clone())

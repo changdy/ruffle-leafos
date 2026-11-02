@@ -15,7 +15,7 @@ use crate::string::{AvmString, WString};
 
 pub fn string_constructor<'gc>(
     activation: &mut Activation<'_, 'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let string_value = match args.get_optional(0) {
         Some(arg) => arg.coerce_to_string(activation)?,
@@ -28,7 +28,7 @@ pub fn string_constructor<'gc>(
 pub fn call_handler<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     match args.get_optional(0) {
         Some(arg) => arg.coerce_to_string(activation).map(Into::into),
@@ -40,10 +40,10 @@ pub fn call_handler<'gc>(
 pub fn get_length<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     if let Value::String(s) = this {
-        return Ok(s.len().into());
+        return Ok(Value::from_usize_lossy(s.len()));
     }
 
     Ok(Value::Undefined)
@@ -53,7 +53,7 @@ pub fn get_length<'gc>(
 pub fn char_at<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     if let Value::String(s) = this {
         // This function takes Number, so if we use get_i32 instead of get_f64, the value may overflow.
@@ -79,7 +79,7 @@ pub fn char_at<'gc>(
 pub fn char_code_at<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     if let Value::String(s) = this {
         // This function takes Number, so if we use coerce_to_i32 instead of coerce_to_number, the value may overflow.
@@ -101,7 +101,7 @@ pub fn char_code_at<'gc>(
 pub fn concat<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let mut ret = this.coerce_to_string(activation)?;
 
@@ -117,7 +117,7 @@ pub fn concat<'gc>(
 pub fn from_char_code<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let mut out = WString::with_capacity(args.len(), false);
     for arg in args {
@@ -131,7 +131,7 @@ pub fn from_char_code<'gc>(
 pub fn index_of<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -143,7 +143,9 @@ pub fn index_of<'gc>(
 
     this.slice(start_index..)
         .and_then(|s| s.find(&pattern))
-        .map(|i| Ok((i + start_index).into()))
+        .map(|i| i + start_index)
+        .map(Value::from_usize_lossy)
+        .map(Ok)
         .unwrap_or_else(|| Ok((-1).into())) // Out of range or not found
 }
 
@@ -151,7 +153,7 @@ pub fn index_of<'gc>(
 pub fn last_index_of<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -172,7 +174,8 @@ pub fn last_index_of<'gc>(
     this.slice(..start_index)
         .unwrap_or(&this)
         .rfind(&pattern)
-        .map(|i| Ok(i.into()))
+        .map(Value::from_usize_lossy)
+        .map(Ok)
         .unwrap_or_else(|| Ok((-1).into())) // Not found
 }
 
@@ -181,7 +184,7 @@ pub fn last_index_of<'gc>(
 pub fn locale_compare<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -224,7 +227,7 @@ pub fn locale_compare<'gc>(
 pub fn match_internal<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -276,7 +279,11 @@ pub fn match_internal<'gc>(
 
                 let array = ArrayObject::from_storage(activation.context, storage);
 
-                array.set_dynamic_property(istr!("index"), result.start().into(), activation.gc());
+                array.set_dynamic_property(
+                    istr!("index"),
+                    Value::from_usize_lossy(result.start()),
+                    activation.gc(),
+                );
                 array.set_dynamic_property(istr!("input"), this.into(), activation.gc());
 
                 return Ok(array.into());
@@ -296,7 +303,7 @@ pub fn match_internal<'gc>(
 pub fn replace<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
     let pattern = args.get_value(0);
@@ -322,7 +329,11 @@ pub fn replace<'gc>(
         let mut ret = WString::from(&this[..position]);
         // Replacement is either a function or treatable as string.
         if let Some(f) = replacement.as_object().and_then(|o| o.as_function_object()) {
-            let args = &[pattern.into(), position.into(), this.into()];
+            let args = &[
+                pattern.into(),
+                Value::from_usize_lossy(position),
+                this.into(),
+            ];
             let v = f.call(activation, Value::Null, FunctionArgs::from_slice(args))?;
             ret.push_str(v.coerce_to_string(activation)?.as_wstr());
         } else {
@@ -341,7 +352,7 @@ pub fn replace<'gc>(
 pub fn search<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -379,7 +390,7 @@ pub fn search<'gc>(
 pub fn slice<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -403,7 +414,7 @@ pub fn slice<'gc>(
 pub fn split<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -442,9 +453,8 @@ pub fn split<'gc>(
                 .collect()
         }
     } else {
-        this.split(&delimiter)
+        this.split_dependent(activation.strings(), delimiter.as_wstr())
             .take(limit.get())
-            .map(|c| AvmString::new(activation.gc(), c))
             .collect()
     };
 
@@ -455,7 +465,7 @@ pub fn split<'gc>(
 pub fn substr<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -498,7 +508,7 @@ pub fn substr<'gc>(
 pub fn substring<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -522,7 +532,7 @@ pub fn substring<'gc>(
 pub fn to_lower_case<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 
@@ -539,7 +549,7 @@ pub fn to_lower_case<'gc>(
 pub fn to_upper_case<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.coerce_to_string(activation)?;
 

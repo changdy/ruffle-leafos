@@ -25,12 +25,14 @@ pub async unsafe fn create(
     height: u32,
     failure: Failure,
 ) -> Result<Box<dyn RenderBackend>, String> {
-    let instance = create_wgpu_instance(wgpu::Backends::VULKAN, Default::default());
+    let instance = create_wgpu_instance(wgpu::Backends::VULKAN, Default::default(), None);
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: None,
             force_fallback_adapter: false,
+            // Match upstream and expose the native device limits for HAL import.
+            apply_limit_buckets: false,
         })
         .await
         .map_err(|e| e.to_string())?;
@@ -70,7 +72,7 @@ unsafe fn create_device(adapter: &wgpu::Adapter) -> Result<(wgpu::Device, wgpu::
         .using_resolution(adapter.limits())
         .using_alignment(adapter.limits());
     limits.max_uniform_buffer_binding_size = adapter.limits().max_uniform_buffer_binding_size;
-    limits.max_inter_stage_shader_components = adapter.limits().max_inter_stage_shader_components;
+    limits.max_inter_stage_shader_variables = adapter.limits().max_inter_stage_shader_variables;
     limits.max_color_attachments = 4;
     let features = adapter.features()
         & (wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES
@@ -136,6 +138,7 @@ unsafe fn create_device(adapter: &wgpu::Adapter) -> Result<(wgpu::Device, wgpu::
             None,
             &extensions,
             features,
+            &desc.required_limits,
             &desc.memory_hints,
             family,
             0,
@@ -626,6 +629,7 @@ impl SharedTarget {
                 view_formats: vec![],
             },
             Some(Box::new(move || drop(keep))),
+            wgpu::hal::vulkan::TextureMemory::External,
         );
         let texture = device.create_texture_from_hal::<wgpu::hal::api::Vulkan>(
             hal_texture,
@@ -641,6 +645,9 @@ impl SharedTarget {
                     | wgpu::TextureUsages::COPY_SRC,
                 view_formats: &[],
             },
+            // The imported VkImage starts in UNDEFINED; wgpu owns the first
+            // transition. Later frames are reacquired in COLOR_ATTACHMENT_OPTIMAL.
+            wgpu::TextureUses::UNINITIALIZED,
         );
         let pool = raw
             .create_command_pool(
@@ -788,9 +795,9 @@ impl RenderTarget for SharedTarget {
             Err(e) => self.fail(e),
         }
     }
-    fn get_next_texture(&mut self) -> Result<Self::Frame, wgpu::SurfaceError> {
+    fn get_next_texture(&mut self) -> Option<Self::Frame> {
         if self.failure.lock().unwrap().is_some() {
-            return Err(wgpu::SurfaceError::Lost);
+            return None;
         }
         if self.released.get() {
             // All native/wgpu queue submissions run on the Flash thread. The
@@ -803,7 +810,7 @@ impl RenderTarget for SharedTarget {
                 )
             } {
                 self.fail(format!("Vulkan acquire: {e:?}"));
-                return Err(wgpu::SurfaceError::Lost);
+                return None;
             }
         }
         self.inner.get_next_texture()

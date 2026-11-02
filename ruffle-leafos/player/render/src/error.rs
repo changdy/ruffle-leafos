@@ -18,6 +18,14 @@ pub enum Error {
     #[error("Invalid JPEG")]
     InvalidJpeg(#[from] jpeg_decoder::Error),
 
+    #[cfg(feature = "jpegxr")]
+    #[error("Invalid JPEG-XR: {0}")]
+    InvalidJpegXr(#[from] jpegxr::JXRError),
+
+    #[cfg(feature = "jpegxr")]
+    #[error("Error decoding TIFF from JPEG-XR: {0}")]
+    MalformedTiffFromJpegXr(#[from] image::ImageError),
+
     #[error("Invalid PNG")]
     InvalidPng(#[from] png::DecodingError),
 
@@ -26,9 +34,6 @@ pub enum Error {
 
     #[error("Empty GIF")]
     EmptyGif,
-
-    #[error("Unsupported DefineBitsLossless{0} format {1:?}")]
-    UnsupportedLosslessFormat(u8, swf::BitmapFormat),
 
     #[cfg(feature = "web")]
     #[error("Javascript error")]

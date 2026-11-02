@@ -23,7 +23,7 @@ fn assert_lexical_scope_wins(bytes: &[u8]) {
     // Therefore the verifier cannot fold the property lookups into static
     // scope accesses and accidentally hide a ScopeChain cache error.
     let movie = SwfMovie::from_data(
-        bytes, "file:///scope-lookup-test.swf".to_owned(), None,
+        bytes, "file:///scope-lookup-test.swf".to_owned(), None, None,
     ).unwrap();
     let log = TraceLog::default();
     let player = PlayerBuilder::new()

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use ruffle_core::backend::ui::{
     DialogResultFuture, FileFilter, FontDefinition, FullscreenError, LanguageIdentifier,
-    MouseCursor, NullUiBackend, UiBackend,
+    MouseCursor, MultiDialogResultFuture, NullUiBackend, UiBackend,
 };
 use ruffle_core::font::{FontFileData, FontQuery};
 use url::Url;
@@ -283,6 +283,13 @@ impl UiBackend for SdlUiBackend {
 
     fn display_file_open_dialog(&mut self, filters: Vec<FileFilter>) -> Option<DialogResultFuture> {
         self.fallback.display_file_open_dialog(filters)
+    }
+
+    fn display_file_open_dialog_multiple(
+        &mut self,
+        filters: Vec<FileFilter>,
+    ) -> Option<MultiDialogResultFuture> {
+        self.fallback.display_file_open_dialog_multiple(filters)
     }
 
     fn display_file_save_dialog(

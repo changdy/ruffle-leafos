@@ -1,14 +1,12 @@
 use crate::backend::WgpuRenderBackend;
 use crate::target::RenderTarget;
-use crate::{
-    Descriptors, GradientUniforms, PosColorVertex, PosVertex, TextureTransforms, as_texture,
-};
+use crate::{Descriptors, GradientUniforms, PosColorVertex, PosUvVertex, as_texture};
 use std::any::Any;
 use std::ops::Range;
 use wgpu::util::DeviceExt;
 
 use crate::buffer_builder::BufferBuilder;
-use ruffle_render::backend::{RenderBackend, ShapeHandle, ShapeHandleImpl};
+use ruffle_render::backend::{ShapeHandle, ShapeHandleImpl};
 use ruffle_render::bitmap::{BitmapHandle, BitmapSource};
 use ruffle_render::tessellator::{Bitmap, Draw as LyonDraw, DrawType as TessDrawType, Gradient};
 use swf::{CharacterId, GradientInterpolation};
@@ -67,31 +65,46 @@ pub struct Draw {
 }
 
 impl PendingDraw {
-    #[expect(clippy::too_many_arguments)]
     pub fn new<T: RenderTarget>(
         backend: &mut WgpuRenderBackend<T>,
         source: &dyn BitmapSource,
         draw: LyonDraw,
         shape_id: CharacterId,
         draw_id: usize,
-        uniform_buffer: &mut BufferBuilder,
         vertex_buffer: &mut BufferBuilder,
         index_buffer: &mut BufferBuilder,
     ) -> Option<Self> {
-        let vertices = if matches!(draw.draw_type, TessDrawType::Color) {
-            let vertices: Vec<_> = draw
-                .vertices
-                .into_iter()
-                .map(PosColorVertex::from)
-                .collect();
-            vertex_buffer
-                .add(&vertices)
-                .expect("Mesh vertex buffer was too large!")
-        } else {
-            let vertices: Vec<_> = draw.vertices.into_iter().map(PosVertex::from).collect();
-            vertex_buffer
-                .add(&vertices)
-                .expect("Mesh vertex buffer was too large!")
+        let vertices = match &draw.draw_type {
+            TessDrawType::Color => {
+                let vertices: Vec<_> = draw
+                    .vertices
+                    .into_iter()
+                    .map(PosColorVertex::from)
+                    .collect();
+                vertex_buffer
+                    .add(&vertices)
+                    .expect("Mesh vertex buffer was too large!")
+            }
+            TessDrawType::Gradient { matrix, .. } => {
+                let vertices: Vec<_> = draw
+                    .vertices
+                    .into_iter()
+                    .map(|v| PosUvVertex::from_tessellator(v, matrix))
+                    .collect();
+                vertex_buffer
+                    .add(&vertices)
+                    .expect("Mesh vertex buffer was too large!")
+            }
+            TessDrawType::Bitmap(bitmap) => {
+                let vertices: Vec<_> = draw
+                    .vertices
+                    .into_iter()
+                    .map(|v| PosUvVertex::from_tessellator(v, &bitmap.matrix))
+                    .collect();
+                vertex_buffer
+                    .add(&vertices)
+                    .expect("Mesh vertex buffer was too large!")
+            }
         };
 
         let indices = index_buffer
@@ -101,12 +114,11 @@ impl PendingDraw {
         let index_count = draw.indices.len() as u32;
         let draw_type = match draw.draw_type {
             TessDrawType::Color => PendingDrawType::color(),
-            TessDrawType::Gradient { matrix, gradient } => {
-                PendingDrawType::gradient(gradient, matrix, shape_id, draw_id, uniform_buffer)
-            }
-            TessDrawType::Bitmap(bitmap) => {
-                PendingDrawType::bitmap(bitmap, shape_id, draw_id, source, backend, uniform_buffer)?
-            }
+            TessDrawType::Gradient {
+                matrix: _,
+                gradient,
+            } => PendingDrawType::gradient(gradient, shape_id, draw_id),
+            TessDrawType::Bitmap(bitmap) => PendingDrawType::bitmap(bitmap, source, backend)?,
         };
         Some(PendingDraw {
             draw_type,
@@ -122,17 +134,12 @@ impl PendingDraw {
 pub enum PendingDrawType {
     Color,
     Gradient {
-        texture_transforms_index: wgpu::BufferAddress,
         gradient_index: usize,
         bind_group_label: Option<String>,
     },
     Bitmap {
-        texture_transforms_index: wgpu::BufferAddress,
-        texture_view: wgpu::TextureView,
+        binds: BitmapBinds,
         handle: BitmapHandle,
-        is_repeating: bool,
-        is_smoothed: bool,
-        bind_group_label: Option<String>,
     },
 }
 
@@ -154,46 +161,34 @@ impl PendingDrawType {
         PendingDrawType::Color
     }
 
-    pub fn gradient(
-        gradient_index: usize,
-        matrix: [[f32; 3]; 3],
-        shape_id: CharacterId,
-        draw_id: usize,
-        uniform_buffers: &mut BufferBuilder,
-    ) -> Self {
-        let tex_transforms_index = create_texture_transforms(&matrix, uniform_buffers);
-
+    pub fn gradient(gradient_index: usize, shape_id: CharacterId, draw_id: usize) -> Self {
         let bind_group_label =
             create_debug_label!("Shape {} (gradient) draw {} bindgroup", shape_id, draw_id);
         PendingDrawType::Gradient {
-            texture_transforms_index: tex_transforms_index,
             gradient_index,
             bind_group_label,
         }
     }
 
-    pub fn bitmap(
+    pub fn bitmap<T: RenderTarget>(
         bitmap: Bitmap,
-        shape_id: CharacterId,
-        draw_id: usize,
         source: &dyn BitmapSource,
-        backend: &mut dyn RenderBackend,
-        uniform_buffers: &mut BufferBuilder,
+        backend: &mut WgpuRenderBackend<T>,
     ) -> Option<Self> {
         let handle = source.bitmap_handle(bitmap.bitmap_id, backend)?;
         let texture = as_texture(&handle);
-        let texture_view = texture.texture.create_view(&Default::default());
-        let texture_transforms_index = create_texture_transforms(&bitmap.matrix, uniform_buffers);
-        let bind_group_label =
-            create_debug_label!("Shape {} (bitmap) draw {} bindgroup", shape_id, draw_id);
+        let binds = texture.bind_group(
+            bitmap.is_repeating,
+            bitmap.is_smoothed,
+            &backend.descriptors.device,
+            &backend.descriptors.bind_layouts.bitmap,
+            handle.clone(),
+            &backend.descriptors.bitmap_samplers,
+        );
 
         Some(PendingDrawType::Bitmap {
-            texture_transforms_index,
-            texture_view,
+            binds: binds.clone(),
             handle,
-            is_repeating: bitmap.is_repeating,
-            is_smoothed: bitmap.is_smoothed,
-            bind_group_label,
         })
     }
 
@@ -206,7 +201,6 @@ impl PendingDrawType {
         match self {
             PendingDrawType::Color => DrawType::Color,
             PendingDrawType::Gradient {
-                texture_transforms_index,
                 gradient_index,
                 bind_group_label,
             } => {
@@ -220,16 +214,6 @@ impl PendingDrawType {
                                 binding: 0,
                                 resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
                                     buffer: uniform_buffer,
-                                    offset: texture_transforms_index,
-                                    size: wgpu::BufferSize::new(
-                                        std::mem::size_of::<TextureTransforms>() as u64,
-                                    ),
-                                }),
-                            },
-                            wgpu::BindGroupEntry {
-                                binding: 1,
-                                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                                    buffer: uniform_buffer,
                                     offset: common.buffer_offset,
                                     size: wgpu::BufferSize::new(
                                         std::mem::size_of::<GradientUniforms>() as u64,
@@ -237,11 +221,11 @@ impl PendingDrawType {
                                 }),
                             },
                             wgpu::BindGroupEntry {
-                                binding: 2,
+                                binding: 1,
                                 resource: wgpu::BindingResource::TextureView(&common.texture_view),
                             },
                             wgpu::BindGroupEntry {
-                                binding: 3,
+                                binding: 2,
                                 resource: wgpu::BindingResource::Sampler(
                                     descriptors.bitmap_samplers.get_sampler(false, true),
                                 ),
@@ -251,31 +235,10 @@ impl PendingDrawType {
                     });
                 DrawType::Gradient { bind_group }
             }
-            PendingDrawType::Bitmap {
-                texture_transforms_index,
-                texture_view,
-                handle,
-                is_repeating,
-                is_smoothed,
-                bind_group_label,
-            } => {
-                let binds = BitmapBinds::new(
-                    &descriptors.device,
-                    &descriptors.bind_layouts.bitmap,
-                    descriptors
-                        .bitmap_samplers
-                        .get_sampler(is_repeating, is_smoothed),
-                    uniform_buffer,
-                    texture_transforms_index,
-                    texture_view,
-                    bind_group_label,
-                );
-
-                DrawType::Bitmap {
-                    binds,
-                    _handle: handle,
-                }
-            }
+            PendingDrawType::Bitmap { binds, handle } => DrawType::Bitmap {
+                binds,
+                _handle: handle,
+            },
         }
     }
 }
@@ -286,8 +249,9 @@ pub enum DrawType {
     Gradient { bind_group: wgpu::BindGroup },
     Bitmap {
         binds: BitmapBinds,
-        // A texture view keeps GPU memory alive, but not the weak-cache handle.
-        // Keep that handle with the shape so other fills reuse the same upload.
+        // GPU views retain the allocation, but the weak library cache needs
+        // the handle itself to stay alive through pending and completed draws.
+        // Keep it on the shape, never in the texture's own bind-group cache.
         _handle: BitmapHandle,
     },
 }
@@ -308,6 +272,8 @@ impl CommonGradient {
             [0; GRADIENT_SIZE * 4]
         } else {
             let mut colors = [0; GRADIENT_SIZE * 4];
+            let mut last = 0;
+            let mut next;
 
             let convert = if gradient.interpolation == GradientInterpolation::LinearRgb {
                 |c| srgb_to_linear(c / 255.0) * 255.0
@@ -316,28 +282,32 @@ impl CommonGradient {
             };
 
             for t in 0..GRADIENT_SIZE {
-                let mut last = 0;
-                let mut next = 0;
-
-                for (i, record) in gradient.records.iter().enumerate().rev() {
-                    if (record.ratio as usize) < t {
-                        last = i;
-                        next = (i + 1).min(gradient.records.len() - 1);
-                        break;
-                    }
+                if last + 1 < gradient.records.len()
+                    && t > gradient.records[last + 1].ratio as usize
+                {
+                    last += 1;
                 }
+                next = (last + 1).min(gradient.records.len() - 1);
+
                 assert!(last == next || last + 1 == next);
 
                 let last_record = &gradient.records[last];
                 let next_record = &gradient.records[next];
 
-                let a = if next == last {
-                    // this can happen if we are before the first gradient record, or after the last one
+                let a = if t <= last_record.ratio as usize || last_record.ratio == next_record.ratio
+                {
+                    // We are before the first gradient record,
+                    // or this record's ratio is equal to the next one,
+                    // meaning we need to do a full stop of this color for 1 pixel.
                     0.0
+                } else if t > next_record.ratio as usize {
+                    // We are after the last record
+                    1.0
                 } else {
                     (t as f32 - last_record.ratio as f32)
                         / (next_record.ratio as f32 - last_record.ratio as f32)
                 };
+
                 colors[t * 4] = lerp(
                     convert(last_record.color.r as f32),
                     convert(next_record.color.r as f32),
@@ -392,7 +362,7 @@ impl CommonGradient {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BitmapBinds {
     pub bind_group: wgpu::BindGroup,
 }
@@ -402,50 +372,23 @@ impl BitmapBinds {
         device: &wgpu::Device,
         layout: &wgpu::BindGroupLayout,
         sampler: &wgpu::Sampler,
-        uniform_buffer: &wgpu::Buffer,
-        texture_transforms: wgpu::BufferAddress,
         texture_view: wgpu::TextureView,
         label: Option<String>,
     ) -> Self {
-        let bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                            buffer: uniform_buffer,
-                            offset: texture_transforms,
-                            size: wgpu::BufferSize::new(
-                                std::mem::size_of::<TextureTransforms>() as u64
-                            ),
-                        }),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(&texture_view),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: wgpu::BindingResource::Sampler(sampler),
-                    },
-                ],
-                label: label.as_deref(),
-            });
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(sampler),
+                },
+            ],
+            label: label.as_deref(),
+        });
         Self { bind_group }
     }
-}
-
-fn create_texture_transforms(
-    matrix: &[[f32; 3]; 3],
-    buffer: &mut BufferBuilder,
-) -> wgpu::BufferAddress {
-    let mut texture_transform = [[0.0; 4]; 4];
-    texture_transform[0][..3].copy_from_slice(&matrix[0]);
-    texture_transform[1][..3].copy_from_slice(&matrix[1]);
-    texture_transform[2][..3].copy_from_slice(&matrix[2]);
-    buffer
-        .add(&[texture_transform])
-        .expect("Mesh uniform buffer was too large!")
-        .start
 }

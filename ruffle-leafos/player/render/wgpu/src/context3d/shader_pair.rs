@@ -56,14 +56,9 @@ impl ShaderPairAgal {
     ) -> RefMut<'_, CompiledShaderProgram> {
         let compiled = self.compiled.borrow_mut();
         RefMut::map(compiled, |compiled| {
-            // TODO: Figure out a way to avoid the clone when we have a cache hit
-            compiled.get_or_insert_mut(data.clone(), || {
-                let vertex_naga_module = naga_agal::agal_to_naga(
-                    &self.vertex_shader,
-                    &data.vertex_attributes,
-                    &data.sampler_configs,
-                )
-                .unwrap();
+            compiled.get_or_insert_mut_with_key(data, |data| {
+                let vertex_naga_module =
+                    naga_agal::agal_to_naga(&self.vertex_shader, &data.vertex_attributes).unwrap();
                 let vertex_module =
                     descriptors
                         .device
@@ -72,12 +67,9 @@ impl ShaderPairAgal {
                             source: wgpu::ShaderSource::Naga(Cow::Owned(vertex_naga_module)),
                         });
 
-                let fragment_naga_module = naga_agal::agal_to_naga(
-                    &self.fragment_shader,
-                    &data.vertex_attributes,
-                    &data.sampler_configs,
-                )
-                .unwrap();
+                let fragment_naga_module =
+                    naga_agal::agal_to_naga(&self.fragment_shader, &data.vertex_attributes)
+                        .unwrap();
                 let fragment_module =
                     descriptors
                         .device
@@ -163,7 +155,6 @@ pub enum ShaderTextureInfo {
 
 #[derive(Hash, Eq, PartialEq, Clone)]
 pub struct ShaderCompileData {
-    pub sampler_configs: [SamplerConfig; 8],
     pub vertex_attributes: [Option<VertexAttributeFormat>; MAX_VERTEX_ATTRIBUTES],
     pub texture_infos: [Option<ShaderTextureInfo>; 8],
 }

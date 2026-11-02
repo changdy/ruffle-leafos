@@ -2,7 +2,7 @@
 
 use crate::avm1::clamp::Clamp;
 use crate::avm1::object::NativeObject;
-use crate::avm1::property_decl::{DeclContext, StaticDeclarations, SystemClass};
+use crate::avm1::property_decl::{DeclContext, PropertyOrder, StaticDeclarations, SystemClass};
 use crate::avm1::{Activation, Error, Object, Value};
 use crate::bitmap::bitmap_data::BitmapData;
 use crate::context::UpdateContext;
@@ -107,9 +107,9 @@ impl<'gc> DisplacementMapFilter<'gc> {
 
     fn map_point(self, activation: &mut Activation<'_, 'gc>) -> Result<Value<'gc>, Error<'gc>> {
         let map_point = self.0.map_point.get();
-        let args = &[map_point.x.into(), map_point.y.into()];
-        let constructor = activation.prototypes().point_constructor;
-        constructor.construct(activation, args)
+        let path = [istr!("flash"), istr!("geom"), istr!("Point")];
+        let args = [map_point.x.into(), map_point.y.into()];
+        activation.instantiate_class_as_script(path, &args)
     }
 
     fn set_map_point(
@@ -322,7 +322,12 @@ pub fn create_class<'gc>(
     context: &mut DeclContext<'_, 'gc>,
     super_proto: Object<'gc>,
 ) -> SystemClass<'gc> {
-    let class = context.native_class(table_constructor!(method), None, super_proto);
+    let class = context.native_class(
+        table_constructor!(method),
+        None,
+        super_proto,
+        PropertyOrder::PrototypeFirst,
+    );
     context.define_properties_on(class.proto, PROTO_DECLS(context));
     class
 }

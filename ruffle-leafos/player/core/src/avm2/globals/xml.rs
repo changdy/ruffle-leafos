@@ -1,20 +1,23 @@
 //! XML builtin and prototype
 
+use crate::avm2::function::FunctionArgs;
 use ruffle_macros::istr;
 
 use crate::avm2::e4x::{E4XNamespace, E4XNode, E4XNodeKind, name_to_multiname};
 use crate::avm2::error::{make_error_1088, make_error_1117};
 pub use crate::avm2::object::xml_allocator;
-use crate::avm2::object::{E4XOrXml, QNameObject, TObject, XmlListObject, XmlObject};
+use crate::avm2::object::{
+    E4XOrXml, NotificationCommand, QNameObject, TObject, XmlListObject, XmlObject,
+};
 use crate::avm2::parameters::ParametersExt;
-use crate::avm2::string::AvmString;
-use crate::avm2::{Activation, ArrayObject, ArrayStorage, Error, Multiname, Object, Value};
+use crate::avm2::{Activation, ArrayObject, ArrayStorage, Error, Multiname, Value};
 use crate::avm2_stub_method;
+use crate::string::AvmString;
 
 pub fn init<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -24,15 +27,15 @@ pub fn init<'gc>(
     let ignore_processing_instructions = args.get_bool(2);
     let ignore_whitespace = args.get_bool(3);
 
-    if let Some(obj) = value.as_object() {
-        if let Some(xml_list) = obj.as_xml_list_object() {
-            // Note - 'new XML(new XMLList())' throws an error, even though
-            // 'new XML("")' does not. We need this special case to ensure that we return
-            // an error, since E4XNode::parse would otherwise return an empty array
-            // (which would be accepted)
-            if xml_list.length() != 1 {
-                return Err(make_error_1088(activation));
-            }
+    if let Some(obj) = value.as_object()
+        && let Some(xml_list) = obj.as_xml_list_object()
+    {
+        // Note - 'new XML(new XMLList())' throws an error, even though
+        // 'new XML("")' does not. We need this special case to ensure that we return
+        // an error, since E4XNode::parse would otherwise return an empty array
+        // (which would be accepted)
+        if xml_list.length() != 1 {
+            return Err(make_error_1088(activation));
         }
     }
 
@@ -97,7 +100,7 @@ pub fn init<'gc>(
 pub fn get_ignore_comments<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     Ok(Value::Bool(activation.avm2().xml_settings.ignore_comments))
 }
@@ -105,7 +108,7 @@ pub fn get_ignore_comments<'gc>(
 pub fn set_ignore_comments<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     activation.avm2().xml_settings.ignore_comments = args.get_bool(0);
 
@@ -115,7 +118,7 @@ pub fn set_ignore_comments<'gc>(
 pub fn get_ignore_processing_instructions<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     Ok(Value::Bool(
         activation
@@ -128,7 +131,7 @@ pub fn get_ignore_processing_instructions<'gc>(
 pub fn set_ignore_processing_instructions<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     activation
         .avm2()
@@ -141,7 +144,7 @@ pub fn set_ignore_processing_instructions<'gc>(
 pub fn get_ignore_whitespace<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     Ok(Value::Bool(
         activation.avm2().xml_settings.ignore_whitespace,
@@ -151,7 +154,7 @@ pub fn get_ignore_whitespace<'gc>(
 pub fn set_ignore_whitespace<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     activation.avm2().xml_settings.ignore_whitespace = args.get_bool(0);
 
@@ -161,7 +164,7 @@ pub fn set_ignore_whitespace<'gc>(
 pub fn get_pretty_printing<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     Ok(Value::Bool(activation.avm2().xml_settings.pretty_printing))
 }
@@ -169,7 +172,7 @@ pub fn get_pretty_printing<'gc>(
 pub fn set_pretty_printing<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     activation.avm2().xml_settings.pretty_printing = args.get_bool(0);
 
@@ -179,7 +182,7 @@ pub fn set_pretty_printing<'gc>(
 pub fn get_pretty_indent<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     Ok(Value::Integer(activation.avm2().xml_settings.pretty_indent))
 }
@@ -187,7 +190,7 @@ pub fn get_pretty_indent<'gc>(
 pub fn set_pretty_indent<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     activation.avm2().xml_settings.pretty_indent = args.get_i32(0);
 
@@ -197,7 +200,7 @@ pub fn set_pretty_indent<'gc>(
 pub fn normalize<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -209,7 +212,7 @@ pub fn normalize<'gc>(
 pub fn name<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -229,7 +232,7 @@ pub fn name<'gc>(
 pub fn set_name<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -243,7 +246,10 @@ pub fn set_name<'gc>(
 
     let name = match args.get_value(0) {
         // 2. If (Type(name) is Object) and (name.[[Class]] == "QName") and (name.uri == null)
-        Value::Object(Object::QNameObject(qname)) if qname.is_any_namespace() => {
+        Value::Object(o)
+            if let Some(qname) = o.as_qname_object()
+                && qname.is_any_namespace() =>
+        {
             // a. Let name = name.localName
             qname.local_name(activation.strings()).into()
         }
@@ -302,6 +308,13 @@ pub fn set_name<'gc>(
         }
     }
 
+    xml.trigger_notification(
+        activation,
+        NotificationCommand::NameSet,
+        new_name.into(),
+        new_local_name.into(),
+    );
+
     Ok(Value::Undefined)
 }
 
@@ -309,7 +322,7 @@ pub fn set_name<'gc>(
 pub fn namespace_internal_impl<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -359,7 +372,7 @@ pub fn namespace_internal_impl<'gc>(
 pub fn add_namespace<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -395,7 +408,7 @@ pub fn add_namespace<'gc>(
 pub fn set_namespace<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -455,7 +468,7 @@ pub fn set_namespace<'gc>(
 pub fn remove_namespace<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -508,22 +521,22 @@ pub fn remove_namespace<'gc>(
         }
     }
 
-    // 6. If ns.prefix == undefined
-    if ns.prefix.is_none() {
+    {
         let E4XNodeKind::Element { namespaces, .. } = &mut *node.kind_mut(activation.gc()) else {
             unreachable!()
         };
-        // 6.a. If there exists a namespace n ∈ x.[[InScopeNamespaces]],
-        // such that n.uri == ns.uri, remove the namespace n from x.[[InScopeNamespaces]]
-        namespaces.retain(|namespace| namespace.uri != ns.uri);
-    } else {
+
+        // 6. If ns.prefix == undefined
+        if ns.prefix.is_none() {
+            // 6.a. If there exists a namespace n ∈ x.[[InScopeNamespaces]],
+            // such that n.uri == ns.uri, remove the namespace n from x.[[InScopeNamespaces]]
+            namespaces.retain(|namespace| namespace.uri != ns.uri);
         // 7. Else
-        let E4XNodeKind::Element { namespaces, .. } = &mut *node.kind_mut(activation.gc()) else {
-            unreachable!()
-        };
-        // 7.a. If there exists a namespace n ∈ x.[[InScopeNamespaces]],
-        // such that n.uri == ns.uri and n.prefix == ns.prefix, remove the namespace n from x.[[InScopeNamespaces]]
-        namespaces.retain(|namespace| *namespace != ns);
+        } else {
+            // 7.a. If there exists a namespace n ∈ x.[[InScopeNamespaces]],
+            // such that n.uri == ns.uri and n.prefix == ns.prefix, remove the namespace n from x.[[InScopeNamespaces]]
+            namespaces.retain(|namespace| *namespace != ns);
+        }
     }
 
     let E4XNodeKind::Element { children, .. } = &*node.kind() else {
@@ -546,7 +559,7 @@ pub fn remove_namespace<'gc>(
 pub fn in_scope_namespaces<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -580,7 +593,7 @@ pub fn in_scope_namespaces<'gc>(
 pub fn namespace_declarations<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -630,7 +643,7 @@ pub fn namespace_declarations<'gc>(
 pub fn local_name<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -641,7 +654,7 @@ pub fn local_name<'gc>(
 pub fn to_string<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -653,7 +666,7 @@ pub fn to_string<'gc>(
 pub fn to_xml_string<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -664,7 +677,7 @@ pub fn to_xml_string<'gc>(
 pub fn child<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -678,7 +691,7 @@ pub fn child<'gc>(
 pub fn child_index<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -691,34 +704,23 @@ pub fn child_index<'gc>(
         .unwrap_or(Value::Number(-1.0)))
 }
 
+// ECMA-357 13.4.4.8 XML.prototype.children ( )
 pub fn children<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
-
     let xml = this.as_xml_object().unwrap();
-    let children = if let E4XNodeKind::Element { children, .. } = &*xml.node().kind() {
-        children.iter().map(|node| E4XOrXml::E4X(*node)).collect()
-    } else {
-        Vec::new()
-    };
 
-    // FIXME: Spec says to just call [[Get]] with * (any multiname).
-    Ok(XmlListObject::new_with_children(
-        activation,
-        children,
-        Some(xml.into()),
-        Some(Multiname::any()),
-    )
-    .into())
+    // 1. Return the results of calling the [[Get]] method of x with argument "*"
+    xml.get_property_local(&Multiname::any(), activation)
 }
 
 pub fn contains<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -735,7 +737,7 @@ pub fn contains<'gc>(
 pub fn copy<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -746,7 +748,7 @@ pub fn copy<'gc>(
 pub fn parent<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -760,7 +762,7 @@ pub fn parent<'gc>(
 pub fn elements<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -771,86 +773,69 @@ pub fn elements<'gc>(
     Ok(list.into())
 }
 
+// ECMA-357 13.4.4.5 XML.prototype.attributes ( )
 pub fn attributes<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
-
     let xml = this.as_xml_object().unwrap();
-    let attributes = if let E4XNodeKind::Element { attributes, .. } = &*xml.node().kind() {
-        attributes.iter().map(|node| E4XOrXml::E4X(*node)).collect()
-    } else {
-        Vec::new()
-    };
 
-    // FIXME: Spec/avmplus says to call [[Get]] with * attribute name (any attribute multiname).
-    Ok(XmlListObject::new_with_children(
-        activation,
-        attributes,
-        Some(xml.into()),
-        Some(Multiname::any_attribute()),
-    )
-    .into())
+    // 1. Return the result of calling the [[Get]] method of x with argument ToAttributeName("*")
+    xml.get_property_local(&Multiname::any_attribute(), activation)
 }
 
+// ECMA-357 13.4.4.4 XML.prototype.attribute ( attributeName )
 pub fn attribute<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
-
     let xml = this.as_xml_object().unwrap();
-    let multiname = name_to_multiname(activation, args.get_value(0), true)?;
-    let attributes = if let E4XNodeKind::Element { attributes, .. } = &*xml.node().kind() {
-        attributes
-            .iter()
-            .filter(|node| node.matches_name(&multiname))
-            .map(|node| E4XOrXml::E4X(*node))
-            .collect()
-    } else {
-        Vec::new()
-    };
 
-    // FIXME: Spec/avmplus call [[Get]] with attribute name.
-    Ok(
-        XmlListObject::new_with_children(activation, attributes, Some(xml.into()), Some(multiname))
-            .into(),
-    )
+    // 1. Let name = ToAttributeName(attributeName)
+    let multiname = name_to_multiname(activation, args.get_value(0), true)?;
+
+    // 2. Return the result of calling the [[Get]] method of x with argument name
+    xml.get_property_local(&multiname, activation)
 }
 
 pub fn call_handler<'gc>(
     activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
-    if args.len() == 1 {
-        if let Some(obj) = args.get_value(0).as_object() {
-            // We do *not* create a new object when AS does 'XML(someXML)'
-            if let Some(xml) = obj.as_xml_object() {
-                return Ok(xml.into());
+    if args.len() == 1
+        && let Some(obj) = args.get_value(0).as_object()
+    {
+        // We do *not* create a new object when AS does 'XML(someXML)'
+        if let Some(xml) = obj.as_xml_object() {
+            return Ok(xml.into());
+        }
+        // This re-uses the XML object stored in the list
+        if let Some(xml_list) = obj.as_xml_list_object() {
+            if xml_list.length() == 1 {
+                return Ok(xml_list.children_mut(activation.gc())[0]
+                    .get_or_create_xml(activation)
+                    .into());
             }
-            // This re-uses the XML object stored in the list
-            if let Some(xml_list) = obj.as_xml_list_object() {
-                if xml_list.length() == 1 {
-                    return Ok(xml_list.children_mut(activation.gc())[0]
-                        .get_or_create_xml(activation)
-                        .into());
-                }
-                return Err(make_error_1088(activation));
-            }
+            return Err(make_error_1088(activation));
         }
     }
 
-    activation.avm2().classes().xml.construct(activation, args)
+    activation
+        .avm2()
+        .classes()
+        .xml
+        .construct_with_args(activation, args)
 }
 
 pub fn node_kind<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -871,7 +856,7 @@ pub fn node_kind<'gc>(
 pub fn append_child<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -905,7 +890,7 @@ pub fn append_child<'gc>(
 pub fn prepend_child<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -923,7 +908,7 @@ pub fn prepend_child<'gc>(
 pub fn descendants<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -941,7 +926,7 @@ pub fn descendants<'gc>(
 pub fn text<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -971,7 +956,7 @@ pub fn text<'gc>(
 pub fn length<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     _this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     Ok(Value::Integer(1))
 }
@@ -979,7 +964,7 @@ pub fn length<'gc>(
 pub fn has_complex_content<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -991,7 +976,7 @@ pub fn has_complex_content<'gc>(
 pub fn has_simple_content<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1004,7 +989,7 @@ pub fn has_simple_content<'gc>(
 pub fn comments<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1035,7 +1020,7 @@ pub fn comments<'gc>(
 pub fn processing_instructions<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1070,7 +1055,7 @@ pub fn processing_instructions<'gc>(
 pub fn insert_child_after<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1089,10 +1074,10 @@ pub fn insert_child_after<'gc>(
         if let Some(xml) = x.as_xml_object() {
             return Some(xml.node());
         // NOTE: Non-standard avmplus behavior, single element XMLLists are treated as XML objects.
-        } else if let Some(list) = x.as_xml_list_object() {
-            if list.length() == 1 {
-                return Some(list.children()[0].node());
-            }
+        } else if let Some(list) = x.as_xml_list_object()
+            && list.length() == 1
+        {
+            return Some(list.children()[0].node());
         }
 
         None
@@ -1128,7 +1113,7 @@ pub fn insert_child_after<'gc>(
 pub fn insert_child_before<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1147,10 +1132,10 @@ pub fn insert_child_before<'gc>(
         if let Some(xml) = x.as_xml_object() {
             return Some(xml.node());
         // NOTE: Non-standard avmplus behavior, single element XMLLists are treated as XML objects.
-        } else if let Some(list) = x.as_xml_list_object() {
-            if list.length() == 1 {
-                return Some(list.children()[0].node());
-            }
+        } else if let Some(list) = x.as_xml_list_object()
+            && list.length() == 1
+        {
+            return Some(list.children()[0].node());
         }
 
         None
@@ -1192,7 +1177,7 @@ pub fn insert_child_before<'gc>(
 pub fn replace<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1229,12 +1214,12 @@ pub fn replace<'gc>(
     };
 
     // 4. If ToString(ToUint32(P)) == P
-    if let Some(local_name) = multiname.local_name() {
-        if let Ok(index) = local_name.parse::<usize>() {
-            // 4.a. Call the [[Replace]] method of x with arguments P and c and return x
-            self_node.replace(index, value, activation)?;
-            return Ok(xml.into());
-        }
+    if let Some(local_name) = multiname.local_name()
+        && let Ok(index) = local_name.parse::<usize>()
+    {
+        // 4.a. Call the [[Replace]] method of x with arguments P and c and return x
+        self_node.replace(index, value, activation)?;
+        return Ok(xml.into());
     }
 
     // 5. Let n be a QName object created as if by calling the function QName(P)
@@ -1264,7 +1249,7 @@ pub fn replace<'gc>(
 pub fn set_children<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1282,7 +1267,7 @@ pub fn set_children<'gc>(
 pub fn set_local_name<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1310,8 +1295,19 @@ pub fn set_local_name<'gc>(
         return Err(make_error_1117(activation, name));
     }
 
+    let previous_name = node.local_name();
+
     // 4. Let x.[[Name]].localName = name
     node.set_local_name(name, activation.gc());
+
+    if let Some(previous_name) = previous_name {
+        xml.trigger_notification(
+            activation,
+            NotificationCommand::NameSet,
+            name.into(),
+            previous_name.into(),
+        );
+    }
 
     Ok(Value::Undefined)
 }
@@ -1319,7 +1315,7 @@ pub fn set_local_name<'gc>(
 pub fn set_notification<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    args: &[Value<'gc>],
+    args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 
@@ -1334,7 +1330,7 @@ pub fn set_notification<'gc>(
 pub fn notification<'gc>(
     _activation: &mut Activation<'_, 'gc>,
     this: Value<'gc>,
-    _args: &[Value<'gc>],
+    _args: FunctionArgs<'_, 'gc>,
 ) -> Result<Value<'gc>, Error<'gc>> {
     let this = this.as_object().unwrap();
 

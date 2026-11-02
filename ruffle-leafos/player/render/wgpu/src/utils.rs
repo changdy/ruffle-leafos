@@ -147,7 +147,9 @@ pub fn capture_image<R, F: FnOnce(&[u8], u32) -> R>(
         })
         .expect("Device must not fail to poll");
     let _ = receiver.recv().expect("MPSC channel must not fail");
-    let map = buffer_slice.get_mapped_range();
+    let map = buffer_slice
+        .get_mapped_range()
+        .expect("Buffer slice must be mappable");
     let result = with_rgba(&map, dimensions.padded_bytes_per_row);
     drop(map);
     buffer.unmap();
@@ -194,14 +196,11 @@ pub fn supported_sample_count(
     sample_count
 }
 
-#[expect(clippy::too_many_arguments)]
 pub fn run_copy_pipeline(
     descriptors: &Descriptors,
     format: wgpu::TextureFormat,
-    actual_surface_format: wgpu::TextureFormat,
     frame_view: &wgpu::TextureView,
     input: &wgpu::TextureView,
-    whole_frame_bind_group: &wgpu::BindGroup,
     globals: &Globals,
     sample_count: u32,
     encoder: &mut CommandEncoder,
@@ -213,27 +212,19 @@ pub fn run_copy_pipeline(
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: descriptors.quad.texture_transforms.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
                     resource: wgpu::BindingResource::TextureView(input),
                 },
                 wgpu::BindGroupEntry {
-                    binding: 2,
+                    binding: 1,
                     resource: wgpu::BindingResource::Sampler(
                         descriptors.bitmap_samplers.get_sampler(false, false),
                     ),
                 },
             ],
-            label: create_debug_label!("Copy sRGB bind group").as_deref(),
+            label: create_debug_label!("Copy bind group").as_deref(),
         });
 
-    let pipeline = if actual_surface_format == format {
-        descriptors.copy_pipeline(format, sample_count)
-    } else {
-        descriptors.copy_srgb_pipeline(actual_surface_format, sample_count)
-    };
+    let pipeline = descriptors.copy_pipeline(format, sample_count);
 
     // We overwrite the pixels in the target texture (no blending at all),
     // so this doesn't matter.
@@ -256,10 +247,9 @@ pub fn run_copy_pipeline(
     render_pass.set_pipeline(&pipeline);
     render_pass.set_bind_group(0, globals.bind_group(), &[]);
 
-    render_pass.set_bind_group(1, whole_frame_bind_group, &[0]);
     render_pass.set_bind_group(2, &copy_bind_group, &[]);
 
-    render_pass.set_vertex_buffer(0, descriptors.quad.vertices_pos.slice(..));
+    render_pass.set_vertex_buffer(0, descriptors.quad.vertices_pos_uv.slice(..));
     render_pass.set_index_buffer(
         descriptors.quad.indices.slice(..),
         wgpu::IndexFormat::Uint32,

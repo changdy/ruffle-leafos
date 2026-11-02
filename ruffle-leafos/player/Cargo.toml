@@ -6,58 +6,63 @@ members = [
     "swf",
     "flv",
     "wstr",
-
     "frontend-utils",
-
     "sdl2test-rocknix",
     "sdl2test-u",
     "sdl2test-tb",
-
     "render",
     "render/wgpu",
-    "render/naga-pixelbender",
     "render/naga-agal",
     "render/pixel_bender",
-
-    "stub-report",
-
+    "tools/asc",
+    "tools/stub-report",
     "video",
     "video/software",
     "video/external",
 ]
-default-members = ["sdl2test-u"]
+default-members = ["sdl2test-rocknix"]
 resolver = "2"
 
 [workspace.package]
-authors = ["aweigit"]
+authors = ["Ruffle LLC <ruffle@ruffle.rs>"]
 edition = "2024"
+homepage = "https://ruffle.rs"
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/aweigit/ruffle-miyooflip"
-repository = "https://github.com/aweigit/ruffle-miyooflip"
-version = "0.3.0"
+repository = "https://github.com/ruffle-rs/ruffle"
+version = "0.7.1"
 
 [workspace.dependencies]
+rand = { version = "0.10.1", default-features = false }
+png = "0.18.1"
+proc-macro2 = "1.0.106"
+zip = { version = "8.6.0", default-features = false }
+quote = "1.0.45"
 tracing = "0.1.43"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
-naga = { version = "27.0.3", features = ["wgsl-out"] }
-wgpu = { version = "27.0.1", default-features = false, features = ["std", "parking_lot", "vulkan", "wgsl"] }
-egui = "0.33.3"
-clap = { version = "4.5.60", features = ["derive"] }
-cpal =  { git = "https://github.com/RustAudio/cpal", rev = "33e05ec94b5670c6f02080acf3fd6d8ac21e37cd"}
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+naga = { version = "30.0.1", features = ["wgsl-out"] }
+wgpu = { version = "30.0.1", default-features = false, features = ["std", "parking_lot", "vulkan", "wgsl"] }
+wgpu-profiler = "0.28.0"
+egui = "0.36.1"
+egui_extras = { version = "0.36.1", default-features = false }
+egui-wgpu = "0.36.1"
+egui-winit = "0.36.1"
+clap = { version = "4.6.1", features = ["derive"] }
+clap_complete = "4.6"
+cpal = "0.16.0"
 anyhow = "1.0"
-gc-arena = { git = "https://github.com/kyren/gc-arena.git", rev = "75671ae03f53718357b741ed4027560f14e90836", features = ["hashbrown", "indexmap", "smallvec", "slotmap"] }
+gc-arena = { version = "0.7.0", features = ["enum-map", "hashbrown", "indexmap", "slotmap", "smallvec"] }
 slotmap = "1.1.1"
 async-channel = "2.5.0"
-bitflags = "2.11.0"
+bitflags = "2.12.1"
 bytemuck = "1.25.0"
 chrono = { version = "0.4.44", default-features = false }
 enum-map = "2.7.3"
 flate2 = "1.1.9"
 futures = "0.3.32"
-image = { version = "0.25.9", default-features = false }
-js-sys = "0.3.85"
-web-sys = "0.3.85"
-log = "0.4.29"
+image = { version = "0.25.10", default-features = false }
+js-sys = "0.3.97"
+web-sys = "0.3.97"
+log = "0.4"
 num-derive = "0.4.2"
 num-traits = "0.2.19"
 serde = "1.0.228"
@@ -66,36 +71,36 @@ url = "2.5.8"
 quick-xml = "0.37.5"
 regress = { git = "https://github.com/ruffle-rs/regras3", rev = "6d48179d6bd448f2cc66b76352c9f048dde968d1" }
 # Make sure to match wasm-bindgen-cli version to this everywhere.
-wasm-bindgen = "=0.2.108"
+wasm-bindgen = "=0.2.127"
 walkdir = "2.5.0"
-tokio = "1.50.0"
+tokio = "1.52.3"
 rfd = { version = "0.17.2", default-features = false, features = ["wayland", "xdg-portal"] }
 memmap2 = "0.9.10"
-libtest-mimic = "0.8.1"
+libtest-mimic = "0.8.2"
 regex = "1.12.3"
+reqwest = { version = "0.13.5", default-features = false }
 toml = "1.0.6"
 toml_edit = "0.25.4"
-vfs = "0.12.2"
+vfs = "0.13.0"
 smallvec = { version = "1.15.1", features = ["const_new", "union"] }
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 percent-encoding = "2.3.2"
 approx = "0.5.1"
 encoding_rs = "0.8.35"
 byteorder = "1.5"
-bitstream-io = "4.9.0"
+bitstream-io = "4.10.0"
 indicatif = "0.18"
-rayon = "1.11.0"
+rayon = "1.12.0"
 sha2 = "0.10.9"
 indexmap = "2.13.0"
 fnv = "1.0.7"
-hashbrown = "0.16.1"
+hashbrown = "0.17.1"
 fluent-templates = "0.13.3"
 lzma-rs = "0.3.0"
-tempfile = "3.26.0"
+tempfile = "3.27.0"
 tracing-wasm = "0.2.1"
-
-# [patch.crates-io]
-# wgpu-hal = { path = "./wgpu-hal-27.0.4" }
+rascal = "0.3.5"
+jpegxr = { git = "https://github.com/ruffle-rs/jpegxr", rev = "86cc1749d493288f53d7290ac3eb7082c475b5d9" }
 
 [workspace.lints.rust]
 # Clippy nightly often adds new/buggy lints that we want to ignore.
@@ -112,6 +117,13 @@ unknown_lints = "allow"
 trivially_copy_pass_by_ref = "deny"
 redundant_clone = "deny"
 unused_async = "deny"
+used_underscore_items = "deny"
+dbg_macro = "warn"
+enum_glob_use = "deny"
+branches_sharing_code = "warn"
+needless_pass_by_ref_mut = "warn"
+
+# TODO Enable used_underscore_binding when false positives get fixed.
 
 # LONG-TERM: These lints are unhelpful.
 manual_map = "allow"             # Less readable: Suggests `opt.map(..)` instead of `if let Some(opt) { .. }`
@@ -119,6 +131,9 @@ manual_range_contains = "allow"  # Less readable: Suggests `(a..b).contains(n)` 
 assigning_clones = "allow"       # Sometimes useful, but more often than not it doesn't do anything as
                                  # we overwrite an empty item. And sometimes it can even be a footgun
                                  # by keeping big allocations alive.
+byte_char_slices = "allow"       # Less expressive: Suggests `b"abc"` byte string literal instead of an explicit
+                                 # `[b'a', b'b', b'c']` array. The array form is clearer when the elements
+                                 # represent a set of alternatives (any-of) rather than a byte sequence.
 
 # Don't optimize build scripts and macros.
 [profile.release.build-override]
@@ -128,11 +143,16 @@ opt-level = 0
 panic = "unwind"
 
 [profile.release]
-panic = "abort" # panic时直接终止，不进行栈展开，可减小二进制体积
-opt-level = 2        # 启用2级别的代码性能优化
-lto = true           # 启用“胖”链接时优化 (LTO)，进行跨模块的全局优化
-codegen-units = 1    # 将代码生成单元设为1，允许编译器进行更深度的优化
-strip = true         # 剥离调试符号，进一步减小二进制文件体积
+panic = "abort"
+opt-level = 2
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dist]
+inherits = "release"
+lto = true
+codegen-units = 1
 
 [profile.dev.package.h263-rs]
 opt-level = 3

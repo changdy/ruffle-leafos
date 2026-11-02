@@ -11,7 +11,7 @@ use crate::avm2::object::{NamespaceObject, Object, TObject};
 use crate::avm2::property::Property;
 use crate::avm2::script::TranslationUnit;
 use crate::avm2::vtable::VTable;
-use crate::avm2::{Error, Multiname, Namespace};
+use crate::avm2::{Error, Multiname};
 use crate::ecma_conversions::{f64_to_wrapping_i32, f64_to_wrapping_u32};
 use crate::string::{AvmAtom, AvmString, WStr};
 use gc_arena::Collect;
@@ -44,11 +44,15 @@ pub enum Value<'gc> {
     Undefined,
     Null,
     Bool(bool),
+
+    /// Numbers that are representable as ints are equivalent to
+    /// [`Value::Integer`]. See [`Value::normalize`] for details.
     Number(f64),
-    // note: this value should never reach +/- 1<<28; this is currently not enforced (TODO).
-    // Ruffle currently won't break if you break that invariant,
-    // but some FP compatibility edge cases depend on it, so we should do this at some point.
+
+    /// All integers are equivalent to [`Value::Number`].
+    /// See [`Value::normalize`] for details.
     Integer(i32),
+
     String(AvmString<'gc>),
     Object(Object<'gc>),
 }
@@ -57,18 +61,21 @@ pub enum Value<'gc> {
 const _: () = assert!(size_of::<Value<'_>>() <= 16);
 
 impl<'gc> From<AvmString<'gc>> for Value<'gc> {
+    #[inline(always)]
     fn from(string: AvmString<'gc>) -> Self {
         Value::String(string)
     }
 }
 
 impl<'gc> From<AvmAtom<'gc>> for Value<'gc> {
+    #[inline(always)]
     fn from(atom: AvmAtom<'gc>) -> Self {
         Value::String(atom.into())
     }
 }
 
 impl From<bool> for Value<'_> {
+    #[inline(always)]
     fn from(value: bool) -> Self {
         Value::Bool(value)
     }
@@ -78,50 +85,65 @@ impl<'gc, T> From<T> for Value<'gc>
 where
     Object<'gc>: From<T>,
 {
+    #[inline(always)]
     fn from(value: T) -> Self {
         Value::Object(Object::from(value))
     }
 }
 
 impl From<f64> for Value<'_> {
+    #[inline(always)]
     fn from(value: f64) -> Self {
         Value::Number(value)
     }
 }
 
 impl From<f32> for Value<'_> {
+    #[inline(always)]
     fn from(value: f32) -> Self {
         Value::Number(f64::from(value))
     }
 }
 
 impl From<u8> for Value<'_> {
+    #[inline(always)]
     fn from(value: u8) -> Self {
         Value::Integer(i32::from(value))
     }
 }
 
 impl From<i8> for Value<'_> {
+    #[inline(always)]
     fn from(value: i8) -> Self {
         Value::Integer(i32::from(value))
     }
 }
 
 impl From<i16> for Value<'_> {
+    #[inline(always)]
     fn from(value: i16) -> Self {
         Value::Integer(i32::from(value))
     }
 }
 
 impl From<u16> for Value<'_> {
+    #[inline(always)]
     fn from(value: u16) -> Self {
         Value::Integer(i32::from(value))
     }
 }
 
 impl From<i32> for Value<'_> {
+    #[inline(always)]
     fn from(value: i32) -> Self {
-        if fits_in_value_integer_i32(value) {
+        Value::Integer(value)
+    }
+}
+
+impl From<u32> for Value<'_> {
+    #[inline(always)]
+    fn from(value: u32) -> Self {
+        if let Some(value) = value.to_i32() {
             Value::Integer(value)
         } else {
             Value::Number(value as f64)
@@ -129,45 +151,8 @@ impl From<i32> for Value<'_> {
     }
 }
 
-impl From<u32> for Value<'_> {
-    fn from(value: u32) -> Self {
-        if fits_in_value_integer_u32(value) {
-            Value::Integer(value as i32)
-        } else {
-            Value::Number(value as f64)
-        }
-    }
-}
-
-impl From<usize> for Value<'_> {
-    fn from(value: usize) -> Self {
-        Value::Number(value as f64)
-    }
-}
-
-impl PartialEq for Value<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Value::Undefined, Value::Undefined) => true,
-            (Value::Null, Value::Null) => true,
-            (Value::Bool(a), Value::Bool(b)) => a == b,
-            (Value::Number(a), Value::Number(b)) => a == b,
-            (Value::Number(a), Value::Integer(b)) => *a == *b as f64,
-            (Value::Integer(a), Value::Number(b)) => *a as f64 == *b,
-            (Value::Integer(a), Value::Integer(b)) => a == b,
-            (Value::String(a), Value::String(b)) => a == b,
-            (Value::Object(a), Value::Object(b)) => Object::ptr_eq(*a, *b),
-            _ => false,
-        }
-    }
-}
-
 fn fits_in_value_integer_i32(value: i32) -> bool {
     value < (1 << 28) && value >= -(1 << 28)
-}
-
-fn fits_in_value_integer_u32(value: u32) -> bool {
-    value < (1 << 28)
 }
 
 /// Strips leading whitespace.
@@ -459,6 +444,62 @@ pub fn string_to_f64(mut s: &WStr, swf_version: u8, strict: bool) -> Option<f64>
     Some(result)
 }
 
+fn f64_to_string<'gc>(n: f64, activation: &mut Activation<'_, 'gc>) -> AvmString<'gc> {
+    if !n.is_finite() {
+        return if n.is_nan() {
+            istr!("NaN")
+        } else if n.is_sign_positive() {
+            istr!("Infinity")
+        } else {
+            istr!("-Infinity")
+        };
+    }
+
+    if n == 0.0 {
+        istr!("0")
+    } else {
+        AvmString::new_utf8(activation.gc(), f64_to_string_finite_nonzero(n))
+    }
+}
+
+fn f64_to_string_finite_nonzero(n: f64) -> String {
+    let (sign, n) = if n.is_sign_negative() {
+        ("-", -n)
+    } else {
+        ("", n)
+    };
+
+    if n >= 0.000001 && n < 1e+21 {
+        // No exponent.
+        return format!("{sign}{n}");
+    }
+
+    // TODO Subnormal values have wrong representations.
+
+    let sci = format!("{n:e}");
+    let (mantissa, exp) = sci.split_once('e').unwrap();
+
+    let mut mantissa = mantissa.to_string();
+    let exp: i32 = exp.parse().unwrap();
+
+    if exp > 0 {
+        if [0x7fe0000000000000u64, 0x7fd0000000000000u64].contains(&n.to_bits()) {
+            // These two values look like a weird bug in Flash,
+            // values around them are fine.
+            return format!("{sign}1e+308");
+        }
+
+        // Flash shows large numbers with smaller precision for some reason.
+        mantissa.truncate(16);
+    }
+
+    format!(
+        "{sign}{mantissa}e{}{}",
+        if exp < 0 { "-" } else { "+" },
+        exp.abs()
+    )
+}
+
 /// Retrieve a default value as an AVM2 `Value`.
 pub fn abc_default_value<'gc>(
     translation_unit: TranslationUnit<'gc>,
@@ -491,13 +532,29 @@ pub fn abc_default_value<'gc>(
     }
 }
 
+/// Given an `f64`, return an `i32` value that losslessly represents it, or
+/// `None` if there is no such `i32` value.
+fn try_promote_f64(value: f64) -> Option<i32> {
+    let i = value as i32;
+    if value.to_bits() == (i as f64).to_bits() {
+        Some(i)
+    } else {
+        None
+    }
+}
+
 impl<'gc> Value<'gc> {
-    pub fn as_namespace(&self) -> Result<Namespace<'gc>, Error<'gc>> {
-        match self {
-            Value::Object(ns) => ns
-                .as_namespace()
-                .ok_or_else(|| "Expected Namespace, found Object".into()),
-            _ => Err(format!("Expected Namespace, found {self:?}").into()),
+    /// Do the best effort of converting the [`usize`] value to [`Value`].
+    ///
+    /// This is lossless on 32-bit architectures and for values less or equal to
+    /// 2^53. For values greater than that, it will return a value equivalent to
+    /// the closest integer representable as IEEE 754 64-bit.
+    #[inline(always)]
+    pub fn from_usize_lossy(value: usize) -> Self {
+        if let Some(value) = value.to_i32() {
+            Value::Integer(value)
+        } else {
+            Value::Number(value as f64)
         }
     }
 
@@ -517,8 +574,7 @@ impl<'gc> Value<'gc> {
     pub fn normalize(self) -> Self {
         match self {
             Value::Number(n) => {
-                let i = n as i32;
-                if n.to_bits() == (i as f64).to_bits() && fits_in_value_integer_i32(i) {
+                if let Some(i) = try_promote_f64(n).filter(|i| fits_in_value_integer_i32(*i)) {
                     Value::Integer(i)
                 } else {
                     self
@@ -531,6 +587,16 @@ impl<'gc> Value<'gc> {
                     self
                 }
             }
+            _ => self,
+        }
+    }
+
+    /// If this `Value` is a `Value::Number` that can be losslessly represented
+    /// as a `Value::Integer`, return that `Value::Integer`. Otherwise return
+    /// the original value.
+    pub fn try_promote_number(self) -> Self {
+        match self {
+            Value::Number(n) if let Some(i) = try_promote_f64(n) => Value::Integer(i),
             _ => self,
         }
     }
@@ -732,6 +798,7 @@ impl<'gc> Value<'gc> {
     /// This function can be very hot, so we inline a fast-path for
     /// `Value::Number` and `Value::Integer`, and fall back to a non-inlined
     /// slow-path handling the rest of the cases if necessary.
+    #[inline]
     pub fn coerce_to_u32(&self, activation: &mut Activation<'_, 'gc>) -> Result<u32, Error<'gc>> {
         // Full coerce-to-u32 implementation. This is the slow-path.
         #[inline(never)]
@@ -770,6 +837,7 @@ impl<'gc> Value<'gc> {
     /// This function can be very hot, so we inline a fast-path for
     /// `Value::Number` and `Value::Integer`, and fall back to a non-inlined
     /// slow-path handling the rest of the cases if necessary.
+    #[inline]
     pub fn coerce_to_i32(&self, activation: &mut Activation<'_, 'gc>) -> Result<i32, Error<'gc>> {
         // Full coerce-to-i32 implementation. This is the slow-path.
         #[inline(never)]
@@ -797,20 +865,6 @@ impl<'gc> Value<'gc> {
         }
     }
 
-    /// Minimum number of digits after which numbers are formatted as
-    /// exponential strings.
-    const MIN_DIGITS: f64 = -6.0;
-
-    /// Maximum number of digits before numbers are formatted as exponential
-    /// strings.
-    const MAX_DIGITS: f64 = 21.0;
-
-    /// Maximum number of significant digits renderable within coerced numbers.
-    ///
-    /// Any precision beyond this point will be discarded and replaced with
-    /// zeroes (for whole parts) or not rendered (for decimal parts).
-    const MAX_PRECISION: f64 = 15.0;
-
     /// Coerce the value to a String.
     ///
     /// This function returns the resulting String directly; or a TypeError if
@@ -835,35 +889,7 @@ impl<'gc> Value<'gc> {
             Value::Null => istr!("null"),
             Value::Bool(true) => istr!("true"),
             Value::Bool(false) => istr!("false"),
-            Value::Number(n) if n.is_nan() => istr!("NaN"),
-            Value::Number(n) if *n == 0.0 => istr!("0"),
-            Value::Number(n) if *n < 0.0 => AvmString::new_utf8(
-                activation.gc(),
-                format!("-{}", Value::Number(-n).coerce_to_string(activation)?),
-            ),
-            Value::Number(n) if n.is_infinite() => istr!("Infinity"),
-            Value::Number(n) => {
-                let digits = n.log10().floor();
-
-                // TODO: This needs to limit precision in the resulting decimal
-                // output, not in binary.
-                let precision = (n * 10.0_f64.powf(Self::MAX_PRECISION - digits)).floor()
-                    / 10.0_f64.powf(Self::MAX_PRECISION - digits);
-
-                if digits < Self::MIN_DIGITS || digits >= Self::MAX_DIGITS {
-                    AvmString::new_utf8(
-                        activation.gc(),
-                        format!(
-                            "{}e{}{}",
-                            precision / 10.0_f64.powf(digits),
-                            if digits < 0.0 { "-" } else { "+" },
-                            digits.abs()
-                        ),
-                    )
-                } else {
-                    AvmString::new_utf8(activation.gc(), n.to_string())
-                }
-            }
+            Value::Number(n) => f64_to_string(*n, activation),
             Value::Integer(i) => {
                 if *i >= 0 && *i < 10 {
                     activation.strings().ascii_char(b'0' + *i as u8)
@@ -940,7 +966,7 @@ impl<'gc> Value<'gc> {
         let vtable = self.vtable(activation);
 
         match vtable.get_trait(multiname) {
-            Some(Property::Slot { slot_id }) | Some(Property::ConstSlot { slot_id }) => {
+            Some(Property::Slot { slot_id } | Property::ConstSlot { slot_id }) => {
                 // Only objects can have slots
                 let object = self.as_object().unwrap();
 
@@ -1080,7 +1106,7 @@ impl<'gc> Value<'gc> {
             Some(Property::Virtual { set: Some(set), .. }) => {
                 self.call_method(set, &[value], activation).map(|_| ())
             }
-            Some(Property::ConstSlot { .. }) | Some(Property::Virtual { set: None, .. }) => {
+            Some(Property::ConstSlot { .. } | Property::Virtual { set: None, .. }) => {
                 let instance_class = self.instance_class(activation);
 
                 Err(error::make_reference_error(
@@ -1133,7 +1159,7 @@ impl<'gc> Value<'gc> {
         let vtable = self.vtable(activation);
 
         match vtable.get_trait(multiname) {
-            Some(Property::Slot { slot_id }) | Some(Property::ConstSlot { slot_id }) => {
+            Some(Property::Slot { slot_id } | Property::ConstSlot { slot_id }) => {
                 // Only objects can have slots
                 let object = self.as_object().unwrap();
 
@@ -1194,7 +1220,7 @@ impl<'gc> Value<'gc> {
         let vtable = self.vtable(activation);
 
         match vtable.get_trait(multiname) {
-            Some(Property::Slot { slot_id }) | Some(Property::ConstSlot { slot_id }) => {
+            Some(Property::Slot { slot_id } | Property::ConstSlot { slot_id }) => {
                 // Only objects can have slots
                 let object = self.as_object().unwrap();
 
@@ -1280,10 +1306,10 @@ impl<'gc> Value<'gc> {
     ) -> Result<Value<'gc>, Error<'gc>> {
         // TODO: Bound methods should be cached on the Method in a
         // WeakKeyHashMap<Value, FunctionObject>, not on the Object
-        if let Some(object) = self.as_object() {
-            if let Some(bound_method) = object.get_bound_method(id) {
-                return bound_method.call(activation, *self, arguments);
-            }
+        if let Some(object) = self.as_object()
+            && let Some(bound_method) = object.get_bound_method(id)
+        {
+            return bound_method.call(activation, *self, arguments);
         }
 
         let vtable = self.vtable(activation);
@@ -1370,7 +1396,7 @@ impl<'gc> Value<'gc> {
         let vtable = self.vtable(activation);
 
         match vtable.get_trait(multiname) {
-            Some(Property::Slot { slot_id }) | Some(Property::ConstSlot { slot_id }) => {
+            Some(Property::Slot { slot_id } | Property::ConstSlot { slot_id }) => {
                 // Only objects can have slots
                 let object = self.as_object().unwrap();
 
@@ -1475,10 +1501,10 @@ impl<'gc> Value<'gc> {
     ) -> bool {
         let name = Multiname::new(activation.avm2().find_public_namespace(), name);
 
-        if let Some(object) = self.as_object() {
-            if object.has_own_property(&name) {
-                return true;
-            }
+        if let Some(object) = self.as_object()
+            && object.has_own_property(&name)
+        {
+            return true;
         }
 
         if let Some(proto) = self.proto(activation) {
@@ -1500,9 +1526,11 @@ impl<'gc> Value<'gc> {
         receiver: Value<'gc>,
         args: FunctionArgs<'_, 'gc>,
     ) -> Result<Value<'gc>, Error<'gc>> {
-        match self.as_object() {
-            Some(Object::ClassObject(class_object)) => class_object.call(activation, args),
-            Some(Object::FunctionObject(function_object)) => {
+        match self {
+            Value::Object(o) if let Some(class_object) = o.as_class_object() => {
+                class_object.call(activation, args)
+            }
+            Value::Object(o) if let Some(function_object) = o.as_function_object() => {
                 function_object.call(activation, receiver, args)
             }
             _ => Err(make_error_1006(activation)),
@@ -1514,11 +1542,11 @@ impl<'gc> Value<'gc> {
         activation: &mut Activation<'_, 'gc>,
         args: FunctionArgs<'_, 'gc>,
     ) -> Result<Value<'gc>, Error<'gc>> {
-        match self.as_object() {
-            Some(Object::ClassObject(class_object)) => {
+        match self {
+            Value::Object(o) if let Some(class_object) = o.as_class_object() => {
                 class_object.construct_with_args(activation, args)
             }
-            Some(Object::FunctionObject(function_object)) => {
+            Value::Object(o) if let Some(function_object) = o.as_function_object() => {
                 function_object.construct(activation, args).map(Into::into)
             }
             _ => Err(make_error_1007(activation)),
@@ -1569,10 +1597,10 @@ impl<'gc> Value<'gc> {
             return Ok(*self);
         }
 
-        if let Some(object) = self.as_object() {
-            if object.is_of_type(class) {
-                return Ok(*self);
-            }
+        if let Some(object) = self.as_object()
+            && object.is_of_type(class)
+        {
+            return Ok(*self);
         }
 
         Err(make_error_1034(activation, *self, class))
@@ -1585,7 +1613,6 @@ impl<'gc> Value<'gc> {
 
     /// Determine if this value is a number representable as a u32 without loss
     /// of precision.
-    #[expect(clippy::float_cmp)]
     pub fn is_u32(&self) -> bool {
         match self {
             Value::Number(n) => *n == (*n as u32 as f64),
@@ -1596,7 +1623,6 @@ impl<'gc> Value<'gc> {
 
     /// Determine if this value is a number representable as an i32 without
     /// loss of precision.
-    #[expect(clippy::float_cmp)]
     pub fn is_i32(&self) -> bool {
         match self {
             Value::Number(n) => *n == (*n as i32 as f64),
@@ -1724,10 +1750,12 @@ impl<'gc> Value<'gc> {
         activation: &mut Activation<'_, 'gc>,
         class_or_function_object: Object<'gc>,
     ) -> bool {
-        let type_proto = match class_or_function_object {
-            Object::ClassObject(class_object) => Some(class_object.prototype()),
-            Object::FunctionObject(function_object) => function_object.prototype(),
-            _ => panic!("Object must be either ClassObject or FunctionObject"),
+        let type_proto = if let Some(class_object) = class_or_function_object.as_class_object() {
+            Some(class_object.prototype())
+        } else if let Some(function_object) = class_or_function_object.as_function_object() {
+            function_object.prototype()
+        } else {
+            panic!("Object must be either ClassObject or FunctionObject")
         };
 
         if let Some(type_proto) = type_proto {
@@ -1747,16 +1775,28 @@ impl<'gc> Value<'gc> {
 
     /// Implements the strict-equality `===` check for AVM2.
     pub fn strict_eq(&self, other: &Value<'gc>) -> bool {
-        if self == other {
-            true
-        } else {
-            // TODO - this should apply to (Array/Vector).indexOf, and possibility more places as well
-            if let Some(xml1) = self.as_object().and_then(|obj| obj.as_xml_object()) {
-                if let Some(xml2) = other.as_object().and_then(|obj| obj.as_xml_object()) {
-                    return E4XNode::ptr_eq(xml1.node(), xml2.node());
+        match (self, other) {
+            (Value::Undefined, Value::Undefined) => true,
+            (Value::Null, Value::Null) => true,
+            (Value::Bool(a), Value::Bool(b)) => a == b,
+            (Value::Number(a), Value::Number(b)) => a == b,
+            (Value::Number(a), Value::Integer(b)) => *a == *b as f64,
+            (Value::Integer(a), Value::Number(b)) => *a as f64 == *b,
+            (Value::Integer(a), Value::Integer(b)) => a == b,
+            (Value::String(a), Value::String(b)) => a == b,
+            (Value::Object(a), Value::Object(b)) => {
+                let self_xml = self.as_object().and_then(|obj| obj.as_xml_object());
+                let other_xml = other.as_object().and_then(|obj| obj.as_xml_object());
+
+                // Two `XML` objects are considered equal if they point to the
+                // same node.
+                if let (Some(self_xml), Some(other_xml)) = (self_xml, other_xml) {
+                    E4XNode::ptr_eq(self_xml.node(), other_xml.node())
+                } else {
+                    Object::ptr_eq(*a, *b)
                 }
             }
-            false
+            _ => false,
         }
     }
 
@@ -1783,20 +1823,22 @@ impl<'gc> Value<'gc> {
                 return xml_obj.abstract_eq(other, activation);
             }
 
-            if let Some(self_qname) = obj.as_qname_object() {
-                if let Value::Object(Object::QNameObject(other_qname)) = other {
-                    return Ok(self_qname.uri(activation.strings())
-                        == other_qname.uri(activation.strings())
-                        && self_qname.local_name(activation.strings())
-                            == other_qname.local_name(activation.strings()));
-                }
+            if let Some(self_qname) = obj.as_qname_object()
+                && let Value::Object(o) = other
+                && let Some(other_qname) = o.as_qname_object()
+            {
+                return Ok(self_qname.uri(activation.strings())
+                    == other_qname.uri(activation.strings())
+                    && self_qname.local_name(activation.strings())
+                        == other_qname.local_name(activation.strings()));
             }
 
-            if let Some(self_ns) = obj.as_namespace_object() {
-                if let Value::Object(Object::NamespaceObject(other_ns)) = other {
-                    return Ok(self_ns.namespace().as_uri(activation.strings())
-                        == other_ns.namespace().as_uri(activation.strings()));
-                }
+            if let Some(self_ns) = obj.as_namespace_object()
+                && let Value::Object(o) = other
+                && let Some(other_ns) = o.as_namespace_object()
+            {
+                return Ok(self_ns.namespace().as_uri(activation.strings())
+                    == other_ns.namespace().as_uri(activation.strings()));
             }
         }
 
@@ -1817,20 +1859,7 @@ impl<'gc> Value<'gc> {
             (Value::Number(_) | Value::Integer(_), Value::Number(_) | Value::Integer(_)) => {
                 let a = self.coerce_to_number(activation)?;
                 let b = other.coerce_to_number(activation)?;
-
-                if a.is_nan() || b.is_nan() {
-                    return Ok(false);
-                }
-
-                if a == b {
-                    return Ok(true);
-                }
-
-                if a.abs() == 0.0 && b.abs() == 0.0 {
-                    return Ok(true);
-                }
-
-                Ok(false)
+                Ok(a == b)
             }
             (Value::String(a), Value::String(b)) => Ok(a == b),
             (Value::Bool(a), Value::Bool(b)) => Ok(a == b),
@@ -1878,30 +1907,62 @@ impl<'gc> Value<'gc> {
     /// This abstract relational comparison algorithm is intended to match
     /// ECMA-262 3rd edition, section 11.8.5. It returns `true`, `false`, *or*
     /// `undefined` (to signal NaN), the latter of which we represent as `None`.
+    ///
+    /// This function can be very hot, so we try to inline this fast-path and
+    /// fall back to a non-inlined slow-path if necessary.
     pub fn abstract_lt(
         &self,
         other: &Value<'gc>,
         activation: &mut Activation<'_, 'gc>,
     ) -> Result<Option<bool>, Error<'gc>> {
+        // Full abstract-lt implementation. This is the slow-path.
+        #[inline(never)]
+        fn abstract_lt_slow<'gc>(
+            self_value: &Value<'gc>,
+            other_value: &Value<'gc>,
+            activation: &mut Activation<'_, 'gc>,
+        ) -> Result<Option<bool>, Error<'gc>> {
+            let prim_self = self_value.coerce_to_primitive(Some(Hint::Number), activation)?;
+            let prim_other = other_value.coerce_to_primitive(Some(Hint::Number), activation)?;
+
+            if let (Value::String(s), Value::String(o)) = (&prim_self, &prim_other) {
+                return Ok(Some(s.as_wstr() < o.as_wstr()));
+            }
+
+            let num_self = prim_self.coerce_to_number(activation)?;
+            let num_other = prim_other.coerce_to_number(activation)?;
+
+            if num_self.is_nan() || num_other.is_nan() {
+                return Ok(None);
+            }
+
+            Ok(Some(num_self < num_other))
+        }
+
         match (self, other) {
             (Value::Integer(a), Value::Integer(b)) => Ok(Some(a < b)),
-            _ => {
-                let prim_self = self.coerce_to_primitive(Some(Hint::Number), activation)?;
-                let prim_other = other.coerce_to_primitive(Some(Hint::Number), activation)?;
-
-                if let (Value::String(s), Value::String(o)) = (&prim_self, &prim_other) {
-                    return Ok(Some(s.as_wstr() < o.as_wstr()));
-                }
-
-                let num_self = prim_self.coerce_to_number(activation)?;
-                let num_other = prim_other.coerce_to_number(activation)?;
-
-                if num_self.is_nan() || num_other.is_nan() {
+            (Value::Integer(a), Value::Number(b)) => {
+                if b.is_nan() {
                     return Ok(None);
                 }
 
-                Ok(Some(num_self < num_other))
+                Ok(Some((*a as f64) < *b))
             }
+            (Value::Number(a), Value::Integer(b)) => {
+                if a.is_nan() {
+                    return Ok(None);
+                }
+
+                Ok(Some(*a < *b as f64))
+            }
+            (Value::Number(a), Value::Number(b)) => {
+                if a.is_nan() || b.is_nan() {
+                    return Ok(None);
+                }
+
+                Ok(Some(a < b))
+            }
+            _ => abstract_lt_slow(self, other, activation),
         }
     }
 }

@@ -43,6 +43,7 @@ pub struct Vp6Decoder {
     bitreader: VP6BR,
     init_called: bool,
     last_frame: Option<NABufferRef<NAVideoBuffer<u8>>>,
+    scratch: Vec<u8>,
 }
 
 impl Vp6Decoder {
@@ -65,33 +66,35 @@ impl Vp6Decoder {
             bitreader: VP6BR::new(),
             init_called: false,
             last_frame: None,
+            scratch: Vec::new(),
         }
     }
 }
 
-fn crop(data: &[u8], mut width: usize, to_size: (u16, u16)) -> Vec<u8> {
+/// Crop `data` to the requested size, and append the result to the `out` buffer.
+fn crop(out: &mut Vec<u8>, data: &[u8], width: usize, to_size: (u16, u16)) {
     debug_assert!(data.len().is_multiple_of(width));
-    let mut height = data.len() / width;
-    let mut data = data.to_vec();
+    let height = data.len() / width;
+
+    let new_width = usize::min(width, to_size.0 as usize);
+    let new_height = usize::min(height, to_size.1 as usize);
 
     if width > to_size.0 as usize {
-        // Removing the unwanted pixels on the right edge
-        // by squishing all the rows tightly next to each other.
-        let new_width = to_size.0 as usize;
-        let new_height = usize::min(height, to_size.1 as usize);
-        // no need to move the first row, nor any rows on the bottom that will end up being cropped entirely
-        for row in 1..new_height {
-            data.copy_within(row * width..(row * width + new_width), row * new_width);
+        // Removing the unwanted pixels on the right edge (most commonly: unused pieces
+        // of macroblocks) by squishing all the rows tightly next to each other.
+        // Bitmap at the moment does not allow these gaps, so we need to remove them.
+        out.reserve(new_width * new_height);
+
+        // No need to move rows on the bottom that are being cropped entirely
+        for row in 0..new_height {
+            let row_data = &data[row * width..(row * width + new_width)];
+            out.extend_from_slice(row_data);
         }
-        width = new_width;
-        height = new_height;
+    } else {
+        // Cropping unwanted rows on the bottom
+        // No horizontal squish needed, everything can be copied in one go
+        out.extend_from_slice(&data[..width * new_height]);
     }
-
-    // Cropping the unwanted rows on the bottom, also dropping any unused space at the end left by the squish above
-    height = usize::min(height, to_size.1 as usize);
-    data.truncate(width * height);
-
-    data
 }
 
 impl VideoDecoder for Vp6Decoder {
@@ -112,7 +115,11 @@ impl VideoDecoder for Vp6Decoder {
         )
     }
 
-    fn decode_frame(&mut self, encoded_frame: EncodedFrame<'_>) -> Result<DecodedFrame, Error> {
+    fn decode_frame_dyn(
+        &mut self,
+        encoded_frame: EncodedFrame<'_>,
+        callback: &mut dyn FnMut(DecodedFrame<'_>),
+    ) -> Result<(), Error> {
         // If this is the first frame, the decoder needs to be initialized.
 
         if !self.init_called {
@@ -129,9 +136,12 @@ impl VideoDecoder for Vp6Decoder {
                 .parse_header(&mut bool_coder)
                 .map_err(Vp6Error::DecoderError)?;
 
+            // NOTE: It seems that the disp_w and disp_h fields in the header
+            // are just ignored by Flash Player (and by VLC too), whatever the
+            // VP6 spec has to say about ScalingMode functionality...
             let video_info = NAVideoInfo::new(
-                header.disp_w as usize * 16,
-                header.disp_h as usize * 16,
+                header.mb_w as usize * 16,
+                header.mb_h as usize * 16,
                 true,
                 if self.with_alpha {
                     VP_YUVA420_FORMAT
@@ -151,11 +161,9 @@ impl VideoDecoder for Vp6Decoder {
             || (self.with_alpha && encoded_frame.data.len() <= 3)
         {
             // This frame is empty, so it's a "skip frame"; reusing the last frame, if there is one.
-
-            match &self.last_frame {
-                Some(frame) => frame.clone(),
-                None => return Err(Vp6Error::UnexpectedSkipFrame.into()),
-            }
+            self.last_frame
+                .as_ref()
+                .ok_or(Vp6Error::UnexpectedSkipFrame)?
         } else {
             // Actually decoding the frame and extracting the buffer it is stored in.
 
@@ -169,9 +177,7 @@ impl VideoDecoder for Vp6Decoder {
                 _ => Err(Vp6Error::InvalidBufferType),
             }?;
 
-            self.last_frame = Some(frame.clone());
-
-            frame
+            self.last_frame.insert(frame)
         };
 
         let yuv = frame.get_data();
@@ -209,16 +215,17 @@ impl VideoDecoder for Vp6Decoder {
             // Flash Player just produces a black image in this case!
         }
 
-        //(most commonly: unused pieces of macroblocks)
-        // Bitmap at the moment does not allow these gaps, so we need to remove them.
+        self.scratch.clear();
 
-        let y = crop(y, width, bounds);
-        let u = crop(
+        crop(&mut self.scratch, y, width, bounds);
+        crop(
+            &mut self.scratch,
             u,
             chroma_width,
             (bounds.0.div_ceil(2), bounds.1.div_ceil(2)),
         );
-        let v = crop(
+        crop(
+            &mut self.scratch,
             v,
             chroma_width,
             (bounds.0.div_ceil(2), bounds.1.div_ceil(2)),
@@ -228,38 +235,27 @@ impl VideoDecoder for Vp6Decoder {
         height = bounds.1 as usize;
 
         // Adding in the alpha component, if present.
-        if self.with_alpha {
+        let format = if self.with_alpha {
             // Apparently it's possible for the alpha channel to be coded in a different size than the Y channel.
             let (alpha_width, alpha_height) = frame.get_dimensions(3);
             debug_assert!(frame.get_stride(3) == frame.get_dimensions(3).0);
 
             let alpha_offset = frame.get_offset(3);
             let alpha = &yuv[alpha_offset..alpha_offset + alpha_width * alpha_height];
-            let a = crop(alpha, alpha_width, bounds);
+            crop(&mut self.scratch, alpha, alpha_width, bounds);
 
-            let mut data = y.to_vec();
-            data.extend(u);
-            data.extend(v);
-            data.extend(a);
-
-            Ok(DecodedFrame::new(
-                width as u32,
-                height as u32,
-                BitmapFormat::Yuva420p,
-                data,
-            ))
+            BitmapFormat::Yuva420p
         } else {
-            let mut data = y.to_vec();
-            data.extend(u);
-            data.extend(v);
+            BitmapFormat::Yuv420p
+        };
 
-            Ok(DecodedFrame::new(
-                width as u32,
-                height as u32,
-                BitmapFormat::Yuv420p,
-                data,
-            ))
-        }
+        callback(DecodedFrame::new(
+            width as u32,
+            height as u32,
+            format,
+            self.scratch.as_slice(),
+        ));
+        Ok(())
     }
 }
 

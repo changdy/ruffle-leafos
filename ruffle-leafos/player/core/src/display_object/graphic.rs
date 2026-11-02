@@ -9,12 +9,14 @@ use crate::drawing::Drawing;
 use crate::library::MovieLibrarySource;
 use crate::prelude::*;
 use crate::tag_utils::SwfMovie;
+use crate::tessellation_cache::TessellationCache;
 use crate::vminterface::Instantiator;
 use core::fmt;
 use gc_arena::barrier::unlock;
 use gc_arena::lock::Lock;
 use gc_arena::{Collect, Gc, Mutation};
 use ruffle_common::utils::HasPrefixField;
+use ruffle_render::backend::ShapeHandle;
 use ruffle_render::commands::CommandHandler;
 use std::cell::{OnceCell, RefCell, RefMut};
 use std::rc::Rc;
@@ -55,13 +57,15 @@ impl<'gc> Graphic<'gc> {
     ) -> Self {
         let shared = GraphicShared {
             id: swf_shape.id,
-            bounds: swf_shape.shape_bounds,
-            // Registering a shape also uploads its bitmap fills. Large games can
-            // exhaust shared GPU/system memory before any fighter is displayed.
+            shape_bounds: swf_shape.shape_bounds,
+            edge_bounds: swf_shape.edge_bounds,
+            // Upload only when visible; every scale variant shares the same
+            // reclaimable resource accounting used by the idle-memory budget.
             render_resource: Rc::default(),
             bitmap_ids: OnceCell::new(),
             shape: swf_shape,
             movie,
+            scaled_handle: RefCell::new(TessellationCache::new()),
         };
 
         Graphic(Gc::new(
@@ -80,7 +84,8 @@ impl<'gc> Graphic<'gc> {
     pub fn empty(context: &mut UpdateContext<'gc>) -> Self {
         let shared = GraphicShared {
             id: 0,
-            bounds: Default::default(),
+            shape_bounds: Default::default(),
+            edge_bounds: Default::default(),
             render_resource: Rc::default(),
             bitmap_ids: OnceCell::new(),
             shape: swf::Shape {
@@ -96,6 +101,7 @@ impl<'gc> Graphic<'gc> {
                 shape: Vec::new(),
             },
             movie: context.root_swf.clone(),
+            scaled_handle: RefCell::new(TessellationCache::new()),
         };
 
         Graphic(Gc::new(
@@ -108,6 +114,10 @@ impl<'gc> Graphic<'gc> {
                 drawing: OnceCell::new(),
             },
         ))
+    }
+
+    pub fn instantiate(self, mc: &Mutation<'gc>) -> Self {
+        Self(Gc::new(mc, (*self.0).clone()))
     }
 
     pub fn drawing_mut(&self) -> RefMut<'_, Drawing> {
@@ -124,14 +134,21 @@ impl<'gc> Graphic<'gc> {
 
     /// Seed collection once if a frontend enables it after the first render.
     pub(crate) fn track_cached_render_resource(self, resources: &mut StaticRenderResources) {
-        resources.track(&self.0.shared.get().render_resource);
+        let shared = self.0.shared.get();
+        resources.track(&shared.render_resource);
+        for resource in shared.scaled_handle.borrow().values() {
+            resources.track(resource);
+        }
     }
 
     fn predecode_bitmap_fills(self, context: &UpdateContext<'gc>) {
         if !ruffle_render::bitmap_cache::predecode_enabled() { return; }
         if self.0.drawing.get().is_some() { return; }
         let shared = self.0.shared.get();
-        if shared.render_resource.handle.borrow().is_some() { return; }
+        if shared.render_resource.handle.borrow().is_some()
+            || shared.scaled_handle.borrow().values().any(|resource| resource.handle.borrow().is_some()) {
+            return;
+        }
         let Some(library) = context.library.library_for_movie(shared.movie.clone()) else { return };
         // Only placed shapes request work; preloading a movie never expands all
         // of its artwork. Include styles introduced inside a shape as well.
@@ -160,6 +177,53 @@ impl<'gc> Graphic<'gc> {
             }
         }
     }
+
+    /// Retessellate for the current display scale while keeping every variant
+    /// reclaimable by the frontend's global static-resource memory budget.
+    fn get_or_retessellate_handle(
+        self,
+        context: &mut RenderContext,
+        current_scale: f32,
+    ) -> Option<ShapeHandle> {
+        let shared = self.0.shared.get();
+        {
+            let mut cache = shared.scaled_handle.borrow_mut();
+            // The cache keeps resource containers, not a second ShapeHandle.
+            // Drop reclaimed entries so a reupload is keyed at its actual scale.
+            cache.retain(|resource| resource.handle.borrow().is_some());
+            if let Some(resource) = cache.find_near_and_touch(current_scale) {
+                resource.mark_rendered();
+                context.library.track_static_render_resource(&resource);
+                return resource.handle.borrow().clone();
+            }
+        }
+
+        let library = context.library.library_for_movie(shared.movie.clone())?;
+        let start = crate::render_metrics::start();
+        let handle = context.renderer.register_shape_with_scale(
+            (&shared.shape).into(),
+            &MovieLibrarySource { library },
+            current_scale,
+        );
+        crate::render_metrics::shape(start);
+        let resource = if shared.render_resource.handle.borrow().is_none() {
+            shared.render_resource.clone()
+        } else {
+            Rc::default()
+        };
+        *resource.handle.borrow_mut() = Some(handle.clone());
+        resource.mark_rendered();
+        context.library.track_static_render_resource(&resource);
+        let mut cache = shared.scaled_handle.borrow_mut();
+        tracing::debug!(
+            "Graphic id={} retessellated: new_scale={:.2}, cache_size={}",
+            shared.id,
+            current_scale,
+            cache.len()
+        );
+        cache.insert(current_scale, resource);
+        Some(handle)
+    }
 }
 
 impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
@@ -167,19 +231,19 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
         HasPrefixField::as_prefix_gc(self.0)
     }
 
-    fn instantiate(self, gc_context: &Mutation<'gc>) -> DisplayObject<'gc> {
-        Self(Gc::new(gc_context, self.0.as_ref().clone())).into()
-    }
-
     fn id(self) -> CharacterId {
         self.0.shared.get().id
     }
 
-    fn self_bounds(self, _mode: BoundsMode) -> Rectangle<Twips> {
+    fn self_bounds(self, mode: BoundsMode) -> Rectangle<Twips> {
+        let include_strokes = mode.includes_strokes();
+
         if let Some(drawing) = self.0.drawing.get() {
-            drawing.borrow().self_bounds()
+            drawing.borrow().self_bounds(include_strokes)
+        } else if include_strokes {
+            self.0.shared.get().shape_bounds
         } else {
-            self.0.shared.get().bounds
+            self.0.shared.get().edge_bounds
         }
     }
 
@@ -242,32 +306,15 @@ impl<'gc> TDisplayObject<'gc> for Graphic<'gc> {
 
         if let Some(drawing) = self.0.drawing.get() {
             drawing.borrow().render(context);
-        } else {
-            let shared = self.0.shared.get();
-            if shared.shape.shape.is_empty() {
-                return;
-            }
-            let mut render_handle = shared.render_resource.handle.borrow_mut();
-            if render_handle.is_none() {
-                let Some(library) = context.library.library_for_movie(shared.movie.clone()) else {
-                    return;
-                };
-                let start = crate::render_metrics::start();
-                *render_handle = Some(context.renderer.register_shape(
-                    (&shared.shape).into(),
-                    &MovieLibrarySource { library },
-                ));
-                crate::render_metrics::shape(start);
-                drop(render_handle);
-                context.library.track_static_render_resource(&shared.render_resource);
-                render_handle = shared.render_resource.handle.borrow_mut();
-            }
-            shared.render_resource.mark_rendered();
-            if let Some(render_handle) = render_handle.as_ref() {
-                context.commands.render_shape(
-                    render_handle.clone(),
-                    context.transform_stack.transform(),
-                );
+        } else if !self.0.shared.get().shape.shape.is_empty() {
+            let transform = context.transform_stack.transform();
+            // Match upstream's scale-dependent tessellation and nearest-scale LRU.
+            let matrix = &transform.matrix;
+            let scale_x = f32::abs(matrix.a + matrix.c);
+            let scale_y = f32::abs(matrix.b + matrix.d);
+            let current_scale = ((scale_x * scale_x + scale_y * scale_y) / 2.0).sqrt();
+            if let Some(handle) = self.get_or_retessellate_handle(context, current_scale) {
+                context.commands.render_shape(handle, transform);
             }
         }
     }
@@ -343,8 +390,11 @@ struct GraphicShared {
     /// Shared by every instance; only allocate GPU resources on first render.
     render_resource: Rc<StaticRenderResource>,
     bitmap_ids: OnceCell<Vec<CharacterId>>,
-    bounds: Rectangle<Twips>,
+    shape_bounds: Rectangle<Twips>,
+    edge_bounds: Rectangle<Twips>,
     movie: Arc<SwfMovie>,
+    #[collect(require_static)]
+    scaled_handle: RefCell<TessellationCache<Rc<StaticRenderResource>>>,
 }
 
 #[cfg(test)]
@@ -377,6 +427,7 @@ mod tests {
                 let mut render = RenderContext {
                     gc_context: context.gc(), stage: context.stage,
                     renderer: context.renderer, library: context.library,
+                    ui: &*context.ui,
                     commands: CommandList::new(), cache_draws: &mut cache_draws,
                     transform_stack: &mut transform_stack,
                     is_offscreen: true, use_bitmap_cache: true,
@@ -391,6 +442,73 @@ mod tests {
             assert!(weak.upgrade().is_some(), "current frame must retain its resources");
             context.library.collect_static_render_resources();
             assert!(weak.upgrade().is_none(), "unused animation frames must release resources");
+        });
+    }
+
+    fn render_at_scale<'gc>(
+        graphic: Graphic<'gc>,
+        context: &mut UpdateContext<'gc>,
+        scale: f32,
+    ) -> ShapeHandle {
+        let mut cache_draws = vec![];
+        let mut transform_stack = TransformStack::new();
+        transform_stack.push(&ruffle_render::transform::Transform {
+            matrix: ruffle_render::matrix::Matrix {
+                a: scale,
+                d: scale,
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+        let mut render = RenderContext {
+            gc_context: context.gc(), stage: context.stage,
+            renderer: context.renderer, library: context.library,
+            ui: &*context.ui,
+            commands: CommandList::new(), cache_draws: &mut cache_draws,
+            transform_stack: &mut transform_stack,
+            is_offscreen: true, use_bitmap_cache: true,
+        };
+        graphic.render_self(&mut render);
+        let shared = graphic.0.shared.get();
+        let resource = shared.scaled_handle.borrow_mut().find_near_and_touch(scale).unwrap();
+        resource.handle.borrow().as_ref().unwrap().clone()
+    }
+
+    #[test]
+    fn scaled_static_cache_shares_nearby_scales_and_releases_every_variant() {
+        let player = PlayerBuilder::new().with_movie(SwfMovie::empty(9, None)).build();
+        player.lock().unwrap().mutate_with_update_context(|context| {
+            let graphic = Graphic::from_swf_tag(context, swf::Shape {
+                version: 1, id: 1, shape_bounds: Default::default(),
+                edge_bounds: Default::default(), flags: swf::ShapeFlag::empty(),
+                styles: swf::ShapeStyles { fill_styles: vec![], line_styles: vec![] },
+                shape: vec![swf::ShapeRecord::StraightEdge { delta: Default::default() }],
+            }, context.root_swf.clone());
+            let instance = graphic.instantiate(context.gc());
+            context.library.collect_static_render_resources();
+            let first = render_at_scale(graphic, context, 4.0);
+            let nearby = render_at_scale(instance, context, 5.0);
+            assert!(Arc::ptr_eq(&first.0, &nearby.0), "instances reuse a nearby tessellation");
+            let distant = render_at_scale(instance, context, 16.0);
+            assert!(!Arc::ptr_eq(&first.0, &distant.0), "large scale changes retessellate");
+            let first_weak = Arc::downgrade(&first.0);
+            let distant_weak = Arc::downgrade(&distant.0);
+            drop((first, nearby, distant));
+            let stats = context.library.collect_static_render_resources_with_budget(0);
+            assert_eq!(stats.current_entries, 2, "all rendered scale variants join accounting");
+            assert!(first_weak.upgrade().is_some() && distant_weak.upgrade().is_some());
+            let stats = context.library.collect_static_render_resources_with_budget(0);
+            assert_eq!(stats.evicted, 2);
+            assert!(first_weak.upgrade().is_none() && distant_weak.upgrade().is_none(),
+                "scale metadata must not keep evicted GPU handles alive");
+            let reloaded = render_at_scale(graphic, context, 4.0);
+            assert_eq!(graphic.0.shared.get().scaled_handle.borrow().len(), 1,
+                "reclaimed scales must not retain stale tessellation entries");
+            assert_eq!(context.library.collect_static_render_resources_with_budget(0).current_entries, 1,
+                "a newly uploaded scale rejoins collection");
+            drop(reloaded);
+            context.library.collect_static_render_resources();
+            assert!(graphic.0.shared.get().render_resource.handle.borrow().is_none());
         });
     }
 }

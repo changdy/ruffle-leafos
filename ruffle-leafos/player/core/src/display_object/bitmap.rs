@@ -198,6 +198,10 @@ impl<'gc> Bitmap<'gc> {
         Self::new_with_bitmap_data(mc, id, bitmap_data, smoothing, &movie)
     }
 
+    pub fn instantiate(self, mc: &Mutation<'gc>) -> Self {
+        Self(Gc::new(mc, (*self.0).clone()))
+    }
+
     // Important - we read 'width' and 'height' from the cached
     // values on this object. See the definition of these fields
     // for more information
@@ -250,6 +254,7 @@ impl<'gc> Bitmap<'gc> {
         .set(bitmap_data);
 
         bitmap_data.add_display_object(context.gc(), weak_self);
+        self.invalidate_cached_bitmap();
     }
 
     pub fn avm2_bitmapdata_class(self) -> Option<Avm2ClassObject<'gc>> {
@@ -290,10 +295,6 @@ impl<'gc> Bitmap<'gc> {
 impl<'gc> TDisplayObject<'gc> for Bitmap<'gc> {
     fn base(self) -> Gc<'gc, DisplayObjectBase<'gc>> {
         HasPrefixField::as_prefix_gc(self.0)
-    }
-
-    fn instantiate(self, gc_context: &Mutation<'gc>) -> DisplayObject<'gc> {
-        Self(Gc::new(gc_context, self.0.as_ref().clone())).into()
     }
 
     fn id(self) -> CharacterId {

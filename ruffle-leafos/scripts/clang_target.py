@@ -31,6 +31,7 @@ def compile_c(args):
         print('clang version 19.1.7 (Zig 0.14.1 raw frontend)')
         return 0
     translated = []
+    assembler_flags = []
     source = None
     output = None
     preprocess = '-E' in args
@@ -48,6 +49,18 @@ def compile_c(args):
         elif arg in ('-I', '-isystem', '-D', '-U', '-include'):
             translated += [arg, args[i]]
             i += 1
+        elif arg.startswith('--include='):
+            # cc-rs/AWS-LC use the driver spelling. Raw cc1 otherwise treats
+            # the '=' as the first character of the forced-header filename.
+            translated += ['-include', arg.split('=', 1)[1]]
+        elif arg == '-Wa,--noexecstack':
+            # This belongs to the assembler, not the C preprocessor.
+            assembler_flags.append('-mnoexecstack')
+        elif arg == '--param' and i < len(args) and args[i].startswith('ssp-buffer-size='):
+            translated += ['-stack-protector-buffer-size', args[i].split('=', 1)[1]]
+            i += 1
+        elif arg.startswith('--param=ssp-buffer-size='):
+            translated += ['-stack-protector-buffer-size', arg.rsplit('=', 1)[1]]
         elif not arg.startswith('-'):
             source = arg
         else:
@@ -67,7 +80,8 @@ def compile_c(args):
             return status
         try:
             return run(['-cc1as', '-triple', TRIPLE, '-filetype', 'obj',
-                        '-target-feature', '+neon', '-o', output, temporary])
+                        '-target-feature', '+neon', *assembler_flags,
+                        '-o', output, temporary])
         finally:
             temporary.unlink(missing_ok=True)
     command = [*base, '-E' if preprocess else '-emit-obj', *translated]

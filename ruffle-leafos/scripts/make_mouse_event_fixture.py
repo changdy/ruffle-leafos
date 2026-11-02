@@ -23,7 +23,7 @@ def main():
     settings_file = ROOT / 'workspace.local.json'
     settings = json.loads(settings_file.read_text(encoding='utf8')) if settings_file.exists() else {}
     java = Path(settings.get('jdk', 'C:/Users/changdy/.jdks/azul-17.0.19-1')) / 'bin/java.exe'
-    subprocess.run([str(java), '-classpath', str(ROOT / 'player/core/build_playerglobal/asc.jar'),
+    subprocess.run([str(java), '-classpath', str(ROOT / 'player/tools/asc/asc.jar'),
                     'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-import', str(output / 'playerglobal.abc'),
                     '-outdir', str(output), str(source)], check=True)
     tags = tag(82, struct.pack('<I', 0) + b'mouse-events\0' + source.with_suffix('.abc').read_bytes())
