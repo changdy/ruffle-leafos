@@ -1,6 +1,6 @@
 # 工程实现细节
 
-适用 **0.8.3 开发预览**，整理于 2026-11-02。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
+适用 **0.8.4 开发预览**，整理于 2026-11-02。本文维护当前实现和工程操作。安装使用见[README](../README.md)，完成状态、限制和验收见[工程进度](progress.md)。
 
 Ruffle 共享核心、SWF/FLV、字符串、前端工具、视频及官方渲染模块统一采用官方稳定版 [v0.7.1](https://github.com/ruffle-rs/ruffle/releases/tag/v0.7.1)，提交 `89a7049965f3090e706265670df309a5128233ac`。Leaf 前端和原有兼容、内存及存档扩展继续保留；应用版本与上游 Ruffle 版本分别标识。原 `ruffle-miyooflip` 是前端和部分补丁的历史来源，已不作为当前共享核心基线。本轮范围、补丁保留及验证边界见[稳定版升级记录](validation/ruffle-stable-20261102.md)。
 
@@ -19,7 +19,7 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 | [player/sdl2test-rocknix/src/](../player/sdl2test-rocknix/src/) | 本项目掌机前端：输入、菜单、映射、光标、原生进度和音画 |
 | [player/core/](../player/core/) | 官方 Ruffle v0.7.1 核心及保留的 Leaf 核心扩展；其余 workspace 成员保留依赖关系 |
 | [pak/](../pak/) | Leaf 清单、Flash/Apps 启动、路径、主题和诊断脚本 |
-| [games/](../games/README.md) | 版本化的两款定制游戏、完整外部资源及 SHA-256 清单；安装到 `Roms/flash/` |
+| [games/](../games/README.md) | 版本化的三款定制游戏、完整外部资源及 SHA-256 清单；安装到 `Roms/flash/` |
 | [scripts/](../scripts/) | 构建、主机回归、诊断和打包 |
 | [adapter/src/](../adapter/src/) | 复用的 SDL 诊断/物理输入采样 C 库；adapter 其他说明对应早期适配版本 |
 | [runtime/leaf-12/](../runtime/leaf-12/)、[target-libs/](../target-libs/) | 固定的原始运行时对照、发布所需库/字体、目标链接输入 |
@@ -57,7 +57,7 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 | 全局光标 | 外观独立保存；空心圆中心点固定 1×1 屏幕像素；移动恢复显示，静止 3.5 秒隐藏；点击/按住/滚轮不延长显示 | [cursor.rs](../player/sdl2test-rocknix/src/cursor.rs) |
 | 原生进度/画面/Apps/说明 | 内容身份、五槽、校验与写盘、确认复制/清理、本地归档；全局缩放/画质/FPS/渲染接口；独立关于单页与快捷键三组说明 | [experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 | Apps 数据目录 | 结合实际存档、按键文件与旧目录记录生成游戏列表；恢复 SWF 路径并识别失效，保留孤立或损坏数据的清理入口 | [data_manager.rs](../player/sdl2test-rocknix/src/data_manager.rs) |
-| 系统音量 | 异步读取真实 Leaf 数值，仅显示系统硬件键反馈；旧每游戏音量/静音不再控制播放 | [system_volume.rs](../player/sdl2test-rocknix/src/system_volume.rs) |
+| 系统音量与亮度 | 异步读取真实 Leaf 数值；音量键显示音量，M+音量键显示亮度，不重复调整系统值；旧每游戏音量/静音不再控制播放 | [system_volume.rs](../player/sdl2test-rocknix/src/system_volume.rs) |
 | 软键盘 | Ruffle 焦点回调排队；主循环内暂停、释放输入、草稿确认/取消；Leaf Catastrophe 布局与现有 GL 主题绘制 | [virtual_keyboard.rs](../player/sdl2test-rocknix/src/virtual_keyboard.rs)、[ui_backend.rs](../player/sdl2test-rocknix/src/ui_backend.rs)、[keyboard_test.rs](../player/sdl2test-rocknix/src/keyboard_test.rs) |
 | Flash FPS | 统计实际 Flash 帧执行量，按秒显示当前值；全局默认及恢复默认时开启，已有全局画面配置优先 | [core/src/player.rs](../player/core/src/player.rs)、[experience.rs](../player/sdl2test-rocknix/src/experience.rs) |
 
@@ -211,7 +211,7 @@ Leaf 在 `PlayerBuilder` 中显式设置有限的 60 秒 `with_max_execution_dur
 
 `scripts/optimize_swf_bitmaps.py` 使用 Python 标准库裁掉私有无损位图的零色外边并合并完全相同的内部位图，同步重写填充 ID/矩阵，不修改脚本、音频和帧调度。默认仅处理 AVM1；只支持可完整解析并安全重写的 FWS/CWS、DefineBitsLossless2 和 Shape 1—4。导出或其他引用保护、平铺填充、分数 twip 补偿及未知结构按保守规则跳过或拒绝。拒绝覆盖原文件与已有输出/报告。
 
-用 `python scripts/optimize_swf_bitmaps.py <输入.swf> --output <新输出.swf> --report <新报告.json>` 生成副本，`python -m unittest discover -s scripts -p test_optimize_swf_bitmaps.py -v` 运行格式与保护条件回归。游戏优化的临时输出与完整修改明细放入忽略的 `outputs/`；按用户要求固定收录的两款定制游戏另在 [games/](../games/README.md) 版本化并随包分发。副本内容指纹变化会建立独立原生进度，不能将素材展开尺寸减少当作实机 FPS/RSS 改善；适用范围和验证见[拳皇 SWF 优化报告](validation/kof-swf-optimization-20261026.md)。
+用 `python scripts/optimize_swf_bitmaps.py <输入.swf> --output <新输出.swf> --report <新报告.json>` 生成副本，`python -m unittest discover -s scripts -p test_optimize_swf_bitmaps.py -v` 运行格式与保护条件回归。游戏优化的临时输出与完整修改明细放入忽略的 `outputs/`；按用户要求固定收录的三款定制游戏另在 [games/](../games/README.md) 版本化并随包分发。副本内容指纹变化会建立独立原生进度，不能将素材展开尺寸减少当作实机 FPS/RSS 改善；适用范围和验证见[拳皇 SWF 优化报告](validation/kof-swf-optimization-20261026.md)。
 
 对已检查主电影及所有外部调用者的 AVM2 素材，可显式增加 `--avm2-private-bitmaps`，仅改写未导出、未直接放置的内部填充位图，保留 ABC、SymbolClass 和时间轴标签。工具拒绝 ABC 中含 `readGraphicsData` / `GraphicsBitmapFill` 的文件，因为这些接口可暴露或修改原本私有的位图。这个局部检查不能识别外部代码或动态拼接的名字，开关不能替代调用者审查、逐像素还原、形状补偿验证及实机检查。报告中的 `avm2_private_bitmaps` 表示输入是否为已显式允许的 AVM2；默认拒绝 AVM2 的保护保留。具体处理和范围见[3.3 素材优化记录](validation/bvn33-assets-20261028.md)。
 
@@ -276,7 +276,7 @@ python scripts/test_renderer.py --suite screenshot
 python scripts/test_swf.py
 python scripts/build_player.py test --package ruffle_core --offline --isolated-config
 python scripts/build_diagnostics.py
-python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuild --include-source
+python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.4-rebuild --include-source
 ```
 
 使用独立输出目录可保留已发布的安装包及其验证记录。主机测试覆盖前端状态逻辑；真机验证范围见 [工程进度](progress.md)。
@@ -295,7 +295,7 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuil
 
 `test_renderer.py --suite screenshot` 使用已有渲染库依赖编译前端的实际 PNG 编码模块，验证奇数高度翻转、RGB 像素还原、难压缩全屏的有界输出以及短写/满卡错误传播；没有 SDL/GPU 依赖，不构成实机渲染或完整 OOM 验收。
 
-`test_swf.py` 在 Windows GNU 主机离线编译并实际执行 `swf` 的单元与集成测试；先用等待输入的子进程完成 Windows Job Object 分配，再启动测试，每个测试进程树限制 512 MiB 提交内存和 180 秒，串行运行用例。覆盖上游损坏样本、正常 FWS/CWS/ZWS、超过 128 MiB 的有效流、超过 256 项的场景/帧标签及两款随包游戏与资源的主机解析；结果写入 `build/swf-test-report.json`。测试限额不进入正式播放器，也不代表 Pocket1 游戏运行验收。
+`test_swf.py` 在 Windows GNU 主机离线编译并实际执行 `swf` 的单元与集成测试；先用等待输入的子进程完成 Windows Job Object 分配，再启动测试，每个测试进程树限制 512 MiB 提交内存和 180 秒，串行运行用例。覆盖上游损坏样本、正常 FWS/CWS/ZWS、超过 128 MiB 的有效流、超过 256 项的场景/帧标签及三款随包游戏与资源的主机解析；结果写入 `build/swf-test-report.json`。测试限额不进入正式播放器，也不代表 Pocket1 游戏运行验收。
 
 `test --package ruffle_core` 以 `--lib --tests --no-run` 编译 ARM64 release 核心单元及集成测试，不自动执行。静态资源用例可用生成的 `ruffle_core-<hash> static_ --nocapture` 运行，AVM1 旧档位于独立 `shared_object_avm1-<hash>` 测试 ELF。Rust测试框架与应用ELF的系统要求可能不同；既有测试框架需要GLIBC 2.39，仅在隔离目录通过SDK匹配的加载器、libc/libm执行，没有替换设备系统库。当前静态资源测试与隔离运行边界见[缓存验证报告](validation/resource-cache-20261030.md)，本次目标测试编译结果另见[升级记录](validation/ruffle-stable-20261102.md)。
 
@@ -318,7 +318,7 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 本机受管 Windows 上 GNU 编译器启动曾报 OS623，当前构建使用 Zig 的 Clang/LLD 配合 SDK 头文件和库，包装器生成在 `build/`。全新机器构建演练保留为待办。
 
 
-依赖版本是本工程固定构建输入，以上说明不代表已完成全新机器构建验收。`package_preview.py` 需要现成的 `build/ruffle-leaf`、`build/libruffle_probe.so` 和 Cargo 许可缓存；打包不会重新编译播放器。`test_session.py` 使用本机链接包装器验证前端状态；当前 148 项通过，新增五项覆盖 Vulkan 连续低内存、无效计数、恢复、GLES 排除及首轮缓存回收。
+依赖版本是本工程固定构建输入，以上说明不代表已完成全新机器构建验收。`package_preview.py` 需要现成的 `build/ruffle-leaf`、`build/libruffle_probe.so` 和 Cargo 许可缓存；打包不会重新编译播放器。`test_session.py` 使用本机链接包装器验证前端状态；当前 150 项通过，包括亮度/音量选择、松键后轮询及私有资源读取回归；Vulkan 连续低内存等既有覆盖保留。
 
 ## 打包与验证
 
@@ -328,9 +328,9 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 新生成的安装归档名为 `ruffle-leafos-<版本>.zip`，源码归档为 `ruffle-leafos-<版本>-source.zip`；旧交付目录及历史归档保留原名。
 
-安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、生成的自有探针资源、两款定制游戏及许可组成。随包 `README.md` / `README.en.md` 使用当前项目中英文使用指南，支持文档与截图一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、中英文指南、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
+安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、仅包内保留的自有探针资源、三款定制游戏及许可组成。随包 `README.md` / `README.en.md` 使用当前项目中英文使用指南，支持文档与截图一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、中英文指南、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
 
-`package_preview.py` 的 `bundle_games` 从 `games/manifest.json` 读取游戏入口和全部文件 SHA-256，先检查 `games/flash/` 的文件集合、逐文件字节及主入口，再完整复制到 `Roms/flash/`，保留死神的 398 个外部资源及相对路径。缺失、多余或内容变化均停止打包。`build-manifest.json` / `build-report.json` 的 `bundled_games` 记录名称、入口、来源名称和主文件指纹，包内 `provenance/bundled-games.json` 保留完整文件清单；`games/README.md` 随应用附带。`python -m unittest discover -s scripts -p test_package_preview.py -v` 检查错误输入及两份真实游戏的完整安装路径，GitHub release job 在构建后执行同一回归。
+`package_preview.py` 的 `bundle_games` 从 `games/manifest.json` 读取游戏入口和全部文件 SHA-256，先检查 `games/flash/` 的文件集合、逐文件字节及主入口，再完整复制到 `Roms/flash/`，保留死神 3.3 的 398 个、3.6 的 554 个外部资源。两个目录使用 `_assets/`，主文件及资源字节保持旧版；`game_assets.rs` 经选中主文件的 `navigator::LinuxNavigatorInterface` 将该游戏根下 `assets/` 请求映射到 `_assets/`，保留逻辑 URL，不修改核心或其他目录游戏。存在 `_assets/` 时整树优先，缺项明确失败；旧 `assets/` 布局继续直读。Leaf 的递归扫描跳过点号/下划线前缀；打包检查可见 SWF 与三个入口集合完全相等，探针不再写入 ROM 目录。缺失、多余或内容变化均停止打包。`build-manifest.json` / `build-report.json` 的 `bundled_games` 记录名称、入口、来源名称和主文件指纹，包内 `provenance/bundled-games.json` 保留完整文件清单；`games/README.md` 随应用附带。`python -m unittest discover -s scripts -p test_package_preview.py -v` 检查错误输入、资源误暴露及三款真实游戏的完整安装路径，GitHub release job 在构建后执行同一回归。
 
 死神单文件实验可在仓库根目录执行以下命令，输出路径须尚不存在：
 

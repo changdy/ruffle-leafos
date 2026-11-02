@@ -39,11 +39,11 @@ def read_assets(games: Path) -> tuple[bytes, dict[str, bytes]]:
     main = (games / 'flash' / entry['entrypoint']).read_bytes()
     if entry['main_sha256'] != MAIN_SHA256 or sha(main) != MAIN_SHA256:
         raise ValueError('Unsupported BVN main SWF; audit loader instructions before updating the pin')
-    prefix = GAME + '/assets/'
+    prefix = GAME + '/_assets/'
     expected = {name[len(GAME) + 1:]: digest for name, digest in manifest['files_sha256'].items()
                 if name.startswith(prefix)}
     folder = games / 'flash' / GAME
-    actual = {p.relative_to(folder).as_posix() for p in (folder / 'assets').rglob('*') if p.is_file()}
+    actual = {p.relative_to(folder).as_posix() for p in (folder / '_assets').rglob('*') if p.is_file()}
     if len(expected) != 398 or actual != expected.keys():
         raise ValueError('Expected the complete set of 398 bundled BVN assets')
     assets = {}
@@ -54,7 +54,7 @@ def read_assets(games: Path) -> tuple[bytes, dict[str, bytes]]:
         data = folder.joinpath(*rel.parts).read_bytes()
         if sha(data) != digest:
             raise ValueError('Asset checksum mismatch: ' + name)
-        assets[name] = data
+        assets['assets/' + name.removeprefix('_assets/')] = data
     return main, assets
 
 

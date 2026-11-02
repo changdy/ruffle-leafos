@@ -1,6 +1,6 @@
 死神 VS 火影 3.3 - 定制版（脚本＋素材优化，0.7.3 LOW 启动修复，2026-10-28）
 
-将整个目录放入 Roms/flash/，刷新 Leaf 游戏列表后打开同名主 SWF。必须保留相邻 assets/。
+将整个目录放入 Roms/flash/，刷新 Leaf 游戏列表后打开同名主 SWF。必须保留相邻 _assets/；Ruffle Flash 0.8.4 起自动解析游戏原有 assets/ 请求，Leaf 不扫描该私有资源目录。升级时先备份并移走旧游戏目录，再将本目录完整放回相同路径，避免旧 assets/ 资源继续出现在游戏列表中。主 SWF 内容与路径未变，已有进度及按键身份保持。
 首次默认使用游戏内部 LOW：原生战斗目标 30 FPS、闪光效果 15 FPS、关闭效果平滑。
 仍可在游戏 OPTION → QUALITY 中选择其他画质，再选择 APPLY 保存；保存/读取逻辑未修改，但保存不同画质后重开的实机验证仍待完成。
 0.7.3 将启动入口 bleachvsnaruto.initlize 的 _defaultQuality 从 medium 改为 low，修复入口覆盖此前 LOW 槽默认值的问题。使用游戏自身模式与速度补偿，不改 SWF 帧头或播放器外部限帧。

@@ -46,6 +46,14 @@ def bundle_games(stage, games_root=ROOT / 'games'):
     for game in manifest['games']:
         if game['entrypoint'] not in expected:
             raise ValueError('bundled game entrypoint missing: ' + game['entrypoint'])
+        if game.get('main_sha256', expected[game['entrypoint']]) != expected[game['entrypoint']]:
+            raise ValueError('bundled game entrypoint checksum differs: ' + game['entrypoint'])
+    # Leaf recursively discovers SWFs but skips dot/underscore-prefixed paths.
+    # Refuse an archive that exposes support movies as standalone games.
+    visible = {name for name in expected if name.lower().endswith('.swf')
+               and not any(part.startswith(('.', '_')) for part in Path(name).parts)}
+    if visible != {game['entrypoint'] for game in manifest['games']}:
+        raise ValueError('bundled game list differs from entrypoints; keep resource SWFs in _assets')
     shutil.copytree(source, stage / 'Roms/flash', dirs_exist_ok=True)
     return manifest['games']
 
@@ -101,7 +109,6 @@ def main():
     assert shim_info['machine'] == 183 and not shim_info['needed']
     shutil.copyfile(shim, frontend / 'lib/libruffle_probe.so')
     make_movie(frontend / 'res/Leaf-GPU-Probe.swf')
-    make_movie(stage / 'Roms/flash/Leaf-GPU-Probe.swf')
     bundled_games = bundle_games(stage)
     (stage / 'Images/flash').mkdir(parents=True)
     for filename in ['README.md', 'README.en.md']:
@@ -165,7 +172,7 @@ def main():
         'scope': ['Leaf/Jawaka source-referenced in-game menu, live theme colors and pill selection',
                   'five native SharedObject progress profiles, checked atomic writes, backup recovery and timestamps',
                   'startup profile picker before VM execution; reload via process restart; confirmed profile copy',
-                  'hardware-only system volume; legacy game volume/mute ignored; aspect/fit/original scaling and Flash quality',
+                  'hardware-only system volume/brightness feedback; legacy game volume/mute ignored; aspect/fit/original scaling and Flash quality',
                   'compact current-only Flash FPS and text-sized toast/drag overlays',
                   'Apps data manager with confirmed scoped clears and recoverable local archives',
                   'ten independent per-game control schemes, saved selection and toast switching',
@@ -184,7 +191,8 @@ def main():
                   'movement-only cursor auto-hide, hollow ring with one-pixel center, single global appearance file and mapping speed',
                   'per-button 5/10/15 Hz hold turbo, 8ms release target with 2ms headroom below 10ms, deadline-aware loop sleep and shared-key ownership',
                   'queued physical Menu taps independent of virtual Guide release state',
-                  'asynchronous real Leaf system-volume feedback without double-applying hardware keys',
+                  'asynchronous real Leaf volume/brightness feedback without double-applying hardware keys',
+                  'three bundled games with directory-game resources in private _assets trees, preserving movie/control/progress identities',
                   'Simplified Chinese and English UI with persisted LeafOS first-launch detection, immediate language switching and CJK font fallback',
                   'Catastrophe-derived gamepad keyboard on editable Flash focus, transactional Unicode edits, masked passwords, native text restrictions/events and neutral input resume',
                   'pause lifecycle, input ownership, neutral gate and checked SharedObject flush'],

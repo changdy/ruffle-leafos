@@ -1027,7 +1027,7 @@ pub async fn run() -> Result<(), String> {
         AndroidExecutor { event_loop: sender.clone(), player_id: id }, None, true, Default::default(),
         ruffle_core::backend::navigator::SocketMode::Allow,
         Rc::new(PlayingContent::DirectFile(ContentDescriptor::new_remote(movie_url.clone()))),
-        LinuxNavigatorInterface,
+        LinuxNavigatorInterface { game_dir: swf_path.parent().unwrap().to_owned() },
     );
     let ui = SdlUiBackend::new();
     let keyboard_request=ui.keyboard_request();
@@ -1191,10 +1191,10 @@ pub async fn run() -> Result<(), String> {
         }
         front.poll_chords();
         if let Some(level)=front.system_volume.poll(front.started.elapsed()) {
-            if front.state.system_volume.as_ref().is_none_or(|(old,_)|*old!=level) {println!("leaf-volume system_percent={level} source=leaf");}
-            front.state.system_volume=Some((level,Instant::now()));front.redraw=true;
+            if front.state.system_level.as_ref().is_none_or(|(old,_)|*old!=level) {println!("leaf-{} system_percent={} source=leaf",level.kind.name(),level.percent);}
+            front.state.system_level=Some((level,Instant::now()));front.redraw=true;
         }
-        if front.state.system_volume.as_ref().is_some_and(|(_,at)|at.elapsed()>=Duration::from_millis(1500)) {front.state.system_volume=None;front.redraw=true;}
+        if front.state.system_level.as_ref().is_some_and(|(_,at)|at.elapsed()>=Duration::from_millis(1500)) {front.state.system_level=None;front.redraw=true;}
         if front.state.toast.as_ref().is_some_and(|(_,at)|at.elapsed()>=Duration::from_secs(3)) {front.state.toast=None;front.redraw=true;}
         for event in pump.poll_iter() {
             match event {
@@ -1428,7 +1428,7 @@ pub async fn run() -> Result<(), String> {
                     performance.static_current_shapes = performance.static_current_shapes.max(cache_stats.current_entries);
                     performance.collect += crate::performance::Performance::elapsed(collect_at);
                     drop(p);
-                    if front.state.experience.settings.fps || front.state.drag_locked || front.cursor_visible || front.state.toast.is_some() || front.state.system_volume.is_some() { menu.draw(size.0, size.1, &front.state, if front.cursor_visible {Some(front.cursor)} else {None}); }
+                    if front.state.experience.settings.fps || front.state.drag_locked || front.cursor_visible || front.state.toast.is_some() || front.state.system_level.is_some() { menu.draw(size.0, size.1, &front.state, if front.cursor_visible {Some(front.cursor)} else {None}); }
                 }
                 if opt.self_test_slots {
                     if let Some(dir)=&opt.capture_dir {

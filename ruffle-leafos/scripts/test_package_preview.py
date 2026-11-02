@@ -15,13 +15,16 @@ class BundledGamesTests(unittest.TestCase):
         self.root = Path(temporary.name)
         self.games = self.root / 'games'
         self.stage = self.root / 'stage'
-        self.relative = '测试-定制版/assets/fighter.swf'
+        self.relative = '测试-定制版/_assets/fighter.swf'
         self.resource = self.games / 'flash' / self.relative
         self.resource.parent.mkdir(parents=True)
         self.resource.write_bytes(b'external SWF fixture')
+        self.main = self.games / 'flash/测试-定制版/测试.swf'
+        self.main.write_bytes(b'main SWF fixture')
         self.manifest = {
-            'games': [{'name': '测试-定制版', 'entrypoint': self.relative}],
-            'files_sha256': {self.relative: hashlib.sha256(self.resource.read_bytes()).hexdigest()},
+            'games': [{'name': '测试-定制版', 'entrypoint': '测试-定制版/测试.swf'}],
+            'files_sha256': {p.relative_to(self.games / 'flash').as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                             for p in (self.main, self.resource)},
         }
         (self.games / 'manifest.json').write_text(json.dumps(self.manifest), encoding='utf8')
 
@@ -44,16 +47,33 @@ class BundledGamesTests(unittest.TestCase):
 
     def test_repository_games_install_with_all_assets(self):
         games = bundle_games(self.stage)
-        self.assertEqual([g['name'] for g in games], ['拳皇Wing1.91-定制版', '死神VS火影3.3-定制版'])
+        self.assertEqual([g['name'] for g in games], ['拳皇Wing1.91-定制版', '死神VS火影3.3-定制版', '死神VS火影3.6-定制版'])
         manifest = json.loads((ROOT / 'games/manifest.json').read_text(encoding='utf8'))
         installed = self.stage / 'Roms/flash'
         actual = {p.relative_to(installed).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in installed.rglob('*') if p.is_file()}
         self.assertEqual(actual, manifest['files_sha256'])
-        self.assertEqual(len(actual), 402)
+        self.assertEqual(len(actual), 959)
         for game in games:
             self.assertTrue((installed / game['entrypoint']).is_file())
-        self.assertEqual(len(list((installed / '死神VS火影3.3-定制版/assets').rglob('*.*'))), 398)
+        self.assertEqual(len(list((installed / '死神VS火影3.3-定制版/_assets').rglob('*.*'))), 398)
+        self.assertEqual(len(list((installed / '死神VS火影3.6-定制版/_assets').rglob('*.*'))), 554)
+        # Reproduce Leaf's recursive dot/underscore exclusion: only the three
+        # launch movies may reach its game and search indexes.
+        visible = {p.relative_to(installed).as_posix() for p in installed.rglob('*.swf')
+                   if not any(part.startswith(('.', '_')) for part in p.relative_to(installed).parts)}
+        self.assertEqual(visible, {g['entrypoint'] for g in games})
+
+    def test_exposed_resource_movie_is_rejected(self):
+        extra = self.games / 'flash/测试-定制版/assets/fighter.swf'
+        extra.parent.mkdir()
+        extra.write_bytes(self.resource.read_bytes())
+        relative = extra.relative_to(self.games / 'flash').as_posix()
+        self.manifest['files_sha256'][relative] = hashlib.sha256(extra.read_bytes()).hexdigest()
+        (self.games / 'manifest.json').write_text(json.dumps(self.manifest), encoding='utf8')
+        with self.assertRaisesRegex(ValueError, 'game list differs from entrypoints'):
+            bundle_games(self.stage, self.games)
+        self.assertFalse(self.stage.exists())
 
 
 if __name__ == '__main__':

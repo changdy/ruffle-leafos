@@ -1,10 +1,12 @@
 use ruffle_frontend_utils::backends::navigator::NavigatorInterface;
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use url::Url;
 
 #[derive(Clone)]
-pub struct LinuxNavigatorInterface;
+pub struct LinuxNavigatorInterface {
+    pub game_dir: PathBuf,
+}
 
 // TODO: Prompt the user for these things!
 impl NavigatorInterface for LinuxNavigatorInterface {
@@ -15,8 +17,7 @@ impl NavigatorInterface for LinuxNavigatorInterface {
     }
 
     async fn open_file(&self, path: &Path) -> std::io::Result<File> {
-        //println!("openfile");
-        File::open(path)
+        crate::session::game_assets::open(&self.game_dir, path)
     }
 
     async fn confirm_socket(&self, _host: &str, _port: u16) -> bool {

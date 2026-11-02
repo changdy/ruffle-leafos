@@ -18,7 +18,7 @@ A Flash player built for leafOS on the Miniloong Pocket 1, powered by Ruffle.
 | --- | --- |
 | ![The King of Fighters Wing 1.91 running on Pocket1](ruffle-leafos/docs/images/game-kof.png) | ![Bleach vs Naruto 3.3 running on Pocket1](ruffle-leafos/docs/images/game-bvn.png) |
 
-**Current version: 0.8.3 development preview.** Currently supports **Miniloong Pocket 1 / leafOS** only, with device checks on Leaf 0.13.0. Compatibility and performance vary by game, and development is ongoing.
+**Current version: 0.8.4 development preview.** Currently supports **Miniloong Pocket 1 / leafOS** only, with device checks on Leaf 0.13.0. Compatibility and performance vary by game, and development is ongoing.
 
 ## Made for handheld play
 
@@ -50,7 +50,7 @@ System SD card/
 └─ Images/flash/               ← Game covers
 ```
 
-The current packaging process includes custom editions of *The King of Fighters Wing 1.91* and *Bleach vs Naruto 3.3*. Choose the main SWF whose filename contains **`-定制版`**. Keep Bleach vs Naruto’s `assets/` folder beside its main file; the resource SWFs inside it are not game entry points. Older archives may contain different games. See [bundled game details](ruffle-leafos/games/README.md) (Chinese).
+The current packaging process includes custom editions of *The King of Fighters Wing 1.91*, *Bleach vs Naruto 3.3* and *Bleach vs Naruto 3.6*. Choose the main SWF whose filename contains **`-定制版`**. Keep Bleach vs Naruto’s `_assets/` folder beside its main file; Leaf skips this private resource directory. When upgrading an old directory edition, back up and move the old game folder outside `Roms/`, copy the complete replacement to the same path, then refresh the game list. Merging leaves the old `assets/` movies visible. See [bundled game details](ruffle-leafos/games/README.md) (Chinese).
 
 To add your own games, put `.swf` files in `Roms/flash/`. Keep the full folder structure for games with external resources. [Adding games and covers →](ruffle-leafos/README.en.md#adding-games-and-covers)
 
@@ -66,6 +66,7 @@ To add your own games, put `.swf` files in `Roms/flash/`. Keep the full folder s
 | Switch control profiles | **M + A / B**: previous / next, skipping empty profiles |
 | Drag | **M + D-pad Down** toggles holding the left mouse button |
 | Adjust sound | Use the physical volume buttons |
+| Adjust brightness | **M + volume button**; the brightness percentage appears at the top right |
 
 Games use different keys. If a game does not respond, check **M → Controls** first. [Full controls guide →](ruffle-leafos/README.en.md#everyday-controls)
 

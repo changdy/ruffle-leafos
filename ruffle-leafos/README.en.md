@@ -15,14 +15,17 @@ Play local Flash games with the buttons and stick on your **Miniloong Pocket 1 /
 
 **The two entry points serve different purposes:** the Flash category launches games; **Flash Data Manager** in Apps manages progress, controls and interface language. Leaf may display the Apps launcher as **Flash 数据管理**. The installation folder keeps its existing `RuffleProbe.pak` name.
 
-The current package includes two custom games. Older archives may have different contents.
+Starting with 0.8.4, the package includes three custom games. Older archives may have different contents.
 
 | Game | Main file to select inside `Roms/flash/` |
 | --- | --- |
 | The King of Fighters Wing 1.91 | `拳皇Wing1.91-定制版.swf` |
 | Bleach vs Naruto 3.3 | `死神VS火影3.3-定制版/死神VS火影3.3-定制版.swf` |
+| Bleach vs Naruto 3.6 | `死神VS火影3.6-定制版/死神VS火影3.6-定制版.swf` |
 
-For Bleach vs Naruto, keep the entire game directory, including the adjacent `assets/` folder. Do not launch resource SWFs. New progress starts with the game’s internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Bundled games and sources](games/README.md) (Chinese)
+For Bleach vs Naruto, keep the entire game directory, including the adjacent `_assets/` folder. The player reads these private resources, while Leaf lists only the main SWF. New progress starts with the game’s internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Bundled games and sources](games/README.md) (Chinese)
+
+**Upgrading an older directory edition:** back up and move the old `死神VS火影3.3-定制版/` folder (and any manually installed 3.6 folder with the same name) outside `Roms/`, then copy the complete replacement to the same path and refresh Leaf’s game list. Merging folders leaves old `assets/` movies visible as games. Main SWF bytes and paths retain their existing identities; keep progress and control files in place. You can also move the old `Leaf-GPU-Probe.swf` diagnostic demo out of `Roms/flash/`.
 
 On Pocket1, Bleach vs Naruto 3.3 takes about half a minute to initialize its effects at startup. Short Menu (M) presses and opening the player menu may be delayed during initialization; wait until it finishes before continuing. To return to Leaf, hold Menu to use the system return function.
 
@@ -31,6 +34,8 @@ Use **OpenGL ES** for Bleach vs Naruto 3.3 on Pocket1. Vulkan may end the sessio
 ## Adding games and covers
 
 Put your own `.swf` files in **`Roms/flash/`** and refresh Leaf’s game list. If a game uses external images, sounds or resource SWFs, copy its full directory without changing relative paths. Extract ZIP game archives first.
+
+For games using an adjacent `assets/` folder, you can rename it to `_assets/`: Ruffle Flash 0.8.4 and later resolves the original resource requests there, keeping resource SWFs out of Leaf’s game list. Preserve other folder layouts as provided by the game.
 
 Put covers in **`Images/flash/`**, using the main SWF’s filename without its extension. Covers go directly in that folder even when the game is in a subfolder. For example:
 
@@ -143,7 +148,7 @@ Open **M → Display settings**. Left / Right or A changes settings, which save 
 - **FPS counter:** toggle the Flash frame-rate display at the top left. It is not the screen refresh rate and does not fully describe smoothness during stalls.
 - **Graphics API:** OpenGL ES by default, with experimental Vulkan available. Switching requires confirmation and restarts the game, restoring only saved native progress. Switch back to OpenGL ES if you encounter rendering or stability problems. Vulkan may not be faster. If a low-memory message ends a Vulkan session, retry with OpenGL ES and check the actual save result.
 
-Use the physical volume buttons for sound. A system volume indicator appears at the top right.
+Use the physical volume buttons for sound, or hold M and press a volume button to adjust brightness. Leaf’s actual volume or brightness percentage appears at the top right and disappears about 1.5 seconds after release.
 
 ![Display settings with scaling, Flash quality, FPS and graphics API options](docs/images/display-settings-en.png)
 

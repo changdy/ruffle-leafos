@@ -7,7 +7,7 @@ import zlib
 
 from optimize_swf_bitmaps import load, pack
 from package_bvn_single_swf import (
-    AFTER, BEFORE, DISABLED_LOADER, INSTALL_LOADER, asset_zip, embed,
+    AFTER, BEFORE, DISABLED_LOADER, INSTALL_LOADER, ROOT, asset_zip, embed, read_assets,
 )
 
 
@@ -29,6 +29,12 @@ def movie(loader=DISABLED_LOADER, archive=None):
 
 
 class SingleSwfTests(unittest.TestCase):
+    def test_private_directory_assets_keep_original_embedded_zip_paths(self):
+        _, assets = read_assets(ROOT / 'games')
+        self.assertEqual(len(assets), 398)
+        self.assertTrue(all(name.startswith('assets/') for name in assets))
+        self.assertTrue(any(name.endswith('.swf') for name in assets))
+
     def test_zip_is_deterministic_and_preserves_paths_bytes_and_fzip_adler(self):
         assets = {'assets/map/test.swf': b'CWS' + b'abc' * 100, 'assets/config.xml': b'<test/>'}
         archive = asset_zip(assets)

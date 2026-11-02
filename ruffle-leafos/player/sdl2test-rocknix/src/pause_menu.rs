@@ -245,8 +245,11 @@ impl PauseMenu {
         } else if state.drag_locked {
             self.live_chip(61,t("左键保持 · M+十字下解除"),22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
         }
-        if let Some((level,_))=&state.system_volume {
-            let label=crate::tr!("系统音量 {}%", "System volume {}%",level);
+        if let Some((level,_))=&state.system_level {
+            let label=match level.kind {
+                crate::session::system_volume::Kind::Volume=>crate::tr!("系统音量 {}%", "System volume {}%",level.percent),
+                crate::session::system_volume::Kind::Brightness=>crate::tr!("屏幕亮度 {}%", "Screen brightness {}%",level.percent),
+            };
             self.live_chip(63,&label,23.,(600.,10.),350.,false,[0.96,0.99,1.,1.]);
         }
         if let Some((message,_))=&state.toast {

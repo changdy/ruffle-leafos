@@ -20,6 +20,8 @@ pub mod graphics;
 pub mod turbo;
 #[path = "system_volume.rs"]
 pub mod system_volume;
+#[path = "game_assets.rs"]
+pub mod game_assets;
 #[path = "i18n.rs"]
 pub mod i18n;
 #[path = "virtual_keyboard.rs"]
@@ -183,7 +185,7 @@ pub enum MenuResult {
 
 pub struct Session {
     pub virtual_keyboard: Option<virtual_keyboard::Editor>,
-    pub system_volume: Option<(u8,std::time::Instant)>,
+    pub system_level: Option<(system_volume::Level,std::time::Instant)>,
     pub directions_swapped: bool,
     pub experience: experience::Ui,
     pub toast: Option<(String,std::time::Instant)>,
@@ -211,7 +213,7 @@ impl Session {
     pub fn new(mode: InputMode) -> Self {
         Self {
             virtual_keyboard: None,
-            system_volume: None,
+            system_level: None,
             directions_swapped: false,
             experience: experience::Ui::default(),
             toast: None,
