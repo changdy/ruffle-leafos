@@ -3748,33 +3748,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdl2test-flip"
-version = "0.1.0"
-dependencies = [
- "async-task",
- "bytemuck",
- "cc",
- "clap",
- "env_logger",
- "glow 0.14.2",
- "khronos-egl",
- "libloading",
- "log",
- "raw-window-handle",
- "ruffle_common",
- "ruffle_core",
- "ruffle_frontend_utils",
- "ruffle_render",
- "ruffle_video_external",
- "ruffle_video_software",
- "sdl2",
- "thiserror 1.0.69",
- "tokio",
- "ttf-parser",
- "url",
-]
-
-[[package]]
 name = "sdl2test-rocknix"
 version = "0.8.3"
 dependencies = [

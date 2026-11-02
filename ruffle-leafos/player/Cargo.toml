@@ -9,7 +9,6 @@ members = [
 
     "frontend-utils",
 
-    "sdl2test-flip",
     "sdl2test-rocknix",
     "sdl2test-u",
     "sdl2test-tb",

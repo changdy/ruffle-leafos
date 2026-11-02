@@ -341,7 +341,7 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 
 | 保留内容 | 来源与保留理由 |
 | --- | --- |
-| Ruffle 与前端基线 | aweigit/ruffle-miyooflip 提交 `3bc39c5e0fdbc9fcde92681706395f6ef70f991b`，本项目变动及指纹见 [leaf-source.lock.json](../leaf-source.lock.json)。保留 Cargo workspace 成员、构建资源和测试 SWF/ZIP，不凭扩展名删除测试数据 |
+| Ruffle 与前端基线 | aweigit/ruffle-miyooflip 提交 `3bc39c5e0fdbc9fcde92681706395f6ef70f991b`，本项目变动及指纹见 [leaf-source.lock.json](../leaf-source.lock.json)。已移除独立 Miyoo Flip 前端 `sdl2test-flip` 及其构建入口；保留 Pocket1 前端、共享核心、其他现存 Cargo workspace 成员、共享头文件、构建资源和测试 SWF/ZIP，上游来源与许可不变，不凭扩展名删除测试数据 |
 | 官方 wgpu 后端 | Ruffle 提交 `71f18f0d0e3bd118945d5956f4ac4bb2e486e856` 的 54 个导入文件；[来源锁](../vendor/ruffle-wgpu.lock.json) 固定构建字节、本地修改的原始指纹与双许可，打包验证并随包附带来源锁 |
 | Jawaka 参考 | 提交 `915c48595fbd20ec56a9d23b2fc1f39a4f6f8803`，仅保留七个菜单/主题/设置/许可文件；[来源与逐文件指纹](../vendor/jawaka.lock.json) |
 | Leaf 契约 | [references.lock.json](../adapter/references.lock.json) 固定的 leaf-contracts 提交；schema、校验器与测试夹具是版本化契约输入 |

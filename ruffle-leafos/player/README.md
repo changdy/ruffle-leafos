@@ -2,7 +2,9 @@
 
 [English](#english)
 
-基于 [Ruffle](https://github.com/ruffle-rs/ruffle) 的 Flash Player 模拟器，专门为掌机设备（Trimui Brick、Miyoo Flip）和桌面 Linux 优化的 SDL2 前端版本。
+本仓库发布目标仅为 Miniloong Pocket 1 / leafOS，当前构建指南见[工程实现细节](../docs/implementation.md#构建环境与命令)。以下保留其余上游 SDL2 前端说明作为源码参考，不表示本项目支持其他设备或系统。
+
+上游基于 [Ruffle](https://github.com/ruffle-rs/ruffle) 的 Flash Player 模拟器，为 Trimui Brick 和桌面 Linux 提供 SDL2 前端。
 
 ## 项目特性
 
@@ -38,16 +40,7 @@ export RUSTFLAGS="-C link-arg=-L/lib-trimui -C link-arg=-Wl,-rpath-link=/lib-tri
 cargo build --release --target aarch64-unknown-linux-gnu -p sdl2test-tb
 ```
 
-#### 3. Miyoo Flip (ARM64)
-
-```bash
-export PKG_CONFIG_SYSROOT_DIR="/lib-flip"
-export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-none-linux-gnu-gcc
-export RUSTFLAGS="-C link-arg=-L/lib-flip -C link-arg=-Wl,-rpath-link=/lib-flip"
-cargo build --release --target aarch64-unknown-linux-gnu -p sdl2test-flip
-```
-
-#### 4. ROCKNIX / Wayland (ARM64)
+#### 3. ROCKNIX / Wayland (ARM64)
 
 适用于运行 sway 等 Wayland 合成器的 ROCKNIX 系统，使用 SDL2 + OpenGL ES 显示，不占用 DRM Master。
 
@@ -90,7 +83,7 @@ cargo build --release --target aarch64-unknown-linux-gnu -p sdl2test-rocknix
 |--------|------|
 | Select + X | 切换鼠标模式 / 键盘模式 |
 | Select + A | 切换十字方向键为 WASD 模式（`sdl2test-rocknix`；cfg 中已配置十字键映射时无效） |
-| Select + Start | 切换十字方向键为 WASD 模式（`sdl2test-flip` / `sdl2test-tb` / `sdl2test-u`；cfg 中已配置十字键映射时无效） |
+| Select + Start | 切换十字方向键为 WASD 模式（`sdl2test-tb` / `sdl2test-u`；cfg 中已配置十字键映射时无效） |
 | Guide | 退出游戏 |
 
 ### 鼠标模式
@@ -198,7 +191,9 @@ ROCKNIX 端口可参考 `sdl2test-rocknix/launch.sh` 设置 Wayland 环境变量
 
 # Ruffle - Flash Player Emulator (Handheld Version)
 
-An Flash Player emulator based on [Ruffle](https://github.com/ruffle-rs/ruffle), specifically optimized SDL2 frontend for handheld devices (Trimui Brick, Miyoo Flip) and desktop Linux.
+This repository releases only for Miniloong Pocket 1 / leafOS. See the [implementation guide](../docs/implementation.md) for current build instructions. The remaining upstream SDL2 frontend notes below are retained as source references and do not imply support for other devices or systems.
+
+The upstream Flash Player emulator is based on [Ruffle](https://github.com/ruffle-rs/ruffle) and provides SDL2 frontends for Trimui Brick and desktop Linux.
 
 ## Features
 
@@ -234,16 +229,7 @@ export RUSTFLAGS="-C link-arg=-L/lib-trimui -C link-arg=-Wl,-rpath-link=/lib-tri
 cargo build --release --target aarch64-unknown-linux-gnu -p sdl2test-tb
 ```
 
-#### 3. Miyoo Flip (ARM64)
-
-```bash
-export PKG_CONFIG_SYSROOT_DIR="/lib-flip"
-export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-none-linux-gnu-gcc
-export RUSTFLAGS="-C link-arg=-L/lib-flip -C link-arg=-Wl,-rpath-link=/lib-flip"
-cargo build --release --target aarch64-unknown-linux-gnu -p sdl2test-flip
-```
-
-#### 4. ROCKNIX / Wayland (ARM64)
+#### 3. ROCKNIX / Wayland (ARM64)
 
 For ROCKNIX systems running sway or other Wayland compositors. Uses SDL2 + OpenGL ES instead of direct DRM/KMS.
 
@@ -286,7 +272,7 @@ See `sdl2test-rocknix/launch.sh` for required Wayland environment variables.
 |-----------|----------|
 | Select + X | Toggle mouse mode / keyboard mode |
 | Select + A | Toggle D-pad to WASD mode (`sdl2test-rocknix`; disabled when cfg defines D-pad mappings) |
-| Select + Start | Toggle D-pad to WASD mode (`sdl2test-flip` / `sdl2test-tb` / `sdl2test-u`; disabled when cfg defines D-pad mappings) |
+| Select + Start | Toggle D-pad to WASD mode (`sdl2test-tb` / `sdl2test-u`; disabled when cfg defines D-pad mappings) |
 | Guide | Quit game |
 
 ### Mouse Mode
