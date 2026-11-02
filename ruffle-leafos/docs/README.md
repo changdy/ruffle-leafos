@@ -28,6 +28,7 @@
 | [死神人机卡顿验证](validation/bvn33-pve-stutter-20261031.md) | 换回合 BitmapData 完整覆盖、旧目标读回消除、实际像素检查与正式安装/版本清理 |
 | [死神 3.6 定制目录版](validation/bvn36-custom-20261031.md) | 3.3/3.6 文件对比、AIR/TLF 离线适配、素材/特效校验、限定实机战斗与设置重开 |
 | [0.8.4 游戏列表与亮度修复](validation/game-list-brightness-20261102.md) | 私有资源目录、亮度百分比、3.6 正式收录及主机/打包验证边界 |
+| [ZIP 与目录实机对照](validation/zip-vs-directory-20261102.md) | ZIP 首次解压、缓存复用、首帧/初始化及同场景 FPS 的限定样本 |
 | [0.6.9 后逐提交审查](validation/review-after-0.6.9-20261031.md) | 39 个提交的代码合理性与历史问题闭环 |
 | [第三方声明](THIRD_PARTY.md) | 来源与许可 |
 | [截图来源](images/README.md) | 首页与指南使用的实机图片、拍摄日期及版本范围 |
