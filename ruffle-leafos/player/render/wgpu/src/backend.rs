@@ -80,9 +80,23 @@ pub struct WgpuRenderBackend<T: RenderTarget> {
     texture_pool: TexturePool,
     offscreen_texture_pool: TexturePool,
     pub(crate) offscreen_buffer_pool: Arc<BufferPool<wgpu::Buffer, BufferDimensions>>,
+    under_memory_pressure: bool,
     dynamic_transforms: DynamicTransforms,
     active_frame: ActiveFrame,
     profiler: GpuProfiler,
+}
+
+fn create_offscreen_buffer_pool() -> Arc<BufferPool<wgpu::Buffer, BufferDimensions>> {
+    Arc::new(BufferPool::new(Box::new(
+        |descriptors: &Descriptors, dimensions: &BufferDimensions| {
+            descriptors.device.create_buffer(&wgpu::BufferDescriptor {
+                label: None,
+                size: dimensions.size(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                mapped_at_creation: false,
+            })
+        },
+    )))
 }
 
 impl WgpuRenderBackend<SwapChainTarget> {
@@ -238,17 +252,6 @@ impl<T: RenderTarget> WgpuRenderBackend<T> {
             target.format(),
         );
 
-        let offscreen_buffer_pool = BufferPool::new(Box::new(
-            |descriptors: &Descriptors, dimensions: &BufferDimensions| {
-                descriptors.device.create_buffer(&wgpu::BufferDescriptor {
-                    label: None,
-                    size: dimensions.size(),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-                    mapped_at_creation: false,
-                })
-            },
-        ));
-
         let transforms = DynamicTransforms::new(&descriptors);
         let active_frame = ActiveFrame::new(&descriptors);
 
@@ -276,7 +279,8 @@ impl<T: RenderTarget> WgpuRenderBackend<T> {
             viewport_scale_factor: 1.0,
             texture_pool: TexturePool::new(),
             offscreen_texture_pool: TexturePool::new(),
-            offscreen_buffer_pool: Arc::new(offscreen_buffer_pool),
+            offscreen_buffer_pool: create_offscreen_buffer_pool(),
+            under_memory_pressure: false,
             dynamic_transforms: transforms,
             active_frame,
             profiler,
@@ -452,7 +456,7 @@ impl<T: RenderTarget + 'static> RenderBackend for WgpuRenderBackend<T> {
         );
 
         self.viewport_scale_factor = dimensions.scale_factor;
-        self.texture_pool = TexturePool::new();
+        self.texture_pool.clear();
     }
 
     fn create_context3d(
@@ -511,6 +515,20 @@ impl<T: RenderTarget + 'static> RenderBackend for WgpuRenderBackend<T> {
             self.surface.size().height,
             self.target.format(),
         );
+    }
+
+    fn set_memory_pressure(&mut self, under_pressure: bool) {
+        if under_pressure && !self.under_memory_pressure {
+            // NotCopied sync handles may take from their old Arc only after
+            // pressure has ended. Retire that pool before replacing it, so
+            // those late reads remain usable without recreating an idle cache.
+            self.offscreen_buffer_pool.retire();
+            self.offscreen_buffer_pool = create_offscreen_buffer_pool();
+        }
+        self.under_memory_pressure = under_pressure;
+        self.texture_pool.set_memory_pressure(under_pressure);
+        self.offscreen_texture_pool.set_memory_pressure(under_pressure);
+        self.offscreen_buffer_pool.set_memory_pressure(under_pressure);
     }
 
     fn viewport_dimensions(&self) -> ViewportDimensions {
@@ -668,7 +686,7 @@ impl<T: RenderTarget + 'static> RenderBackend for WgpuRenderBackend<T> {
 
         self.active_frame
             .submit_for_target(&self.descriptors, &self.target, frame_output);
-        self.offscreen_texture_pool = TexturePool::new();
+        self.offscreen_texture_pool.clear();
         self.profiler
             .end_frame()
             .expect("Frame should end successfully");

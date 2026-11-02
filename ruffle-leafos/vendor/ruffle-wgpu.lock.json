@@ -25,11 +25,11 @@
     "render/wgpu/shaders/filter/displacement_map.wgsl": "c05e99e18c447620427a1d6567baecd74d383bc771b2bf7f501d68386c129c4a",
     "render/wgpu/shaders/filter/glow.wgsl": "b5ccdd4c732e35bfbc46564bd546b2fad1c77826132cb95d3dd2beca7cbe9402",
     "render/wgpu/shaders/gradient.wgsl": "46d34628e706b5f61a202de6f4deeffe3db1243b905bb0e9417ccf067b15cbe7",
-    "render/wgpu/src/backend.rs": "a1fb1cd3a58776c04faf5bbb7d416148bd6855b271399d1f830e2f13c8afbd05",
+    "render/wgpu/src/backend.rs": "4636acb25b6811e21fb5e7ac345d0e75d5961960b1d41037090ce0e992ecd385",
     "render/wgpu/src/bitmaps.rs": "ef31c071b883f83ba36c1c4931f8596e1d188d24ce07c07b92793088fad1b352",
     "render/wgpu/src/blend.rs": "a3e3e0f59bd268e75cc7340229117b9a249a5b11db409f22efef883cc86dc2f6",
     "render/wgpu/src/buffer_builder.rs": "045bd159a6ed7a26888e88a7a291a85c2b6126b982a5018cae3d06c2b3fecaf7",
-    "render/wgpu/src/buffer_pool.rs": "c905e781b78ac45d7a36e849bfd9c852a19393bee0f861b04c48df9bd18d511a",
+    "render/wgpu/src/buffer_pool.rs": "979acd6d0342c0213127f7152b7a0aef3e70013a351b42a496007e87a1db3f91",
     "render/wgpu/src/clap.rs": "684d8bdc0cc016269677705652799b737c079900d0784b95dec67e0ed668fdda",
     "render/wgpu/src/context3d/current_pipeline.rs": "1f97e3a8995824d319f3dc3dced593ceabb8ea5fdea17b959053feae251879c5",
     "render/wgpu/src/context3d/mod.rs": "635ae9b03d77b243aa51ce4926a88e053e95f9397fef1ada42935687c69853d3",
@@ -66,6 +66,14 @@
     "render/wgpu/src/mesh.rs": {
       "upstream_sha256": "4ee0a48542e55ca95eba1980bc67e974f1457e5071fc95c5ea6065c79dfa9b36",
       "purpose": "Retain BitmapHandle ownership for pending and submitted draws without a texture/cache reference cycle."
+    },
+    "render/wgpu/src/backend.rs": {
+      "upstream_sha256": "a1fb1cd3a58776c04faf5bbb7d416148bd6855b271399d1f830e2f13c8afbd05",
+      "purpose": "Propagate Pocket1 memory pressure to GPU pools and retire deferred-readback pools safely."
+    },
+    "render/wgpu/src/buffer_pool.rs": {
+      "upstream_sha256": "c905e781b78ac45d7a36e849bfd9c852a19393bee0f861b04c48df9bd18d511a",
+      "purpose": "Release idle GPU pool entries under pressure without retaining or destroying borrowed resources."
     }
   }
 }

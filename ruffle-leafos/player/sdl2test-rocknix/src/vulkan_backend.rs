@@ -15,6 +15,7 @@ use std::{
     fmt,
     os::fd::{AsRawFd, FromRawFd, IntoRawFd, OwnedFd},
     sync::{Arc, Mutex},
+    time::{Duration, Instant},
 };
 
 pub type Failure = Arc<Mutex<Option<String>>>;
@@ -82,7 +83,9 @@ unsafe fn create_device(adapter: &wgpu::Adapter) -> Result<(wgpu::Device, wgpu::
         label: Some("Leaf Vulkan"),
         required_features: features,
         required_limits: limits,
-        memory_hints: Default::default(),
+        // Pocket1 shares 1 GiB with the GPU. wgpu 30's performance policy
+        // starts device blocks at 128 MiB; prefer its smaller memory policy.
+        memory_hints: wgpu::MemoryHints::MemoryUsage,
         trace: wgpu::Trace::Off,
         experimental_features: wgpu::ExperimentalFeatures::disabled(),
     };
@@ -478,6 +481,7 @@ struct SharedTarget {
     queue: vk::Queue,
     released: Cell<bool>,
     frames: Cell<u64>,
+    allocator_report_at: Cell<Option<Instant>>,
     failure: Failure,
 }
 impl fmt::Debug for SharedTarget {
@@ -760,11 +764,42 @@ impl SharedTarget {
             queue,
             released: Cell::new(false),
             frames: Cell::new(0),
+            allocator_report_at: Cell::new(None),
             failure,
         })
     }
     fn fail(&self, error: String) {
         *self.failure.lock().unwrap() = Some(error);
+    }
+
+    fn log_allocator_report(&self) {
+        if !crate::performance::enabled() {
+            return;
+        }
+        let now = Instant::now();
+        if self.allocator_report_at.get().is_some_and(|previous| {
+            now.duration_since(previous) < Duration::from_secs(1)
+        }) {
+            return;
+        }
+        self.allocator_report_at.set(Some(now));
+
+        // This reports wgpu-managed allocations, excluding the imported GBM
+        // image, driver allocations and CPU memory. Query only while tracing.
+        if let Some(mut report) = self.native._owner.generate_allocator_report() {
+            let allocations = report.allocations.len();
+            report.allocations.sort_unstable_by(|a, b| b.size.cmp(&a.size));
+            let largest = &report.allocations[..allocations.min(3)];
+            println!(
+                "leaf-vulkan-memory allocated_bytes={} reserved_bytes={} blocks={} allocations={} largest={largest:?}",
+                report.total_allocated_bytes,
+                report.total_reserved_bytes,
+                report.blocks.len(),
+                allocations,
+            );
+        } else {
+            println!("leaf-vulkan-memory allocator_report=unsupported");
+        }
     }
 }
 impl RenderTarget for SharedTarget {
@@ -854,6 +889,7 @@ impl RenderTarget for SharedTarget {
             println!("leaf-vulkan first_frame=presented");
         }
         self.frames.set(self.frames.get() + 1);
+        self.log_allocator_report();
         index
     }
 }

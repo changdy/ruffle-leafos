@@ -3,7 +3,7 @@
   "upstream_tag": "v0.7.1",
   "upstream_commit": "89a7049965f3090e706265670df309a5128233ac",
   "upstream_cargo_lock_sha256": "c63981977750d740c24a70fdd1582f9f4b40f9bb8bf18fd8ed2790e576628e0d",
-  "leaf_cargo_lock_sha256": "90f31eadcbfffe81a38bde6fa613fa5db0b9daee58354e39b059d33810da14d7",
+  "leaf_cargo_lock_sha256": "29ea28e88c7e4e7575e98bbbe2b3f8c85e9da7b26dc7b817a768f1c1c3d3ea9f",
   "relationship": "Official stable Ruffle snapshot with retained Pocket1/LeafOS frontend, resource budgets and compatibility patches; the original frontend fork is recorded below.",
   "frontend_origin": {
     "repository": "https://github.com/aweigit/ruffle-miyooflip",
@@ -14,7 +14,7 @@
   "leaf_files_sha256": {
     ".cargo/config.toml": "b98b9cec78252ac9db7527006c71be7fc5b58ba2189bedd4803c6803237d9d2d",
     ".gitignore": "b9488404c4e4b23aac696d1c94ae658868bff98cbf02aa0fc493fe70469a5df9",
-    "Cargo.lock": "90f31eadcbfffe81a38bde6fa613fa5db0b9daee58354e39b059d33810da14d7",
+    "Cargo.lock": "29ea28e88c7e4e7575e98bbbe2b3f8c85e9da7b26dc7b817a768f1c1c3d3ea9f",
     "Cargo.toml": "afb37f32fd76a5330b917a9b45efcabe4df4c498a01a9d5ddecb0454f98ac7cd",
     "README.md": "9a2eb57cd24d805aec22b63079fbfe6ab43acc9540c6cceb30746b7e15cc1267",
     "c_inc/EGL/egl.h": "ed1ee3a3360756c3caf666d575882bd9b4bd344324ae8573f1c664d2516d7364",
@@ -102,8 +102,8 @@
     "render/tests/screenshot_png.rs": "221dd64635d87253df2ed209d47c439f2f929fea107a8d0c0f6fb6c0d954d030",
     "render/wgpu/Cargo.toml": "497ce9884469511089c7ce69db7dc1d0679d2fe14c7c70eb0b7c410907a8b791",
     "render/wgpu/src/mesh.rs": "a0bde03c4487c3ca3cad4be7b6fbcadaaa1b09dcee95352144c4cdd986b1bbe4",
-    "render/wgpu/tests/bitmap_lifetime.rs": "ecf6963bd249b8d115fde5535342c8315287e4101da3595e3ea4d2068b303f42",
-    "sdl2test-rocknix/Cargo.toml": "3d11222d55c47c15cdfcdfc69dc56eaffb477ad98aff69525ed8952be4dd028c",
+    "render/wgpu/tests/bitmap_lifetime.rs": "f866fb456321ee94347191db58e403e98fd0c0b06168cc5f88eef0401a5a7563",
+    "sdl2test-rocknix/Cargo.toml": "5751746c6b7e1c57981d62ca27fb876ca37dbaf7cf1cfa552279f3b94e92acb2",
     "sdl2test-rocknix/launch.sh": "ed22a0bfff716c120f471e8245a787a88ef622bfcea3b0c882bba4e30cae142c",
     "sdl2test-rocknix/shaders/alpha_mask.frag": "91a21a9de22cc4f013cb0dab4678764a701ec16ed0f27efd8842503398b77eef",
     "sdl2test-rocknix/shaders/alpha_mask.vert": "60c1c47223b12b807fb0ab622a34f8576cb038d1bb2b070e8d070695eed00a13",
@@ -137,13 +137,13 @@
     "sdl2test-rocknix/src/idle_pool.rs": "07b9278495ec187b9d0648a3246c47d9ad49adcc5984af2699f3ddc552f56b53",
     "sdl2test-rocknix/src/keyboard_test.rs": "426d938e90d2e293ac5234ad528cf408e6ede4e3666996c2ba98940e8f48d7da",
     "sdl2test-rocknix/src/keycodes.rs": "10c3367cb9c9431b86c42b590163b41593a0d514e41d289ede86451a198a9705",
-    "sdl2test-rocknix/src/leaf.rs": "371e437eb3fcdf120ed0d0b23ce457500a9a513796c352d3f9cfef26b69fec24",
+    "sdl2test-rocknix/src/leaf.rs": "2ea758103d1da101b15efe028d2d3c61bfae3a870bf86c910875a52f08b05dd3",
     "sdl2test-rocknix/src/main.rs": "15577f915dc4d17c1cdf290a8b274872dd46d09996d6643cddc80283d540acbf",
     "sdl2test-rocknix/src/navigator.rs": "fcc17440883a63283c4f05a98793fe5084644a4acfb9d1cb5328ed0c738055e1",
     "sdl2test-rocknix/src/pause_menu.rs": "09f5309cffa6cbd1b33f9e83154c4f8132e750a925e36d88b2c968c7332c1750",
-    "sdl2test-rocknix/src/performance.rs": "8cea17e6521174cab8bddb89577f8cf383b599c56ba0ddd91497c121bb46da36",
+    "sdl2test-rocknix/src/performance.rs": "4597ef86a28775156aa792479b4c8890396cbf429f1ce1f6ea352be3942cc54d",
     "sdl2test-rocknix/src/profiles.rs": "abea2df80a02d5d267fa9ac10354637a76491d7d673207a23cd2c3b227c2b1c5",
-    "sdl2test-rocknix/src/resource_cache.rs": "d19af8fa6722d39c0d2f639adefd8b4ead79ae5bcdcdd0cfdc19ca172e7b6358",
+    "sdl2test-rocknix/src/resource_cache.rs": "f39cfb680eb16e0fe8d9698ed3a8bd3e06fe22edcc9a515f644f204e943ed2c0",
     "sdl2test-rocknix/src/screenshot.rs": "db8b3c4b31b0f88f0f0e6d920ef45e01035d36f19e4b6b1bc456b574bae4ed53",
     "sdl2test-rocknix/src/screenshot_png.rs": "52e12911edf4321941027e3ed9556e6dddbeb0aeff551cdd04c5ab689dc164f5",
     "sdl2test-rocknix/src/session.rs": "ee09033b81458855800d5c6937866af329f59db5890b468aa06b77c9889db8b9",
@@ -154,7 +154,7 @@
     "sdl2test-rocknix/src/turbo.rs": "a77673e4c9a2f4f541097e7cdba64ce081313291f5c42bbc99b9987a16cacb9a",
     "sdl2test-rocknix/src/ui_backend.rs": "47c55bc985cf2219aaa3d67bb3adcb7ae7fb0857ebe28a405bf5278e2b8cf9ae",
     "sdl2test-rocknix/src/virtual_keyboard.rs": "ec53a5301b2b287d12ee23f351430f49aa0e21cdb02649d555ddab82a1651b4f",
-    "sdl2test-rocknix/src/vulkan_backend.rs": "2e7b74987bd8618b4c7c257ee431ef66b7307d815f2e04bf6769bc2d537f3afb",
+    "sdl2test-rocknix/src/vulkan_backend.rs": "cf072ae5575a32cdcabfe3f3ec858fdc2dc0b97bc9661ad6383907dfedb4ec46",
     "sdl2test-tb/Cargo.lock": "ffb1e6ad3f980cea71ce37d5777de83cc280d2ff3929891cf98512da636313f7",
     "sdl2test-tb/Cargo.toml": "e21e0b31fdc220e147e82024452c27f5e6e6a40ad7b29b55f262f9d4d933a9c4",
     "sdl2test-tb/build.rs": "2d94d50c26dcd51ddbba737c9bbbd968fb9d03996972eea0cc63eecc92919cdc",
@@ -222,7 +222,9 @@
     "swf/tests/swfs/EmbedData.as": "2656fee72e6f1153368d82be539631f859519d0f6ec7fd8c2de74a55c133eb93",
     "swf/tests/swfs/frame-label-count-too-large.swf": "4f2ed13f29240dcfec064d16069ca6cdeed7d93046d490abba82cece2f0ff928",
     "swf/tests/swfs/scene-count-too-large.swf": "ae1d3e016f2f0c3b8ad20a17705b475a3e5f1fc92d8299acb04128241d01a419",
-    "tools/stub-report/generate-report.sh": "8afb165ee5c6bb40b949dae7d123e90c6301450d250c3b9660e213cb498defc9"
+    "tools/stub-report/generate-report.sh": "8afb165ee5c6bb40b949dae7d123e90c6301450d250c3b9660e213cb498defc9",
+    "render/wgpu/src/backend.rs": "4636acb25b6811e21fb5e7ac345d0e75d5961960b1d41037090ce0e992ecd385",
+    "render/wgpu/src/buffer_pool.rs": "979acd6d0342c0213127f7152b7a0aef3e70013a351b42a496007e87a1db3f91"
   },
   "local_patch_upstream_sha256": {
     ".cargo/config.toml": "8b8a0495f5c0b134a52a3733a3d039d93b5a532a33b04d04749ac0f80b9ae724",
@@ -260,6 +262,8 @@
     "render/wgpu/Cargo.toml": "98b0b1ec477521393e3fd2bc50330e1f533f1375f5055fd5451631ebb76c6aa4",
     "render/wgpu/src/mesh.rs": "4ee0a48542e55ca95eba1980bc67e974f1457e5071fc95c5ea6065c79dfa9b36",
     "swf/tests/swfs/AddPlaceObject4Data.jsfl": "a6890398729f921a64c18d7c8d57596f0c38994c6f153ffa827325cd691752e6",
-    "swf/tests/swfs/EmbedData.as": "074aaf0ce33ac5984f1e2d5fed6bffce4b819c3951da573b0b93369633982dbc"
+    "swf/tests/swfs/EmbedData.as": "074aaf0ce33ac5984f1e2d5fed6bffce4b819c3951da573b0b93369633982dbc",
+    "render/wgpu/src/backend.rs": "a1fb1cd3a58776c04faf5bbb7d416148bd6855b271399d1f830e2f13c8afbd05",
+    "render/wgpu/src/buffer_pool.rs": "c905e781b78ac45d7a36e849bfd9c852a19393bee0f861b04c48df9bd18d511a"
   }
 }

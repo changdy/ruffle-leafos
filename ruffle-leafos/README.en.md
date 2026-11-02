@@ -24,6 +24,10 @@ The current package includes two custom games. Older archives may have different
 
 For Bleach vs Naruto, keep the entire game directory, including the adjacent `assets/` folder. Do not launch resource SWFs. New progress starts with the game’s internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Bundled games and sources](games/README.md) (Chinese)
 
+On Pocket1, Bleach vs Naruto 3.3 takes about half a minute to initialize its effects at startup. Short Menu (M) presses and opening the player menu may be delayed during initialization; wait until it finishes before continuing. To return to Leaf, hold Menu to use the system return function.
+
+Use **OpenGL ES** for Bleach vs Naruto 3.3 on Pocket1. Vulkan may end the session because of low memory; retry with OpenGL ES afterward.
+
 ## Adding games and covers
 
 Put your own `.swf` files in **`Roms/flash/`** and refresh Leaf’s game list. If a game uses external images, sounds or resource SWFs, copy its full directory without changing relative paths. Extract ZIP game archives first.
@@ -107,7 +111,7 @@ Open **M → Mouse settings** to adjust mouse speed for the current session. Cho
 
 The player also attempts to commit progress when opening menus, exiting normally and responding to game save requests. Slot timestamps show the last data change in Beijing time (UTC+8).
 
-If saving fails, the pause home and Game saves keep a warning. Select the current slot in Game saves and press **Y** to retry. The warning clears after a successful save. Save and quit, slot changes and renderer changes stay in the current session if saving fails.
+If saving fails, the pause home and Game saves keep a warning. Select the current slot in Game saves and press **Y** to retry. The warning clears after a successful save. Menu actions for saving and quitting, changing slots or changing renderers stay in the current session if saving fails.
 
 Progress is identified by **SWF content**: renaming or moving the same file preserves its identity; a different game build gets separate progress. Controls use the **ROM path**, so they do not automatically follow a renamed or moved file. Back up before replacing games. Automatic migration of old `.sol` files, progress import/export and instant save states are not available yet.
 
@@ -137,7 +141,7 @@ Open **M → Display settings**. Left / Right or A changes settings, which save 
 - **Scaling:** keep aspect ratio, stretch to fill, or original size. Original-size content larger than the screen is cropped.
 - **Flash quality:** Low / Medium / High. Adjust this separately from a game’s internal quality setting.
 - **FPS counter:** toggle the Flash frame-rate display at the top left. It is not the screen refresh rate and does not fully describe smoothness during stalls.
-- **Graphics API:** OpenGL ES by default, with experimental Vulkan available. Switching requires confirmation and restarts the game, restoring only saved native progress. Switch back to OpenGL ES if you encounter rendering or stability problems. Vulkan may not be faster.
+- **Graphics API:** OpenGL ES by default, with experimental Vulkan available. Switching requires confirmation and restarts the game, restoring only saved native progress. Switch back to OpenGL ES if you encounter rendering or stability problems. Vulkan may not be faster. If a low-memory message ends a Vulkan session, retry with OpenGL ES and check the actual save result.
 
 Use the physical volume buttons for sound. A system volume indicator appears at the top right.
 

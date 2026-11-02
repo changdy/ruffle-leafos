@@ -4,6 +4,7 @@ use std::sync::{Arc, Weak};
 use ruffle_render::backend::RenderBackend;
 use ruffle_render::bitmap::{Bitmap, BitmapFormat, BitmapHandle, BitmapHandleImpl, BitmapSize, BitmapSource, PixelRegion, PixelSnapping};
 use ruffle_render::commands::{CommandHandler, CommandList};
+use ruffle_render::quality::StageQuality;
 use ruffle_render::shape_utils::{DistilledShape, DrawCommand, DrawPath, FillRule};
 use ruffle_render::transform::Transform;
 use ruffle_render_wgpu::backend::WgpuRenderBackend;
@@ -121,4 +122,32 @@ fn direct_bitmap_bindings_do_not_keep_their_own_handle_alive() {
         PixelRegion::for_whole_size(1, 1));
     renderer.submit_frame(Color::TRANSPARENT, commands, vec![]);
     assert!(weak.upgrade().is_none(), "a bitmap's own bind-group cache must not create an Arc cycle");
+}
+
+#[test]
+fn deferred_readback_survives_pool_retirement_and_pressure_recovery() {
+    let mut renderer = renderer();
+    let bitmap = renderer.register_bitmap(Bitmap::new(2, 3, BitmapFormat::Rgba, vec![255; 24])).unwrap();
+    let weak = Arc::downgrade(&bitmap.0);
+    let sync = renderer.render_offscreen(
+        bitmap,
+        CommandList::new(),
+        StageQuality::Low,
+        PixelRegion::for_whole_size(2, 3),
+    ).unwrap();
+    // The sync handle retains a bitmap and the readback pool Arc until pixels
+    // are requested. Neither may be invalidated by trimming idle resources.
+    renderer.set_memory_pressure(true);
+    renderer.set_memory_pressure(true);
+    renderer.set_quality(StageQuality::Medium);
+    renderer.set_memory_pressure(false);
+    assert!(weak.upgrade().is_some());
+    let called = Cell::new(false);
+    renderer.resolve_sync_handle(sync, Box::new(|pixels, bytes_per_row| {
+        assert!(bytes_per_row >= 8);
+        assert!(pixels.len() >= bytes_per_row as usize * 3);
+        called.set(true);
+    })).unwrap();
+    assert!(called.get(), "the late readback must complete after retirement/recovery");
+    assert!(weak.upgrade().is_none(), "completing the readback must release its bitmap handle");
 }

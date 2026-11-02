@@ -12,6 +12,10 @@ pub fn enable(enabled: bool) {
     ruffle_core::render_metrics::set_enabled(enabled);
 }
 
+pub fn enabled() -> bool {
+    ENABLED.get()
+}
+
 pub fn vulkan_start() -> Option<Instant> {
     Performance::start(ENABLED.get())
 }

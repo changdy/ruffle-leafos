@@ -28,7 +28,7 @@ env.update(CARGO_HOME=str(cache / 'cargo-home'), CARGO_TARGET_DIR=str(build / 'c
 env['PATH'] = os.pathsep.join([str(rust / 'bin'), str(mingw / 'bin'), env['PATH']])
 test_target = (['-p', 'ruffle_render', '--lib'] if args.suite == 'decode'
                else ['-p', 'ruffle_render', '--test', 'screenshot_png'] if args.suite == 'screenshot'
-               else ['-p', 'ruffle_render_wgpu', '--test', 'bitmap_lifetime'])
+               else ['-p', 'ruffle_render_wgpu', '--lib', '--test', 'bitmap_lifetime'])
 command = [str(rust / 'bin/cargo.exe'), 'test', '--locked', '--offline',
            '--target', 'x86_64-pc-windows-gnu', *test_target, '-j', '4',
            '--manifest-path', str(ROOT / 'player/Cargo.toml'),

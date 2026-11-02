@@ -905,7 +905,15 @@ fn push_button(events: &sdl2::EventSubsystem, button: Button, swap: bool) -> Res
 }
 
 pub async fn run() -> Result<(), String> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    // Upstream uses tracing; its default log bridge also keeps local log:: output.
+    let filter = tracing_subscriber::EnvFilter::builder()
+        .with_default_directive(tracing_subscriber::filter::LevelFilter::INFO.into())
+        .from_env_lossy();
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .with_ansi(false)
+        .init();
     install_signals();
     let opt = Opt::parse();
     crate::performance::enable(opt.trace_performance);
@@ -917,6 +925,7 @@ pub async fn run() -> Result<(), String> {
     let static_cache_mib = std::env::var("RUFFLE_STATIC_CACHE_MIB").ok()
         .and_then(|value| value.parse::<u64>().ok()).unwrap_or(16).min(32);
     let mut cache_policy = crate::session::resource_cache::CachePolicy::new(bitmap_cache_mib as u64, static_cache_mib);
+    let mut vulkan_memory_guard = session::resource_cache::VulkanMemoryGuard::default();
     let memory = std::fs::read_to_string("/proc/meminfo").ok();
     cache_policy.update(memory.as_deref());
     ruffle_render::bitmap_cache::set_limit(cache_policy.pixel_bytes());
@@ -1023,7 +1032,13 @@ pub async fn run() -> Result<(), String> {
     let ui = SdlUiBackend::new();
     let keyboard_request=ui.keyboard_request();
     let cjk_fonts = ui.cjk_font_names();
-    let mut builder = PlayerBuilder::new().with_ui(ui);
+    // Pocket1's bundled games can legitimately spend about 31 seconds caching
+    // effects in one callback. Keep a finite device budget instead of relying
+    // on whether the core's sparse timeout checks happen to miss that callback.
+    let script_budget = Duration::from_secs(60);
+    println!("leaf-script max_execution_seconds={}", script_budget.as_secs());
+    let mut builder = PlayerBuilder::new().with_ui(ui)
+        .with_max_execution_duration(script_budget);
     if opt.no_audio {
         builder = builder.with_audio(NullAudioBackend::new());
     } else {
@@ -1362,6 +1377,17 @@ pub async fn run() -> Result<(), String> {
                     cache_policy.shape_bytes() / (1024 * 1024));
             }
             ruffle_render::bitmap_cache::maintain();
+            let available = session::resource_cache::available_bytes(memory.as_deref());
+            if vulkan_memory_guard.update(actual == GraphicsBackend::Vulkan, available, front.started.elapsed()) {
+                let error = crate::tr!(
+                    "Vulkan 可用内存持续不足，已结束本次游戏；请使用 OpenGL ES 重试。",
+                    "Vulkan memory remains low; this game session has ended. Please retry with OpenGL ES."
+                );
+                eprintln!("leaf-graphics runtime_error={error} available_bytes={available:?}");
+                graphics_failure.lock().unwrap().get_or_insert(error);
+                front.quit = true;
+                continue;
+            }
             let mut p=front.active.player.lock().unwrap();
             p.renderer_mut().set_memory_pressure(cache_policy.under_pressure());
             let frames=p.frames_run();
@@ -1464,6 +1490,11 @@ pub async fn run() -> Result<(), String> {
         println!("leaf-experience self_test=passed app={} saved={saved} fps={:.1}",opt.app_settings,front.state.experience.fps);
     }
     if let Some(error)=graphics_failure.lock().unwrap().take() {
+        let error = if saved { error } else {
+            let save_error = front.state.experience.save_error.as_deref()
+                .unwrap_or_else(||t("游戏内进度保存失败，请检查日志和存储卡"));
+            format!("{error}; {}", crate::tr!("保存失败：{save_error}", "Save failed: {save_error}"))
+        };
         let mut settings=front.state.experience.settings;
         if settings.recover_renderer(actual,opt.renderer.as_deref()) {
             if let Err(error)=settings.save(&front.settings_path){eprintln!("leaf-graphics recovery_preference_save_failed={error}");}

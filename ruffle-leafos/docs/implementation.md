@@ -34,11 +34,15 @@ GitHub 仓库为 [changdy/ruffle-leafos](https://github.com/changdy/ruffle-leafo
 
 Vulkan 使用同一官方 Ruffle v0.7.1 的 `render/wgpu/` 和 wgpu 30；当前共享渲染接口与核心同步，原先独立导入的 2026-03-15 后端已升级。[ruffle-wgpu.lock.json](../vendor/ruffle-wgpu.lock.json) 固定构建字节、本地修改的原始上游 SHA-256 与用途。workspace 仅启用 wgpu 的本机 Vulkan/WGSL 功能，noop 仅供主机测试。Leaf 通过公开 HAL 导入接口创建逻辑设备，在上游同等 limits/features 基础上增加 DRM format modifier 扩展，并拒绝 CPU adapter。
 
+Leaf 的 Vulkan `DeviceDescriptor` 显式采用 `MemoryHints::MemoryUsage`，并将同一提示传给 HAL 导入接口。wgpu 30 的 Vulkan 分配器从 `gpu-alloc` 换为 `gpu-allocator`；当前 HAL 的 Performance 策略采用 128–256 MiB 设备内存块、64–128 MiB 主机可见内存块，MemoryUsage 改用 8–64 MiB 和 4–32 MiB。这里是该版本分配器的子分配块量级，不是 Vulkan 总内存限额，也不是每个纹理的大小限制；独立大资源、活动资源和驱动开销仍可能超过这些数值。
+
+该策略调整依据一次真实压力失败：原性能提示候选 `c1bf201d…` 在死神跨轮中 OOM / exit 137，Mali 单次申请约 128 MiB。MemoryUsage 和 Manual 4–16 MiB 实验又被外部验证脚本的低内存阈值结束，均不算六分钟通过；Manual 无足够收益，已撤回。当前 `422e3fd9…` 保留 MemoryUsage 并接入池退让与持续低内存保护，已完成 ARM64 构建、四项图形夹具、真实 Vulkan 保护退出及三组隔离 QA；也已正式安装核验 1,597 文件，通过双游戏 GLES 实际对战和 Apps 主菜单复核。试玩变化先备份再恢复，原配置/存档等哈希全等；最终安装与 GBA 351 文件再次全哈希匹配。测试归档、临时入口/索引缓存清理及租约自然到期核对均已完成。[本轮实机报告](validation/stable-device-20261102.md)。
+
 Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 导入和 Vulkan 外部内存扩展。[vulkan_backend.rs](../player/sdl2test-rocknix/src/vulkan_backend.rs) 从 `/dev/dri/renderD128` 的 GBM 分配线性 ABGR8888 缓冲区，以明确 modifier/plane layout 导入 Vulkan，在官方 `WgpuRenderBackend` 的自定义 `RenderTarget` 中绘制，再以 EGLImage 作为 GLES 纹理完成全屏呈现；现有 `PauseMenu` 继续叠加菜单、光标和提示。显示链路没有逐帧 CPU 像素读回，不需要替换系统 GPU 驱动或 WSI layer。直接导出 Vulkan 分配再交 EGL 的方案在当前驱动上失败，因此使用共享 GBM 分配。
 
 所有队列提交在 Flash 线程串行执行。Vulkan 绘制后通过原生 barrier 将图像释放到 `QUEUE_FAMILY_EXTERNAL`/GENERAL，有限超时 fence 等待完成后交 EGL/GLES 采样；`glFinish` 确保采样完成后才允许下一帧重新获取图像。当前同步较保守，不宣称速度或功耗优于 GLES。导入用重复 FD，成功的 `vkAllocateMemory` 接管该 FD，GBM/EGL/纹理与底层分配分别保留生命周期；resize/退出先等待 GPU，再释放同步、图像和内存资源。
 
-`leaf-graphics actual=` 记录实际 Flash 绘制接口，`leaf-vulkan` 记录硬件 adapter、共享布局、首次呈现与累计帧数。`GL_*` 始终描述显示上下文，不能单独证明 Flash 使用 GLES。按全局偏好启动的 Vulkan 初始化失败会显示提示、恢复全局 GLES 偏好并继续游戏；捕获的运行期 GPU 错误会终止循环、尝试提交原生进度，并将后续游戏共用的偏好恢复为 GLES。诊断用 `--renderer opengl-es|vulkan` 只覆盖本次选择，显式指定 Vulkan 时初始化错误直接返回，运行期错误也不重置全局偏好；Apps 始终使用 GLES。`Settings::requested_renderer` 选择本次实际接口，不覆盖保存的全局值，其他画面选项保存时也不会把 Apps/命令行的临时接口写回。RAV1/RAV2 契约见[渲染设置格式](formats/graphics-settings.md)。
+`leaf-graphics actual=` 记录实际 Flash 绘制接口，`leaf-vulkan` 记录硬件 adapter、共享布局、首次呈现与累计帧数。`GL_*` 始终描述显示上下文，不能单独证明 Flash 使用 GLES。按全局偏好启动的 Vulkan 初始化失败会显示提示、恢复全局 GLES 偏好并继续游戏；运行期 GPU 错误或持续低内存保护会结束循环、尝试提交原生进度，并将后续游戏共用的偏好恢复为 GLES。保存失败时，返回错误同时保留真实存储原因，`progress_flushed` 按实际结果记录。诊断用 `--renderer opengl-es|vulkan` 只覆盖本次选择，显式指定 Vulkan 时初始化错误直接返回，运行期错误也不重置全局偏好；Apps 始终使用 GLES。`Settings::requested_renderer` 不覆盖保存的全局值，其他画面选项保存时也不会把临时接口写回。RAV1/RAV2 契约见[渲染设置格式](formats/graphics-settings.md)。
 
 ## 功能实现与源码入口
 
@@ -59,7 +63,7 @@ Pocket1 原厂驱动缺少 `VK_KHR_wayland_surface`，但提供 GBM/EGL DMA-BUF 
 
 M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有其他候选时保持当前方案；主菜单左右与编辑页 L1/R1 仍可选择全部十个方案。`Mapping::is_empty` 统一按 14 个按键和 5 个摇杆动作均为 `None` 且 `fine=false` 判断；鼠标精调是有效动作，基底、摇杆预设和速度等元数据不单独使方案非空。切换继续使用同一持久化/释放规则。M+十字下切左键保持，M+X 仅在本次运行互换十字/摇杆四方向，摇杆按下不变；交换状态不会写入映射文件。光标页速度仅本次生效，方案内保存的速度仍随方案读取；外观由所有游戏共用。
 
-暂停主菜单共十行，新增“语言”（英语显示 Language），与 Apps 管理页共用 `Page::Language`；“操作说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页，以三张卡片展示项目介绍、完整 GitHub 仓库地址和开源致谢，底部单独显示许可说明；文案维护在 `experience::BACKGROUND` 与 `pause_menu::draw_about`。快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
+暂停主菜单共十一行，其中第十行为“截图”、第十一行为“保存并退出”；“语言”（英语显示 Language）与 Apps 管理页共用 `Page::Language`；“操作说明”和“关于”分别路由到 `Page::Shortcuts` 与 `Page::About`。关于不处理翻页，以三张卡片展示项目介绍、完整 GitHub 仓库地址和开源致谢，底部单独显示许可说明；文案维护在 `experience::BACKGROUND` 与 `pause_menu::draw_about`。快捷键的 `shortcut_tab` 在每次进入时复位，方向左右或肩键循环三组，A/B 仅返回主菜单。说明数据每项采用“目的、按法、补充说明”三字段，按使用场景分组；关于仅显示返回提示，快捷键增加翻页提示。两页继续处于暂停状态。
 
 摇杆现有径向死区为 0.18，键盘/点击动作采用 0.45 按下、0.30 释放的滞回阈值。完整可调设置和坐标矩阵仍在待办，现有阈值不等于该项验收完成。
 
@@ -69,7 +73,7 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 
 `i18n.rs` 维护简体中文/英语的识别、持久化和当前线程语言；`translations.rs` 集中保存静态文案，`tr!` 在调用点保留两份格式字面量，由 Rust 检查参数和命名捕获。菜单、按键、光标、存档、说明和提示显式取译文，用户标题/路径不进入翻译匹配。首次识别后写 `config/language.conf`，菜单保存成功才立即切换；协议、环境优先级及异常行为见[语言设置格式](formats/language-settings.md)。
 
-暂停主菜单和 Apps 管理页均提供语言入口，A 选择后自动保存，A/B 返回到对应入口。暂停列表采用十行布局；文本纹理缓存包含实际译文，切换后按需重建；已生成的临时状态提示清空。Leaf 所选主题字体继续负责有字形的文字，缺失字形使用 `paths.sh` 导出的随包 CJK 字体 `RUFFLE_FONT_FILE`，确保英语系统可显示中文选项并切回中文。
+暂停主菜单和 Apps 管理页均提供语言入口，A 选择后自动保存，A/B 返回到对应入口。暂停列表采用十一行布局（含截图入口）；文本纹理缓存包含实际译文，切换后按需重建；已生成的临时状态提示清空。Leaf 所选主题字体继续负责有字形的文字，缺失字形使用 `paths.sh` 导出的随包 CJK 字体 `RUFFLE_FONT_FILE`，确保英语系统可显示中文选项并切回中文。
 
 菜单术语按实际功能统一：鼠标设置 / Mouse settings 包含速度与光标外观；操作说明 / Controls guide 覆盖组合键、菜单和编辑操作；Flash 画质 / Flash quality 对应 `StageQuality`；渲染接口 / Graphics API 对应 GLES/Vulkan。界面用“游戏内进度 / In-game progress”称呼 SharedObject 数据，英文槽位统一为 Slot；键盘功能键也通过同一翻译表显示退格 / Backspace、空格 / Space、确认 / Confirm。存档页提示依据所选项目区分当前槽、其他槽、损坏槽和返回行，与 `Ui::nav` 的保存、切槽、复制及返回行为保持一致。
 
@@ -94,6 +98,14 @@ Leaf 在每次完整游戏帧 `Player::render()` 提交后调用 `collect_static
 `RUFFLE_BITMAP_CACHE_MIB=0..16`、`RUFFLE_STATIC_CACHE_MIB=0..32` 用于隔离对照；0 禁用对应留存。`RUFFLE_BITMAP_PREDECODE=1` 可选单线程预解码，默认关闭，仅处理不超过 1 MiB 的合格 Lossless 素材，最多四项排队/执行/待领取任务，与像素缓存共用输出预算。投机工作不驱逐已有有效像素，失败素材弱记录去重，主线程永不等待后台结果，迟到时仍走同步兼容路径；线程不接触 GC 或 GPU，退出时回收。
 
 `session::resource_cache::CachePolicy` 每秒读取 `MemAvailable`：低于 128 MiB 或读取失败时将留存预算降为 0，超过 160 MiB 恢复，使用迟滞避免反复清空。CPU 像素及 GLES 临时纹理/PBO 立即收缩，静态形状闲置资源在下次完整游戏绘制后回收；暂停/无重绘期间不额外推进游戏帧。秒级采样不能防住瞬时大分配或保证不再 OOM。实现与限定实测见 [资源缓存报告](validation/resource-cache-20261030.md)。
+
+### Vulkan 闲置池与持续低内存保护
+
+`WgpuRenderBackend::set_memory_pressure()` 接收同一迟滞状态，退让普通/离屏纹理池、Globals 缓存和离屏读回缓冲池。压力时释放已闲置资源，已借用纹理及命令保持有效；新建尺寸键也继承压力，不重新留存归还项。池记录压力代次，压力前借出的项在恢复后迟到归还也不会重新填池。进入压力时退休旧离屏读回池并换用新池；持有旧 Arc 的延迟读回仍能分配和完成，但旧池永久不再留存闲置项。它不强制销毁活动或在途纹理，也不把逻辑释放当作驱动立即归还物理内存。
+
+Leaf 的 `VulkanMemoryGuard` 只接受实际 Vulkan 及有效 `MemAvailable <128 MiB`。首次低读数先让缓存策略回收；后续有效低读数跨度至少一秒才结束会话。读数无效、恢复至至少 128 MiB 或实际后端为 GLES 时清除连续状态，不能把缓存的 128/160 MiB 迟滞布尔值直接当退出条件。触发后保留已有 GPU 故障原因，跳过该轮后续渲染，沿输入释放、暂停 VM/音频、checked flush 和偏好恢复通路退出；显式 renderer 覆盖不改全局偏好，真实保存错误附入最终错误。该秒级保护不预留内存，不能阻止检查点之间的突发分配或原生长调用 OOM。
+
+新逻辑由 148 项前端状态和 9 项 wgpu noop 回归覆盖。422e 实机已在死神初始化后、进入战斗前观察到有效低读数触发保护，正常释放输入、暂停音频并成功 flush 后以错误码 1 退出；这不算六分钟战斗或全部 OOM 已解决。此前验证脚本按 64 MiB 阈值发送 SIGTERM 的两次记录与此内置保护分开记账。 随后用仅播放器生效的 meminfo shim 注入 96 MiB 计数，确认 Vulkan 拒写分支保留原档和真实错误、无显式覆盖时仅隔离偏好回 GLES、GLES 低计数不退出；不真实填 RAM 或改变系统计数。
 
 ### GLES 滤镜与读回临时资源
 
@@ -166,6 +178,16 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 该命令使用现有 build 内的 playerglobal 和配置 JDK 生成原创 AVM1/AVM2 SWF，只放在忽略目录。通过已有 Leaf 启动环境运行 `ruffle <Keyboard-AVM1.swf或Keyboard-AVM2.swf> --self-test-keyboard --renderer opengl-es --capture-dir <隔离截图目录>`，必须同时指定独立 `--storage-dir`、`--controls-dir`；Vulkan 使用 `--renderer vulkan`。诊断包含脚本聚焦/点击、完整编辑、同框重开、取消、密码 Unicode、多行、数字/长度限制、只读、清空、AVM2 preventDefault、VM 暂停及失焦/断连处理的模拟，不用于用户游戏。实际物理按键和正式安装的验证边界见[记录](validation/soft-keyboard-20261028.md)。
 
+## 日志接入与脚本执行预算
+
+Leaf 入口 [leaf.rs](../player/sdl2test-rocknix/src/leaf.rs) 使用 `tracing-subscriber` 同时接收新版 core 的 `tracing` 事件和既有 `log` 输出。过滤继续读取 `RUST_LOG`，默认 `info`；格式化日志写入 stderr，并禁用 ANSI 控制序列。启动器继续把输出收集到现有 `ruffle-probe.log`，不另建日志目录。
+
+Leaf 在 `PlayerBuilder` 中显式设置有限的 60 秒 `with_max_execution_duration`，启动日志记为 `leaf-script max_execution_seconds=60`。上游 core 的默认值和检查机制保持：release 默认 15 秒，debug 默认不启用有限时长；AVM2 每 10,000 次 timeout check 检查经过时间，AVM1 每 2,000 个动作检查。Leaf 的 60 秒设置覆盖其自身 Builder 默认，不改变其他前端。
+
+该预算通过 VM 检查点检测，不是严格的墙钟截止时间。原生函数或 GPU 长调用返回前无法在该调用中途检查，Flash 主线程处理 Menu 也可能延迟；Leaf 系统长按逃生继续保留。脚本预算的完整提示界面、异常恢复及任意负载下的响应范围尚未全面验收。
+
+2026-11-02 的局部实机验证中，候选 ELF `c1bf201d…` 完成死神初始化，记录耗时约 31.03 秒，并继续输出 `games_inited` 和 `show_alert`，未触发脚本超时；此前 15 秒预算的两轮运行均在初始化中被截断。该结果限定于本次初始化段，完整游戏与正式安装结论见[本轮验证报告](validation/ruffle-stable-20261102.md)。
+
 ## 按需性能诊断
 
 播放器接受 `--trace-performance`，默认关闭；需在已有 Leaf 启动环境中使用，可配合 `--diagnostic-seconds`、显式 `--renderer` 及独立 `--storage-dir`/`--controls-dir`。它只增加日志，不改变回收策略、帧调度或渲染接口。实现见 `sdl2test-rocknix/src/performance.rs` 和 `core/src/render_metrics.rs`。
@@ -183,7 +205,7 @@ python scripts/make_keyboard_fixtures.py --output ../work/keyboard-fixtures
 
 前端 `#[tokio::main]` 创建多线程 runtime，但 `AndroidExecutor` 使用 `spawn_local`，`leaf.rs` 在 Flash 主循环处理 TaskPoll、tick、render、GC 和同步静态位图解码；这部分没有自动跨核执行。CPAL/ALSA、PulseAudio、Mali 驱动及物理菜单/系统音量观察各有线程。AVM2 生命周期和嵌套 goto 有时序约束，不能仅增加工作线程就并行推进；实测与线程占用见[2026-10-29 记录](validation/bvn33-threads-20261029.md)。
 
-`render/src/utils.rs` 按 Lossless 格式、尺寸、调色板和行填充，以及 JPEG3 alpha 的像素数提示 zlib 初始输出容量，减少按需解码时的反复扩容。预留最多 4 MiB，宽整数计算后封顶；它不是解压总量限制或持久缓存，异常数据继续使用既有解码/尺寸修正流程。`python scripts/test_renderer.py --suite decode` 运行无 GPU 的渲染库主机测试；不带参数继续只运行原 wgpu 所有权回归。主机微基准不替代掌机验证。
+`render/src/utils.rs` 按 Lossless 格式、尺寸、调色板和行填充，以及 JPEG3 alpha 的像素数提示 zlib 初始输出容量，减少按需解码时的反复扩容。预留最多 4 MiB，宽整数计算后封顶；它不是解压总量限制或持久缓存，异常数据继续使用既有解码/尺寸修正流程。`python scripts/test_renderer.py --suite decode` 运行无 GPU 的渲染库主机测试；不带参数运行 wgpu noop 的资源池与所有权回归。主机微基准不替代掌机验证。
 
 ## 离线 SWF 位图素材优化
 
@@ -265,7 +287,7 @@ python scripts/package_preview.py --output ../outputs/ruffle-leafos-0.8.3-rebuil
 
 `player-build.json.source_inputs` 使用 `schema_version=1`、相对路径到 SHA-256 的 `files_sha256` 清单及规范化清单总摘要 `sha256`。`python -m unittest discover -s scripts -p test_build_inputs.py -v` 验证过期记录、源码变更及打包复制竞态，自动 Release 在 ARM64 构建前执行同一套回归；配置已接入，本轮未新增线上 runner 执行验收。
 
-`test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 `ruffle_render_wgpu` 的 `bitmap_lifetime` 集成测试；noop 只作为该包的开发依赖启用，不进入正式播放器的渲染选择。
+`test_renderer.py` 在 Windows GNU 主机以离线、锁定依赖及隔离 Cargo 配置运行 wgpu 库单元测试和 `bitmap_lifetime` 集成测试；当前共 9 项（5 项池退让、4 项句柄/延迟读回）。覆盖闲置清理、活动引用、恢复后的旧代归还拒收、新键继承压力、退休池的延迟读回及 BitmapHandle 所有权。noop 只作为开发依赖启用，不进入正式播放器渲染选择；它不验收真实 GPU 像素、驱动分配或同步性能。
 
 `test_core.py` 在 Windows GNU 主机编译并实际执行 `ruffle_core --lib --tests` 单元及集成测试，使用与 Pocket1 播放器相同的 audio/symphonia/mp3/nellymoser/lzma/default_compatibility_rules/default_font 特性，串行运行并写入 `build/core-test-report.json`。实际 Player、VM、事件、存储和静态缓存使用 Null 后端，包含本地兼容修复回归，以及独立的公开 Player API AVM1 存档集成测试；通过不等于设备输入、GPU 像素、音频听感或游戏性能验收。它与只编译 ARM64 测试的 `build_player.py test --package ruffle_core` 分开记录。
 
@@ -296,7 +318,7 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 本机受管 Windows 上 GNU 编译器启动曾报 OS623，当前构建使用 Zig 的 Clang/LLD 配合 SDK 头文件和库，包装器生成在 `build/`。全新机器构建演练保留为待办。
 
 
-依赖版本是本工程固定构建输入，以上说明不代表已经完成全新机器构建验收。`package_preview.py` 需要现成的 `build/ruffle-leaf`、`build/libruffle_probe.so` 和 Cargo 许可缓存；仅运行打包命令不会重新编译播放器。`test_session.py` 使用构建步骤生成的本机链接包装器，覆盖无外部依赖的前端状态逻辑。
+依赖版本是本工程固定构建输入，以上说明不代表已完成全新机器构建验收。`package_preview.py` 需要现成的 `build/ruffle-leaf`、`build/libruffle_probe.so` 和 Cargo 许可缓存；打包不会重新编译播放器。`test_session.py` 使用本机链接包装器验证前端状态；当前 148 项通过，新增五项覆盖 Vulkan 连续低内存、无效计数、恢复、GLES 排除及首轮缓存回收。
 
 ## 打包与验证
 
