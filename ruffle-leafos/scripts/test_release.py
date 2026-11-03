@@ -103,6 +103,7 @@ class ReleaseTests(unittest.TestCase):
         output.mkdir()
         archive = output / f'ruffle-leafos-{release.version()}.zip'
         archive.write_bytes(b'installable ZIP fixture')
+        (output / f'ruffle-leafos-games-{release.version()}.zip').write_bytes(b'optional games ZIP fixture')
         return output, archive
 
     def test_notes_include_build_commit_and_all_changes_after_previous_tag(self):
@@ -120,6 +121,12 @@ class ReleaseTests(unittest.TestCase):
         self.assertNotIn('初始版本', notes)
         self.assertIn('/compare/v0.6.8...v0.6.9', notes)
         self.assertIn(hashlib.sha256(archive.read_bytes()).hexdigest(), notes)
+        games = output / 'ruffle-leafos-games-0.6.9.zip'
+        self.assertIn(hashlib.sha256(games.read_bytes()).hexdigest(), notes)
+        self.assertIn(games.name, notes)
+        self.assertIn('Bloxorz-翻滚方块.swf', notes)
+        self.assertIn('Leaf-GPU-Probe.swf', notes)
+        self.assertIn('游戏 ZIP 不需手动解压', notes)
         self.assertIn('SD 卡根目录', notes)
 
     def test_first_release_notes_include_history(self):
@@ -128,7 +135,7 @@ class ReleaseTests(unittest.TestCase):
             release.notes(output)
         self.assertIn('初始版本', (output / 'release-notes.md').read_text(encoding='utf8'))
 
-    def test_publish_only_attaches_installation_zip_to_exact_commit(self):
+    def test_publish_attaches_both_zips_to_exact_commit(self):
         output, archive = self.prepare_archive()
         missing = subprocess.CompletedProcess([], 1, '', 'gh: Not Found (HTTP 404)')
         with patch.dict(os.environ, {'GH_REPO': 'owner/repo'}), \
@@ -137,8 +144,26 @@ class ReleaseTests(unittest.TestCase):
         command = run.call_args_list[-1].args[0]
         self.assertEqual(command[:4], ['gh', 'release', 'create', 'v0.6.8'])
         self.assertIn(str(archive), command)
+        self.assertIn(str(output / 'ruffle-leafos-games-0.6.8.zip'), command)
         self.assertEqual(command[command.index('--target') + 1], self.first)
         self.assertIn('--notes-file', command)
+
+    def test_missing_games_zip_prevents_notes_and_publish(self):
+        output, _ = self.prepare_archive()
+        (output / 'ruffle-leafos-games-0.6.8.zip').unlink()
+        with patch.object(release, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'missing release archive'):
+                release.publish(output)
+            run.assert_not_called()
+        with self.assertRaisesRegex(ValueError, 'missing release archive'):
+            release.notes(output)
+
+    def test_release_assets_exclude_source_and_stale_archives(self):
+        output, archive = self.prepare_archive()
+        for name in ('ruffle-leafos-0.6.8-source.zip', 'ruffle-leafos-0.6.7.zip'):
+            (output / name).write_bytes(b'not a release attachment')
+        self.assertEqual(release.release_archives(output, '0.6.8'),
+                         [archive, output / 'ruffle-leafos-games-0.6.8.zip'])
 
     def test_api_error_is_not_treated_as_missing_release(self):
         output, _ = self.prepare_archive()
@@ -165,7 +190,8 @@ class ReleaseTests(unittest.TestCase):
             release.publish(output)
         upload = run.call_args_list[1].args[0]
         publish = run.call_args_list[2].args[0]
-        self.assertEqual(upload, ['gh', 'release', 'upload', 'v0.6.8', str(archive), '--clobber'])
+        self.assertEqual(upload, ['gh', 'release', 'upload', 'v0.6.8', str(archive),
+                                  str(output / 'ruffle-leafos-games-0.6.8.zip'), '--clobber'])
         self.assertEqual(publish[:4], ['gh', 'release', 'edit', 'v0.6.8'])
         self.assertIn('--draft=false', publish)
 

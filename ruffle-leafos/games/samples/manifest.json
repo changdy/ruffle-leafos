@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "games": [
+    {
+      "name": "Bloxorz｜翻滚方块",
+      "entrypoint": "Bloxorz-翻滚方块.swf",
+      "language": "en",
+      "author": "Damien Clarke (Roboman / DX Interactive)",
+      "source_page": "https://locker.phinugamma.org/swf/miniclip/",
+      "source_url": "https://locker.phinugamma.org/swf/miniclip/bloxorz_miniclip.swf",
+      "retrieved": "2026-11-03",
+      "modifications": "None; original English SWF bytes retained.",
+      "main_sha256": "296c5c17b7a7b6529f6b8faa19aae78ebf4382c161c07e5070ab338fd8264803",
+      "edition": "Original English Miniclip distribution, retrieved from a historical SWF mirror",
+      "original_page": "https://www.miniclip.com/games/bloxorz/en/"
+    }
+  ],
+  "files_sha256": {
+    "Bloxorz-翻滚方块.swf": "296c5c17b7a7b6529f6b8faa19aae78ebf4382c161c07e5070ab338fd8264803"
+  }
+}

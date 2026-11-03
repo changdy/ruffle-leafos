@@ -1,4 +1,4 @@
-"""Detect version changes and publish one installable Pocket 1 ZIP."""
+"""Detect version changes and publish installation and optional games ZIPs."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -68,11 +68,19 @@ def previous_tag(current):
     return candidates[0] if candidates else None
 
 
+def release_archives(output, current):
+    archives = [output / f'ruffle-leafos-{current}.zip',
+                output / f'ruffle-leafos-games-{current}.zip']
+    for archive in archives:
+        if not archive.is_file():
+            raise ValueError('missing release archive: ' + archive.name)
+    return archives
+
+
 def notes(output):
     current = version()
     check_tag('v' + current)
-    archive = output / f'ruffle-leafos-{current}.zip'
-    checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
+    archive, games_archive = release_archives(output, current)
     head = git('rev-parse', 'HEAD')
     repository = os.environ['GITHUB_REPOSITORY']
     base_url = os.environ.get('GITHUB_SERVER_URL', 'https://github.com') + '/' + repository
@@ -83,7 +91,14 @@ def notes(output):
              '适用于迷你龙 Miniloong Pocket 1 / LeafOS（ARM64，最低 Leaf 0.13.0）。', '',
              f'下载 **{archive.name}**，退出播放器后解压，将 `Apps/`、`Roms/`、`Images/` '
              '按原层级复制到系统 SD 卡根目录，合并目录即可安装或覆盖升级。',
-             '建议先备份现有安装和用户数据。游戏放入 `Roms/flash/`。', '',
+             '主包保留 `Roms/flash/Leaf-GPU-Probe.swf` 测试演示，附英文原版 '
+             '`Bloxorz-翻滚方块.swf` 供试玩；Bloxorz 使用按键方案 2 的方向键移动，'
+             '摇杆移动光标并按下点击菜单，L1 为 Space。',
+             f'可选下载 **{games_archive.name}**，解压后将 `Roms/` 按原层级合并到同一 SD 卡根目录。'
+             '内含拳皇 Wing 1.91、死神 VS 火影 3.3 / 3.6 三个独立游戏 ZIP；'
+             '游戏 ZIP 不需手动解压。只更新播放器时无需重复下载游戏合集。',
+             '建议先备份现有安装和用户数据。升级已有 ZIP 游戏时保留原路径；'
+             '从旧目录/SWF 版迁移时先备份并将旧入口移到 `Roms/` 之外，避免重复列表。', '',
              f'构建提交：[{head}]({base_url}/commit/{head})',
              '自动验证：ARM64 release 编译、主机输入/状态回归、诊断库测试和安装包校验。'
              '本次 CI 未进行实机验证。', '', '## Commits', '']
@@ -94,7 +109,9 @@ def notes(output):
                      f'<code>{html.escape(subject)}</code> — <code>{html.escape(author)}</code>')
     if previous:
         lines += ['', f'[完整变更：{previous} → v{current}]({base_url}/compare/{previous}...v{current})']
-    lines += ['', '## SHA-256', '', f'```text\n{checksum}  {archive.name}\n```', '']
+    checksums = '\n'.join(f'{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}'
+                          for path in (archive, games_archive))
+    lines += ['', '## SHA-256', '', f'```text\n{checksums}\n```', '']
     (output / 'release-notes.md').write_text('\n'.join(lines), encoding='utf8')
 
 
@@ -102,6 +119,7 @@ def publish(output):
     current = version()
     tag = 'v' + current
     check_tag(tag)
+    archives = [str(path) for path in release_archives(output, current)]
     # Check API failures explicitly; an authentication/server error is not a missing release.
     result = run(['gh', 'api', f'repos/{os.environ["GH_REPO"]}/releases/tags/{tag}'],
                             text=True, encoding='utf8', capture_output=True)
@@ -110,12 +128,12 @@ def publish(output):
         if not release['draft']:
             print('Release already published: ' + release['html_url'])
             return
-        run(['gh', 'release', 'upload', tag, str(output / f'ruffle-leafos-{current}.zip'),
+        run(['gh', 'release', 'upload', tag, *archives,
                         '--clobber'], check=True)
         run(['gh', 'release', 'edit', tag, '--draft=false', '--prerelease',
                         '--notes-file', str(output / 'release-notes.md')], check=True)
     elif '(HTTP 404)' in result.stderr:
-        run(['gh', 'release', 'create', tag, str(output / f'ruffle-leafos-{current}.zip'),
+        run(['gh', 'release', 'create', tag, *archives,
                         '--target', git('rev-parse', 'HEAD'), '--title', f'Ruffle Flash {current}',
                         '--notes-file', str(output / 'release-notes.md'), '--prerelease'], check=True)
     else:

@@ -1,20 +1,30 @@
-# 随包定制游戏
+# 试玩与可选游戏合集
 
-当前收录拳皇 Wing 1.91、死神 VS 火影 3.3 / 3.6 三款定制游戏，名称后缀统一为 `-定制版`。打包脚本校验 `flash/` 的源文件后，将三款游戏分别构建为 ZIP；GitHub Actions 使用同一流程。
+0.8.6 起，**主安装包**只附英文原版《Bloxorz｜翻滚方块》和原创测试动画 `Leaf-GPU-Probe.swf`；**可选游戏合集** `ruffle-leafos-games-<版本>.zip` 收录拳皇 Wing 1.91、死神 VS 火影 3.3 / 3.6 三款定制游戏。GitHub Actions 同时构建并发布两个附件。
 
-正式随包方案为：**三款游戏分别使用 ZIP；拳皇 ZIP 内含单 SWF，死神 ZIP 含完整目录内容**。死神内嵌资源单 SWF 副本保留为独立实验。
+## 主包试玩
+
+`samples/Bloxorz-翻滚方块.swf` 为 Damien Clarke（Roboman / DX Interactive）的英文原版 Miniclip 分发版，从[历史 SWF 镜像](https://locker.phinugamma.org/swf/miniclip/bloxorz_miniclip.swf)收录；[原发布页面](https://www.miniclip.com/games/bloxorz/en/)仅作历史来源。2026-11-03 收录，下载字节原样保留，无汉化或本项目脚本修改；文件 2,286,600 字节，SHA-256 为 `296c5c17b7a7b6529f6b8faa19aae78ebf4382c161c07e5070ab338fd8264803`。`samples/manifest.json` 固定来源、语言和文件指纹，打包拒绝缺失、额外或字节变化的试玩文件。
+
+安装位置为 `Roms/flash/Bloxorz-翻滚方块.swf`。用鼠标点击开始菜单，方向键滚动方块，Space 切换分裂方块；掌机选择按键方案 2，以十字键移动、L1 发 Space，摇杆移动并按下点击。测试动画同时保留在 `Roms/flash/Leaf-GPU-Probe.swf` 和播放器内部 `res/`。本轮实际验证与限制见[0.8.6 验证](../docs/validation/release-split-20261103.md)。
+
+## 可选合集
+
+打包脚本校验 `flash/` 的源文件后，将三款游戏分别构建为 ZIP，再将它们放进独立合集的 `Roms/flash/`。解压合集外层一次并合并到 SD 卡根目录，三个内层游戏 ZIP 保持原样。主安装包不再重复收录三款大型游戏。
+
+合集方案为：**三款游戏分别使用 ZIP；拳皇 ZIP 内含单 SWF，死神 ZIP 含完整目录内容**。死神内嵌资源单 SWF 副本保留为独立实验。
 
 3.6 此前仅在本地独立交付，0.8.4 起纳入正式清单。ZIP 的主 SWF 和 554 个资源字节与独立版相同，包内恢复原 `assets/` 路径。原 Pocket1 / GLES 限定人机战斗、暂停恢复、设置保存重开及菜单保存退出已通过；全角色与长时稳定性仍待验证。[来源与历史验证边界](../docs/validation/bvn36-custom-20261031.md)。
 
-| 游戏 | 安装包内启动文件 | 收录来源 |
+| 游戏 | 合集内启动文件 | 收录来源 |
 | --- | --- | --- |
 | 拳皇 Wing 1.91 | `Roms/flash/拳皇Wing1.91-定制版.zip` | 掌机 `拳皇Wing1.91-素材优化版.swf` |
 | 死神 VS 火影 3.3 | `Roms/flash/死神VS火影3.3-定制版.zip` | 掌机脚本素材优化版，0.7.3 追加启动入口 LOW 修复 |
 | 死神 VS 火影 3.6 | `Roms/flash/死神VS火影3.6-定制版.zip` | 2026-10-31 本地 LOW / 30 FPS 独立定制目录版 |
 
-拳皇 ZIP 包含单个 SWF；两个死神 ZIP 分别包含主 SWF 和 398 / 554 个 `assets/` 资源，不需手动解压。`manifest.json` 固定源码游戏入口及全部 959 个源文件的 SHA-256；打包检查源文件集合、字节和 ZIP 内每个资源。包内 `provenance/bundled-games.json` 保留源码清单，`build-manifest.json` 另记录安装入口；源码归档也包含 `games/`。主 SWF 字节保持，原生进度按内容识别。
+拳皇 ZIP 包含单个 SWF；两个死神 ZIP 分别包含主 SWF 和 398 / 554 个 `assets/` 资源，不需手动解压。`manifest.json` 固定源码游戏入口及全部 959 个源文件的 SHA-256；打包检查源文件集合、字节和 ZIP 内每个资源。主包 `provenance/bundled-games.json` 保留可选合集的源清单，`provenance/sample-games.json` 保留 Bloxorz 清单；`build-manifest.json` 的 `bundled_games` 只记录主包试玩，`optional_games` 与 `games_archive` 记录合集入口及附件名。源码归档也包含整个 `games/`。主 SWF 字节保持，原生进度按内容识别。
 
-升级时先备份并将旧的同名死神游戏目录和旧拳皇 SWF 移到 `Roms/` 外，再复制 ZIP 并刷新 Leaf 游戏列表；只合并会遗留可扫描的旧 `assets/`。存档和按键文件保留原位；播放器在旧目录记录与相同主 SWF 内容匹配时沿用旧按键方案；拳皇从 SWF 改为 ZIP 后按键方案不会自动迁移。诊断演示不再安装进 `Roms/flash/`，旧版留下的 `Leaf-GPU-Probe.swf` 可移出。
+已有三个同名 ZIP 时保留路径，只升级主包即可；更新包不会删除已安装游戏。旧目录/SWF 版升级时先备份并将旧的同名死神游戏目录和旧拳皇 SWF 移到 `Roms/` 外，再复制合集里的 ZIP 并刷新 Leaf 游戏列表；只合并会遗留可扫描的旧 `assets/`。存档和按键文件保留原位；播放器在旧目录记录与相同主 SWF 内容匹配时沿用旧按键方案；拳皇从 SWF 改为 ZIP 后按键方案不会自动迁移。
 
 死神也可以通过 [package_bvn_single_swf.py](../scripts/package_bvn_single_swf.py) 生成独立的单文件实验副本：重新内嵌当前 398 个优化资源，恢复游戏原有的 `ZipAssetLoader`，并分帧缓存启动特效，避免一次长调用中断初始化。输出约 65.7 MiB，只需复制这一个 SWF；保留 LOW 默认值、全部资源和战斗补丁。Pocket1 / GLES 已进入一护对鸣人练习场并正常退出，但内存高于目录版，保留实验状态；正式安装包采用外部 ZIP。单文件使用新的内容身份和路径，不自动继承目录版的进度及按键。复现依赖已完成的播放器构建及配置 JDK，结果和限制见[单文件验证](../docs/validation/bvn33-single-swf-20261031.md)。
 

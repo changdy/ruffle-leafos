@@ -3,7 +3,7 @@
   "upstream_tag": "v0.7.1",
   "upstream_commit": "89a7049965f3090e706265670df309a5128233ac",
   "upstream_cargo_lock_sha256": "c63981977750d740c24a70fdd1582f9f4b40f9bb8bf18fd8ed2790e576628e0d",
-  "leaf_cargo_lock_sha256": "39e65daa6baa08a06d1dad77e725fa67c38cb700111e2fc01774272fd21bba07",
+  "leaf_cargo_lock_sha256": "25b11e5488729ac162f7b117e6845f72a53fe613f3d5c3cb33f7ccc3fb0a4f9c",
   "relationship": "Official stable Ruffle snapshot with retained Pocket1/LeafOS frontend, resource budgets and compatibility patches; the original frontend fork is recorded below.",
   "frontend_origin": {
     "repository": "https://github.com/aweigit/ruffle-miyooflip",
@@ -14,7 +14,7 @@
   "leaf_files_sha256": {
     ".cargo/config.toml": "b98b9cec78252ac9db7527006c71be7fc5b58ba2189bedd4803c6803237d9d2d",
     ".gitignore": "b9488404c4e4b23aac696d1c94ae658868bff98cbf02aa0fc493fe70469a5df9",
-    "Cargo.lock": "39e65daa6baa08a06d1dad77e725fa67c38cb700111e2fc01774272fd21bba07",
+    "Cargo.lock": "25b11e5488729ac162f7b117e6845f72a53fe613f3d5c3cb33f7ccc3fb0a4f9c",
     "Cargo.toml": "afb37f32fd76a5330b917a9b45efcabe4df4c498a01a9d5ddecb0454f98ac7cd",
     "README.md": "9a2eb57cd24d805aec22b63079fbfe6ab43acc9540c6cceb30746b7e15cc1267",
     "c_inc/EGL/egl.h": "ed1ee3a3360756c3caf666d575882bd9b4bd344324ae8573f1c664d2516d7364",
@@ -103,7 +103,7 @@
     "render/wgpu/Cargo.toml": "497ce9884469511089c7ce69db7dc1d0679d2fe14c7c70eb0b7c410907a8b791",
     "render/wgpu/src/mesh.rs": "a0bde03c4487c3ca3cad4be7b6fbcadaaa1b09dcee95352144c4cdd986b1bbe4",
     "render/wgpu/tests/bitmap_lifetime.rs": "f866fb456321ee94347191db58e403e98fd0c0b06168cc5f88eef0401a5a7563",
-    "sdl2test-rocknix/Cargo.toml": "120b598bf26d0ac1f3e17739867c47dd7841206e68f7238648e9b504f9ac805f",
+    "sdl2test-rocknix/Cargo.toml": "101cac774e0fda92732a0e30f5b27c2091ed3281be2bb9ff7d9b33bb83f55ab4",
     "sdl2test-rocknix/launch.sh": "ed22a0bfff716c120f471e8245a787a88ef622bfcea3b0c882bba4e30cae142c",
     "sdl2test-rocknix/shaders/alpha_mask.frag": "91a21a9de22cc4f013cb0dab4678764a701ec16ed0f27efd8842503398b77eef",
     "sdl2test-rocknix/shaders/alpha_mask.vert": "60c1c47223b12b807fb0ab622a34f8576cb038d1bb2b070e8d070695eed00a13",
@@ -269,5 +269,5 @@
     "render/wgpu/src/backend.rs": "a1fb1cd3a58776c04faf5bbb7d416148bd6855b271399d1f830e2f13c8afbd05",
     "render/wgpu/src/buffer_pool.rs": "c905e781b78ac45d7a36e849bfd9c852a19393bee0f861b04c48df9bd18d511a"
   },
-  "frontend_version": "0.8.5"
+  "frontend_version": "0.8.6"
 }

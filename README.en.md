@@ -18,7 +18,7 @@ A Flash player built for leafOS on the Miniloong Pocket 1, powered by Ruffle.
 | --- | --- |
 | ![The King of Fighters Wing 1.91 running on Pocket1](ruffle-leafos/docs/images/game-kof.png) | ![Bleach vs Naruto 3.3 running on Pocket1](ruffle-leafos/docs/images/game-bvn.png) |
 
-**Current version: 0.8.5 development preview.** Currently supports **Miniloong Pocket 1 / leafOS** only, with device checks on Leaf 0.13.0. Compatibility and performance vary by game, and development is ongoing.
+**Current version: 0.8.6 development preview.** Currently supports **Miniloong Pocket 1 / leafOS** only. Earlier device checks used Leaf 0.13.0; see [progress](ruffle-leafos/docs/progress.md) for the 0.8.6 validation status. Compatibility and performance vary by game, and development is ongoing.
 
 ## Made for handheld play
 
@@ -50,7 +50,9 @@ System SD card/
 └─ Images/flash/               ← Game covers
 ```
 
-The package includes custom editions of *The King of Fighters Wing 1.91*, *Bleach vs Naruto 3.3* and *Bleach vs Naruto 3.6*. KOF is an SWF; each Bleach game is a ZIP containing all resources. The player shows loading progress while preparing its cache on first launch. To upgrade a directory edition, back up and move the old game folder outside `Roms/`, copy the new ZIP and refresh the game list. See [bundled game details](ruffle-leafos/games/README.md) (Chinese).
+Starting with 0.8.6, the main installation ZIP includes the original English *Bloxorz* and the `Leaf-GPU-Probe.swf` diagnostic demo. For Bloxorz, select control scheme 2 to move with the D-pad; move and press the stick to click menus.
+
+The three custom games, *The King of Fighters Wing 1.91*, *Bleach vs Naruto 3.3* and *Bleach vs Naruto 3.6*, are in the optional **`ruffle-leafos-games-<version>.zip`** collection. Merge its `Roms/` into the SD card root and keep the three inner game ZIPs intact. Player-only upgrades do not require downloading the collection again; keep existing game ZIPs at their original paths. To upgrade a directory edition, back up and move the old game folder outside `Roms/` first. See [games and sources](ruffle-leafos/games/README.md) (Chinese).
 
 To add your own games, put `.swf` or complete game `.zip` files in `Roms/flash/`. [Adding games and covers →](ruffle-leafos/README.en.md#adding-games-and-covers)
 

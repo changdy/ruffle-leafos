@@ -81,15 +81,15 @@ jobs:
         run: python scripts/test_session.py
       - name: Test ZIP game extraction and caching
         run: python scripts/test_zip_game.py
-      - name: Verify bundled customized games and external assets
+      - name: Verify sample games, optional games and split installation paths
         run: python -m unittest discover -s scripts -p test_package_preview.py -v
       - name: Build and test diagnostics
         run: python scripts/build_diagnostics.py
-      - name: Package root directory installation ZIP
+      - name: Package installation ZIP and optional games ZIP
         run: python scripts/package_preview.py --output ../outputs/release
-      - name: Generate commit notes and ZIP checksum
+      - name: Generate commit notes and both ZIP checksums
         run: python scripts/release.py notes --output ../outputs/release
-      - name: Publish installation ZIP
+      - name: Publish installation and optional games ZIPs
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

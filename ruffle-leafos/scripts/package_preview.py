@@ -1,4 +1,4 @@
-"""Package the source-built Leaf frontend and its current documentation."""
+"""Package the Leaf frontend with samples and a separate optional games ZIP."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -29,6 +29,52 @@ def source_ignore(directory, names):
         '.env', '.env.*', '*.pyc', '*.pyo', '*.log', '*.o', '*.obj', '*.pdb',
         '*.exe', '*.part', '*.rs.bk')(directory, names)
     return ignored - {'.env.example', '.env.sample', '.env.template'}
+
+
+def bundle_samples(stage, samples_root=ROOT / 'games/samples'):
+    """Keep the diagnostic and the pinned, unmodified sample in the main ZIP."""
+    manifest = json.loads((samples_root / 'manifest.json').read_text(encoding='utf8'))
+    files = {p.relative_to(samples_root).as_posix(): p for p in samples_root.rglob('*')
+             if p.is_file() and p != samples_root / 'manifest.json'}
+    expected = manifest['files_sha256']
+    if files.keys() != expected.keys():
+        raise ValueError('sample game files differ from manifest')
+    for relative, path in files.items():
+        if sha(path) != expected[relative]:
+            raise ValueError('sample game checksum mismatch: ' + relative)
+    for game in manifest['games']:
+        entry = game['entrypoint']
+        if (entry not in expected or Path(entry).name != entry
+                or Path(entry).suffix.lower() != '.swf'
+                or entry == 'Leaf-GPU-Probe.swf'
+                or game['main_sha256'] != expected[entry]):
+            raise ValueError('invalid sample game entrypoint: ' + entry)
+    if set(expected) != {game['entrypoint'] for game in manifest['games']}:
+        raise ValueError('sample game list differs from entrypoints')
+    target = stage / 'Roms/flash'
+    target.mkdir(parents=True, exist_ok=True)
+    make_movie(target / 'Leaf-GPU-Probe.swf')
+    bundled = []
+    for game in manifest['games']:
+        destination = target / game['entrypoint']
+        shutil.copyfile(files[game['entrypoint']], destination)
+        if sha(destination) != game['main_sha256']:
+            raise ValueError('staged sample game checksum mismatch: ' + game['entrypoint'])
+        bundled.append(dict(game, install_path=game['entrypoint']))
+    return bundled
+
+
+def write_install_archives(stage, games_stage, output, version):
+    """Both ZIPs install at the card root, without an enclosing version folder."""
+    archive = output / f'ruffle-leafos-{version}.zip'
+    games_archive = output / f'ruffle-leafos-games-{version}.zip'
+    for source, destination in [(stage, archive), (games_stage, games_archive)]:
+        zip_tree(source, destination)
+        with zipfile.ZipFile(destination) as z:
+            assert z.testzip() is None
+            assert all((item.external_attr >> 16) & 0o111
+                       for item in z.infolist() if item.filename.endswith('.sh'))
+    return archive, games_archive
 
 
 def bundle_games(stage, games_root=ROOT / 'games'):
@@ -145,7 +191,9 @@ def main():
     assert shim_info['machine'] == 183 and not shim_info['needed']
     shutil.copyfile(shim, frontend / 'lib/libruffle_probe.so')
     make_movie(frontend / 'res/Leaf-GPU-Probe.swf')
-    bundled_games = bundle_games(stage)
+    sample_games = bundle_samples(stage)
+    games_stage = Path(tempfile.mkdtemp(prefix=f'games-{version}-', dir=ROOT / 'build'))
+    optional_games = bundle_games(games_stage)
     (stage / 'Images/flash').mkdir(parents=True)
     for filename in ['README.md', 'README.en.md']:
         shutil.copyfile(ROOT / filename, pak / filename)
@@ -179,6 +227,7 @@ def main():
     shutil.copyfile(ROOT / 'vendor/catastrophe.lock.json', provenance / 'catastrophe.lock.json')
     shutil.copyfile(ROOT / 'vendor/ruffle-wgpu.lock.json', provenance / 'ruffle-wgpu.lock.json')
     shutil.copyfile(ROOT / 'games/manifest.json', provenance / 'bundled-games.json')
+    shutil.copyfile(ROOT / 'games/samples/manifest.json', provenance / 'sample-games.json')
     # Validate against the pinned official contract, then the new behavior.
     contracts = ROOT / 'vendor/leaf-contracts/contracts'
     sys.path[:0] = [str(contracts / 'leaf-content/scripts'), str(contracts / 'leaf-services/scripts')]
@@ -198,7 +247,10 @@ def main():
         'version': version, 'runtime_rebuilt_from_source': True,
         'runtime_sha256': sha(binary), 'source': source_lock,
         'player_build': build_info,
-        'bundled_games': bundled_games,
+        'bundled_games': sample_games,
+        'diagnostic_movie': 'Roms/flash/Leaf-GPU-Probe.swf',
+        'optional_games': optional_games,
+        'games_archive': f'ruffle-leafos-games-{version}.zip',
         'target': 'Leaf 0.13.0 / AArch64 / glibc 2.38 / GLES 3 / experimental Vulkan',
         'upstream_wgpu_renderer': renderer_lock,
         'keyboard_reference': keyboard_lock,
@@ -228,7 +280,8 @@ def main():
                   'per-button 5/10/15 Hz hold turbo, 8ms release target with 2ms headroom below 10ms, deadline-aware loop sleep and shared-key ownership',
                   'queued physical Menu taps independent of virtual Guide release state',
                   'asynchronous real Leaf volume/brightness feedback without double-applying hardware keys',
-                  'three bundled games, with original assets paths in ZIP archives and content-based progress identity',
+                  'original English Bloxorz sample and original diagnostic SWF in the main installation ZIP',
+                  'three optional games in a separate root-installable games ZIP, retaining original assets paths and content-based progress identity',
                   'Simplified Chinese and English UI with persisted LeafOS first-launch detection, immediate language switching and CJK font fallback',
                   'Catastrophe-derived gamepad keyboard on editable Flash focus, transactional Unicode edits, masked passwords, native text restrictions/events and neutral input resume',
                   'pause lifecycle, input ownership, neutral gate and checked SharedObject flush'],
@@ -239,12 +292,8 @@ def main():
         'device_validation': 'See docs/progress.md for current acceptance and binary identities; automated packaging does not verify hardware, and earlier device reports apply only to their recorded binaries',
     }
     (pak / 'build-manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
-    archive = output / f'ruffle-leafos-{version}.zip'
     verify_player_build(ROOT, binary, build_info)
-    zip_tree(stage, archive)
-    with zipfile.ZipFile(archive) as z:
-        assert z.testzip() is None
-        assert all((item.external_attr >> 16) & 0o111 for item in z.infolist() if item.filename.endswith('.sh'))
+    archive, games_archive = write_install_archives(stage, games_stage, output, version)
     if args.include_source:
         source_stage = Path(tempfile.mkdtemp(prefix='preview-source-', dir=ROOT / 'build'))
         for folder in ['player', 'adapter', 'pak', 'scripts', 'docs', 'games', 'target-libs', 'runtime/leaf-12', 'vendor/leaf-contracts', 'vendor/catastrophe']:
@@ -265,9 +314,15 @@ def main():
         zip_tree(source_stage, output / f'ruffle-leafos-{version}-source.zip')
     (output / 'build-report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')
     (ROOT / 'build/package-stage-path.txt').write_text(str(stage), encoding='utf8')
-    sums = ''.join(f'{sha(p)}  {p.name}\n' for p in sorted(output.glob('*.zip')))
+    (ROOT / 'build/games-stage-path.txt').write_text(str(games_stage), encoding='utf8')
+    archives = [archive, games_archive]
+    if args.include_source:
+        archives.append(output / f'ruffle-leafos-{version}-source.zip')
+    sums = ''.join(f'{sha(p)}  {p.name}\n' for p in archives)
     (output / 'SHA256SUMS.txt').write_text(sums, encoding='ascii')
-    print(json.dumps({'stage': str(stage), 'archive': str(archive), 'runtime_sha256': sha(binary)}, indent=2))
+    print(json.dumps({'stage': str(stage), 'archive': str(archive),
+                      'games_stage': str(games_stage), 'games_archive': str(games_archive),
+                      'runtime_sha256': sha(binary)}, indent=2))
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@
 | --- | --- |
 | ![Pocket1 上运行的拳皇 Wing 1.91 对战画面](ruffle-leafos/docs/images/game-kof.png) | ![Pocket1 上运行的死神 VS 火影 3.3 对战画面](ruffle-leafos/docs/images/game-bvn.png) |
 
-**当前版本：0.8.5 开发预览。** 当前仅支持 **Miniloong Pocket 1 / leafOS**，已在 Leaf 0.13.0 上验证。游戏兼容性和流畅度取决于具体内容，仍在持续完善。
+**当前版本：0.8.6 开发预览。** 当前仅支持 **Miniloong Pocket 1 / leafOS**，既有设备验证基于 Leaf 0.13.0；0.8.6 的实机验证状态见[工程进度](ruffle-leafos/docs/progress.md)。游戏兼容性和流畅度取决于具体内容，仍在持续完善。
 
 ## 为掌机游玩准备的功能
 
@@ -50,7 +50,9 @@
 └─ Images/flash/               ← 游戏封面
 ```
 
-当前打包收录《拳皇 Wing 1.91》《死神 VS 火影 3.3》和《死神 VS 火影 3.6》三款定制版。拳皇为 SWF，死神为包含完整资源的 ZIP；首次启动会显示加载进度并创建缓存。升级旧目录版时先备份并将旧游戏目录移出 `Roms/`，再复制新版 ZIP 并刷新列表。详见[随包游戏说明](ruffle-leafos/games/README.md)。
+0.8.6 起，主安装包附英文原版《Bloxorz｜翻滚方块》和 `Leaf-GPU-Probe.swf` 测试演示，可直接尝试。Bloxorz 选择按键方案 2，用十字键移动方块，摇杆移动光标并按下点击菜单。
+
+《拳皇 Wing 1.91》《死神 VS 火影 3.3》和《死神 VS 火影 3.6》移到可选的 **`ruffle-leafos-games-<版本>.zip`** 合集。将合集内的 `Roms/` 合并到 SD 卡根目录，保留三个游戏 ZIP 即可，无需再手动解压。只升级播放器时不用重复下载合集；已有同名 ZIP 保持原路径。升级旧目录版时先备份并将旧游戏目录移出 `Roms/`，再复制新版 ZIP 并刷新列表。详见[游戏与来源说明](ruffle-leafos/games/README.md)。
 
 你也可以把自己的 `.swf` 或完整游戏 `.zip` 放入 `Roms/flash/`。[查看添加游戏与封面的方法 →](ruffle-leafos/README.md#添加游戏与封面)
 
