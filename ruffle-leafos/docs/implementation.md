@@ -330,7 +330,7 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 安装 ZIP 从 `pak/`、新编译的播放器与诊断库、固定 SDL2/ALSA/字体、仅包内保留的自有探针资源、三款定制游戏及许可组成。随包 `README.md` / `README.en.md` 使用当前项目中英文使用指南，支持文档与截图一并附带；历史交付继续保持发布时快照。`--include-source` 收录源码、中英文指南、文档、`games/`、依赖锁、必要参考和原始 runtime，不收录内嵌 Git、SDK、构建目录或本机配置。
 
-`package_preview.py` 的 `bundle_games` 先校验 `games/manifest.json` 的全部 959 个源文件及 SHA-256；拳皇作为 SWF，死神 3.3 / 3.6 分别打成 ZIP，恢复归档内的原始 `assets/` 相对路径。打包逐项验证主 SWF 和资源内容，Leaf 只看到三个游戏文件。清单记录安装路径、归档入口和主文件指纹；包内 `provenance/bundled-games.json` 保留源清单。旧 `assets/`、`_assets/` 目录布局仍可读取。
+`package_preview.py` 的 `bundle_games` 先校验 `games/manifest.json` 的全部 959 个源文件及 SHA-256；拳皇及死神 3.3 / 3.6 分别打成 ZIP，恢复归档内的原始 `assets/` 相对路径。打包逐项验证主 SWF 和资源内容，Leaf 只看到三个游戏文件。清单记录安装路径、归档入口和主文件指纹；包内 `provenance/bundled-games.json` 保留源清单。旧 `assets/`、`_assets/` 目录布局仍可读取。
 
 Leaf 将 ZIP 原样交给播放器。`zip_game.rs` 流式计算 ZIP 的 SHA-256，先解压到临时目录，成功后原子发布到 `$XDG_CACHE_HOME/zip-games/<SHA-256>/`；按最浅层 SWF 选择入口，同层多个时使用与 ZIP 同名的 SWF，否则报错。限制 10,000 项和 4 GiB 解压总量，拒绝不安全路径、符号链接与大小写冲突。复用时核验所有文件存在和大小、主 SWF 的 CRC，不能发现其他资源的同大小损坏；退出后可删除缓存重新解压。`zip_loading.rs` 在后台准备期间显示文字及进度条，失败显示提示。主 SWF 内容用于原生进度身份，ZIP 路径用于封面与目录；旧目录控制方案只有在目录记录确认内容及路径身份匹配且 ZIP 没有独立方案时才复用。`python scripts/test_zip_game.py` 检查提取、缓存及异常 ZIP；`python -m unittest discover -s scripts -p test_package_preview.py -v` 验证源与安装归档，发布工作流执行这两项。
 

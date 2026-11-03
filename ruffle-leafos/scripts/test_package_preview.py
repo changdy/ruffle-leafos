@@ -55,9 +55,7 @@ class BundledGamesTests(unittest.TestCase):
         self.assertEqual(actual, {g['install_path'] for g in games})
         for game in games:
             output = installed / game['install_path']
-            if output.suffix == '.swf':
-                self.assertEqual(hashlib.sha256(output.read_bytes()).hexdigest(), game['main_sha256'])
-                continue
+            self.assertEqual(output.suffix, '.zip')
             source_prefix = game['name'] + '/_assets/'
             expected = {'assets/' + path[len(source_prefix):]: digest
                         for path, digest in manifest['files_sha256'].items() if path.startswith(source_prefix)}
@@ -66,7 +64,7 @@ class BundledGamesTests(unittest.TestCase):
                 self.assertIsNone(archive.testzip())
                 self.assertEqual({name: hashlib.sha256(archive.read(name)).hexdigest()
                                   for name in archive.namelist()}, expected)
-            self.assertEqual(len(expected)-1, 398 if '3.3' in game['name'] else 554)
+            self.assertEqual(len(expected)-1, 398 if '3.3' in game['name'] else 554 if '3.6' in game['name'] else 0)
 
     def test_exposed_resource_movie_is_rejected(self):
         extra = self.games / 'flash/测试-定制版/assets/fighter.swf'

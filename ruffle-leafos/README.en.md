@@ -19,13 +19,13 @@ The package includes three custom games. Older archives may have different conte
 
 | Game | Main file to select inside `Roms/flash/` |
 | --- | --- |
-| The King of Fighters Wing 1.91 | `拳皇Wing1.91-定制版.swf` |
+| The King of Fighters Wing 1.91 | `拳皇Wing1.91-定制版.zip` |
 | Bleach vs Naruto 3.3 | `死神VS火影3.3-定制版.zip` |
 | Bleach vs Naruto 3.6 | `死神VS火影3.6-定制版.zip` |
 
-The Bleach vs Naruto ZIPs include the game and all resources; do not extract them manually. On first launch the player shows a loading screen while extracting to its cache; later launches can reuse the cache. New progress starts with the game’s internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Bundled games and sources](games/README.md) (Chinese)
+All three bundled games use ZIPs. The Bleach vs Naruto ZIPs include the game and all resources; do not extract them manually. On first launch the player shows a loading screen while extracting to its cache; later launches can reuse the cache. New progress starts with the game’s internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Bundled games and sources](games/README.md) (Chinese)
 
-**Upgrading an older directory edition:** back up and move the old same-name game folders outside `Roms/`, copy the new ZIP files and refresh Leaf’s game list. The main SWF bytes are unchanged, so native progress keeps its content identity. Existing controls are reused when the old catalog confirms the matching game. You can also move the old `Leaf-GPU-Probe.swf` diagnostic demo out of `Roms/flash/`.
+**Upgrading an older directory edition:** back up and move the old same-name game folders and the old KOF SWF outside `Roms/`, copy the new ZIP files and refresh Leaf’s game list. The main SWF bytes are unchanged, so native progress keeps its content identity. Existing directory controls are reused when the old catalog confirms the matching game; KOF controls do not migrate automatically from its old SWF path. You can also move the old `Leaf-GPU-Probe.swf` diagnostic demo out of `Roms/flash/`.
 
 On Pocket1, Bleach vs Naruto 3.3 takes about half a minute to initialize its effects at startup. Short Menu (M) presses and opening the player menu may be delayed during initialization; wait until it finishes before continuing. To return to Leaf, hold Menu to use the system return function.
 
