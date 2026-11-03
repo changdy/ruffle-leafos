@@ -35,7 +35,7 @@ Pocket1 上的《死神 VS 火影 3.3》建议使用 **OpenGL ES**；Vulkan 可�
 
 把自己的 `.swf` 或 `.zip` 放进 **`Roms/flash/`**，然后刷新 Leaf 游戏列表。目录游戏可将主 SWF 与所有资源一起放进 ZIP，并保留游戏原有的相对路径；支持普通存储或 DEFLATE 压缩的 ZIP。加密、符号链接或有不安全路径的 ZIP 不支持。
 
-ZIP 中选择层级最浅的主 SWF；同层有多个 SWF 时，将 ZIP 命名为与主 SWF 相同的名称。首次启动需要足够空间解压；缓存位于 `.userdata/mlp1/ruffle-probe/cache/zip-games/`，退出播放器后可手动删除，之后启动会重新解压。旧 `assets/` 或 `_assets/` 目录布局仍可使用。
+ZIP 中选择层级最浅的主 SWF；同层有多个 SWF 时，将 ZIP 命名为与主 SWF 相同的名称。首次启动需要足够空间解压；缓存位于 `Saves/ruffle-leaf-preview/cache/zip-games/`，退出播放器后可手动删除，之后启动会重新解压。旧 `assets/` 或 `_assets/` 目录布局仍可使用。
 
 封面放进 **`Images/flash/`**，名称与所选 SWF 或 ZIP 去掉扩展名后的名称相同。即使游戏位于子目录，封面也直接放在 `Images/flash/` 下。例如：
 

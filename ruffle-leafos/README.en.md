@@ -35,7 +35,7 @@ Use **OpenGL ES** for Bleach vs Naruto 3.3 on Pocket1. Vulkan may end the sessio
 
 Put your own `.swf` or `.zip` files in **`Roms/flash/`** and refresh Leaf’s game list. For a directory game, place its main SWF and all resources in a ZIP while preserving their relative paths. Stored and DEFLATE ZIPs are supported; encrypted archives, symbolic links and unsafe paths are rejected.
 
-The player selects the shallowest SWF in the ZIP. If several SWFs share that depth, name the ZIP after the main SWF. First launch needs free space for extraction; the cache is in `.userdata/mlp1/ruffle-probe/cache/zip-games/`. You can delete it after exiting the player; the next launch extracts it again. Existing `assets/` and `_assets/` directory layouts continue to work.
+The player selects the shallowest SWF in the ZIP. If several SWFs share that depth, name the ZIP after the main SWF. First launch needs free space for extraction; the cache is in `Saves/ruffle-leaf-preview/cache/zip-games/`. You can delete it after exiting the player; the next launch extracts it again. Existing `assets/` and `_assets/` directory layouts continue to work.
 
 Put covers in **`Images/flash/`**, using the selected SWF or ZIP filename without its extension. Covers go directly in that folder even when the game is in a subfolder. For example:
 

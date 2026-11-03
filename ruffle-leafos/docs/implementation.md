@@ -332,7 +332,7 @@ Cargo 缓存位于 `host_tool_cache/cargo-home/`。准备主机工具后运行 `
 
 `package_preview.py` 的 `bundle_games` 先校验 `games/manifest.json` 的全部 959 个源文件及 SHA-256；拳皇及死神 3.3 / 3.6 分别打成 ZIP，恢复归档内的原始 `assets/` 相对路径。打包逐项验证主 SWF 和资源内容，Leaf 只看到三个游戏文件。清单记录安装路径、归档入口和主文件指纹；包内 `provenance/bundled-games.json` 保留源清单。旧 `assets/`、`_assets/` 目录布局仍可读取。
 
-Leaf 将 ZIP 原样交给播放器。`zip_game.rs` 流式计算 ZIP 的 SHA-256，先解压到临时目录，成功后原子发布到 `$XDG_CACHE_HOME/zip-games/<SHA-256>/`；按最浅层 SWF 选择入口，同层多个时使用与 ZIP 同名的 SWF，否则报错。限制 10,000 项和 4 GiB 解压总量，拒绝不安全路径、符号链接与大小写冲突。复用时核验所有文件存在和大小、主 SWF 的 CRC，不能发现其他资源的同大小损坏；退出后可删除缓存重新解压。`zip_loading.rs` 在后台准备期间显示文字及进度条，失败显示提示。主 SWF 内容用于原生进度身份，ZIP 路径用于封面与目录；旧目录控制方案只有在目录记录确认内容及路径身份匹配且 ZIP 没有独立方案时才复用。`python scripts/test_zip_game.py` 检查提取、缓存及异常 ZIP；`python -m unittest discover -s scripts -p test_package_preview.py -v` 验证源与安装归档，发布工作流执行这两项。
+Leaf 将 ZIP 原样交给播放器。`zip_game.rs` 流式计算 ZIP 的 SHA-256，先解压到临时目录，成功后原子发布到 `$SAVES_PATH/ruffle-leaf-preview/cache/zip-games/<SHA-256>/`。正式启动脚本为 ZIP 设置不含点前缀组件的缓存路径，避免 Ruffle 的 SharedObject 路径检查拒绝游戏存档初始化；按最浅层 SWF 选择入口，同层多个时使用与 ZIP 同名的 SWF，否则报错。限制 10,000 项和 4 GiB 解压总量，拒绝不安全路径、符号链接与大小写冲突。复用时核验所有文件存在和大小、主 SWF 的 CRC，不能发现其他资源的同大小损坏；退出后可删除缓存重新解压。`zip_loading.rs` 在后台准备期间显示文字及进度条，失败显示提示。主 SWF 内容用于原生进度身份，ZIP 路径用于封面与目录；旧目录控制方案只有在目录记录确认内容及路径身份匹配且 ZIP 没有独立方案时才复用。`python scripts/test_zip_game.py` 检查提取、缓存及异常 ZIP；`python -m unittest discover -s scripts -p test_package_preview.py -v` 验证源与安装归档，发布工作流执行这两项。
 
 死神单文件实验可在仓库根目录执行以下命令，输出路径须尚不存在：
 

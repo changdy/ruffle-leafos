@@ -57,6 +57,18 @@ for LOCAL_DIR in "$STATE_DIR/home" "$STATE_DIR/config" "$STATE_DIR/cache" "$STAT
 done
 export HOME="$STATE_DIR/home"
 export XDG_CONFIG_HOME="$STATE_DIR/config" XDG_CACHE_HOME="$STATE_DIR/cache" XDG_DATA_HOME="$STATE_DIR/data"
+# Ruffle rejects dot-prefixed components in the movie URL when opening a
+# SharedObject. Extract ZIP games outside Leaf's .userdata tree so games can
+# initialize their native saves; keep ordinary frontend caches unchanged.
+case "$SWF" in
+    *.[zZ][iI][pP])
+        [ -n "${SAVES_PATH:-}" ] || ruffle_die 'Leaf 未提供存档目录'
+        case "$SAVES_PATH" in /*|?:/*) ;; *) ruffle_die '存档目录必须为绝对路径' ;; esac
+        XDG_CACHE_HOME="$SAVES_PATH/ruffle-leaf-preview/cache"
+        ruffle_write_check "$XDG_CACHE_HOME"
+        export XDG_CACHE_HOME
+        ;;
+esac
 export RUFFLE_CONTROLS_DIR="$STATE_DIR/config/controls"
 ruffle_prepare_fonts
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/var/run}" WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
