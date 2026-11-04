@@ -63,6 +63,17 @@ impl<'gc> OrphanManager<'gc> {
     /// that have been garbage collected, or are no longer orphans
     /// (they've since acquired a parent).
     pub fn cleanup_dead_orphans(&mut self, mc: &Mutation<'gc>) {
+        // Nested frame callbacks can retain a snapshot of this list. Avoid
+        // cloning it through Rc::make_mut when no entry needs to be removed.
+        // Weak upgrades do not run scripts; recheck on every cleanup so GC and
+        // parent/placement changes remain visible without an invalidation cache.
+        if Rc::strong_count(&self.orphans) > 1
+            && self.orphans.iter().all(|orphan| {
+                valid_orphan(*orphan, mc).is_some_and(|dobj| dobj.placed_by_avm2_script())
+            })
+        {
+            return;
+        }
         self.orphans_mut().retain(|d| {
             if let Some(dobj) = valid_orphan(*d, mc) {
                 // All clips that become orphaned (have their parent removed, or start out with no parent)
@@ -109,4 +120,67 @@ fn valid_orphan<'gc>(
     mc: &Mutation<'gc>,
 ) -> Option<DisplayObject<'gc>> {
     dobj.upgrade(mc).filter(|dobj| dobj.parent().is_none())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::display_object::MovieClip;
+    use crate::tag_utils::SwfMovie;
+    use std::sync::Arc;
+
+    #[test]
+    fn shared_cleanup_reuses_unchanged_list_and_preserves_removed_entry_snapshot() {
+        gc_arena::arena::rootless_mutate(|mc| {
+            let movie = Arc::new(SwfMovie::empty(10, None));
+            let kept = MovieClip::new(movie.clone(), mc);
+            kept.set_placed_by_avm2_script(true);
+            let removed = MovieClip::new(movie, mc);
+            let mut manager = OrphanManager::default();
+            manager.add_orphan_obj(kept.into());
+            let snapshot = manager.orphans.clone();
+            manager.cleanup_dead_orphans(mc);
+            assert!(Rc::ptr_eq(&snapshot, &manager.orphans));
+
+            manager.add_orphan_obj(removed.into());
+            let snapshot = manager.orphans.clone();
+            manager.cleanup_dead_orphans(mc);
+            assert!(!Rc::ptr_eq(&snapshot, &manager.orphans));
+            assert_eq!(snapshot.len(), 2);
+            assert_eq!(manager.orphans.len(), 1);
+            assert!(std::ptr::eq(manager.orphans[0].as_ptr(), kept.as_ptr()));
+
+            // The outer pass keeps its original iteration order, including the
+            // timeline-removed object, until its snapshot is released.
+            assert!(std::ptr::eq(snapshot[0].as_ptr(), kept.as_ptr()));
+            assert!(std::ptr::eq(snapshot[1].as_ptr(), removed.as_ptr()));
+        });
+    }
+
+    #[test]
+    fn collection_preserves_reachable_orphan_and_releases_weak_only_orphan() {
+        let mut arena = gc_arena::Arena::<gc_arena::Rootable![
+            (OrphanManager<'_>, MovieClip<'_>)
+        ]>::new(|mc| {
+            let movie = Arc::new(SwfMovie::empty(10, None));
+            let kept = MovieClip::new(movie.clone(), mc);
+            let garbage = MovieClip::new(movie, mc);
+            kept.set_placed_by_avm2_script(true);
+            garbage.set_placed_by_avm2_script(true);
+            let mut manager = OrphanManager::default();
+            manager.add_orphan_obj(kept.into());
+            manager.add_orphan_obj(garbage.into());
+            (manager, kept)
+        });
+        arena.finish_cycle();
+        arena.mutate_root(|mc, (manager, kept)| {
+            assert!(manager.orphans[0].upgrade(mc).is_some());
+            assert!(manager.orphans[1].upgrade(mc).is_none());
+            let snapshot = manager.orphans.clone();
+            manager.cleanup_dead_orphans(mc);
+            assert_eq!(manager.orphans.len(), 1);
+            assert_eq!(snapshot.len(), 2);
+            assert!(std::ptr::eq(manager.orphans[0].as_ptr(), kept.as_ptr()));
+        });
+    }
 }

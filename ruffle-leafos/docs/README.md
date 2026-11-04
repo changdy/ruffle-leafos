@@ -19,6 +19,7 @@
 | [官方稳定版升级](validation/ruffle-stable-20261102.md) | v0.7.1 来源、保留矩阵和初版身份；后续 148 项前端、9 项 noop、422e 构建与池/低内存保护边界 |
 | [本轮 Pocket1 实机与重新安装](validation/stable-device-20261102.md) | 当前 422e 正式安装、双游戏 GLES 实际对战/Apps 主菜单、数据复原；真实 OOM、两次阈值中止、内置保护/拒写 QA 及最终完整性核验 |
 | [上游修复与优化实施顺序](upstream-roadmap.md) | 面向 Pocket1，按移植难度、运行代价和实际收益排序的候选、前置条件与逐项验收方法；不代表已经完成 |
+| [字体分配与孤立对象清理优化](validation/font-orphan-optimization-20261104.md) | 2026-11-04 第一批代码、完整字形对照、主机回归及构建/实机边界；完整 Loader 缓存尚未实施 |
 | [异常 SWF 长度与预分配防护](validation/swf-length-guards-20261101.md) | 上游计划 01 的来源与损坏样本、受限内存主机回归、ARM64 构建、两后端各 9 组实机解析夹具及限定 GLES 游戏启动/暂停/退出 |
 | [上游 02—07 兼容修复](validation/upstream-compatibility-20261101.md) | 独立问题提交、30 项核心设备回归、两后端各 18 项像素检查、限定游戏启动/暂停恢复及未验范围 |
 | [输入、保存提示与构建绑定](validation/reliability-fixes-20261101.md) | 有效轴归中、保存错误保留/重试、构建输入与 ELF 绑定，以及主机/两后端隔离故障验证 |

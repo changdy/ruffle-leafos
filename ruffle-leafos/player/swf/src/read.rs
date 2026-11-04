@@ -1075,19 +1075,136 @@ impl<'a> Reader<'a> {
             }
         }
 
+        let layout = self.read_font_layout(&mut glyphs, flags)?;
+
+        Ok(Font {
+            version,
+            id,
+            name,
+            language,
+            layout,
+            glyphs,
+            flags,
+        })
+    }
+
+    /// Read an embedded font without expanding its glyph outlines. Offset
+    /// ranges are validated before any encoded slice is exposed to the caller.
+    pub fn read_define_font_2_encoded(&mut self, version: u8) -> Result<EncodedFont<'a>> {
+        let id = self.read_character_id()?;
+        let flags = FontFlag::from_bits_truncate(self.read_u8()?);
+        let language = self.read_language()?;
+        let name = self.read_str_with_len()?;
+        let num_glyphs = self.read_u16()? as usize;
+        let mut glyphs = vec![
+            Glyph {
+                shape_records: Vec::new(),
+                code: 0,
+                advance: 0,
+                bounds: None,
+            };
+            num_glyphs
+        ];
+        let mut glyph_shapes = Vec::with_capacity(num_glyphs);
+
+        if num_glyphs == 0 {
+            // Match the eager reader: an empty font may omit this offset.
+            if flags.contains(FontFlag::HAS_WIDE_OFFSETS) {
+                let _ = self.read_u32();
+            } else {
+                let _ = self.read_u16();
+            }
+        } else {
+            let offsets_ref = self.get_ref();
+            let wide = flags.contains(FontFlag::HAS_WIDE_OFFSETS);
+            let mut offsets = Vec::with_capacity(num_glyphs + 1);
+            for _ in 0..=num_glyphs {
+                offsets.push(if wide {
+                    self.read_u32()? as usize
+                } else {
+                    self.read_u16()? as usize
+                });
+            }
+            let table_bytes = (num_glyphs + 1) * if wide { 4 } else { 2 };
+            let code_table_offset = offsets[num_glyphs];
+            let code_table_bytes = num_glyphs
+                * if flags.contains(FontFlag::HAS_WIDE_CODES) {
+                    2
+                } else {
+                    1
+                };
+            // Irregular offset tables can use the host's existing eager fallback.
+            if offsets[0] != table_bytes
+                || offsets.windows(2).any(|pair| pair[1].saturating_sub(pair[0]) < 2)
+                || code_table_offset > offsets_ref.len()
+                || code_table_bytes > offsets_ref.len() - code_table_offset
+            {
+                return Err(Error::invalid_data("Invalid embedded font glyph offsets"));
+            }
+            for pair in offsets.windows(2) {
+                glyph_shapes.push(&offsets_ref[pair[0]..pair[1]]);
+            }
+            *self.get_mut() = &offsets_ref[code_table_offset..];
+            for glyph in &mut glyphs {
+                glyph.code = if flags.contains(FontFlag::HAS_WIDE_CODES) {
+                    self.read_u16()?
+                } else {
+                    self.read_u8()?.into()
+                };
+            }
+        }
+        let layout = self.read_font_layout(&mut glyphs, flags)?;
+        Ok(EncodedFont {
+            font: Font {
+                version,
+                id,
+                name,
+                language,
+                layout,
+                glyphs,
+                flags,
+            },
+            glyph_shapes,
+        })
+    }
+
+    /// Decode a single bounded embedded glyph SHAPE (including its initial
+    /// fill/line bit counts). Truncated outlines never read into another glyph.
+    pub fn read_font_glyph_shape(&mut self) -> Result<Vec<ShapeRecord>> {
+        let num_bits = self.read_u8()?;
+        let mut shape_context = ShapeContext {
+            swf_version: self.version,
+            shape_version: 1,
+            num_fill_bits: num_bits >> 4,
+            num_line_bits: num_bits & 0b1111,
+        };
+        let mut records = Vec::new();
+        let mut bits = self.bits();
+        while let Some(record) = Self::read_shape_record(&mut bits, &mut shape_context)? {
+            records.push(record);
+        }
+        records.shrink_to_fit();
+        Ok(records)
+    }
+
+    fn read_font_layout(
+        &mut self,
+        glyphs: &mut [Glyph],
+        flags: FontFlag,
+    ) -> Result<Option<FontLayout>> {
         // TODO: Is it possible to have a layout when there are no glyphs?
         let layout = if flags.contains(FontFlag::HAS_LAYOUT) {
             let ascent = self.read_u16()?;
             let descent = self.read_u16()?;
             let leading = self.read_i16()?;
 
-            for glyph in &mut glyphs {
+            for glyph in glyphs.iter_mut() {
                 glyph.advance = self.read_u16()?;
             }
 
             // Some older SWFs end the tag here, as this data isn't used until v7.
             if !self.as_slice().is_empty() {
-                for glyph in &mut glyphs {
+                for glyph in glyphs.iter_mut() {
                     glyph.bounds = Some(self.read_rectangle()?);
                 }
             }
@@ -1114,16 +1231,7 @@ impl<'a> Reader<'a> {
         } else {
             None
         };
-
-        Ok(Font {
-            version,
-            id,
-            name,
-            language,
-            layout,
-            glyphs,
-            flags,
-        })
+        Ok(layout)
     }
 
     pub fn read_define_font_4(&mut self) -> Result<Font4<'a>> {
@@ -2602,6 +2710,150 @@ pub mod tests {
     fn reader(data: &[u8]) -> Reader<'_> {
         let default_version = 13;
         Reader::new(data, default_version)
+    }
+
+    #[test]
+    fn encoded_fonts_match_eager_outlines_and_layout_in_existing_files() {
+        for (path, code, version) in [
+            ("tests/swfs/DefineFont2-CS6.swf", TagCode::DefineFont2, 2),
+            ("tests/swfs/DefineFont3-CS6.swf", TagCode::DefineFont3, 3),
+            (
+                "tests/swfs/DefineFont3-DeviceText.swf",
+                TagCode::DefineFont3,
+                3,
+            ),
+        ] {
+            let bytes = read_tag_bytes_from_file(path, code);
+            let mut tag_reader = reader(&bytes);
+            let (_, len) = tag_reader.read_tag_code_and_length().unwrap();
+            let body = &tag_reader.get_ref()[..len];
+            let eager = reader(body).read_define_font_2(version).unwrap();
+            let mut deferred = reader(body).read_define_font_2_encoded(version).unwrap();
+            assert!(
+                deferred
+                    .font
+                    .glyphs
+                    .iter()
+                    .all(|g| g.shape_records.is_empty())
+            );
+            for (glyph, bytes) in deferred.font.glyphs.iter_mut().zip(deferred.glyph_shapes) {
+                assert!(bytes.as_ptr() >= body.as_ptr());
+                assert!(bytes.as_ptr_range().end <= body.as_ptr_range().end);
+                glyph.shape_records = reader(bytes).read_font_glyph_shape().unwrap();
+            }
+            assert_eq!(deferred.font, eager, "{path}");
+        }
+    }
+
+    fn encoded_font_bytes(wide_offsets: bool, wide_codes: bool) -> (Vec<u8>, usize) {
+        let flags = FontFlag::HAS_LAYOUT
+            | if wide_offsets {
+                FontFlag::HAS_WIDE_OFFSETS
+            } else {
+                FontFlag::empty()
+            }
+            | if wide_codes {
+                FontFlag::HAS_WIDE_CODES
+            } else {
+                FontFlag::empty()
+            };
+        let mut bytes = vec![1, 0, flags.bits(), 0, 1, b'f', 3, 0];
+        let table_start = bytes.len();
+        let table_len = 4 * if wide_offsets { 4 } else { 2 };
+        for offset in [table_len, table_len + 2, table_len + 4, table_len + 6] {
+            if wide_offsets {
+                bytes.extend_from_slice(&(offset as u32).to_le_bytes());
+            } else {
+                bytes.extend_from_slice(&(offset as u16).to_le_bytes());
+            }
+        }
+        bytes.extend_from_slice(&[0x10, 0, 0x10, 0, 0x10, 0]);
+        let codes = if wide_codes {
+            [65u16, 0x4e2d, 0xd800]
+        } else {
+            [65u16, 66, 67]
+        };
+        for code in codes {
+            if wide_codes {
+                bytes.extend_from_slice(&code.to_le_bytes());
+            } else {
+                bytes.push(code as u8);
+            }
+        }
+        for value in [1024u16, 128, (-4i16) as u16, 100, 200, 300] {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        bytes.extend_from_slice(&[0, 0, 0]); // Three empty RECTs.
+        bytes.extend_from_slice(&1u16.to_le_bytes());
+        for code in [codes[0], codes[1]] {
+            if wide_codes {
+                bytes.extend_from_slice(&code.to_le_bytes());
+            } else {
+                bytes.push(code as u8);
+            }
+        }
+        bytes.extend_from_slice(&(-7i16).to_le_bytes());
+        (bytes, table_start)
+    }
+
+    #[test]
+    fn encoded_fonts_preserve_offset_widths_codes_empty_glyphs_and_kerning() {
+        for wide_offsets in [false, true] {
+            for wide_codes in [false, true] {
+                let (bytes, _) = encoded_font_bytes(wide_offsets, wide_codes);
+                let expected = reader(&bytes).read_define_font_2(3).unwrap();
+                let encoded = reader(&bytes).read_define_font_2_encoded(3).unwrap();
+                assert_eq!(encoded.font, expected);
+                assert_eq!(
+                    encoded
+                        .glyph_shapes
+                        .iter()
+                        .map(|s| s.len())
+                        .collect::<Vec<_>>(),
+                    [2, 2, 2]
+                );
+                for outline in encoded.glyph_shapes {
+                    assert!(reader(outline).read_font_glyph_shape().unwrap().is_empty());
+                }
+            }
+        }
+        for suffix in [&[][..], &[0, 0][..]] {
+            let mut empty = vec![1, 0, 0, 0, 1, b'f', 0, 0];
+            empty.extend_from_slice(suffix);
+            assert!(
+                reader(&empty)
+                    .read_define_font_2_encoded(2)
+                    .unwrap()
+                    .font
+                    .glyphs
+                    .is_empty()
+            );
+        }
+    }
+
+    #[test]
+    fn encoded_fonts_reject_bad_ranges_and_do_not_read_next_glyph_on_decode_error() {
+        let (bytes, start) = encoded_font_bytes(false, false);
+        for (entry, offset) in [(0, 0u16), (1, 7), (1, 8), (1, 9), (3, u16::MAX)] {
+            let mut bad = bytes.clone();
+            bad[start + entry * 2..start + entry * 2 + 2].copy_from_slice(&offset.to_le_bytes());
+            assert!(reader(&bad).read_define_font_2_encoded(3).is_err());
+        }
+        let mut bad = bytes;
+        let shape_start = start + 8;
+        bad[shape_start..shape_start + 2].copy_from_slice(&[0x10, 0xff]);
+        let encoded = reader(&bad).read_define_font_2_encoded(3).unwrap();
+        assert!(
+            reader(encoded.glyph_shapes[0])
+                .read_font_glyph_shape()
+                .is_err()
+        );
+        assert!(
+            reader(encoded.glyph_shapes[2])
+                .read_font_glyph_shape()
+                .unwrap()
+                .is_empty()
+        );
     }
 
     fn try_read_from_file(path: &str) -> Result<SwfBuf> {

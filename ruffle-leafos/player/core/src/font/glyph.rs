@@ -2,14 +2,23 @@ use crate::context::RenderContext;
 use crate::drawing::Drawing;
 use crate::font::FontAtlasGlyph;
 use crate::prelude::*;
+use crate::tag_utils::SwfSlice;
 use ruffle_render::backend::null::NullBitmapSource;
 use ruffle_render::backend::{RenderBackend, ShapeHandle};
 use ruffle_render::transform::Transform;
 use std::cell::{Ref, RefCell};
 
+#[cfg(test)]
+#[path = "lazy_glyph_tests.rs"]
+mod lazy_glyph_tests;
+
 #[derive(Debug, Clone)]
 enum SwfGlyphOrShape {
     Glyph(swf::Glyph),
+    Encoded {
+        data: SwfSlice,
+        glyph: swf::Glyph,
+    },
     Shape {
         shape: swf::Shape,
         // Handle to registered shape, loaded lazily on first render of this glyph.
@@ -20,9 +29,25 @@ enum SwfGlyphOrShape {
 
 impl SwfGlyphOrShape {
     fn shape(&mut self) -> (&mut swf::Shape, &mut Option<ShapeHandle>) {
-        if let Self::Glyph(_) = self
-            && let Self::Glyph(glyph) = core::mem::replace(self, Self::Poisoned)
-        {
+        if matches!(self, Self::Glyph(_) | Self::Encoded { .. }) {
+            let glyph = match core::mem::replace(self, Self::Poisoned) {
+                Self::Glyph(glyph) => glyph,
+                Self::Encoded { data, mut glyph } => {
+                    glyph.shape_records = match data.read_from(0).read_font_glyph_shape() {
+                        Ok(records) => records,
+                        Err(error) => {
+                            // Keep failure local to this bounded outline and cache it.
+                            tracing::warn!(
+                                "Unable to decode embedded glyph {}: {error}",
+                                glyph.code
+                            );
+                            Vec::new()
+                        }
+                    };
+                    glyph
+                }
+                _ => unreachable!(),
+            };
             *self = Self::Shape {
                 shape: ruffle_render::shape_utils::swf_glyph_to_shape(glyph),
                 handle: None,
@@ -139,6 +164,21 @@ impl Glyph {
         Self {
             advance: Twips::new(swf_glyph.advance.into()),
             shape: GlyphShape::Swf(Box::new(RefCell::new(SwfGlyphOrShape::Glyph(swf_glyph)))),
+            character,
+        }
+    }
+
+    pub(super) fn from_encoded_swf(
+        character: char,
+        glyph: swf::Glyph,
+        data: SwfSlice,
+    ) -> Self {
+        Self {
+            advance: Twips::new(glyph.advance.into()),
+            shape: GlyphShape::Swf(Box::new(RefCell::new(SwfGlyphOrShape::Encoded {
+                data,
+                glyph,
+            }))),
             character,
         }
     }

@@ -20,9 +20,11 @@ pub use text_render_settings::TextRenderSettings;
 use crate::font::glyph::GlyphRef;
 use crate::prelude::*;
 use crate::string::WStr;
+use crate::tag_utils::{SwfMovie, SwfSlice};
 use gc_arena::{Collect, Gc, Mutation};
 use ruffle_render::backend::RenderBackend;
 use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
 pub use swf::TextGridFit;
 
@@ -349,6 +351,35 @@ impl<'gc> Font<'gc> {
         encoding: &'static swf::Encoding,
         font_type: FontType,
     ) -> Font<'gc> {
+        Self::from_swf_tag_inner(gc_context, renderer, tag, encoding, font_type, None)
+    }
+
+    pub(crate) fn from_encoded_swf_tag(
+        gc_context: &Mutation<'gc>,
+        renderer: &mut dyn RenderBackend,
+        tag: swf::EncodedFont<'_>,
+        movie: Arc<SwfMovie>,
+        encoding: &'static swf::Encoding,
+        font_type: FontType,
+    ) -> Font<'gc> {
+        Self::from_swf_tag_inner(
+            gc_context,
+            renderer,
+            tag.font,
+            encoding,
+            font_type,
+            Some((SwfSlice::from(movie), tag.glyph_shapes)),
+        )
+    }
+
+    fn from_swf_tag_inner<'a>(
+        gc_context: &Mutation<'gc>,
+        renderer: &mut dyn RenderBackend,
+        tag: swf::Font<'a>,
+        encoding: &'static swf::Encoding,
+        font_type: FontType,
+        encoded: Option<(SwfSlice, Vec<&'a [u8]>)>,
+    ) -> Font<'gc> {
         let mut code_point_to_glyph = fnv::FnvHashMap::default();
 
         let descriptor = FontDescriptor::from_swf_tag(&tag, encoding);
@@ -369,7 +400,15 @@ impl<'gc> Font<'gc> {
                 let character = char::from_u32(code as u32).unwrap_or(char::REPLACEMENT_CHARACTER);
                 code_point_to_glyph.insert(code, index);
 
-                let glyph = Glyph::from_swf(character, swf_glyph);
+                let glyph = if let Some((source, outlines)) = &encoded {
+                    Glyph::from_encoded_swf(
+                        character,
+                        swf_glyph,
+                        source.to_unbounded_subslice(outlines[index]),
+                    )
+                } else {
+                    Glyph::from_swf(character, swf_glyph)
+                };
 
                 // Eager-load ASCII characters.
                 if code < 128 {

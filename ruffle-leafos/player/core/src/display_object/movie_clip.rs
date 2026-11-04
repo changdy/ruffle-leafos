@@ -3859,18 +3859,7 @@ impl<'gc, 'a> MovieClipShared<'gc> {
         context: &mut UpdateContext<'gc>,
         reader: &mut SwfStream<'a>,
     ) -> Result<(), Error> {
-        let font = reader.read_define_font_2(2)?;
-        let font_id = font.id;
-        let font_object = Font::from_swf_tag(
-            context.gc(),
-            context.renderer,
-            font,
-            reader.encoding(),
-            FontType::Embedded,
-        );
-        self.library_mut(context)
-            .register_character(font_id, Character::Font(font_object));
-        Ok(())
+        self.define_font_2_or_3(context, reader, 2)
     }
 
     #[inline]
@@ -3879,15 +3868,49 @@ impl<'gc, 'a> MovieClipShared<'gc> {
         context: &mut UpdateContext<'gc>,
         reader: &mut SwfStream<'a>,
     ) -> Result<(), Error> {
-        let font = reader.read_define_font_2(3)?;
-        let font_id = font.id;
-        let font_object = Font::from_swf_tag(
-            context.gc(),
-            context.renderer,
-            font,
-            reader.encoding(),
-            FontType::Embedded,
-        );
+        self.define_font_2_or_3(context, reader, 3)
+    }
+
+    fn define_font_2_or_3(
+        &self,
+        context: &mut UpdateContext<'gc>,
+        reader: &mut SwfStream<'a>,
+        version: u8,
+    ) -> Result<(), Error> {
+        let checkpoint = reader.get_ref();
+        let encoding = reader.encoding();
+        let (font_id, font_object) = match reader.read_define_font_2_encoded(version) {
+            Ok(font) => {
+                let id = font.font.id;
+                (
+                    id,
+                    Font::from_encoded_swf_tag(
+                        context.gc(),
+                        context.renderer,
+                        font,
+                        self.movie(),
+                        encoding,
+                        FontType::Embedded,
+                    ),
+                )
+            }
+            Err(_) => {
+                // Preserve the existing compatibility path for irregular offset
+                // tables; only use borrowed outlines when their ranges are valid.
+                *reader.get_mut() = checkpoint;
+                let font = reader.read_define_font_2(version)?;
+                (
+                    font.id,
+                    Font::from_swf_tag(
+                        context.gc(),
+                        context.renderer,
+                        font,
+                        encoding,
+                        FontType::Embedded,
+                    ),
+                )
+            }
+        };
         self.library_mut(context)
             .register_character(font_id, Character::Font(font_object));
         Ok(())

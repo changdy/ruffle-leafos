@@ -83,6 +83,12 @@ M+A/B 按编号向前/后循环查找非空方案，跳过全空方案，没有�
 
 `swf/src/read.rs` 移植上游 #23962 / #23960：LZMA 的文件声明长度先 `checked_sub(8)`，不足 8 返回解析错误；通用解压缓冲和 LZMA 中间缓冲的初始容量最多 128 MiB，场景与帧标签数组的初始容量最多 256 项。后续仍按实际内容增长，保持错误长度流的既有容错，不把这些初始值作为解压总量或合法条目数上限。此检查不限制 LZMA 字典、总 RSS 或其他解析分配，也不保证任意损坏/高压缩内容不会 OOM。来源与验证见[长度防护报告](validation/swf-length-guards-20261101.md)。
 
+### 内嵌字体按需解码
+
+DefineFont2/3 先通过 `read_define_font_2_encoded()` 读取字符、advance、bounds 和 kerning，并校验偏移表、代码表及每个轮廓的独立范围；不展开轮廓记录。`Font` 将原始字节保存在拥有底层 SWF 数据的 `SwfSlice` 中，`font/glyph.rs` 首次命中测试或注册字形时解码并缓存，ASCII 沿用原预热。原电影对象释放后字节仍有效，解码后可释放该字形的切片引用。
+
+偏移不规则或轮廓不足两字节时，恢复 reader 检查点并回退稳定版原读取逻辑。延迟解码不跨邻字形，失败缓存为空轮廓并保留 advance。DefineFont1、DefineFont4/CFF、设备字体、布局指标和字体版本缩放不改。`swf/examples/font_decode.rs` 可对 SWF/目录做 eager/deferred 全轮廓对照及字体解析阶段计时/累计分配请求测量；该工具不测整机 RSS 或首次绘制。[验证与实机待验边界](validation/font-orphan-optimization-20261104.md)。
+
 ### 受限内存下的静态绘图资源
 
 `core/src/display_object/graphic.rs` 在首次实际显示时创建静态 `ShapeHandle`，在所有实例间共享；屏外剔除、形状命中检测和预加载不触发 GPU 上传。`core/src/character.rs` 的位图库通过弱引用复用仍存活的纹理，压缩 SWF 素材继续保留，可重新解码。
@@ -124,6 +130,8 @@ Leaf 的 `VulkanMemoryGuard` 只接受实际 Vulkan 及有效 `MemAvailable <128
 ### 显示树遍历
 
 显示树热路径中，`RenderIter` 的列表及长度取自同一 Rc 快照，保留回调期间修改列表的快照语义；MovieClip 从当前 shared 的 SWF 直接检查 AVM 类型，仍随共享电影替换而变化，不缓存旧类型或反复克隆 Arc。Graphic 已具备 AVM2 对象时不再检查电影类型。默认帧脚本方法的 inline 提示传给生成的 enum 分发，保留每个分支及回调顺序。这些改动不跳过对象、帧事件或嵌套 goto；验证见[逐提交代码审查](validation/review-after-0.6.9-20261031.md)。
+
+`OrphanManager::cleanup_dead_orphans()` 在列表仍被外层回调共享时先检查全部条目；没有删除工作则保留原 Rc，省去整份弱引用列表复制。有删除工作继续沿用原 retain/写时复制，无共享者保持原单次扫描。每次仍检查弱引用与 parent/放置状态；没有工作集合缓存或跨 GC 的有效性缓存。[本轮回归与边界](validation/font-orphan-optimization-20261104.md)。
 
 ## 数据身份与持久化
 

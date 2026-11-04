@@ -1198,6 +1198,15 @@ pub struct Font<'a> {
     pub flags: FontFlag,
 }
 
+/// A DefineFont2/3 whose glyph metadata has been read, but whose outlines
+/// still borrow the encoded SHAPE bytes. `font.glyphs` has empty record vectors;
+/// `glyph_shapes` contains one outline per glyph in the same index order.
+#[derive(Debug)]
+pub struct EncodedFont<'a> {
+    pub font: Font<'a>,
+    pub glyph_shapes: Vec<&'a [u8]>,
+}
+
 bitflags! {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     pub struct FontFlag: u8 {

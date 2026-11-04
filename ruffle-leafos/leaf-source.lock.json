@@ -49,7 +49,7 @@
     "core/src/display_object/avm1_button.rs": "5f0fa32be3a8577ecad1f3713a77cf575eacfff5f06c6f9557a76c3fcb97675e",
     "core/src/display_object/container.rs": "9f2ace2ef24ac9603a8319a3333242bfa1a05c9dc4a72b4b1d07f4edf2c5bb8a",
     "core/src/display_object/graphic.rs": "4264e88feb75eb5e00cc908976957e01bff70139dc953c714e5444cddda1be82",
-    "core/src/display_object/movie_clip.rs": "552c81edddd6b7316e1b51455e3f5c1860acc8f09e92379f38536cae16799a5a",
+    "core/src/display_object/movie_clip.rs": "fce93536020b67410ddc69269dffe6ae236d84d6a430657ae829093ae3e68f4b",
     "core/src/display_object/movie_clip/onload_fixtures/README.md": "e5601879ee80c46dd41aff7044ed316d65d7088f04746ee616d33cce20eddfe5",
     "core/src/display_object/movie_clip/onload_fixtures/action_execution_order_test4/output.txt": "3f3ea78b5827e7b99d2c13b12ff49545148d27f4feb35a27eb78115fd89a577e",
     "core/src/display_object/movie_clip/onload_fixtures/action_execution_order_test4/test.swf": "e4fec7a944f9fbd21e272a4aeab02f164591ac4cecef5ee06f5e8c86b3471494",
@@ -227,7 +227,14 @@
     "render/wgpu/src/backend.rs": "4636acb25b6811e21fb5e7ac345d0e75d5961960b1d41037090ce0e992ecd385",
     "render/wgpu/src/buffer_pool.rs": "979acd6d0342c0213127f7152b7a0aef3e70013a351b42a496007e87a1db3f91",
     "sdl2test-rocknix/src/zip_game.rs": "eae48e5b44a2c2ecb84b6217ea414045ea39ebd75b0d8d6aeb8bbb29ad7b4819",
-    "sdl2test-rocknix/src/zip_loading.rs": "db36b821b4f72e11aa7062cbe442819c982aea3f3485d677a20ae6ab1875a982"
+    "sdl2test-rocknix/src/zip_loading.rs": "db36b821b4f72e11aa7062cbe442819c982aea3f3485d677a20ae6ab1875a982",
+    "core/src/font.rs": "51af42367959105f20aa33c43ac2c717fdaa75dba3f65358e6361dcf8fee65e2",
+    "core/src/font/glyph.rs": "c4f1115fac46e3d189a0186da79788bcf1e30064c800f7373b8074208838b165",
+    "core/src/font/lazy_glyph_tests.rs": "27e60e8c2af413aa3229cfc1f6f09147d9c10de4c171570b6106638c7484ea1d",
+    "core/src/orphan_manager.rs": "57679b2a9c2976dca21ddbda38e2f127eaf116b24b6595019e155e0acd41d415",
+    "swf/src/read.rs": "6748e30b9f60cb100e052480d3305eb24df39a22c38ddce140893e83544d2a2b",
+    "swf/src/types.rs": "965651e8ee10f75667524988497ef7c667e608ad8c5b488ec7d5572c4dfdca08",
+    "swf/examples/font_decode.rs": "238b51d4ee25150534b02ebd1ae5eaaf64afdbe93c5e9a6d4a1809ceac6da196"
   },
   "local_patch_upstream_sha256": {
     ".cargo/config.toml": "8b8a0495f5c0b134a52a3733a3d039d93b5a532a33b04d04749ac0f80b9ae724",
@@ -267,7 +274,12 @@
     "swf/tests/swfs/AddPlaceObject4Data.jsfl": "a6890398729f921a64c18d7c8d57596f0c38994c6f153ffa827325cd691752e6",
     "swf/tests/swfs/EmbedData.as": "074aaf0ce33ac5984f1e2d5fed6bffce4b819c3951da573b0b93369633982dbc",
     "render/wgpu/src/backend.rs": "a1fb1cd3a58776c04faf5bbb7d416148bd6855b271399d1f830e2f13c8afbd05",
-    "render/wgpu/src/buffer_pool.rs": "c905e781b78ac45d7a36e849bfd9c852a19393bee0f861b04c48df9bd18d511a"
+    "render/wgpu/src/buffer_pool.rs": "c905e781b78ac45d7a36e849bfd9c852a19393bee0f861b04c48df9bd18d511a",
+    "core/src/font.rs": "33ea02a85b9a06f00f850295bec18c1f65ae1f35ee4196909119ec0308c98952",
+    "core/src/font/glyph.rs": "3e8bc5319f5091eb477a4db89b69607322105ec0226718a6a286e16c7a0c87ff",
+    "core/src/orphan_manager.rs": "e36b3329ee945a243a46807a8f159a46c6571df221d1d735ba66b9e813add6ae",
+    "swf/src/read.rs": "485fc58a0b0fe7b376e959f49567a16b9d556a3ff6eeac3be29a525522323efd",
+    "swf/src/types.rs": "c5ad075b0d1bb0df4810aacf257533a8beb849689053346b8cf348fa90ee0a53"
   },
   "frontend_version": "0.8.6"
 }
