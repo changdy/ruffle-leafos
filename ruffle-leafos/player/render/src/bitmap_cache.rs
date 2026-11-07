@@ -106,6 +106,19 @@ impl DecodeCache {
         }
     }
 
+    /// Bulk maintenance must not allocate a key list or repeatedly scan for
+    /// the LRU entry. Retention order only matters when some pixels survive.
+    fn retain_entries(&mut self, mut keep: impl FnMut(&Entry) -> bool) {
+        let metrics = &mut self.metrics;
+        self.entries.retain(|_, entry| {
+            if keep(entry) { return true; }
+            metrics.bytes -= entry.pixels.allocation_size();
+            metrics.evictions += 1;
+            metrics.unused += u64::from(entry.speculative);
+            false
+        });
+    }
+
     fn room(&mut self, bytes: usize, evict: bool) -> bool {
         if self.limit == 0 || bytes > self.limit.saturating_sub(self.metrics.reserved) {
             return false;
@@ -203,9 +216,7 @@ impl DecodeCache {
 
     pub fn maintain(&mut self) {
         self.drain();
-        let dead: Vec<_> = self.entries.iter().filter(|(_, e)| e.source.strong_count() == 0)
-            .map(|(id, _)| *id).collect();
-        for id in dead { self.remove(id); }
+        self.retain_entries(|entry| entry.source.strong_count() != 0);
         self.rejected.retain(|_, source| source.strong_count() != 0);
     }
 
@@ -215,8 +226,14 @@ impl DecodeCache {
     pub fn set_limit(&mut self, bytes: usize) {
         self.limit = bytes;
         self.drain();
+        if self.limit == 0 {
+            // Memory-pressure fallback discards every cached pixel, including
+            // zero-byte entries. There is no surviving LRU order to select.
+            self.retain_entries(|_| false);
+            return;
+        }
         while !self.entries.is_empty()
-            && (self.limit == 0 || self.metrics.bytes > self.limit.saturating_sub(self.metrics.reserved)) {
+            && self.metrics.bytes > self.limit.saturating_sub(self.metrics.reserved) {
             let Some(id) = self.entries.iter().min_by_key(|(_, e)| e.used).map(|(id, _)| *id)
                 else { break };
             self.remove(id);
@@ -502,5 +519,70 @@ mod tests {
         assert_eq!(take_metrics().hits, 1);
         drop(guard);
         assert_eq!(take_metrics().bytes, 0);
+    }
+
+    #[test]
+    fn pressure_clear_counts_speculation_and_preserves_borrowed_pixels() {
+        let sources: Vec<_> = (0..4).map(source).collect();
+        let mut cache = DecodeCache::new(32, false);
+        let upload = cache.decode(&sources[0]).unwrap();
+        let unused = Arc::new(sources[1].decode().unwrap());
+        let unused_weak = Arc::downgrade(&unused);
+        assert!(cache.insert(&sources[1], unused, true));
+        cache.decode(&sources[2]).unwrap();
+        assert!(cache.insert(&sources[3], Arc::new(Bitmap::new(
+            0, 0, BitmapFormat::Rgba, Vec::new())), false));
+        cache.take_metrics();
+
+        cache.set_limit(0);
+        let metrics = cache.take_metrics();
+        assert_eq!((metrics.bytes, metrics.evictions, metrics.unused), (0, 4, 1));
+        assert!(cache.entries.is_empty(), "even empty pixel entries must be removed");
+        assert!(unused_weak.upgrade().is_none());
+        assert_eq!(upload.data(), &[0; 8], "active upload retains its own pixels");
+        cache.set_limit(0);
+        assert_eq!(cache.take_metrics().evictions, 0, "no double accounting");
+        cache.set_limit(32);
+        assert_eq!(cache.decode(&sources[2]).unwrap().data(), &[2; 8]);
+        assert_eq!(cache.take_metrics().bytes, 8);
+    }
+
+    #[test]
+    fn unload_maintenance_preserves_live_pixels_and_their_lru_order() {
+        let mut cache = DecodeCache::new(24, false);
+        let a = source(1); let b = source(2); let c = source(3);
+        let upload = cache.decode(&a).unwrap();
+        assert!(cache.insert(&b, Arc::new(b.decode().unwrap()), true));
+        cache.decode(&c).unwrap();
+        cache.take_metrics();
+        drop(a);
+        cache.maintain();
+        let metrics = cache.take_metrics();
+        assert_eq!((metrics.bytes, metrics.evictions, metrics.unused), (16, 1, 0));
+        assert_eq!(upload.data(), &[1; 8]);
+        cache.set_limit(8);
+        assert!(!cache.entries.contains_key(&key(&b)), "oldest live entry still goes first");
+        assert!(cache.entries.contains_key(&key(&c)));
+        assert_eq!(cache.take_metrics().unused, 1);
+        drop(c);
+        cache.maintain();
+        assert_eq!(cache.take_metrics().bytes, 0);
+    }
+
+    #[test]
+    fn repeated_unloads_release_pixels_without_accumulating_entries() {
+        let mut cache = DecodeCache::new(256, false);
+        for _ in 0..64 {
+            let sources: Vec<_> = (0..32).map(source).collect();
+            let pixels: Vec<_> = sources.iter().map(|source|
+                Arc::downgrade(&cache.decode(source).unwrap())).collect();
+            assert_eq!(cache.take_metrics().bytes, 256);
+            drop(sources);
+            cache.maintain();
+            let metrics = cache.take_metrics();
+            assert_eq!((metrics.bytes, metrics.evictions), (0, 32));
+            assert!(pixels.iter().all(|pixel| pixel.upgrade().is_none()));
+            assert!(cache.entries.is_empty());
+        }
     }
 }

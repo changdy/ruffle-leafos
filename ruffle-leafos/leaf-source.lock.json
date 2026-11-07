@@ -96,7 +96,7 @@
     "frontend-utils/src/backends/audio.rs": "09f1d703980b3c0fca9e3f327f690658df099a46338281d678f2b6f444ce8357",
     "render/src/backend.rs": "11bf7164048aff75a1a3ca7ab94b0023b73d4297b31afcea521e55d8bc2300a7",
     "render/src/bitmap.rs": "0f377fae1535b51b1081e4a37864d5b63237488c98a3a3049149753b36fdeb29",
-    "render/src/bitmap_cache.rs": "e6958d9b966be413a5f689658d363acc5a67703002b4dd589aaa37461f915f1e",
+    "render/src/bitmap_cache.rs": "707c53b69b35112aa4e0791813b78f37925a405e2f80c7b1c2e0257ad6f5b296",
     "render/src/lib.rs": "5c8712d33435d5e08639b64902f6efa8200fe6fbe5af7bb76992c11e09a3a181",
     "render/src/utils.rs": "33cd99e89ad1e8477ef237c52300af2389c8343f13dcd7ea97790f114584d954",
     "render/tests/screenshot_png.rs": "221dd64635d87253df2ed209d47c439f2f929fea107a8d0c0f6fb6c0d954d030",
@@ -234,7 +234,8 @@
     "core/src/orphan_manager.rs": "57679b2a9c2976dca21ddbda38e2f127eaf116b24b6595019e155e0acd41d415",
     "swf/src/read.rs": "6748e30b9f60cb100e052480d3305eb24df39a22c38ddce140893e83544d2a2b",
     "swf/src/types.rs": "965651e8ee10f75667524988497ef7c667e608ad8c5b488ec7d5572c4dfdca08",
-    "swf/examples/font_decode.rs": "238b51d4ee25150534b02ebd1ae5eaaf64afdbe93c5e9a6d4a1809ceac6da196"
+    "swf/examples/font_decode.rs": "238b51d4ee25150534b02ebd1ae5eaaf64afdbe93c5e9a6d4a1809ceac6da196",
+    "render/examples/cache_maintenance.rs": "6635768df531cffc47e0196b60296fd744cc9c7f863670358e20ac4d0e4a4aa0"
   },
   "local_patch_upstream_sha256": {
     ".cargo/config.toml": "8b8a0495f5c0b134a52a3733a3d039d93b5a532a33b04d04749ac0f80b9ae724",
