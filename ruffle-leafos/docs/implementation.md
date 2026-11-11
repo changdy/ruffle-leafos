@@ -405,3 +405,13 @@ python -m unittest discover -s ruffle-leafos/scripts -p test_release.py -v
 Git 收录项目源码、必要资源与测试、配置、文档、依赖锁和明确用途的固定输入。`outputs/`、`work/`、`adb-tools/`、`flash-transfer/`、工程 `.tools/` 与 `build/`、所有 target/构建缓存、本机 `workspace.local.json`、环境文件和编辑器缓存均由根 [.gitignore](../../.gitignore) 排除。不要全局忽略 `.so`、`.jar`、`.zip` 或 `.swf`：其中有必要依赖与测试夹具。
 
 [.gitattributes](../../.gitattributes) 保留导入源码的原始字节，Shell 脚本单独强制 LF；锁文件中的 SHA-256 依赖这些字节。`games/flash/` 额外保留游戏配置的原始空白，不为通过 diff 空白检查而改写第三方资源。整理时不批量格式化第三方源码。旧版本使用说明、需求快照和重复报告不再保留独立文件，历史内容从 Git 追溯；当前验证摘要在 [validation/](validation/)，完整日志和截图在本地输出目录。裁剪的无关参考文件保存在本地 `work/repository-cleanup-20261025/unused-reference/`；Git 历史不做重写。
+
+### 本地工作目录清理
+
+清理前检查工作区、暂存区和正在运行的构建，逐项核对绝对路径及 Git 跟踪范围。Git 忽略规则只表示不提交，不能据此整目录删除 `work/`、`outputs/` 或 `.tools/`；其中可能有设备用户数据备份、独有日志、独立工作副本和当前工具链。遇到目录联接或符号链接时，不递归进入其目标；独立工作副本还需检查自己的 Git 状态。
+
+打包完成后，`build/preview-*`（含 `preview-source-*`）与 `build/games-<版本>-*` 是可重建的暂存树，可连同对应的 `package-stage-path.txt`、`games-stage-path.txt` 清理。可删除不再使用的 Cargo debug 缓存；保留当前 release 缓存、`build/ruffle-leaf`、`libruffle_probe.so` 及其构建元数据，便于继续打包。AS3 夹具生成依赖 ARM64 构建目录内成对的 `playerglobal_import.abc` / `playerglobal_avm2.swf`；若连 release 缓存也删除，须先重新构建核心再生成夹具。
+
+工具链是否仍在使用，以 `workspace.local.json`、工具来源锁和构建脚本为准。确认对应版本已完整安装后，可清理下载归档及已淘汰版本，保留当前 SDK、Rust、GCC、Zig 和 `work/toolchains/cargo-home/` 的离线依赖。`outputs/` 优先清理可重建的旧版本安装/源码 ZIP，保留最新交付、设备数据备份、独有实验文件及验证证据。
+
+清理后核对受保护文件、当前工具路径和最新交付的校验和，并复查 Git 差异。删除本地产物不构成重新编译、主机测试或实机验证。
