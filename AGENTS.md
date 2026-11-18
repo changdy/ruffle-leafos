@@ -4,9 +4,9 @@
 
 ## 项目背景
 
-本项目是一款基于 Ruffle 开发的 Flash 模拟器，应用名称为 Ruffle Flash，GitHub 仓库名为 ruffle-leafos。当前仅支持迷你龙 Miniloong Pocket 1（Pocket1）开源掌机的 leafOS 系统；现有文档也使用 LeafOS / Leaf 名称。
+本项目是一款基于 Ruffle 开发的 Flash 模拟器，应用名称为 Ruffle Flash，GitHub 仓库名为 ruffle-leafos。主要平台是迷你龙 Miniloong Pocket 1（Pocket1）的 leafOS（也称 LeafOS / Leaf）。工程另有 RK3562 AisOS / RGBox 的独立应用入口和安装包。
 
-开发与问题排查应以该设备及系统环境为主要目标，不应默认项目已支持其他硬件或操作系统。当前功能、版本、已知限制和验证范围以项目文档为准。
+开发与问题排查应按目标设备选择启动和验证流程。Leaf 的清单、目录和索引约定适用于 Pocket1。各平台的已知限制和验证范围以项目文档为准。
 
 工程位于 `ruffle-leafos/`，本文件所在目录为 Git 仓库根目录。
 

@@ -6,6 +6,14 @@ Play local Flash games with the buttons and stick on your **Miniloong Pocket 1 /
 
 [Install](#installing-and-upgrading) · [Add games](#adding-games-and-covers) · [Controls](#everyday-controls) · [Profiles](#control-profiles) · [Progress](#five-progress-slots) · [Screenshots](#screenshots-and-covers) · [FAQ](#frequently-asked-questions)
 
+## AisOS Apps menu
+
+On the RK3562 AisOS handheld, extract **`ruffle-aisos-0.8.6.zip`** to the external game card. Keep `applyCenter/`, its hidden `.ruffle-flash/` subdirectory, and `flash/` together. The card mounts at `/storage/roms`. From the RGBox home screen, open **Apps → Ruffle Flash**.
+
+Use the D-pad to choose a file, **A** to open it, and **B** to go back. At the top of the list, B returns to RGBox. Add your SWF and ZIP games to `flash/` and reopen the list. Bloxorz and a zipped display test are included. In Bloxorz, move the pointer with the left stick and press the stick to click. Use profile 2 for D-pad movement in a level.
+
+Tap **Guide** to pause. On the controls row, use left or right to change profiles. Choose **Save and exit** to return to the list. Settings, native saves, the ZIP cache, and the two latest session logs live in `gamedata/ruffle-flash/` on the card. Exit and back up this directory before upgrading. The AisOS preview uses GLES. The remaining sections describe Pocket1 / Leaf.
+
 ## Installing and upgrading
 
 1. Download **`ruffle-leafos-<version>.zip`** from [Releases](https://github.com/changdy/ruffle-leafos/releases). This is the installation archive.

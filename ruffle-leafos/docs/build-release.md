@@ -55,6 +55,20 @@ python scripts/build_player.py build --offline --isolated-config
 
 ## 打包
 
+### AisOS / RGBox 预览包
+
+从工程目录运行。脚本校验两个输入的 SHA-256，复用项目 v0.8.6 发布附件中的 ARM64 ELF、字体、图标、样例与许可，使用设备自带的 SDL2 和 ALSA。[v0.8.6 主安装包](https://github.com/changdy/ruffle-leafos/releases/download/v0.8.6/ruffle-leafos-0.8.6.zip) · [PySDL2 0.9.17](https://pypi.org/project/PySDL2/0.9.17/) · [打包脚本](../scripts/package_aisos.py)
+
+```powershell
+python -m pip download --no-deps --only-binary=:all: PySDL2==0.9.17 -d ../work
+curl.exe -fL https://github.com/changdy/ruffle-leafos/releases/download/v0.8.6/ruffle-leafos-0.8.6.zip -o ../work/ruffle-leafos-0.8.6.zip
+python scripts/package_aisos.py ../work/ruffle-leafos-0.8.6.zip ../work/PySDL2-0.9.17-py3-none-any.whl ../outputs/ruffle-aisos-0.8.6.zip
+```
+
+AisOS 输出 ZIP 的顶层目录对应游戏卡根目录。设备端应用入口和播放器需要执行权限，ZIP 已记录 Unix 模式，ext4 卡解压时须保留权限。当前 Pocket1 的发布工作流只生成 Leaf 包。
+
+### Pocket1 / Leaf 安装包
+
 ```powershell
 python scripts/build_diagnostics.py
 python scripts/package_preview.py --output ../outputs/pocket1-local --include-source

@@ -1,8 +1,16 @@
 # 工程进度
 
-当前源码为 **Ruffle Flash 0.8.6 开发预览**。共享核心与官方渲染模块基于 Ruffle v0.7.1。目标设备为 Miniloong Pocket 1，既有实机证据来自 **Leaf 0.13.0**。[应用清单](../pak/pak.json) · [源码锁](../leaf-source.lock.json)
+当前源码为 **Ruffle Flash 0.8.6 开发预览**。共享核心与官方渲染模块基于 Ruffle v0.7.1。Pocket1 的实机证据来自 **Leaf 0.13.0**，RK3562 的独立预览包在以下 AisOS 固件上验证。[Leaf 应用清单](../pak/pak.json) · [源码锁](../leaf-source.lock.json)
 
 ## 已实现
+
+### AisOS 实机验证
+
+RK3562 / AisOS community `f820f3-20261020`、RGBox、1024×768 内屏、Mali-G52 和 exFAT 外置游戏卡已验证。独立预览包复用项目 v0.8.6 发布的 ARM64 播放器。打包脚本校验发布包和 PySDL2 的 SHA-256，安装后的 9 个文件与交付 ZIP 逐字节相同。
+
+从 RGBox「应用」打开 Ruffle Flash 后，通过设备输入节点发送手柄事件，以实际屏幕和会话日志核对。Bloxorz 用摇杆点击开始、跳过说明，切到方案 2，在第一关用十字键使 Moves 从 0 变为 1。Guide 打开暂停菜单，“保存并退出”返回列表。另从列表打开 ZIP 显示探针，确认解压缓存、GLES 彩块画面和返回列表，按 B 回到 RGBox。CPAL 成功打开双声道输出。音频听感、含有效 SharedObject 的跨会话读档、重型游戏与长时性能待验。Leaf 的实体组合快捷键和封面目录尚待 AisOS 适配。[安装与操作](../README.md#aisos-应用菜单)
+
+### Pocket1 / Leaf
 
 | 功能 | 当前范围 |
 | --- | --- |

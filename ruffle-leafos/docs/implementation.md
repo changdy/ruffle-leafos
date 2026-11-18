@@ -4,6 +4,8 @@ Ruffle Flash 面向 **Miniloong Pocket 1 / leafOS**。共享核心、SWF 和官�
 
 ## 源码目录
 
+RK3562 AisOS 复用发布版播放器。`aisos/Ruffle Flash.app` 启动 `aisos/launcher.py`，后者用系统 SDL2、SDL2_ttf 和随包的 PySDL2 绘制列表。进入游戏前释放窗口和手柄，以独立参数传入所选文件，等待播放器退出后重新打开原目录。启动脚本按系统的 `play_joystick` 面键布局映射 A/B 与 X/Y，补上 Guide 菜单键。存档、配置与 ZIP 缓存位于外卡的非隐藏目录，程序和字体放在 `applyCenter/.ruffle-flash/`。[应用入口](../aisos/Ruffle%20Flash.app) · [游戏列表](../aisos/launcher.py)
+
 | 路径 | 职责 |
 | --- | --- |
 | [player/sdl2test-rocknix/src/](../player/sdl2test-rocknix/src/) | Pocket1 前端，处理设备输入、菜单、进度、语言与音画 |

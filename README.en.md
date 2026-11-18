@@ -6,6 +6,8 @@
 
 A Ruffle-based Flash player for **Miniloong Pocket 1 / leafOS**.
 
+An **RK3562 / AisOS** preview opens a game picker from the RGBox Apps menu. [AisOS installation and controls](ruffle-leafos/README.en.md#aisos-apps-menu)
+
 [简体中文](README.md) · **English**
 
 [Download](https://github.com/changdy/ruffle-leafos/releases) · [User guide](ruffle-leafos/README.en.md) · [Documentation](ruffle-leafos/docs/README.md) · [Report an issue](https://github.com/changdy/ruffle-leafos/issues)
@@ -16,7 +18,7 @@ A Ruffle-based Flash player for **Miniloong Pocket 1 / leafOS**.
 | --- | --- |
 | ![The King of Fighters Wing 1.91 running on Pocket1](ruffle-leafos/docs/images/game-kof.png) | ![Bleach vs Naruto 3.3 running on Pocket1](ruffle-leafos/docs/images/game-bvn.png) |
 
-This is a development preview. Device testing to date used Leaf 0.13.0. Compatibility and performance vary by game. [Version and device test coverage](ruffle-leafos/docs/progress.md)
+This is a development preview. The screenshots above are from Pocket1. [Device test coverage for both handhelds](ruffle-leafos/docs/progress.md)
 
 ## Quick start
 

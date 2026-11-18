@@ -6,6 +6,14 @@
 
 [安装](#安装与升级) · [添加游戏](#添加游戏与封面) · [常用操作](#常用操作) · [按键](#按键映射) · [进度](#五份游戏进度) · [截图](#截图与封面) · [常见问题](#常见问题)
 
+## AisOS 应用菜单
+
+在 RK3562 掌机的 AisOS / RGBox 上，将 **`ruffle-aisos-0.8.6.zip`** 解压到外置游戏卡根目录，保留 `applyCenter/`、其隐藏子目录 `.ruffle-flash/` 和 `flash/`。该卡在系统中挂载为 `/storage/roms`。回到 RGBox 主界面，再进入 **应用 → Ruffle Flash**。
+
+用十字键上下选择，**A** 打开游戏或文件夹，**B** 返回上一级，在列表根目录按 **B** 回到 RGBox。将自己的 SWF 或游戏 ZIP 放进卡上 `flash/`，重新进入列表即可看到。安装包附 Bloxorz 和 ZIP 格式的显示测试。Bloxorz 用左摇杆移动光标，按下左摇杆点击，进入关卡后用按键方案 2 的十字键滚动方块。
+
+游戏中短按 **Guide（菜单键）** 打开暂停菜单。在“按键设置”一行用左右键切换方案，选“保存并退出”返回游戏列表。配置、原生进度、ZIP 缓存和最近两次会话日志在卡上 `gamedata/ruffle-flash/`。升级前退出应用并备份此目录。此预览使用 GLES，实机范围见[工程进度](docs/progress.md#aisos-实机验证)。以下章节介绍 Pocket1 / Leaf。
+
 ## 安装与升级
 
 1. 从 [Releases](https://github.com/changdy/ruffle-leafos/releases) 下载 **`ruffle-leafos-<版本>.zip`**，这是可直接安装的包。

@@ -6,6 +6,8 @@
 
 面向 **Miniloong Pocket 1 / leafOS** 的 Flash 播放器，基于 Ruffle。
 
+另提供 **RK3562 / AisOS** 预览版，可从 RGBox 的「应用」菜单选游戏。[AisOS 安装与操作](ruffle-leafos/README.md#aisos-应用菜单)
+
 **简体中文** · [English](README.en.md)
 
 [下载](https://github.com/changdy/ruffle-leafos/releases) · [使用指南](ruffle-leafos/README.md) · [文档索引](ruffle-leafos/docs/README.md) · [问题反馈](https://github.com/changdy/ruffle-leafos/issues)
@@ -16,7 +18,7 @@
 | --- | --- |
 | ![Pocket1 上运行的拳皇 Wing 1.91](ruffle-leafos/docs/images/game-kof.png) | ![Pocket1 上运行的死神 VS 火影 3.3](ruffle-leafos/docs/images/game-bvn.png) |
 
-当前为开发预览，既有实机验证基于 Leaf 0.13.0。兼容性与流畅度因游戏而异。[版本与实机验证范围](ruffle-leafos/docs/progress.md)
+当前为开发预览，上图来自 Pocket1。两台掌机的验证场景见[工程进度](ruffle-leafos/docs/progress.md)。
 
 ## 快速开始
 
