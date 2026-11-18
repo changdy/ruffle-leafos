@@ -29,7 +29,7 @@
 | 拳皇 Wing 1.91 素材优化版 SWF | `bb829289b03fff84aa981bcfed436a9e9ccc4100d018526a2fdeed3fd115ca19` |
 | 单实例滤镜尺寸变化夹具 | `153633dbdd18608f757ebdb61f7e61b76b75a7239eb27812cc6bcaa13efe98c4` |
 
-两份播放器采用相同 Pocket1 / Cortex-A55、release opt-level 3、ThinLTO 构建策略；候选 ARM64 构建通过，最高 GLIBC 需求仍为 2.35。拳皇文件为设备既有素材优化版，原生目标 34 FPS，完整来源与素材处理限制见[素材优化报告](kof-swf-optimization-20261026.md)。本轮没有修改游戏脚本、角色、素材或用户设置来降低内存。
+两份播放器采用相同 Pocket1 / Cortex-A55、release opt-level 3、ThinLTO 构建策略；候选 ARM64 构建通过，最高 GLIBC 需求仍为 2.35。拳皇文件为设备既有素材优化版，原生目标 34 FPS，完整来源与素材处理限制见[游戏来源与处理范围](../../games/README.md#来源与处理范围)。本轮没有修改游戏脚本、角色、素材或用户设置来降低内存。
 
 开发用 `gl_memory_trace.so` 经 SDL GL proc loader 记录 level-zero 纹理和 `glBufferData` 请求有效载荷、创建/删除及调用位置，不读取像素，不主动查询或清除 GL 错误。固定表约 0.52 MiB；正确加载的实验均有 `glmem-init`，单 GL context，表溢出、未知格式/目标/层级、错误绑定/大小等计数为零。`observed_gl_errors=0` 仅表示应用本来执行的错误查询没有返回非零，不代表额外错误探测或驱动验收。
 

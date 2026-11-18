@@ -1,69 +1,47 @@
 # 试玩与可选游戏合集
 
-0.8.6 起，**主安装包**只附英文原版《Bloxorz｜翻滚方块》和原创测试动画 `Leaf-GPU-Probe.swf`；**可选游戏合集** `ruffle-leafos-games-<版本>.zip` 收录拳皇 Wing 1.91、死神 VS 火影 3.3 / 3.6 三款定制游戏。GitHub Actions 同时构建并发布两个附件。
+主安装包附英文 Bloxorz 和原创测试动画 `Leaf-GPU-Probe.swf`。可选的 `ruffle-leafos-games-<版本>.zip` 另含三款定制游戏。安装、旧版升级与按键操作见[使用指南](../README.md#安装与升级)。
 
 ## 主包试玩
 
-`samples/Bloxorz-翻滚方块.swf` 为 Damien Clarke（Roboman / DX Interactive）的英文原版 Miniclip 分发版，从[历史 SWF 镜像](https://locker.phinugamma.org/swf/miniclip/bloxorz_miniclip.swf)收录；[原发布页面](https://www.miniclip.com/games/bloxorz/en/)仅作历史来源。2026-11-03 收录，下载字节原样保留，无汉化或本项目脚本修改；文件 2,286,600 字节，SHA-256 为 `296c5c17b7a7b6529f6b8faa19aae78ebf4382c161c07e5070ab338fd8264803`。`samples/manifest.json` 固定来源、语言和文件指纹，打包拒绝缺失、额外或字节变化的试玩文件。
-
-安装位置为 `Roms/flash/Bloxorz-翻滚方块.swf`。用鼠标点击开始菜单，方向键滚动方块，Space 切换分裂方块；掌机选择按键方案 2，以十字键移动、L1 发 Space，摇杆移动并按下点击。测试动画同时保留在 `Roms/flash/Leaf-GPU-Probe.swf` 和播放器内部 `res/`。本轮实际验证与限制见[0.8.6 验证](../docs/validation/release-split-20261103.md)。
+`samples/Bloxorz-翻滚方块.swf` 为 Damien Clarke（Roboman / DX Interactive）的英文 Miniclip 分发版，收录于 2026-11-03，保留下载原字节。文件为 2,286,600 字节，SHA-256 为 `296c5c17b7a7b6529f6b8faa19aae78ebf4382c161c07e5070ab338fd8264803`。`samples/manifest.json` 固定来源与字节并由打包校验。[收录清单](samples/manifest.json) · [历史 SWF 镜像](https://locker.phinugamma.org/swf/miniclip/bloxorz_miniclip.swf) · [Bloxorz 第一关实机记录](../docs/validation/release-split-20261103.md)
 
 ## 可选合集
 
-打包脚本校验 `flash/` 的源文件后，将三款游戏分别构建为 ZIP，再将它们放进独立合集的 `Roms/flash/`。解压合集外层一次并合并到 SD 卡根目录，三个内层游戏 ZIP 保持原样。主安装包不再重复收录三款大型游戏。
-
-合集方案为：**三款游戏分别使用 ZIP；拳皇 ZIP 内含单 SWF，死神 ZIP 含完整目录内容**。死神内嵌资源单 SWF 副本保留为独立实验。
-
-3.6 此前仅在本地独立交付，0.8.4 起纳入正式清单。ZIP 的主 SWF 和 554 个资源字节与独立版相同，包内恢复原 `assets/` 路径。原 Pocket1 / GLES 限定人机战斗、暂停恢复、设置保存重开及菜单保存退出已通过；全角色与长时稳定性仍待验证。[来源与历史验证边界](../docs/validation/bvn36-custom-20261031.md)。
-
-| 游戏 | 合集内启动文件 | 收录来源 |
+| 游戏 | 合集内启动文件 | 源文件 |
 | --- | --- | --- |
-| 拳皇 Wing 1.91 | `Roms/flash/拳皇Wing1.91-定制版.zip` | 掌机 `拳皇Wing1.91-素材优化版.swf` |
-| 死神 VS 火影 3.3 | `Roms/flash/死神VS火影3.3-定制版.zip` | 掌机脚本素材优化版，0.7.3 追加启动入口 LOW 修复 |
-| 死神 VS 火影 3.6 | `Roms/flash/死神VS火影3.6-定制版.zip` | 2026-10-31 本地 LOW / 30 FPS 独立定制目录版 |
+| 拳皇 Wing 1.91 | `Roms/flash/拳皇Wing1.91-定制版.zip` | 掌机素材优化 SWF |
+| 死神 VS 火影 3.3 | `Roms/flash/死神VS火影3.3-定制版.zip` | 掌机离线、脚本及素材优化版，含 LOW 启动入口修复 |
+| 死神 VS 火影 3.6 | `Roms/flash/死神VS火影3.6-定制版.zip` | LOW / 30 FPS 独立定制目录版 |
 
-拳皇 ZIP 包含单个 SWF；两个死神 ZIP 分别包含主 SWF 和 398 / 554 个 `assets/` 资源，不需手动解压。`manifest.json` 固定源码游戏入口及全部 959 个源文件的 SHA-256；打包检查源文件集合、字节和 ZIP 内每个资源。主包 `provenance/bundled-games.json` 保留可选合集的源清单，`provenance/sample-games.json` 保留 Bloxorz 清单；`build-manifest.json` 的 `bundled_games` 只记录主包试玩，`optional_games` 与 `games_archive` 记录合集入口及附件名。源码归档也包含整个 `games/`。主 SWF 字节保持，原生进度按内容识别。
-
-已有三个同名 ZIP 时保留路径，只升级主包即可；更新包不会删除已安装游戏。旧目录/SWF 版升级时先备份并将旧的同名死神游戏目录和旧拳皇 SWF 移到 `Roms/` 外，再复制合集里的 ZIP 并刷新 Leaf 游戏列表；只合并会遗留可扫描的旧 `assets/`。存档和按键文件保留原位；播放器在旧目录记录与相同主 SWF 内容匹配时沿用旧按键方案；拳皇从 SWF 改为 ZIP 后按键方案不会自动迁移。
-
-死神也可以通过 [package_bvn_single_swf.py](../scripts/package_bvn_single_swf.py) 生成独立的单文件实验副本：重新内嵌当前 398 个优化资源，恢复游戏原有的 `ZipAssetLoader`，并分帧缓存启动特效，避免一次长调用中断初始化。输出约 65.7 MiB，只需复制这一个 SWF；保留 LOW 默认值、全部资源和战斗补丁。Pocket1 / GLES 已进入一护对鸣人练习场并正常退出，但内存高于目录版，保留实验状态；正式安装包采用外部 ZIP。单文件使用新的内容身份和路径，不自动继承目录版的进度及按键。复现依赖已完成的播放器构建及配置 JDK，结果和限制见[单文件验证](../docs/validation/bvn33-single-swf-20261031.md)。
-
-初次收录读取掌机完整文件清单，核对拳皇拉取文件及现有本机死神完整副本，全部 402 个源文件逐项一致，再统一命名、更新说明和重建校验清单。0.7.3 仅追加死神启动入口的 LOW 默认值修复，398 个外部资源保持初次收录字节。当前主文件指纹：
-
-- 拳皇主文件：`bb829289b03fff84aa981bcfed436a9e9ccc4100d018526a2fdeed3fd115ca19`。
-- 死神主文件：`294e5e3c60e24fe01475c1fbb4dfc1f9aad1e23e4fbd62dd9849308f2fb020c0`；修复前为 `b4fa381c…`。
-
-死神 0.7.3 修复版新进度默认使用游戏内部 LOW：原生战斗目标 30 FPS、闪光效果 15 FPS、关闭效果平滑。OPTION → QUALITY → APPLY 的保存/读取逻辑未改，静态调用链仍由已存画质覆盖启动默认值；保存不同画质后重开的实机验证尚待完成。修复改变 SWF 内容指纹，进度身份与旧版独立，不自动迁移旧版存档；按键按 ROM 路径识别。修复及既有隔离实机范围见[LOW 启动修复记录](../docs/validation/bvn33-low-fix-20261028.md)。
-
-2026-10-31 已将本页的两个定制版正式安装到 Pocket1；原版保留，离线版、脚本版、素材版等中间游戏副本经电脑备份与逐文件校验后移除，并刷新、核验游戏和搜索索引。原有存档及按键配置保留，新内容/路径仍不自动继承旧身份。死神新名称的 LOW / 30 FPS 人机战斗、暂停恢复及菜单保存退出通过。见[正式安装与版本清理](../docs/validation/bvn33-pve-stutter-20261031.md#正式安装与版本清理)。
-
-优化及实机验证范围见[拳皇素材报告](../docs/validation/kof-swf-optimization-20261026.md)、[死神素材报告](../docs/validation/bvn33-assets-20261028.md)和[LOW 入口修复](../docs/validation/bvn33-low-fix-20261028.md)。收录和打包校验不扩大此前的游戏兼容性或性能验收；全部角色、长时稳定性等仍待验证。
+拳皇 ZIP 内为单个 SWF，两款死神 ZIP 内为主 SWF 与分别 398 / 554 个资源。打包将仓库中的 `_assets/` 还原为归档内的 `assets/`，逐项校验源文件及归档内容。主 SWF 字节保持，原生进度仍按内容识别。[959 个源文件的清单与 SHA-256](manifest.json) · [正式 ZIP 启动及 Leaf 索引验证](../docs/validation/all-zip-list-20261103.md)
 
 ## 来源与处理范围
 
-拳皇定制版在原 SWF 上裁剪6,620张私有位图的透明外边、合并109张重复定义并补偿填充矩阵，保留脚本、时间轴和34 FPS帧头；来源与逐像素/结构验证见拳皇素材报告。
+- **拳皇 Wing 1.91** 裁剪 6,620 张私有位图的透明外边，合并 109 张重复定义并补偿填充矩阵，保留脚本、时间轴与 34 FPS 帧头。当前主文件 SHA-256 为 `bb829289b03fff84aa981bcfed436a9e9ccc4100d018526a2fdeed3fd115ca19`。[拳皇 GLES 专项验证](../docs/validation/kof-gles-memory-20261031.md)
+- **死神 3.3** 来自包含本体和资源 ZIP 的 4399 封装。提取的本体曾与独立镜像核对。定制版外置 398 个资源、停用原内嵌资源加载入口并重绑根类。四处脚本优化涉及计时数字、气量条、AI 范围及碰撞候选的临时对象，保留战斗判定。素材阶段改写 76 个资源 SWF。新进度默认 LOW，目标 30 FPS，闪光效果 15 FPS。已保存画质优先于默认值。当前主文件 SHA-256 为 `294e5e3c60e24fe01475c1fbb4dfc1f9aad1e23e4fbd62dd9849308f2fb020c0`。[独立镜像](https://github.com/naptestdev/bleach-vs-naruto-3.3) · [限定实机对战](../docs/validation/bvn33-pve-stutter-20261031.md)
+- **死神 3.6** 基于原 AIR 分发，适配离线资源、存档、地图与启动布局，使用原版 Adobe TLF 供界面离线加载。原独立版有完整主 SWF、素材指纹、渲染像素对照，以及 Pocket1 / GLES 限定 CPU 对战、设置重开与退出记录。[原独立版验证](../docs/validation/bvn36-custom-20261031.md)
 
-死神最初来自含本体和资源 ZIP 的4399封装包；提取的本体曾与 [naptestdev 独立镜像](https://github.com/naptestdev/bleach-vs-naruto-3.3)逐字节核对，该镜像不视作官方新发行。最终副本还禁用入口安装 ZipAssetLoader 的19字节指令、外置398个资源、替换为空内嵌 ZIP，并将根类直接绑定 `bleachvsnaruto`、合并顶层单帧；它是离线启动适配，不能称为“完全原样提取”。嵌套角色时间轴保持。
-
-| 历史来源阶段（非当前主文件） | SHA-256 |
+| 死神 3.3 来源阶段 | SHA-256 |
 | --- | --- |
-| 4399封装包 | `2c85b1f5e963b1327c66b03374ed9162ecf81a70e3133ce5e284e4616e6e5a22` |
+| 4399 封装包 | `2c85b1f5e963b1327c66b03374ed9162ecf81a70e3133ce5e284e4616e6e5a22` |
 | 提取的本体 | `c10533a4491110816093c19861ee496e173eaf402818f4c58aaf5a94992b435d` |
 | 完成离线入口适配 | `148592ba6fbffc79938660997ff8ae6d38c4f90d962208c46c41626199a9a4f5` |
 
-随后主 SWF 的四方法补丁保留至今：
+死神仍可能出现脚本、动作帧或 MP3 告警。全部角色、地图、Vulkan、长时稳定性及人工听感待进一步验证。游戏、角色、图像、声音、脚本和 Adobe TLF 的权利属于原作者或相应权利方，沿用游戏内作者说明。[第三方声明](../docs/THIRD_PARTY.md)
 
-| 方法 | 范围与保护 |
-| --- | --- |
-| `FightTimeUI.render` | 仅整数秒变化时重建数字；保留首次显示、无限时间与结束判定 |
-| QiBar 内 `InsBar.setProcess` | 目标帧不同时才 goto，同帧 stop；保留气量、插值、档位切换与停止状态 |
-| `FighterAILogicBase.targetInRange` | 以布尔 intersects 代替临时交集矩形；保留空目标检查、边界及 AI 调用顺序 |
-| `GameMainLogicCtrler.getHitObj` | 未命中先过滤，命中才创建交集；保留候选顺序、hitVO/hitRect及伤害判定 |
+## 开发工具
 
-这组补丁未减少招式命中帧、碰撞次数、AI频率、伤害或主动打击停顿；命中时额外的布尔测试也不保证通用提速。后续76个资源 SWF 的素材优化和0.7.3入口默认值修复分别由上方报告约束，不能把早期 MEDIUM/60 FPS样本当作当前 LOW 性能证据。
+在 `ruffle-leafos/` 运行，输出应使用尚不存在的路径。素材优化器处理可安全重写的 FWS/CWS 私有无损位图和形状填充，默认限于 AVM1。AVM2 需评估主电影与外部调用者后显式启用 `--avm2-private-bitmaps`，并验证实际像素和填充变换。输出改动了 SWF 字节时会使用独立原生进度身份。[素材优化器](../scripts/optimize_swf_bitmaps.py)
 
-2026-10-28 初次收录时安装/源码 ZIP 的 CRC、402个游戏文件和398个资源路径/哈希核对通过，复用当时已构建播放器，未重新编译或验证新名称下完整游戏运行；当前字节以 manifest 为准。死神仍有 `#1006`、缺失动作帧和 MP3 解码告警，限定场景能继续推进不证明所有招式正确；全部角色、变身、地图、Vulkan、长时与人工听感未完整验收。
+```powershell
+python scripts/optimize_swf_bitmaps.py <输入.swf> --output <新输出.swf> --report <新报告.json>
+python -m unittest discover -s scripts -p test_optimize_swf_bitmaps.py -v
+```
 
-旧离线、脚本对照与收录过程报告已删除，必要来源和边界集中在本页；原文可用 `git show 95dbdf3:ruffle-leafos/docs/validation/<原文件名>` 追溯。
+死神 3.3 的单文件实验恢复内嵌资源加载，并分次缓存启动特效。它有独立进度和按键身份，Pocket1 实验内存高于目录版。复现需要完成 ARM64 核心构建并配置 JDK 和配套 playerglobal。[单文件验证](../docs/validation/bvn33-single-swf-20261031.md) · [构建环境](../docs/build-release.md#工具链与首次准备)
 
-游戏及其角色、图像、声音、脚本的权利属于原作者或相应权利方；项目代码的 MIT / Apache-2.0 许可不覆盖这些第三方游戏素材。游戏内原有作者说明保留。
+```powershell
+python scripts/package_bvn_single_swf.py --output "../outputs/死神VS火影3.3-定制单文件版.swf" --report ../outputs/bvn-single-report.json
+python -m unittest discover -s scripts -p test_package_bvn_single_swf.py -v
+```

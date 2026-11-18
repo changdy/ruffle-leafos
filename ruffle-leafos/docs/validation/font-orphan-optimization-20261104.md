@@ -32,7 +32,7 @@
 
 这些计时是各文件重复解析均值的合计，包含解析和销毁临时字体结构；不包含 SWF I/O/解压、Player 初始化、ASCII 预热、GPU 注册或稍后的首次轮廓使用。分配数据是累计请求量，包含 realloc 请求，**不是存活堆、峰值内存、RSS 或设备可用内存**；不能将解析阶段降幅用于整机启动、FPS 或内存承诺。首次文字使用会补做解码，全部字形都用到时最终仍会展开全部轮廓。
 
-在相同主机隔离环境中，可从工程根以 `cargo run --locked --offline --release --target x86_64-pc-windows-gnu --manifest-path player/Cargo.toml -p swf --example font_decode -- games` 重做游戏语料对照；工具缓存和 linker 配置按[构建环境](../implementation.md#构建环境与命令)准备。本轮实际驱动和三轮原始 TSV/汇总位于本地 `work/font-optimization-20261104/`、`outputs/font-optimization-20261104/`，不进入 Git。
+在相同主机隔离环境中，可从工程根以 `cargo run --locked --offline --release --target x86_64-pc-windows-gnu --manifest-path player/Cargo.toml -p swf --example font_decode -- games` 重做游戏语料对照；工具缓存和 linker 配置按[构建环境](../build-release.md#工具链与首次准备)准备。本轮实际驱动和三轮原始 TSV/汇总位于本地 `work/font-optimization-20261104/`、`outputs/font-optimization-20261104/`，不进入 Git。
 
 22a 的主机证据是原 Rc 身份保持，证明在共享且无删除时没有复制列表；本轮未测真实游戏的嵌套 goto 频率或帧时间收益。
 

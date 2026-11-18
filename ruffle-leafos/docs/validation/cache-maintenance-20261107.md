@@ -34,7 +34,7 @@
 
 以上证明局部清理工作减少，不能据此推导整机 FPS、真实长帧改善或持续内存下降；也没有证明游戏会频繁用满 1,024 项、触发低内存退让或发生素材卸载。
 
-复测时按[工程工具环境](../implementation.md#构建环境与命令)设置 Windows GNU 主机与 linker，在隔离 Cargo 配置下构建 `-p ruffle_render --example cache_maintenance --release --target x86_64-pc-windows-gnu --locked --offline`；运行例程传入轮数（默认 200，本轮 300）。两份可执行文件、修改前源码和驱动脚本保存在忽略目录 `work/cache-maintenance-20261107/`，八份原始 CSV 和派生 `summary.json` 在 `outputs/cache-maintenance-20261107/`。
+复测时按[工程工具环境](../build-release.md#工具链与首次准备)设置 Windows GNU 主机与 linker，在隔离 Cargo 配置下构建 `-p ruffle_render --example cache_maintenance --release --target x86_64-pc-windows-gnu --locked --offline`；运行例程传入轮数（默认 200，本轮 300）。两份可执行文件、修改前源码和驱动脚本保存在忽略目录 `work/cache-maintenance-20261107/`，八份原始 CSV 和派生 `summary.json` 在 `outputs/cache-maintenance-20261107/`。
 
 ## 验证与待验
 

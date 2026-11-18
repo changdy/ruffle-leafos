@@ -12,7 +12,7 @@
 
 初次重装删除 499 个旧 Flash 文件，写入并逐文件验证 1,596 个文件：1,193 个应用文件和 403 个 ROM 目录文件；后者为 402 个随包游戏文件加一个 LeafProbe 诊断文件。两款随包游戏仍只应选择各自主 SWF，资源 SWF 的索引记录不表示独立可玩游戏。安装核验当时，保留的用户数据未改变，历史调试目录尚未删除。证据为本地 `backup.json`、`cleanup-plan.json`、`installed.json` 和 `desired.json`。
 
-719a 阶段清单另存 `final-installed-719a.json`。当前正式安装为 `422e3fd9c148bf330db8c14593a433dcbced38cda2160ca01992762f95a7e3eb`，输入摘要 `806039013a5e670b82b9b764957862f8d5878abb23418d5e013d3940899132a2`；`final-installed.json`核验 **1,194 应用+403ROM 共 1,597 文件** 全部 SHA 匹配，配置/存档在这次安装前后相同。后续试玩变化和复原另有独立核验，不将安装前后一致扩大为试玩从未写盘。
+719a 阶段清单另存 `final-installed-719a.json`。当日最终正式安装为 `422e3fd9c148bf330db8c14593a433dcbced38cda2160ca01992762f95a7e3eb`，输入摘要 `806039013a5e670b82b9b764957862f8d5878abb23418d5e013d3940899132a2`；`final-installed.json`核验 **1,194 应用+403ROM 共 1,597 文件** 全部 SHA 匹配，配置/存档在这次安装前后相同。后续试玩变化和复原另有独立核验，不将安装前后一致扩大为试玩从未写盘。
 
 用户数据复原已完成：5 处试玩变化先本地备份并核验哈希，再原子恢复 3 个旧存档文件、移除 2 个测试新增选择文件；`finalize-userdata-restore.json` 确认原 39 配置、42 存档及 home 1/data 0/images 1 全部 SHA 与清理前相同。
 
@@ -39,7 +39,7 @@
 | `c1bf201d4d51bb2e6d622cfbada0784a64b658c35538c0d3d54ffabecb178621` | Leaf 有限 60 秒脚本预算；死神 GLES 初始化、选人和对战通过，Vulkan 实际对战及跨轮后发生 OOM，不能作为内存验收通过版本 |
 | `c4b32396b3f0d7bca8e33bc5de7348b7a93191f3e7e081069d22678eb075f235` | Vulkan 内存优先策略候选；十项诊断通过，高画质起始配置进入战斗后触发低内存测试保护，正常退出；未完成六分钟压力验证 |
 | `719acd7296fe73c230bdace3b0e6ae86dfb84adddb5e29c7183068b4b917f383` | 低频 allocator 诊断；十项诊断、正式安装及双游戏 GLES/Apps 限定流程已完成，尚有 Vulkan 压力缺口 |
-| `422e3fd9c148bf330db8c14593a433dcbced38cda2160ca01992762f95a7e3eb` | 当前正式安装；1597 文件全核验、双游戏 GLES 实际对战、Apps 主菜单及用户数据复原通过；保护/拒写 QA 通过，Vulkan 六分钟压力未通过 |
+| `422e3fd9c148bf330db8c14593a433dcbced38cda2160ca01992762f95a7e3eb` | 当日最终正式安装；1597 文件全核验、双游戏 GLES 实际对战、Apps 主菜单及用户数据复原通过；保护/拒写 QA 通过，Vulkan 六分钟压力未通过 |
 
 初版只安装 `env_logger`，而 v0.7.1 核心、资源加载和音频后端已经使用 `tracing`。改为工作区锁定的 `tracing-subscriber` 后，保留 `RUST_LOG`、默认 info、stderr 和旧 `log::` 输出桥接，日志版才显示 `complete` 回调中的脚本超时。该适配没有改变游戏行为，不能把此前看不到错误解释为此前没有错误。
 

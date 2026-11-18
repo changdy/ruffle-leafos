@@ -15,9 +15,9 @@ Play local Flash games with the buttons and stick on your **Miniloong Pocket 1 /
 
 **The two entry points serve different purposes:** the Flash category launches games; **Flash Data Manager** in Apps manages progress, controls and interface language. Leaf may display the Apps launcher as **Flash 数据管理**. The installation folder keeps its existing `RuffleProbe.pak` name.
 
-**Starting with 0.8.6 there are two downloads:** the main installation ZIP includes the original English *Bloxorz* and a diagnostic demo. The three large custom games are in the optional **`ruffle-leafos-games-<version>.zip`** collection. Player-only upgrades do not require downloading it again or deleting installed games.
+For the bundled English Bloxorz, select **control scheme 2**. Use the D-pad to roll the block, L1 for Space to switch between split blocks, and the stick to move and click the pointer. Write down the game's passcode to resume a level from Load Stage.
 
-The main ZIP keeps `Roms/flash/Bloxorz-翻滚方块.swf` and `Roms/flash/Leaf-GPU-Probe.swf`. In Bloxorz, arrow keys roll the block and Space switches between split blocks. Select **control scheme 2**: the D-pad sends arrows, L1 sends Space, and the stick moves the pointer and clicks when pressed. The game remains in English. See [progress](docs/progress.md) for device validation status. The probe is an original animation for basic display checks.
+The optional game collection is **`ruffle-leafos-games-<version>.zip`**. Keep existing game ZIPs for player-only upgrades.
 
 To install the collection, **extract its outer ZIP once**, merge its `Roms/` folder into the same SD card root and refresh Leaf. Do not place the collection ZIP itself in `Roms/flash/` as a game. Its structure is:
 
@@ -28,19 +28,11 @@ Roms/flash/
 └─ 死神VS火影3.6-定制版.zip
 ```
 
-The collection's three game entrypoints are listed below. Older archives may have different contents.
-
-| Game | Main file to select inside `Roms/flash/` |
-| --- | --- |
-| The King of Fighters Wing 1.91 | `拳皇Wing1.91-定制版.zip` |
-| Bleach vs Naruto 3.3 | `死神VS火影3.3-定制版.zip` |
-| Bleach vs Naruto 3.6 | `死神VS火影3.6-定制版.zip` |
-
 Keep the three inner game ZIPs intact. The Bleach vs Naruto ZIPs include the game and all resources; do not extract them manually. On first launch the player shows a loading screen while extracting to its cache; later launches can reuse the cache. New Bleach vs Naruto progress starts with the game's internal LOW quality setting; change it through **OPTION → QUALITY → APPLY**. [Games and sources](games/README.md) (Chinese)
 
 **Upgrading an older directory edition:** back up and move the old same-name game folders and the old KOF SWF outside `Roms/`, copy the new ZIP files and refresh Leaf's game list. The main SWF bytes are unchanged, so native progress keeps its content identity. Existing directory controls are reused when the old catalog confirms the matching game; KOF controls do not migrate automatically from its old SWF path. If you already have the three same-name ZIPs, keep their paths.
 
-On Pocket1, Bleach vs Naruto 3.3 takes about half a minute to initialize its effects at startup. Short Menu (M) presses and opening the player menu may be delayed during initialization; wait until it finishes before continuing. To return to Leaf, hold Menu to use the system return function.
+In one Pocket1 test, Bleach vs Naruto 3.3 took about half a minute to initialize its effects at startup. Short Menu (M) presses and opening the player menu may be delayed during initialization; wait until it finishes before continuing. To return to Leaf, hold Menu to use the system return function.
 
 Use **OpenGL ES** for Bleach vs Naruto 3.3 on Pocket1. Vulkan may end the session because of low memory; retry with OpenGL ES afterward.
 
@@ -224,4 +216,4 @@ Cleanup requires confirmation and defaults to Cancel. Confirmed data moves to a 
 
 Screenshots are Pocket1 captures from October 25–31, 2026, across different development previews and themes. Follow this guide where older labels differ. Keyboard captures use test input content. [Screenshot sources](docs/images/README.md)
 
-Developer resources (Chinese): [Progress and validation](docs/progress.md) · [Implementation and builds](docs/implementation.md) · [Documentation index](docs/README.md). Licenses: [Project MIT](adapter/LICENSE) · [Third-party notices](docs/THIRD_PARTY.md) · [Game rights](games/README.md).
+[Developer docs and validation](docs/README.md) (Chinese) · [Third-party notices](docs/THIRD_PARTY.md) · [Game rights](games/README.md). The main installation includes the project's MIT license as `LICENSE`.

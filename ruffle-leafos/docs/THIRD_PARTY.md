@@ -1,6 +1,6 @@
 # Runtime provenance
 
-The current source tree uses official ruffle-rs/ruffle stable release v0.7.1, commit `89a7049965f3090e706265670df309a5128233ac`, for the shared core, libraries, video and official rendering modules. The Leaf application is version 0.8.6 development preview; its version is independent of the upstream Ruffle version. `leaf-source.lock.json` records the upstream source and local build-input hashes, and Cargo.lock pins Rust dependencies. Ruffle is MIT / Apache-2.0; see licenses/RUFFLE-LICENSE.md.
+The current source tree uses official ruffle-rs/ruffle stable release v0.7.1, commit `89a7049965f3090e706265670df309a5128233ac`, for the shared core, libraries, video and official rendering modules. The Leaf application has its own version in the package manifest. `leaf-source.lock.json` records the upstream source and local build-input hashes, and Cargo.lock pins Rust dependencies. Ruffle is MIT / Apache-2.0; see licenses/RUFFLE-LICENSE.md.
 
 The Leaf frontend and retained fork adaptations originally derive from aweigit/ruffle-miyooflip commit `3bc39c5e0fdbc9fcde92681706395f6ef70f991b`. That fork is retained in provenance and credits as the historical source, rather than the current shared-core baseline. `adapter/player-source.lock.json` continues to describe the original source relationship. This project does not reproduce every private leaf-12 patch.
 
