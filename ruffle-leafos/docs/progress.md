@@ -6,7 +6,9 @@
 
 ### AisOS 实机验证
 
-`pocketais` 分支增加独立 GitHub Actions 安装包，接入实体 Home 作为 Menu，并在按键编辑中加入右摇杆四方向及按下。在 `f820f3-20261020` 上读到 `KEY_HOME=102`、`ABS_RX`、`ABS_RY` 和 `BTN_THUMBR`。这台设备的默认与当前 RGBox 清单及 EmulationStation 清单均无 Flash 分类，游戏通过 Ruffle Flash 应用内部列表打开。以下游戏数据来自前一版播放器。新实体快捷键、右摇杆和亮度仍需手按验证。[当前安装与操作](../README.md#aisos-应用菜单)
+`pocketais` 分支增加独立 GitHub Actions 安装包，接入实体 Home 作为 Menu，并在按键编辑中加入右摇杆四方向及按下。在 `f820f3-20261020` 上读到 `KEY_HOME=102`、`ABS_RX`、`ABS_RY` 和 `BTN_THUMBR`。这台设备的默认与当前 RGBox 清单及 EmulationStation 清单均无 Flash 分类，游戏通过 Ruffle Flash 应用内部列表打开。[当前安装与操作](../README.md#aisos-应用菜单)
+
+2026-11-19 验证 GitHub Actions 生成的 `ruffle-pocketais-0.8.6.zip`，核对 SHA-256 和安装文件权限。将产物解压到掌机临时目录，用设备输入节点发送按键事件。应用列表可以启动 Bloxorz 和 ZIP 显示探针，两者均用 GLES 运行，保存并退出后回到列表。Home 短按打开和收起暂停菜单，Home 组合键可以切换按键方案、交换十字键与左摇杆、开关鼠标拖拽和调节亮度。右摇杆四个方向及 R3 的五个独立映射均收到对应的按下和松开。测试后亮度恢复原值，新版按键尚未手按复核。[打包运行记录](https://github.com/changdy/ruffle-leafos/actions/runs/44550634161)
 
 #### 早期预览记录
 
