@@ -115,8 +115,8 @@ def draw(renderer, title_font, font, folder, root, items, index, message):
     fill(renderer, (34, 685, 956, 62), "ACCENT")
     back = "退出到 RGBox" if folder == root else "返回上一级"
     label(renderer, font, "十字键 / 摇杆  选择    L1 / R1  翻页", 48, 700, hint, 578)
-    label(renderer, font, "A  打开", 648, 700, text, 135)
-    label(renderer, font, f"Fn  {back}", 806, 700, text, 168)
+    label(renderer, font, "A  打开", 620, 700, text, 113)
+    label(renderer, font, f"Fn  {back}", 759, 700, text, 220)
     sdl.SDL_RenderPresent(renderer)
 
 

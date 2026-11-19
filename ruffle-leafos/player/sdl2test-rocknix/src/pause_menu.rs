@@ -396,9 +396,9 @@ impl PauseMenu {
             self.live_label_width(47,&movement,29.,45.,656.,530.,false,self.palette[4]);
         }
         if !matches!(navigation,FooterNavigation::Back|FooterNavigation::Tabs) {
-            self.live_label_width(50,&format!("A  {}",t("确定")),29.,607.,656.,125.,false,self.palette[1]);
+            self.live_label_width(50,&format!("A  {}",t("确定")),29.,581.,656.,106.,false,self.palette[1]);
         }
-        self.live_label_width(132,&format!("Fn  {back_label}"),29.,756.,656.,158.,false,self.palette[1]);
+        self.live_label_width(132,&format!("Fn  {back_label}"),29.,712.,656.,204.,false,self.palette[1]);
     }
     unsafe fn leaf_footer(&mut self,back_label:&str,navigation:FooterNavigation) {
         if matches!(navigation,FooterNavigation::Back) {
