@@ -185,7 +185,7 @@ mod tests {
 
     #[test]
     fn english_control_notifications_include_success_recovery_and_write_failures() {
-        use super::super::{controls::{Controls, Mapping, Nav, Store, SAVE_ROW}, cursor, MouseSpeed};
+        use super::super::{controls::{Controls, Mapping, Nav, Store}, cursor, MouseSpeed};
         let root=std::env::temp_dir().join(format!("ruffle-english-notifications-{}",std::process::id()));
         let mut controls=Controls::new(Store::new(root.join("controls"),Path::new("/roms/English.swf")));
         set(Language::English);
@@ -194,7 +194,7 @@ mod tests {
         controls.begin(Mapping::group(1));
         controls.nav(Nav::Y);
         assert_eq!(controls.status,"Slow turbo 5/sec; save to keep");
-        controls.row=SAVE_ROW;
+        controls.row=controls.edit_items();
         controls.nav(Nav::A);
         assert_eq!(controls.status,"Saved");
         controls.begin_cursor(cursor::Settings::default(),MouseSpeed::Normal);
@@ -209,7 +209,7 @@ mod tests {
         controls.switch_slot(0);
         assert_eq!(controls.status,"Switched to control profile 1 (this session only; save failed)");
         controls.begin(Mapping::group(0));
-        controls.row=SAVE_ROW;
+        controls.row=controls.edit_items();
         controls.nav(Nav::A);
         assert_eq!(controls.status,"Operation failed; original config kept. Check storage.");
         fs::remove_dir_all(root).unwrap();

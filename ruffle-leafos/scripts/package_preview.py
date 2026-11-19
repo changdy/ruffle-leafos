@@ -140,6 +140,18 @@ def bundle_games(stage, games_root=ROOT / 'games'):
     return bundled
 
 
+def dependency_notices():
+    local = ROOT / 'workspace.local.json'
+    settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
+    cache = Path(settings.get('host_tool_cache', ROOT.parent / 'work/toolchains')) / 'cargo-home'
+    registry = cache / 'registry/src/index.crates.io-1949cf8c6b5b557f'
+    for crate in sorted(registry.iterdir()):
+        if crate.is_dir():
+            for path in sorted(crate.iterdir()):
+                if path.is_file() and path.name.upper().startswith(('LICENSE', 'COPYING', 'NOTICE', 'UNLICENSE')):
+                    yield f'dependencies/{crate.name}/{path.name}', path
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', required=True, type=Path)
@@ -208,16 +220,10 @@ def main():
     shutil.copyfile(ROOT / 'player/LICENSE.md', licenses / 'RUFFLE-LICENSE.md')
     shutil.copyfile(ROOT / 'vendor/jawaka/LICENSE', licenses / 'JAWAKA-LICENSE.txt')
     shutil.copyfile(ROOT / 'vendor/catastrophe/LICENSE', licenses / 'CATASTROPHE-LICENSE.txt')
-    local = ROOT / 'workspace.local.json'
-    settings = json.loads(local.read_text(encoding='utf8')) if local.exists() else {}
-    cache = Path(settings.get('host_tool_cache', ROOT.parent / 'work/toolchains')) / 'cargo-home'
-    for crate in (cache / 'registry/src/index.crates.io-1949cf8c6b5b557f').iterdir():
-        if crate.is_dir():
-            for license_path in crate.iterdir():
-                if license_path.is_file() and license_path.name.upper().startswith(('LICENSE', 'COPYING', 'NOTICE', 'UNLICENSE')):
-                    destination = licenses / 'dependencies' / crate.name / license_path.name
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copyfile(license_path, destination)
+    for name, license_path in dependency_notices():
+        destination = licenses / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(license_path, destination)
     provenance = pak / 'provenance'
     provenance.mkdir()
     shutil.copyfile(ROOT / 'leaf-source.lock.json', provenance / 'leaf-source.lock.json')

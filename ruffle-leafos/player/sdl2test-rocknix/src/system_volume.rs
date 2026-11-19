@@ -10,6 +10,19 @@ impl Kind {
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 pub struct Level { pub kind:Kind, pub percent:u8 }
 
+pub fn pocketais_brightness(up: bool) -> Option<Level> {
+    let status = std::process::Command::new("/usr/bin/brightness")
+        .arg(if up { "up" } else { "down" }).status().ok()?;
+    if !status.success() { return None; }
+    let sysfs = std::path::Path::new("/sys/class/backlight/backlight");
+    let read = |name| std::fs::read_to_string(sysfs.join(name)).ok()?.trim().parse::<u32>().ok();
+    let current = read("brightness")?;
+    let max = read("max_brightness")?;
+    if max == 0 { return None; }
+    let percent = (u64::from(current.min(max)) * 100 + u64::from(max) / 2) / u64::from(max);
+    Some(Level { kind: Kind::Brightness, percent: percent as u8 })
+}
+
 fn parse_level(text:&str,kind:Kind)->Option<Level> {
     let body=text.trim().strip_prefix('{')?.strip_suffix('}')?;
     let mut response_kind=None;let mut level=None;

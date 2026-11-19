@@ -97,7 +97,7 @@ def draw(renderer, title_font, font, folder, root, items, index, message):
     if message:
         label(renderer, font, message, 48, 636, (255, 201, 128), 928)
     label(renderer, font, "十字键 / 摇杆  选择     L1 / R1  翻页     A  打开     B  返回", 48, 684, MUTED, 928)
-    label(renderer, font, "游戏中：按下右摇杆 (R3) 打开暂停菜单", 48, 724, MUTED, 928)
+    label(renderer, font, "游戏中按 Home 打开暂停菜单", 48, 724, MUTED, 928)
     sdl.SDL_RenderPresent(renderer)
 
 

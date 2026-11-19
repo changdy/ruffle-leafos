@@ -8,6 +8,13 @@ use std::sync::Arc;
 
 use crate::session::Session;
 
+fn menu_hint(text: &str, pocketais: bool) -> String {
+    let translated = t(text);
+    if !pocketais { return translated.into(); }
+    // Only substitute standalone M in the specific menu-key hints.
+    translated.replace(" M", " Home")
+}
+
 struct Text {
     texture: glow::Texture,
     width: i32,
@@ -212,7 +219,7 @@ impl PauseMenu {
         gl.blend_equation(glow::FUNC_ADD);
         gl.color_mask(true, true, true, true);
         if let Some(keyboard)=&state.virtual_keyboard {
-            self.draw_virtual_keyboard(keyboard);
+            self.draw_virtual_keyboard(keyboard, state.controls.dual_stick);
         } else if state.paused {
         if !state.experience.started {self.quad((0.,0.,960.,720.),self.palette[0],None);}
         if state.experience.page!=crate::session::experience::Page::Home {
@@ -243,7 +250,7 @@ impl PauseMenu {
             }
         }
         } else if state.drag_locked {
-            self.live_chip(61,t("左键保持 · M+十字下解除"),22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
+            self.live_chip(61,&menu_hint("左键保持 · M+十字下解除", state.controls.dual_stick),22.,(10.,if state.experience.settings.fps{48.}else{10.}),600.,false,[1.,0.8,0.4,1.]);
         }
         if let Some((level,_))=&state.system_level {
             let label=match level.kind {
@@ -279,7 +286,7 @@ impl PauseMenu {
         gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     }
 
-    unsafe fn draw_virtual_keyboard(&mut self, keyboard: &crate::session::virtual_keyboard::Editor) {
+    unsafe fn draw_virtual_keyboard(&mut self, keyboard: &crate::session::virtual_keyboard::Editor, pocketais: bool) {
         self.quad((0.,0.,960.,720.),self.palette[0],None);
         self.live_label_width(150,t("输入文字"),35.,30.,18.,900.,false,self.palette[1]);
         self.rounded((30.,77.,900.,75.),10.,self.palette[2]);
@@ -290,14 +297,14 @@ impl PauseMenu {
             self.rounded(key.rect,8.,self.palette[if selected {2}else{5}]);
             self.live_label_width(160+i,&key.label,29.,key.rect.0+5.,key.rect.1+18.,key.rect.2-10.,true,self.palette[if selected {3}else{1}]);
         }
-        self.live_label_width(153,t("L1 / R1 移动光标 · L2 符号 · M 帮助"),22.,30.,601.,900.,true,self.palette[4]);
+        self.live_label_width(153,&menu_hint("L1 / R1 移动光标 · L2 符号 · M 帮助", pocketais),22.,30.,601.,900.,true,self.palette[4]);
         self.live_label_width(154,t("Y 取消                         Start 确认"),27.,30.,660.,900.,true,self.palette[1]);
         if keyboard.help {
             self.quad((0.,0.,960.,720.),[0.,0.,0.,0.65],None);
             self.rounded((65.,180.,830.,365.),18.,self.palette[0]);
             let lines=[t("十字键选择按键，A 输入，B 退格，X 空格。"),
                 t("Select 切换大小写，L2 切换符号。"),t("L1 / R1 移动文字光标；多行框可用 R2 换行。"),
-                t("Start 确认并回到游戏，Y 取消全部修改。"),t("按 M 或 A 关闭帮助。")];
+                t("Start 确认并回到游戏，Y 取消全部修改。"),&menu_hint("按 M 或 A 关闭帮助。", pocketais)];
             for (i,line) in lines.iter().enumerate() {self.live_label_width(205+i,line,25.,90.,215.+i as f32*60.,780.,false,self.palette[1]);}
         }
     }
@@ -382,8 +389,8 @@ impl PauseMenu {
     unsafe fn draw_experience(&mut self,state:&Session) {
         use crate::session::experience::Page;
         let u=&state.experience;
-        if u.page==Page::About {self.draw_about();return;}
-        if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab);return;}
+        if u.page==Page::About {self.draw_about(u.pocketais);return;}
+        if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab, state.controls.dual_stick);return;}
         if matches!(u.page,Page::Screenshot|Page::CoverConfirm) {
             let confirm=u.page==Page::CoverConfirm;
             self.leaf_background(&u.heading(),t("仅保存 Flash 游戏画面"),t("返回"),FooterNavigation::List);
@@ -394,13 +401,13 @@ impl PauseMenu {
             for (i,row) in u.rows().iter().enumerate(){self.leaf_row(i+1,row,if confirm{320.+i as f32*75.}else{155.+i as f32*65.},55.,i==u.selected);}
             if !confirm {
                 self.live_label_width(19,t("不含菜单、播放器光标、帧率与系统提示。"),24.,23.,402.,910.,false,self.palette[4]);
-                self.live_label_width(20,t("普通照片优先存入副卡 Pictures/Ruffle Flash。"),24.,23.,450.,910.,false,self.palette[4]);
+                self.live_label_width(20,t(if u.pocketais { "照片存入游戏卡 Pictures/Ruffle Flash。" } else { "普通照片优先存入副卡 Pictures/Ruffle Flash。" }),24.,23.,450.,910.,false,self.palette[4]);
             }
             if !u.message.is_empty(){self.live_label_width(23,&u.message,22.,23.,580.,910.,false,self.palette[1]);}
             return;
         }
         let subtitle=match u.page{
-            Page::Saves=>if u.selected>=u.slots.len(){if u.started{t("A 返回")}else{t("A 返回 Leaf")}}
+            Page::Saves=>if u.selected>=u.slots.len(){if u.started{t("A 返回")}else if u.pocketais { t("A 返回游戏列表") } else { t("A 返回 Leaf") }}
                 else if u.slots[u.selected].broken{if u.started{t("存档损坏，无法读取；Y 用当前进度覆盖")}else{t("此槽位损坏；请先在数据管理中清理")}}
                 else if !u.started{t("发现游戏进度，请先选择存档；空槽开始新进度")}
                 else if u.selected==u.active{t("A 返回；Y 保存当前进度")}
@@ -478,21 +485,27 @@ impl PauseMenu {
         if !u.message.is_empty(){self.live_label_width(23,&u.message,21.,55.,615.,850.,false,self.palette[1]);}
     }
 
-    unsafe fn draw_about(&mut self) {
+    unsafe fn draw_about(&mut self, pocketais: bool) {
         use crate::session::experience::BACKGROUND;
-        self.leaf_background(t("Ruffle Flash · LeafOS 版"),&crate::tr!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS", "{} Development preview · Miniloong Pocket 1 / LeafOS",env!("CARGO_PKG_VERSION")),t("返回"),FooterNavigation::Back);
+        let (title, subtitle) = if pocketais {
+            ("Ruffle Flash · Pocket AIS", crate::tr!("{} 开发预览 · Pocket AIS / AisOS", "{} Development preview · Pocket AIS / AisOS", env!("CARGO_PKG_VERSION")))
+        } else {
+            (t("Ruffle Flash · LeafOS 版"), crate::tr!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS", "{} Development preview · Miniloong Pocket 1 / LeafOS", env!("CARGO_PKG_VERSION")))
+        };
+        self.leaf_background(title, &subtitle, t("返回"), FooterNavigation::Back);
         for (i,(title,line1,line2)) in BACKGROUND.iter().enumerate() {
             let y=150.+i as f32*130.;let mut card=self.palette[5];card[3]=0.35;
             self.rounded((23.,y,910.,115.),12.,card);
             self.live_label_width(80+i*3,t(title),30.,38.,y+9.,880.,false,self.palette[1]);
             self.live_label_width(81+i*3,t(line1),25.,38.,y+49.,880.,false,self.palette[1]);
+            let line2 = if pocketais && i == 0 { "Ruffle Flash 基于 Ruffle，适配 Pocket AIS / AisOS。" } else { line2 };
             self.live_label_width(82+i*3,t(line2),24.,38.,y+82.,880.,false,self.palette[4]);
         }
         self.live_label_width(54,t("Ruffle：MIT / Apache-2.0；本项目及 Leaf / Jawaka 菜单参考：MIT。"),22.,23.,570.,910.,false,self.palette[4]);
         self.live_label_width(55,t("完整许可与第三方声明随安装包附带。"),22.,23.,601.,910.,false,self.palette[4]);
     }
 
-    unsafe fn draw_shortcuts(&mut self,tab:usize) {
+    unsafe fn draw_shortcuts(&mut self,tab:usize,pocketais:bool) {
         use crate::session::experience::{SHORTCUT_TABS,SHORTCUTS,SHORTCUT_NOTES};
         self.leaf_background(t("操作说明"),t("先看想做什么，再按右侧提示操作"),t("返回"),FooterNavigation::Tabs);
         for (i,label) in SHORTCUT_TABS.iter().enumerate() {
@@ -503,10 +516,12 @@ impl PauseMenu {
             let y=199.+i as f32*75.;let mut card=self.palette[5];card[3]=0.35;
             self.rounded((23.,y,910.,69.),10.,card);
             self.live_label_width(80+i*3,t(action),28.,38.,y+3.,410.,false,self.palette[1]);
-            self.live_label_width(81+i*3,t(keys),27.,454.,y+4.,460.,false,self.palette[1]);
-            self.live_label_width(82+i*3,t(note),22.,38.,y+39.,877.,false,self.palette[4]);
+            let keys = if pocketais && tab == 1 && i == 4 { "Home + R1 / L1" } else { keys };
+            let note = if pocketais && tab == 1 && i == 4 { "R1 提高亮度，L1 降低亮度。" } else { note };
+            self.live_label_width(81+i*3,&menu_hint(keys,pocketais),27.,454.,y+4.,460.,false,self.palette[1]);
+            self.live_label_width(82+i*3,&menu_hint(note,pocketais),22.,38.,y+39.,877.,false,self.palette[4]);
         }
-        self.live_label_width(54,t(SHORTCUT_NOTES[tab]),22.,23.,591.,910.,false,self.palette[4]);
+        self.live_label_width(54,&menu_hint(SHORTCUT_NOTES[tab],pocketais),22.,23.,591.,910.,false,self.palette[4]);
     }
 
     unsafe fn draw_cursor(&self, settings: crate::session::cursor::Settings, position: (f32,f32)) {
@@ -603,22 +618,25 @@ impl PauseMenu {
             return;
         }
         if controls.page==Page::Edit {
-            for (i,line) in lines.iter().take(crate::session::controls::EDIT_ITEMS).enumerate() {
-                let x=45.+(i%GRID_COLS) as f32*176.; let y=142.+(i/GRID_COLS) as f32*76.;
+            let items = controls.edit_items();
+            let step = if controls.dual_stick { 59. } else { 76. };
+            let height = step - 8.;
+            for (i,line) in lines.iter().take(items).enumerate() {
+                let x=45.+(i%GRID_COLS) as f32*176.; let y=142.+(i/GRID_COLS) as f32*step;
                 let color=self.palette[if i==controls.row{3}else{1}];
-                self.leaf_tile((x,y,166.,68.),i==controls.row);
+                self.leaf_tile((x,y,166.,height),i==controls.row);
                 if let Some((label,value))=line.split_once('：').or_else(||line.split_once(':')) {
                     self.live_label_width(80+i*2,label,21.,x+9.,y+6.,148.,true,color);
-                    self.live_label_width(81+i*2,value,24.,x+9.,y+34.,148.,true,color);
+                    self.live_label_width(81+i*2,value,if controls.dual_stick {20.} else {24.},x+9.,y+height/2.,148.,true,color);
                 } else { self.live_label_width(80+i*2,line,23.,x+9.,y+22.,148.,true,color); }
             }
-            self.live_label_width(54,&if state.directions_swapped {t("本次方向已互换 · M+X 恢复").into()}else{controls.detail()},21.,430.,465.,475.,false,self.palette[4]);
+            self.live_label_width(54,&if state.directions_swapped {menu_hint("本次方向已互换 · M+X 恢复", controls.dual_stick)}else{controls.detail()},21.,430.,if controls.dual_stick {501.}else{465.},475.,false,self.palette[4]);
             self.quad((45.,528.,870.,1.),self.palette[5],None);
             for (i,label) in [t("保存"),t("返回")].iter().enumerate() {
-                let selected=controls.row==crate::session::controls::SAVE_ROW+i;
+                let selected=controls.row==items+i;
                 let x=if i==0 {45.}else{650.};
                 self.rounded((x,543.,265.,52.),26.,self.palette[if selected{2}else{5}]);
-                self.live_label_width(130+i,label,31.,x+15.,550.,235.,true,self.palette[if selected{3}else{1}]);
+                self.live_label_width(135+i,label,31.,x+15.,550.,235.,true,self.palette[if selected{3}else{1}]);
             }
             self.live_label_width(55,&controls.status,21.,45.,604.,870.,false,self.palette[1]);
             return;

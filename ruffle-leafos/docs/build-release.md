@@ -55,24 +55,29 @@ python scripts/build_player.py build --offline --isolated-config
 
 ## 打包
 
-### AisOS / RGBox 预览包
+### Pocket AIS / RGBox 安装包
 
-从工程目录运行。脚本校验两个输入的 SHA-256，复用项目 v0.8.6 发布附件中的 ARM64 ELF、字体、图标、样例与许可，使用设备自带的 SDL2 和 ALSA。[v0.8.6 主安装包](https://github.com/changdy/ruffle-leafos/releases/download/v0.8.6/ruffle-leafos-0.8.6.zip) · [PySDL2 0.9.17](https://pypi.org/project/PySDL2/0.9.17/) · [打包脚本](../scripts/package_aisos.py)
+`pocketais` 分支的 [Build Pocket AIS ZIP](https://github.com/changdy/ruffle-leafos/actions/workflows/pocketais.yml) 在 push 时从该提交的源码重编 AArch64 播放器。构建通过后，在运行记录的 Artifacts 中下载 `ruffle-pocketais-<提交 SHA>`，其中有安装 ZIP 和 `SHA256SUMS.txt`。GitHub 的手动触发要求工作流已存在于默认分支。Pocket1 的发布工作流独立运行。
+
+在 Windows 工程目录用同一套锁定工具链构建。已准备 Node.js、Python、JDK 17 和 7-Zip 后运行以下命令。
 
 ```powershell
+python scripts/setup_release_tools.py
+python scripts/build_player.py build --isolated-config --jobs 4
+python scripts/test_session.py
 python -m pip download --no-deps --only-binary=:all: PySDL2==0.9.17 -d ../work
-curl.exe -fL https://github.com/changdy/ruffle-leafos/releases/download/v0.8.6/ruffle-leafos-0.8.6.zip -o ../work/ruffle-leafos-0.8.6.zip
-python scripts/package_aisos.py ../work/ruffle-leafos-0.8.6.zip ../work/PySDL2-0.9.17-py3-none-any.whl ../outputs/ruffle-aisos-0.8.6.zip
+$version = (Get-Content pak/pak.json -Raw | ConvertFrom-Json).pak_version
+python scripts/package_aisos.py ../work/PySDL2-0.9.17-py3-none-any.whl "../outputs/ruffle-pocketais-$version.zip"
 ```
 
-AisOS 输出 ZIP 的顶层目录对应游戏卡根目录。设备端应用入口和播放器需要执行权限，ZIP 已记录 Unix 模式，ext4 卡解压时须保留权限。当前 Pocket1 的发布工作流只生成 Leaf 包。
+脚本校验播放器的源码及构建记录、AArch64 PIE、glibc 版本和 PySDL2 SHA-256。安装包使用固件自带的 SDL2、SDL2_ttf 和 ALSA。ZIP 顶层对应游戏卡根目录，含 `applyCenter/` 应用和 `flash/` 样例目录。ZIP 带有入口和播放器的 Unix 执行权限，ext4 卡解压时须保留。[打包脚本](../scripts/package_aisos.py) · [安装与操作](../README.md#aisos-应用菜单)
 
 ### AisOS / RGBox 内屏调色
 
-从工程目录运行，复用上一节的两个校验输入。独立 ZIP 包含内屏调色入口、服务安装脚本、PySDL2 和附 SIL OFL 的思源黑体。
+从工程目录运行，复用已校验的 PySDL2 wheel 和仓库字体。独立 ZIP 包含内屏调色入口、服务安装脚本、PySDL2 和附 SIL OFL 的思源黑体。
 
 ```powershell
-python scripts/package_aisos.py ../work/ruffle-leafos-0.8.6.zip ../work/PySDL2-0.9.17-py3-none-any.whl ../outputs/rgbox-screen-color.zip --screen-color
+python scripts/package_aisos.py ../work/PySDL2-0.9.17-py3-none-any.whl ../outputs/rgbox-screen-color.zip --screen-color
 ```
 
 将 ZIP 解压到外置游戏卡根目录并保留 `applyCenter/.screen-color/`。首次安装或升级后，在 AisOS 的 root 终端运行：

@@ -1,0 +1,73 @@
+name: Build Pocket AIS ZIP
+
+on:
+  push:
+    branches: [pocketais]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pocketais-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    if: github.ref == 'refs/heads/pocketais'
+    runs-on: windows-2022
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: ruffle-leafos
+        shell: pwsh
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Cache pinned compilers
+        uses: actions/cache@v5
+        with:
+          path: ruffle-leafos/.tools
+          key: pocket1-tools-v1-${{ runner.os }}-${{ hashFiles('ruffle-leafos/arm-gnu.lock.json', 'ruffle-leafos/adapter/rust-toolchain.lock.json', 'ruffle-leafos/adapter/references.lock.json', 'ruffle-leafos/scripts/setup_release_tools.py') }}
+      - name: Cache Cargo downloads
+        uses: actions/cache@v5
+        with:
+          path: work/toolchains/cargo-home
+          key: pocket1-cargo-v1-${{ runner.os }}-${{ hashFiles('ruffle-leafos/player/Cargo.lock') }}
+          restore-keys: pocket1-cargo-v1-${{ runner.os }}-
+      - name: Install locked compilers
+        run: python scripts/setup_release_tools.py
+      - name: Build the AArch64 player
+        run: python scripts/build_player.py build --isolated-config --jobs 4
+      - name: Test controls and build bindings
+        run: |
+          python scripts/test_session.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s scripts -p test_build_inputs.py -v
+      - name: Build and checksum the Pocket AIS ZIP
+        run: |
+          python -m pip download --no-deps --only-binary=:all: PySDL2==0.9.17 -d ../work
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $version = (Get-Content pak/pak.json -Raw | ConvertFrom-Json).pak_version
+          $package = "../outputs/pocketais/ruffle-pocketais-$version.zip"
+          python scripts/package_aisos.py ../work/PySDL2-0.9.17-py3-none-any.whl $package
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = (Get-FileHash -Algorithm SHA256 $package).Hash.ToLowerInvariant()
+          "$sha  $(Split-Path -Leaf $package)" | Set-Content -Encoding ascii ../outputs/pocketais/SHA256SUMS.txt
+      - name: Upload the installation ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruffle-pocketais-${{ github.sha }}
+          path: outputs/pocketais/
+          if-no-files-found: error

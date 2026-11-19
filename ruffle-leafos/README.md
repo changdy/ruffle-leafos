@@ -8,19 +8,21 @@
 
 ## AisOS 应用菜单
 
-在 RK3562 掌机的 AisOS / RGBox 上，将 **`ruffle-aisos-0.8.6.zip`** 解压到外置游戏卡根目录，保留 `applyCenter/`、其隐藏子目录 `.ruffle-flash/` 和 `flash/`。该卡在系统中挂载为 `/storage/roms`。回到 RGBox 主界面，再进入 **应用 → Ruffle Flash**。
+在 Pocket AIS（RK3562 / AisOS）上，将 **`ruffle-pocketais-<版本>.zip`** 解压到外置游戏卡根目录，保留 `applyCenter/`、其隐藏子目录 `.ruffle-flash/` 和 `flash/`。卡在系统中挂载为 `/storage/roms`。从 RGBox 进入 **应用 → Ruffle Flash**。[GitHub Actions 打包产物](https://github.com/changdy/ruffle-leafos/actions/workflows/pocketais.yml?query=branch%3Apocketais)
 
-将自己的 SWF 或游戏 ZIP 放进卡上 `flash/`，重新进入列表即可看到。安装包附 Bloxorz 和 ZIP 格式的显示测试。
+实测固件的 RGBox 游戏库没有 Flash 分类。将 SWF 或游戏 ZIP 放进卡上的 `flash/`，在 Ruffle Flash 内浏览子目录、选择游戏。安装包附 Bloxorz 和显示测试。
 
-机身正面的四颗小键从左到右依次为 **返回（Fn）、Home、Select、Start**。AisOS 将最左键的快速双击用于退出程序。要保存游戏进度，请在 Ruffle 暂停菜单中选“保存并退出”。
+机身正面的四颗小键从左到右依次为 **返回（Fn）、Home、Select、Start**。在游戏中，第二颗小键 **Home** 就是菜单键。
 
 | 场景 | 掌机操作 |
 | --- | --- |
-| 游戏列表 | 十字键或任一摇杆上下选游戏，L1 / R1 向前 / 向后翻页。A 或 Start 打开，B 返回。在根目录按 B 回到 RGBox。 |
-| 游戏中 | **按下右摇杆（R3）打开或收起暂停菜单**。默认用左摇杆移动光标，按下左摇杆（L3）点击。 |
-| 暂停菜单 | 十字键选择，A 确认，B 返回。在“按键设置”一行按左右切换方案。Bloxorz 用方案 2 的十字键滚动方块。选“保存并退出”回到游戏列表。 |
+| 游戏列表 | 十字键或任一摇杆上下选游戏，L1 / R1 上翻 / 下翻一页。A 或 Start 打开，B 返回上一级。在根目录按 B 回到 RGBox。 |
+| 游戏中 | **短按 Home** 打开或收起暂停菜单。默认用左摇杆移动光标，按下左摇杆（L3）点击。 |
+| 游戏快捷键 | **Home + A / B** 切换上一个 / 下一个按键方案，**Home + X** 互换十字键和左摇杆的方向输入，**Home + 十字键 ↓** 保持或松开鼠标左键，**Home + L1 / R1** 降低或提高屏幕亮度。机身音量键继续调音量。 |
+| 暂停菜单 | 十字键选择，A 确认，B 返回。可调整按键、管理进度、打开软键盘或保存普通照片。选“保存并退出”回到游戏列表。 |
+| 右摇杆 | 在 **Home → 按键设置** 给右摇杆的上、下、左、右和按下（R3）分别分配键盘或鼠标动作。右摇杆默认留空，支持为可连发动作设置连发，按游戏和方案保存。 |
 
-配置、原生进度、ZIP 缓存和最近两次会话日志在卡上 `gamedata/ruffle-flash/`。升级前退出应用并备份此目录。更新按键后，从 RGBox 重新打开 Ruffle Flash 即可生效。此预览使用 GLES。[AisOS 实机验证](docs/progress.md#aisos-实机验证)
+配置、原生进度、ZIP 缓存和最近两次会话日志在卡上 `gamedata/ruffle-flash/`，普通截图保存在 `Pictures/Ruffle Flash/`。升级前退出应用并备份游戏数据。Pocket AIS 使用 GLES，截图菜单只提供普通照片。[AisOS 实机验证](docs/progress.md#aisos-实机验证)
 
 ### AisOS 内屏调色
 

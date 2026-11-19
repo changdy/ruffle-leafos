@@ -6,9 +6,13 @@
 
 ### AisOS 实机验证
 
-RK3562 / AisOS community `f820f3-20261020`、RGBox、1024×768 内屏、Mali-G52 和 exFAT 外置游戏卡已验证。独立预览包复用项目 v0.8.6 发布的 ARM64 播放器。打包脚本校验发布包和 PySDL2 的 SHA-256，安装后的 9 个文件与交付 ZIP 逐字节相同。
+`pocketais` 分支增加独立 GitHub Actions 安装包，接入实体 Home 作为 Menu，并在按键编辑中加入右摇杆四方向及按下。在 `f820f3-20261020` 上读到 `KEY_HOME=102`、`ABS_RX`、`ABS_RY` 和 `BTN_THUMBR`。这台设备的默认与当前 RGBox 清单及 EmulationStation 清单均无 Flash 分类，游戏通过 Ruffle Flash 应用内部列表打开。以下游戏数据来自前一版播放器。新实体快捷键、右摇杆和亮度仍需手按验证。[当前安装与操作](../README.md#aisos-应用菜单)
 
-从 RGBox「应用」打开 Ruffle Flash 后，通过设备输入节点发送手柄事件，以实际屏幕和会话日志核对。Bloxorz 用摇杆点击开始、跳过说明，切到方案 2，在第一关用十字键使 Moves 从 0 变为 1。注入逻辑 Guide 事件后打开暂停菜单，“保存并退出”返回列表。另从列表打开 ZIP 显示探针，确认解压缓存、GLES 彩块画面和返回列表，按 B 回到 RGBox。CPAL 成功打开双声道输出。音频听感、含有效 SharedObject 的跨会话读档与长时性能待验。Leaf 的实体组合快捷键和封面目录尚待 AisOS 适配。[安装与操作](../README.md#aisos-应用菜单)
+#### 早期预览记录
+
+RK3562 / AisOS community `f820f3-20261020`、RGBox、1024×768 内屏、Mali-G52 和 exFAT 外置游戏卡已验证。该预览包复用了项目 v0.8.6 发布的 ARM64 播放器。打包脚本校验发布包和 PySDL2 的 SHA-256，安装后的 9 个文件与交付 ZIP 逐字节相同。
+
+从 RGBox「应用」打开 Ruffle Flash 后，通过设备输入节点发送手柄事件，以实际屏幕和会话日志核对。Bloxorz 用摇杆点击开始、跳过说明，切到方案 2，在第一关用十字键使 Moves 从 0 变为 1。注入逻辑 Guide 事件后打开暂停菜单，“保存并退出”返回列表。另从列表打开 ZIP 显示探针，确认解压缓存、GLES 彩块画面和返回列表，按 B 回到 RGBox。CPAL 成功打开双声道输出。音频听感、含有效 SharedObject 的跨会话读档与长时性能待验。该次测试使用逻辑 Guide 触发暂停。[安装与操作](../README.md#aisos-应用菜单)
 
 按机身从左到右的顺序，每颗小键手动按两次。内置 `play_joystick` 的八次按下依次为 `464, 464, 102, 102, 314, 314, 315, 315`，确认四个位置分别对应返回（`KEY_FN`）、Home（`KEY_HOME`）、Select（`BTN_SELECT`）和 Start（`BTN_START`）。
 

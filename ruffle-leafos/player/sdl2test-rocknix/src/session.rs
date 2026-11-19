@@ -203,10 +203,11 @@ pub struct Session {
     pub use_cfg: bool,
     pub preview_use_cfg: bool,
     pub stick: (i16, i16),
+    pub right_stick: (i16, i16),
     pub ledger: InputLedger,
     held: BTreeSet<Source>,
     wait_neutral: bool,
-    stick_axes: (bool,bool),
+    stick_axes: [(bool,bool); 2],
 }
 
 impl Session {
@@ -223,8 +224,8 @@ impl Session {
             mouse_speed: MouseSpeed::Normal, preview_mouse_speed: MouseSpeed::Normal,
             profile: 0, preview_profile: 0, drag_locked: false,
             use_cfg: true, preview_use_cfg: true,
-            stick: (0, 0), ledger: InputLedger::default(),
-            held: BTreeSet::new(), wait_neutral: true, stick_axes: (true,true),
+            stick: (0, 0), right_stick: (0, 0), ledger: InputLedger::default(),
+            held: BTreeSet::new(), wait_neutral: true, stick_axes: [(true,true), (false,false)],
         }
     }
 
@@ -271,18 +272,21 @@ impl Session {
         // their key-up here can deadlock: update_stick releases them only after
         // allow_game_input becomes true. Real buttons/keys still need release.
         let buttons_released=self.held.iter().all(|source|matches!(source,Source::Stick(_)));
-        let stick=(if self.stick_axes.0 {self.stick.0} else {0},
-                   if self.stick_axes.1 {self.stick.1} else {0});
-        if buttons_released && stick_vector(stick.0,stick.1).is_none() {
+        let sticks_centered = [self.stick, self.right_stick].into_iter().zip(self.stick_axes)
+            .all(|(stick, axes)| mapped_stick(stick, axes).is_none());
+        if buttons_released && sticks_centered {
             self.wait_neutral = false;
         }
     }
 
-    /// Cache the effective mapping for immediate key-up checks as well as the
-    /// next main-loop snapshot. Changing which axes are used re-arms the gate.
+    #[cfg(test)]
     pub fn refresh_neutral_for_axes(&mut self, used: (bool,bool)) {
-        if self.stick_axes!=used {self.wait_neutral=true;}
-        self.stick_axes=used;
+        self.refresh_neutral_for_sticks([used, (false, false)]);
+    }
+
+    pub fn refresh_neutral_for_sticks(&mut self, used: [(bool,bool); 2]) {
+        if self.stick_axes != used { self.wait_neutral = true; }
+        self.stick_axes = used;
         self.refresh_neutral();
     }
 
@@ -363,8 +367,13 @@ impl Session {
         let result = if self.paused {self.ledger.release_all()}else{self.open_menu()};
         self.held.clear();
         self.stick = (0, 0);
+        self.right_stick = (0, 0);
         result
     }
+}
+
+pub fn mapped_stick(stick: (i16, i16), axes: (bool, bool)) -> Option<(f32, f32)> {
+    stick_vector(if axes.0 { stick.0 } else { 0 }, if axes.1 { stick.1 } else { 0 })
 }
 
 pub fn stick_vector(x: i16, y: i16) -> Option<(f32, f32)> {
@@ -630,6 +639,19 @@ mod tests {
     }
 
     #[test]
+    fn right_stick_requires_neutral_only_on_mapped_axes() {
+        let mut state = Session::new(InputMode::Hybrid);
+        state.right_stick = (1000, i16::MAX);
+        state.refresh_neutral_for_sticks([(true, true), (true, false)]);
+        assert!(state.allow_game_input());
+        state.refresh_neutral_for_sticks([(true, true), (true, true)]);
+        assert!(!state.allow_game_input());
+        state.right_stick = (0, 0);
+        state.refresh_neutral();
+        assert!(state.allow_game_input());
+    }
+
+    #[test]
     fn unused_stick_axes_do_not_block_resume_but_physical_buttons_still_do() {
         let mut s=Session::new(InputMode::Hybrid);
         let mut mapping=controls::Mapping::group(2);
@@ -658,8 +680,7 @@ mod tests {
             s.require_neutral();s.stick=(1000,disabled_y);
             s.refresh_neutral_for_axes(used);
             assert!(s.allow_game_input());
-            let filtered=mapping.filter_stick(s.stick);
-            assert!(stick_vector(filtered.0,filtered.1).is_none());
+            assert!(mapped_stick(s.stick, used).is_none());
             for active_x in [-10000,10000] {
                 s.require_neutral();s.stick=(active_x,disabled_y);
                 s.refresh_neutral_for_axes(used);

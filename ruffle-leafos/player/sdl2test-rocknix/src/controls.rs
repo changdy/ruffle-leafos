@@ -6,6 +6,8 @@ use std::{collections::BTreeMap, fs::{self, File, OpenOptions}, io::{Read, Write
 
 pub const LABELS: [&str; 14] = ["A", "B", "X", "Y", "L1", "R1", "L2", "R2", "Start", "Select", "十字上", "十字下", "十字左", "十字右"];
 pub const AXIS_LABELS: [&str; 5] = ["摇杆上", "摇杆下", "摇杆左", "摇杆右", "摇杆按下"];
+const LEFT_AXIS_LABELS: [&str; 5] = ["左摇杆上", "左摇杆下", "左摇杆左", "左摇杆右", "L3"];
+const RIGHT_AXIS_LABELS: [&str; 5] = ["右摇杆上", "右摇杆下", "右摇杆左", "右摇杆右", "R3"];
 pub const CATEGORIES: [&str; 9] = ["常用", "字母", "数字", "功能键", "鼠标", "Shift", "Ctrl", "Alt", "符号"];
 pub const GAME_SLOTS: usize = 10;
 pub const GRID_COLS: usize = 5;
@@ -17,9 +19,9 @@ pub struct Mapping {
     pub mode: InputMode,
     pub speed: MouseSpeed,
     pub buttons: [Binding; 14],
-    pub axes: [Binding; 5],
+    pub axes: [Binding; 10],
     pub turbo: [Rate;14],
-    pub axis_turbo: [Rate;5],
+    pub axis_turbo: [Rate;10],
     pub stick: Stick,
     pub fine: bool,
 }
@@ -33,9 +35,9 @@ impl Mapping {
         (directions[2]!=Binding::None || directions[3]!=Binding::None,
          directions[0]!=Binding::None || directions[1]!=Binding::None)
     }
-    pub fn filter_stick(&self, stick: (i16,i16)) -> (i16,i16) {
-        let (x,y)=self.used_stick_axes(false);
-        (if x {stick.0} else {0},if y {stick.1} else {0})
+    pub fn used_right_axes(&self) -> (bool, bool) {
+        (self.axes[7] != Binding::None || self.axes[8] != Binding::None,
+         self.axes[5] != Binding::None || self.axes[6] != Binding::None)
     }
     pub fn directions(&self, swapped: bool) -> Self {
         let mut mapping=self.clone();
@@ -67,7 +69,8 @@ impl Mapping {
         m.reset_axes(); m.axes[4] = Binding::LeftClick; m
     }
     pub fn reset_axes(&mut self) {
-        self.axes = [Binding::None;5]; self.axis_turbo.fill(Rate::Off);
+        self.axes[..5].fill(Binding::None);
+        self.axis_turbo[..5].fill(Rate::Off);
         for i in 0..4 { self.axes[i] = match self.stick {
             Stick::Mouse => Binding::Pointer(i as u8), Stick::Directions => self.buttons[10+i],
             Stick::Steering if i >= 2 => self.buttons[10+i], _ => Binding::None,
@@ -97,7 +100,7 @@ impl Mapping {
         if let Some(keys) = p.dpad { for (i, key) in keys.into_iter().enumerate() { buttons[10+i] = Binding::Key(key); } }
         let mut mapping = Self { base: base.clamp(1, 12), mode: match p.stick {
             Stick::Mouse if p.dpad.is_none() => InputMode::Mouse, Stick::Mouse => InputMode::Hybrid, _ => InputMode::Keyboard,
-        }, speed: MouseSpeed::Normal, buttons, turbo:[Rate::Off;14], axis_turbo:[Rate::Off;5], axes: [Binding::None;5], stick: p.stick, fine: p.dpad.is_none() };
+        }, speed: MouseSpeed::Normal, buttons, turbo:[Rate::Off;14], axis_turbo:[Rate::Off;10], axes: [Binding::None;10], stick: p.stick, fine: p.dpad.is_none() };
         mapping.reset_axes(); mapping
     }
 }
@@ -165,14 +168,16 @@ pub struct Record { pub name: String, pub identity: String, pub mapping: Mapping
 impl Record {
     pub fn encode(&self) -> String {
         let m = &self.mapping;
-        let mut text = format!("version=5\nname={}\nidentity={}\nbase={}\nmode={}\nspeed={}\nstick={}\nfine={}\n", self.name, self.identity, m.base,
+        let axis_count = if m.axes[5..].iter().any(|binding| *binding != Binding::None) { 10 } else { 5 };
+        let version = if axis_count == 10 { 6 } else { 5 };
+        let mut text = format!("version={version}\nname={}\nidentity={}\nbase={}\nmode={}\nspeed={}\nstick={}\nfine={}\n", self.name, self.identity, m.base,
             match m.mode { InputMode::Hybrid => "hybrid", InputMode::Keyboard => "keyboard", InputMode::Mouse => "mouse" },
             match m.speed { MouseSpeed::Slow => "slow", MouseSpeed::Normal => "normal", MouseSpeed::Fast => "fast" },
             match m.stick { Stick::Directions => "directions", Stick::Steering => "steering", Stick::Mouse => "mouse", Stick::None => "none", Stick::Custom => "custom" }, m.fine);
         for (i, binding) in m.buttons.iter().enumerate() { text.push_str(&format!("bind.{i}={}\n", encode_binding(*binding))); }
-        for (i, binding) in m.axes.iter().enumerate() { text.push_str(&format!("axis.{i}={}\n", encode_binding(*binding))); }
+        for (i, binding) in m.axes[..axis_count].iter().enumerate() { text.push_str(&format!("axis.{i}={}\n", encode_binding(*binding))); }
         for (i,rate) in m.turbo.iter().enumerate() {text.push_str(&format!("turbo.{i}={}\n",rate.hz()));}
-        for (i,rate) in m.axis_turbo.iter().enumerate() {text.push_str(&format!("axis-turbo.{i}={}\n",rate.hz()));}
+        for (i,rate) in m.axis_turbo[..axis_count].iter().enumerate() {text.push_str(&format!("axis-turbo.{i}={}\n",rate.hz()));}
         text
     }
 
@@ -185,7 +190,7 @@ impl Record {
         }
         let get = |key: &str| fields.get(key).copied().ok_or_else(|| crate::tr!("配置缺少 {key}", "Missing config field: {key}"));
         let version = get("version")?;
-        let count = match version { "1"=>22,"2"=>25,"3"=>30,"4"=>27,"5"=>46,_=>return Err(t("不支持的配置版本").into()) };
+        let count = match version { "1"=>22,"2"=>25,"3"=>30,"4"=>27,"5"=>46,"6"=>56,_=>return Err(t("不支持的配置版本").into()) };
         if fields.len() != count { return Err(t("配置字段缺失或未知").into()); }
         // Old appearance fields are validated for compatibility, never applied.
         if matches!(version,"2"|"3") {
@@ -198,19 +203,20 @@ impl Record {
         let identity = get("identity")?.to_string();
         if identity.len() > 4096 || identity.bytes().any(|b| !b.is_ascii_hexdigit()) { return Err(t("游戏标识无效").into()); }
         let base = get("base")?.parse::<usize>().map_err(|_| t("配置基底无效"))?;
-        if base > if matches!(version,"3"|"4"|"5") {14} else {12} { return Err(t("配置基底无效").into()); }
+        if base > if matches!(version,"3"|"4"|"5"|"6") {14} else {12} { return Err(t("配置基底无效").into()); }
         let mode = match get("mode")? { "hybrid" => InputMode::Hybrid, "keyboard" => InputMode::Keyboard, "mouse" => InputMode::Mouse, _ => return Err(t("控制方式无效").into()) };
         let speed = match get("speed")? { "slow" => MouseSpeed::Slow, "normal" => MouseSpeed::Normal, "fast" => MouseSpeed::Fast, _ => return Err(t("鼠标速度无效").into()) };
-        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if matches!(version,"3"|"4"|"5") => Stick::Custom, _ => return Err(t("摇杆方式无效").into()) };
+        let stick = match get("stick")? { "directions" => Stick::Directions, "steering" => Stick::Steering, "mouse" => Stick::Mouse, "none" => Stick::None, "custom" if matches!(version,"3"|"4"|"5"|"6") => Stick::Custom, _ => return Err(t("摇杆方式无效").into()) };
         let fine = match get("fine")? { "true" => true, "false" => false, _ => return Err(t("十字精调无效").into()) };
         let mut buttons = [Binding::None; 14];
         for (i, binding) in buttons.iter_mut().enumerate() { *binding = decode_binding(get(&format!("bind.{i}"))?)?; }
-        let mut mapping = Mapping { base, mode, speed, buttons, turbo:[Rate::Off;14], axis_turbo:[Rate::Off;5], axes: [Binding::None;5], stick, fine };
-        if matches!(version,"3"|"4"|"5") { for (i,binding) in mapping.axes.iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
+        let mut mapping = Mapping { base, mode, speed, buttons, turbo:[Rate::Off;14], axis_turbo:[Rate::Off;10], axes: [Binding::None;10], stick, fine };
+        let axis_count = if version == "6" { 10 } else { 5 };
+        if matches!(version,"3"|"4"|"5"|"6") { for (i,binding) in mapping.axes[..axis_count].iter_mut().enumerate() { *binding = decode_binding(get(&format!("axis.{i}"))?)?; } }
         else { mapping.reset_axes(); }
-        if version=="5" {
+        if matches!(version, "5" | "6") {
             for (i,rate) in mapping.turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("turbo.{i}"))?).ok_or(t("连发频率无效"))?;}
-            for (i,rate) in mapping.axis_turbo.iter_mut().enumerate() {*rate=Rate::parse(get(&format!("axis-turbo.{i}"))?).ok_or(t("摇杆连发频率无效"))?;}
+            for (i,rate) in mapping.axis_turbo[..axis_count].iter_mut().enumerate() {*rate=Rate::parse(get(&format!("axis-turbo.{i}"))?).ok_or(t("摇杆连发频率无效"))?;}
             for (binding,rate) in mapping.buttons.iter().zip(mapping.turbo.iter()).chain(mapping.axes.iter().zip(mapping.axis_turbo.iter())) {
                 if *rate!=Rate::Off && !turbo::supported(*binding) {return Err(t("此动作不支持连发").into());}
             }
@@ -397,22 +403,28 @@ pub enum ResultAction { None, Close, Apply(Mapping), Cursor(cursor::Settings), S
 enum Pending { Exit, Slot(usize) }
 
 pub const EDIT_ITEMS: usize = 22;
-pub const SAVE_ROW: usize = EDIT_ITEMS;
-pub const BACK_ROW: usize = EDIT_ITEMS+1;
+#[cfg(test)]
+const SAVE_ROW: usize = EDIT_ITEMS;
+#[cfg(test)]
+const BACK_ROW: usize = EDIT_ITEMS+1;
 
-fn edit_move(row:usize,nav:Nav)->usize {
+fn edit_move(row:usize,nav:Nav,items:usize)->usize {
     use Nav::*;
-    if row>=EDIT_ITEMS {return match nav {
-        Left|Right=>if row==SAVE_ROW {BACK_ROW}else{SAVE_ROW},
-        Up=>if row==SAVE_ROW {20}else{21},
-        Down=>if row==SAVE_ROW {0}else{4},_=>row,
+    let last_row = (items - 1) / GRID_COLS * GRID_COLS;
+    let save = items;
+    let back = items + 1;
+    if row>=items {return match nav {
+        Left|Right=>if row==save {back}else{save},
+        Up=>if row==save {last_row}else{items-1},
+        Down=>if row==save {0}else{GRID_COLS-1},_=>row,
     };}
-    if matches!(nav,Down)&&row>=20 {return if row==20 {SAVE_ROW}else{BACK_ROW};}
-    if matches!(nav,Up)&&row<GRID_COLS {return if row<2 {SAVE_ROW}else{BACK_ROW};}
-    grid_move(row,EDIT_ITEMS,nav)
+    if matches!(nav,Down)&&row>=last_row {return if row==last_row {save}else{back};}
+    if matches!(nav,Up)&&row<GRID_COLS {return if row<2 {save}else{back};}
+    grid_move(row,items,nav)
 }
 
 pub struct Controls {
+    pub dual_stick: bool,
     pub game_slot: usize,
     pub preview_slot: usize,
     pub mappings: [Mapping;GAME_SLOTS],
@@ -445,7 +457,7 @@ impl Controls {
             Err(_) => {if store.cursor_path().exists() || store.cursor_path().with_extension("conf.bak").exists() {status.push_str(t("；光标配置损坏，使用默认；原文件保留"));} cursor::Settings::default()},
         };
         let mapping = mappings[game_slot].clone();
-        Self { game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {crate::tr!("按键方案{}", "Control profile {}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
+        Self { dual_stick: false, game_slot, preview_slot:game_slot, mappings, active: None, visible: false, page: Page::Edit, row: 0, status: status.clone(), source: if status.is_empty() {crate::tr!("按键方案{}", "Control profile {}",game_slot+1)} else {status}, draft: mapping.clone(), original: mapping, cursor_settings, cursor_draft: cursor_settings, store,
             editing: 0, category: 0, pending:None, return_row:0, pointer_speed:MouseSpeed::Normal }
     }
     pub fn begin(&mut self, actual: Mapping) { self.visible = true; self.page = Page::Edit; self.row = 0; self.draft = actual.clone(); self.original = actual; self.pending=None; self.status.clear(); }
@@ -516,12 +528,36 @@ impl Controls {
         Page::Confirm => t("A 确定  B 继续编辑"),
         Page::Cursor => t("左右调整  A 确认  X 恢复此项  B 返回"),
     } }
+    pub fn edit_items(&self) -> usize { if self.dual_stick { EDIT_ITEMS + RIGHT_AXIS_LABELS.len() } else { EDIT_ITEMS } }
+
+    fn axis_at_row(&self, row: usize) -> Option<usize> {
+        match row {
+            15..=19 => Some(row - 15),
+            22..=26 if self.dual_stick => Some(row - 17),
+            _ => None,
+        }
+    }
+
+    fn axis_label(&self, index: usize) -> &'static str {
+        match index {
+            0..=4 if self.dual_stick => LEFT_AXIS_LABELS[index],
+            0..=4 => AXIS_LABELS[index],
+            _ => RIGHT_AXIS_LABELS[index - 5],
+        }
+    }
+
+    fn axis_line(&self, index: usize) -> String {
+        let label = t(self.axis_label(index));
+        crate::tr!("{label}{}：{}", "{label}{}: {}", self.draft.axis_turbo[index].badge(), binding_label(self.draft.axes[index]))
+    }
+
     pub fn lines(&self) -> Vec<String> { match self.page {
         Page::Edit => LABELS.iter().enumerate().map(|(i,s)| {let s=t(s); crate::tr!("{s}{}：{}", "{s}{}: {}",self.draft.turbo[i].badge(), binding_label(self.draft.buttons[i]))}).chain([
-            crate::tr!("摇杆预设：{}", "Stick preset: {}", stick_label(self.draft.stick))]).chain(AXIS_LABELS.iter().enumerate().map(|(i,s)| {let s=t(s); crate::tr!("{s}{}：{}", "{s}{}: {}",self.draft.axis_turbo[i].badge(),binding_label(self.draft.axes[i]))})).chain([
+            crate::tr!("摇杆预设：{}", "Stick preset: {}", stick_label(self.draft.stick))]).chain((0..5).map(|index| self.axis_line(index))).chain([
             crate::tr!("十字鼠标精调：{}", "D-pad mouse precision: {}", if self.draft.fine {t("开")} else {t("关")}),
             crate::tr!("鼠标速度：{}", "Mouse speed: {}", match self.draft.speed { MouseSpeed::Slow => t("慢"), MouseSpeed::Normal => t("标准"), MouseSpeed::Fast => t("快") }),
-            t("保存").into(), t("返回").into()]).collect(),
+        ]).chain((5..if self.dual_stick { 10 } else { 5 }).map(|index| self.axis_line(index)))
+            .chain([t("保存").into(), t("返回").into()]).collect(),
         Page::Cursor => vec![crate::tr!("光标样式：{}", "Cursor style: {}",self.cursor_draft.style.name()),crate::tr!("光标颜色：{}", "Cursor color: {}",self.cursor_draft.color.name()),
             crate::tr!("光标大小：{}（{}）", "Cursor size: {} ({})",self.cursor_draft.size.name(),self.cursor_draft.size.pixels()),
             crate::tr!("鼠标速度：{}（本次）", "Mouse speed: {} (this session)",match self.pointer_speed {MouseSpeed::Slow=>t("慢"),MouseSpeed::Normal=>t("标准"),MouseSpeed::Fast=>t("快")}),
@@ -530,10 +566,18 @@ impl Controls {
         Page::Confirm => vec![t("继续编辑").into(), t("舍弃修改并继续").into(), t("保存并继续").into()],
     } }
     fn selected_repeat(&self) -> Option<(Binding,Rate)> {
-        match self.row {0..=13=>Some((self.draft.buttons[self.row],self.draft.turbo[self.row])),15..=19=>Some((self.draft.axes[self.row-15],self.draft.axis_turbo[self.row-15])),_=>None}
+        if self.row < LABELS.len() { return Some((self.draft.buttons[self.row], self.draft.turbo[self.row])); }
+        self.axis_at_row(self.row).map(|i| (self.draft.axes[i], self.draft.axis_turbo[i]))
     }
     pub fn detail(&self) -> String {
-        if self.page == Page::Picker { return format!("{}  →  {}", if self.editing < 14 {t(LABELS[self.editing])} else {t(AXIS_LABELS[self.editing-15])}, binding_label(if self.editing < 14 {self.draft.buttons[self.editing]} else {self.draft.axes[self.editing-15]})); }
+        if self.page == Page::Picker {
+            let (label, binding) = if let Some(i) = self.axis_at_row(self.editing) {
+                (self.axis_label(i), self.draft.axes[i])
+            } else {
+                (LABELS[self.editing], self.draft.buttons[self.editing])
+            };
+            return format!("{}  →  {}", t(label), binding_label(binding));
+        }
         if self.page == Page::Cursor { return t("速度调整立即生效，仅本次；光标外观为全局保存").into(); }
         let repeat=if self.page==Page::Edit {self.selected_repeat().map(|(binding,rate)|if turbo::supported(binding) {crate::tr!(" · {}（Y切换）", " · {} (Y to change)",rate.label())}else{t(" · 此动作无连发").into()}).unwrap_or_default()}else{String::new()};
         repeat.trim_start_matches(" · ").into()
@@ -578,12 +622,15 @@ impl Controls {
                     self.draft.buttons[self.editing] = binding;
                     if self.editing>=10 && (self.draft.stick==Stick::Directions || self.draft.stick==Stick::Steering && self.editing>=12) {self.draft.axes[self.editing-10]=binding;}
                 }
-                else { self.draft.axes[self.editing-15] = binding; self.draft.stick = Stick::Custom; }
+                else if let Some(i) = self.axis_at_row(self.editing) {
+                    self.draft.axes[i] = binding;
+                    if i < 5 { self.draft.stick = Stick::Custom; }
+                }
                 self.draft.normalize_turbo(); self.go(Page::Edit); self.row = self.editing;
             }
             return ResultAction::None;
         }
-        if self.page == Page::Edit && matches!(nav,Up|Down|Left|Right) { self.row=edit_move(self.row,nav); return ResultAction::None; }
+        if self.page == Page::Edit && matches!(nav,Up|Down|Left|Right) { self.row=edit_move(self.row,nav,self.edit_items()); return ResultAction::None; }
         if matches!(nav, Up | Down) { self.row = (self.row as i32 + if matches!(nav,Up) {-1} else {1}).rem_euclid(count as i32) as usize; return ResultAction::None; }
         let adjust = if matches!(nav,Left) {-1} else {1};
         if self.page == Page::Cursor {
@@ -615,19 +662,19 @@ impl Controls {
             if matches!(nav,Y) {
                 if let Some((binding,rate))=self.selected_repeat() {
                     if turbo::supported(binding) {
-                        let next=rate.next();if self.row<14 {self.draft.turbo[self.row]=next;}else{self.draft.axis_turbo[self.row-15]=next;}
+                        let next=rate.next();if self.row<14 {self.draft.turbo[self.row]=next;}else if let Some(i) = self.axis_at_row(self.row) {self.draft.axis_turbo[i]=next;}
                         self.status=crate::tr!("{}；请保存", "{}; save to keep",next.label());
                     } else {self.status=t("连发支持键盘、组合键及鼠标左右键").into();}
                 }
             }
             if matches!(nav, A) {
                 match self.row {
-                    0..=13 | 15..=19 if matches!(nav,A) => { self.editing = self.row; self.category = 0; self.go(Page::Picker); },
+                    row if row < LABELS.len() || self.axis_at_row(row).is_some() => { self.editing = row; self.category = 0; self.go(Page::Picker); },
                     14 => { let items = [Stick::Mouse,Stick::Directions,Stick::Steering,Stick::None,Stick::Custom]; let i = items.iter().position(|s| *s == self.draft.stick).unwrap(); self.draft.stick = items[(i as i32+adjust).rem_euclid(5) as usize]; if self.draft.stick != Stick::Custom {let press=self.draft.axes[4];let rate=self.draft.axis_turbo[4]; self.draft.reset_axes();self.draft.axes[4]=press;self.draft.axis_turbo[4]=rate;} },
                     20 => self.draft.fine = !self.draft.fine,
                     21 => self.draft.speed = match self.draft.speed { MouseSpeed::Slow=>MouseSpeed::Normal,MouseSpeed::Normal=>MouseSpeed::Fast,MouseSpeed::Fast=>MouseSpeed::Slow },
-                    SAVE_ROW => return self.save_scope(),
-                    BACK_ROW => return self.request(Pending::Exit), _ => {}
+                    row if row == self.edit_items() => return self.save_scope(),
+                    row if row == self.edit_items() + 1 => return self.request(Pending::Exit), _ => {}
                 }
             }
         }
@@ -645,6 +692,39 @@ mod tests {
         fn record(&self, base: usize, game: bool) -> Record { Record { name: "测试配置".into(), identity: if game {self.0.identity.clone()} else {String::new()}, mapping: Mapping::builtin(base) } }
     }
     impl Drop for Fixture { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0.root); } }
+
+    #[test]
+    fn right_stick_editor_saves_and_reloads_independent_bindings() {
+        let fixture = Fixture::new();
+        let mut controls = Controls::new(fixture.0.clone());
+        controls.dual_stick = true;
+        controls.begin(Mapping::group(0));
+        let old = controls.draft.clone();
+        assert_eq!(controls.lines().len(), controls.edit_items() + 2);
+        for row in 22..=26 {
+            controls.row = row;
+            controls.nav(Nav::A);
+            assert_eq!(controls.page, Page::Picker);
+            controls.row = 1;
+            controls.nav(Nav::A);
+            assert_eq!(controls.page, Page::Edit);
+            assert_eq!(controls.draft.axes[row - 17], Binding::Key(13));
+        }
+        controls.row = 26;
+        controls.nav(Nav::Y);
+        assert_ne!(controls.draft.axis_turbo[9], Rate::Off);
+        assert_eq!(controls.draft.stick, old.stick);
+        assert_eq!(controls.draft.axes[..5], old.axes[..5]);
+        controls.row = controls.edit_items();
+        assert!(matches!(controls.nav(Nav::A), ResultAction::Apply(_)));
+        let stored = fs::read_to_string(fixture.0.game_slot(0)).unwrap();
+        assert!(stored.starts_with("version=6\n"));
+        assert_eq!(Controls::new(fixture.0.clone()).mappings[0], controls.draft);
+        let old_record = Record { mapping: old, ..fixture.record(0, true) };
+        let old_text = old_record.encode();
+        assert!(old_text.starts_with("version=5\n"));
+        assert_eq!(Record::decode(&old_text).unwrap(), old_record);
+    }
 
     #[test]
     fn zip_reuses_directory_controls_only_for_catalogued_same_content() {
@@ -809,7 +889,7 @@ mod tests {
         assert_eq!(&b.buttons[4..10],&a.buttons[4..10]);
         assert_eq!(&a.buttons[4..6],&[Binding::Key(32),Binding::Key(13)]);
         assert_eq!(&a.buttons[8..10],&[Binding::Key(27),Binding::Key(9)]);
-        assert_eq!(a.axes,[Binding::Pointer(0),Binding::Pointer(1),Binding::Pointer(2),Binding::Pointer(3),Binding::LeftClick]);
+        assert_eq!(a.axes[..5],[Binding::Pointer(0),Binding::Pointer(1),Binding::Pointer(2),Binding::Pointer(3),Binding::LeftClick]);
         assert_eq!(b.axes,a.axes);
     }
     #[test]
@@ -817,8 +897,8 @@ mod tests {
         let f=Fixture::new();let c=Controls::new(f.0.clone());
         assert!(!c.mappings[0].is_empty());assert!(!c.mappings[1].is_empty());
         for m in &c.mappings[2..] {
-            assert!(m.is_empty());assert_eq!(m.buttons,[Binding::None;14]);assert_eq!(m.axes,[Binding::None;5]);
-            assert_eq!(m.turbo,[Rate::Off;14]);assert_eq!(m.axis_turbo,[Rate::Off;5]);assert_eq!(m.stick,Stick::None);
+            assert!(m.is_empty());assert_eq!(m.buttons,[Binding::None;14]);assert_eq!(m.axes,[Binding::None;10]);
+            assert_eq!(m.turbo,[Rate::Off;14]);assert_eq!(m.axis_turbo,[Rate::Off;10]);assert_eq!(m.stick,Stick::None);
         }
         assert!(!f.0.root.exists());
     }
@@ -894,7 +974,7 @@ mod tests {
     #[test]
     fn mixed_axis_actions_and_click_roundtrip_and_edit_independently() {
         let f=Fixture::new();let mut r=f.record(1,false);r.mapping.stick=Stick::Custom;
-        r.mapping.axes=[Binding::Key(119),Binding::Key(115),Binding::Pointer(2),Binding::RightClick,Binding::Combo([profiles::CTRL,32,0,0],2)];
+        r.mapping.axes[..5].copy_from_slice(&[Binding::Key(119),Binding::Key(115),Binding::Pointer(2),Binding::RightClick,Binding::Combo([profiles::CTRL,32,0,0],2)]);
         assert_eq!(Record::decode(&r.encode()).unwrap(),r);
         let mut c=Controls::new(f.0.clone());c.begin(r.mapping.clone());c.page=Page::Edit;c.row=15;c.nav(Nav::A);
         c.nav(Nav::Right);c.nav(Nav::A);assert_eq!(c.draft.axes[0],Binding::Key(13));assert_eq!(&c.draft.axes[1..],&r.mapping.axes[1..]);
@@ -928,7 +1008,7 @@ mod tests {
     fn repeat_is_per_button_and_per_scheme_and_survives_restart() {
         let f=Fixture::new();let mut c=Controls::new(f.0.clone());c.begin(Mapping::group(0));
         c.nav(Nav::Y);c.nav(Nav::Y);assert_eq!(c.draft.turbo[0],Rate::Normal);
-        assert!(c.draft.turbo[1..].iter().all(|rate|*rate==Rate::Off));assert_eq!(c.draft.axis_turbo,[Rate::Off;5]);
+        assert!(c.draft.turbo[1..].iter().all(|rate|*rate==Rate::Off));assert_eq!(c.draft.axis_turbo,[Rate::Off;10]);
         assert!(c.lines()[0].contains("连10"));c.row=SAVE_ROW;c.nav(Nav::A);
         c.switch_slot(1);assert_eq!(c.draft.turbo,[Rate::Off;14]);
         let restarted=Controls::new(f.0.clone());assert_eq!(restarted.mappings[0].turbo[0],Rate::Normal);

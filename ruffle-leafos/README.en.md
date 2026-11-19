@@ -8,19 +8,21 @@ Play local Flash games with the buttons and stick on your **Miniloong Pocket 1 /
 
 ## AisOS Apps menu
 
-On the RK3562 AisOS handheld, extract **`ruffle-aisos-0.8.6.zip`** to the external game card. Keep `applyCenter/`, its hidden `.ruffle-flash/` subdirectory, and `flash/` together. The card mounts at `/storage/roms`. From the RGBox home screen, open **Apps → Ruffle Flash**.
+On Pocket AIS (RK3562 / AisOS), extract **`ruffle-pocketais-<version>.zip`** to the external game card. Keep `applyCenter/`, its hidden `.ruffle-flash/` subdirectory, and `flash/` together. The card mounts at `/storage/roms`. In RGBox, open **Apps → Ruffle Flash**. [GitHub Actions builds](https://github.com/changdy/ruffle-leafos/actions/workflows/pocketais.yml?query=branch%3Apocketais)
 
-Add your SWF and ZIP games to `flash/` and reopen the list. Bloxorz and a zipped display test are included.
+The tested RGBox firmware has no Flash category. Put SWF and game ZIP files in `flash/` on the card and browse them inside Ruffle Flash. The package includes Bloxorz and a display test.
 
-From left to right, the four small front buttons are **Back (Fn), Home, Select and Start**. AisOS uses a quick double press of the leftmost button to quit an application. To save your game as you leave, choose **Save and exit** in the Ruffle pause menu.
+The four small front buttons are **Back (Fn), Home, Select and Start** from left to right. The second button, **Home**, is the in-game Menu button.
 
 | Screen | Handheld controls |
 | --- | --- |
-| Game list | Move up or down with the D-pad or either stick. L1 and R1 move a page back or forward. Press A or Start to open, B to go back. At the root, B returns to RGBox. |
-| In game | **Press the right stick (R3) to pause or resume.** By default, move the pointer with the left stick and press it (L3) to click. |
-| Pause menu | Use the D-pad to navigate, A to confirm and B to go back. On the controls row, press left or right to change profiles. Use profile 2 for D-pad movement in Bloxorz. Choose **Save and exit** to return to the game list. |
+| Game list | Move with the D-pad or either stick. L1 and R1 move a page up or down. Press A or Start to open and B to go up a folder. At the root, B returns to RGBox. |
+| In game | **Tap Home** to pause or resume. By default, move the pointer with the left stick and press it (L3) to click. |
+| Shortcuts | **Home + A / B** selects the previous or next control profile. **Home + X** swaps the D-pad and left-stick directions. **Home + D-pad Down** toggles mouse drag lock. **Home + L1 / R1** lowers or raises screen brightness. The volume buttons still adjust volume. |
+| Pause menu | Use the D-pad to navigate, A to confirm and B to go back. The menu includes controls, progress, the on-screen keyboard and photos. Choose **Save and exit** to return to the game list. |
+| Right stick | In **Home → Controls**, assign each direction and the click (R3) to a keyboard or mouse action. These inputs start unbound, support turbo for eligible actions, and are saved per game and profile. |
 
-Settings, native saves, the ZIP cache, and the two latest session logs live in `gamedata/ruffle-flash/` on the card. Exit and back up this directory before upgrading. Reopen Ruffle Flash from RGBox to activate updated controls. The AisOS preview uses GLES. The remaining sections describe Pocket1 / Leaf.
+Settings, native saves, the ZIP cache, and the two latest session logs live in `gamedata/ruffle-flash/` on the card. Photos are stored in `Pictures/Ruffle Flash/`. Exit and back up game data before upgrading. Pocket AIS uses GLES and offers standard photos in the screenshot menu. The remaining sections describe Pocket1 / Leaf.
 
 ## Installing and upgrading
 

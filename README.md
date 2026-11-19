@@ -6,7 +6,7 @@
 
 面向 **Miniloong Pocket 1 / leafOS** 的 Flash 播放器，基于 Ruffle。
 
-另提供 **RK3562 / AisOS** 预览版，可从 RGBox 的「应用」菜单选游戏。[AisOS 安装与操作](ruffle-leafos/README.md#aisos-应用菜单)
+另提供 **Pocket AIS（RK3562 / AisOS）** 安装包，从 RGBox「应用 → Ruffle Flash」进入游戏列表。[AisOS 安装与操作](ruffle-leafos/README.md#aisos-应用菜单)
 
 **简体中文** · [English](README.en.md)
 

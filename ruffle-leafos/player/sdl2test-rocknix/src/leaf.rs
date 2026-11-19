@@ -236,8 +236,13 @@ impl Frontend {
                     cover.target.clone()
                 },
                 Screenshot::Photo=>{
-                    let mounts=std::fs::read_to_string("/proc/self/mountinfo").map_err(|e|e.to_string())?;
-                    let root=session::screenshot::photo_root(&session::screenshot::cards(),&mounts).map_err(|e|e.to_string())?;
+                    let root = if self.state.experience.pocketais {
+                        let card = std::env::var_os("SDCARD_PATH").ok_or(t("缺少数据父目录"))?;
+                        std::path::PathBuf::from(card)
+                    } else {
+                        let mounts = std::fs::read_to_string("/proc/self/mountinfo").map_err(|e|e.to_string())?;
+                        session::screenshot::photo_root(&session::screenshot::cards(), &mounts).map_err(|e|e.to_string())?
+                    };
                     session::screenshot::save_photo(&root,&self.state.experience.title,&screenshot_timestamp(),encode).map_err(|e|e.to_string())?
                 },
             };
@@ -445,14 +450,11 @@ impl Frontend {
     }
 
     fn refresh_neutral(&mut self) {
-        let used=if let Some(mapping)=&self.state.controls.active {
-            mapping.used_stick_axes(self.state.directions_swapped)
-        } else {
-            // Legacy/config fallback dispatches snapshot().directions(...),
-            // including the real D-pad bindings after direction swapping.
-            self.snapshot().used_stick_axes(self.state.directions_swapped)
-        };
-        self.state.refresh_neutral_for_axes(used);
+        let mapping = self.snapshot();
+        self.state.refresh_neutral_for_sticks([
+            mapping.used_stick_axes(self.state.directions_swapped),
+            if self.state.controls.dual_stick { mapping.used_right_axes() } else { (false, false) },
+        ]);
     }
 
     fn stick_kind(&self) -> Stick { self.state.controls.active.as_ref().map(|m| if m.has_pointer() {Stick::Mouse} else {m.stick}).unwrap_or(Stick::Mouse) }
@@ -462,13 +464,16 @@ impl Frontend {
         self.cancel_repeats();
         self.cursor_idle.reveal(self.started.elapsed());
         let released = self.state.ledger.release_all(); self.emit(released,false);
-        for i in 0..4 {self.state.release(Source::Stick(i));}
+        for i in [0, 1, 2, 3, 5, 6, 7, 8] { self.state.release(Source::Stick(i)); }
         self.state.drag_locked=false; self.state.require_neutral();
         self.state.profile=mapping.base; self.state.preview_profile=mapping.base;
         self.state.mode=mapping.mode; self.state.preview_mode=mapping.mode;
         self.state.mouse_speed=mapping.speed; self.state.preview_mouse_speed=mapping.speed;
         self.state.use_cfg=false; self.state.preview_use_cfg=false; self.redraw=true;
-        self.state.refresh_neutral_for_axes(mapping.used_stick_axes(self.state.directions_swapped));
+        self.state.refresh_neutral_for_sticks([
+            mapping.used_stick_axes(self.state.directions_swapped),
+            if self.state.controls.dual_stick { mapping.used_right_axes() } else { (false, false) },
+        ]);
         println!("leaf-controls applied source={} mapping={mapping:?}",self.state.controls.source);
     }
     fn switch_slot(&mut self, slot: usize) {
@@ -482,21 +487,42 @@ impl Frontend {
         self.menu_held=snapshot.menu;
         self.system_volume.observe(snapshot.volume_up,snapshot.volume_down,snapshot.menu,self.started.elapsed());
         for command in self.chords.update_at(snapshot,at) {
-            if self.state.virtual_keyboard.is_some() {
-                if command==session::shortcuts::Command::MenuTap {self.keyboard_nav(KeyboardInput::Help);}
+            use session::shortcuts::Command;
+            if matches!(command, Command::BrightnessUp | Command::BrightnessDown) {
+                let up = command == Command::BrightnessUp;
+                let button = if up { Button::RightShoulder } else { Button::LeftShoulder };
+                self.blocked.insert(button as u8);
+                let source = Source::Controller(button as u8);
+                let repeated = self.repeater.release(source, &mut self.state.ledger);
+                self.emit(repeated, false);
+                let released = self.state.release(source);
+                self.emit(released, false);
+                if let Some(level) = session::system_volume::pocketais_brightness(up) {
+                    self.state.system_level = Some((level, Instant::now()));
+                    self.redraw = true;
+                }
                 continue;
             }
-            if command==session::shortcuts::Command::MenuTap {
-                println!("leaf-session physical_menu_tap");self.toggle_menu();continue;
+            if self.state.virtual_keyboard.is_some() {
+                if command == Command::MenuTap { self.keyboard_nav(KeyboardInput::Help); }
+                continue;
+            }
+            if command == Command::MenuTap {
+                println!("leaf-session physical_menu_tap");
+                self.toggle_menu();
+                continue;
             }
             if self.state.paused {continue;}
             let consumed=match command {session::shortcuts::Command::Previous=>Some(Button::A),session::shortcuts::Command::Next=>Some(Button::B),session::shortcuts::Command::SwapDirections=>Some(Button::X),session::shortcuts::Command::Drag=>Some(Button::DPadDown),_=>None};
             if let Some(button)=consumed {self.blocked.insert(button as u8);}
             // The buttons used for a Menu chord must not remain held in Flash.
             for button in DPAD.into_iter().chain([Button::A,Button::B,Button::X]) {
-                let released=self.state.release(Source::Controller(button as u8)); self.emit(released,false);
+                let source = Source::Controller(button as u8);
+                let repeated = self.repeater.release(source, &mut self.state.ledger);
+                self.emit(repeated, false);
+                let released = self.state.release(source);
+                self.emit(released, false);
             }
-            use session::shortcuts::Command;
             match command {
                 Command::Previous | Command::Next => {
                     if let Some(slot)=self.state.controls.shortcut_slot(if command==Command::Previous {-1} else {1}) {
@@ -510,7 +536,7 @@ impl Frontend {
                     self.toast(if self.state.directions_swapped {t("十字键 ↔ 摇杆：已互换（本次）")} else {t("十字键 ↔ 摇杆：已恢复")}.into());
                 },
                 Command::Drag => { if self.can_game_input() {let transitions=self.state.toggle_drag(); self.emit(transitions,false); self.toast(if self.state.drag_locked {t("鼠标左键保持：开")} else {t("鼠标左键保持：关")}.into());} }
-                Command::MenuTap=>{},
+                Command::MenuTap | Command::BrightnessUp | Command::BrightnessDown => {},
             }
         }
         }
@@ -633,7 +659,11 @@ impl Frontend {
 
     fn binding(&self, button: Button) -> Binding {
         if let Some(mapping) = &self.state.controls.active {
-            if button == Button::LeftStick {return mapping.axes[4];}
+            match button {
+                Button::LeftStick => return mapping.axes[4],
+                Button::RightStick if self.state.controls.dual_stick => return mapping.axes[9],
+                _ => {}
+            }
             return PROFILE_BUTTONS.iter().chain(DPAD.iter()).position(|b| *b == button).map(|i|
                 if self.state.directions_swapped && i>=10 {mapping.axes[i-10]} else {mapping.buttons[i]}).unwrap_or(Binding::None);
         }
@@ -642,7 +672,11 @@ impl Frontend {
 
     fn repeat_rate(&self, button: Button) -> Rate {
         let Some(mapping)=&self.state.controls.active else {return Rate::Off;};
-        if button==Button::LeftStick {return mapping.axis_turbo[4];}
+        match button {
+            Button::LeftStick => return mapping.axis_turbo[4],
+            Button::RightStick if self.state.controls.dual_stick => return mapping.axis_turbo[9],
+            _ => {}
+        }
         PROFILE_BUTTONS.iter().chain(DPAD.iter()).position(|b|*b==button).map(|i|if self.state.directions_swapped&&i>=10 {mapping.axis_turbo[i-10]}else{mapping.turbo[i]}).unwrap_or(Rate::Off)
     }
     fn cancel_repeats(&mut self) {let released=self.repeater.clear(&mut self.state.ledger);self.emit(released,false);}
@@ -693,7 +727,7 @@ impl Frontend {
             // The physical observer owns Menu taps when available. Leaf's
             // synthetic Guide events must neither duplicate a tap nor acquire
             // a game-held source whose release can be lost after a chord.
-            if self.menu_device.available()&&!self.scripted_input {return;}
+            if (self.menu_device.available() || self.state.controls.dual_stick) && !self.scripted_input {return;}
             println!("leaf-session guide_received");
             self.toggle_menu();
             return;
@@ -801,6 +835,8 @@ impl Frontend {
         match axis {
             Axis::LeftX => self.state.stick.0 = value,
             Axis::LeftY => self.state.stick.1 = value,
+            Axis::RightX => self.state.right_stick.0 = value,
+            Axis::RightY => self.state.right_stick.1 = value,
             Axis::TriggerLeft | Axis::TriggerRight => {
                 let left = axis == Axis::TriggerLeft;
                 let source = Source::Trigger(if left { 0 } else { 1 });
@@ -810,7 +846,6 @@ impl Frontend {
                     self.button(if left { Button::Paddle1 } else { Button::Paddle2 }, source, down);
                 }
             }
-            _ => {}
         }
     }
 
@@ -859,9 +894,15 @@ impl Frontend {
     fn update_stick(&mut self, seconds: f32) {
         if !self.can_game_input() || self.menu_held {return;}
         let mapping=self.snapshot().directions(self.state.directions_swapped);
-        let stick=mapping.filter_stick(self.state.stick);
-        let (x,y)=session::stick_vector(stick.0,stick.1).unwrap_or((0.,0.));
-        let strengths=[(-y).max(0.),y.max(0.),(-x).max(0.),x.max(0.)];
+        let left = session::mapped_stick(self.state.stick, mapping.used_stick_axes(false));
+        let right = if self.state.controls.dual_stick {
+            session::mapped_stick(self.state.right_stick, mapping.used_right_axes())
+        } else { None };
+        let strengths = [left, right].into_iter().enumerate().flat_map(|(stick, value)| {
+            let (x, y) = value.unwrap_or((0., 0.));
+            [(-y).max(0.), y.max(0.), (-x).max(0.), x.max(0.)].into_iter()
+                .enumerate().map(move |(direction, amount)| (stick * 5 + direction, amount))
+        });
         let mut pointer=(0f32,0f32);
         let mut slow=false; let mut fast=false;
         let mut motion = |binding:Binding, amount:f32| {
@@ -871,18 +912,18 @@ impl Frontend {
                 Binding::Slow if amount>0.3=>slow=true,Binding::Fast if amount>0.3=>fast=true,_=>{}
             }
         };
-        for (i,amount) in strengths.into_iter().enumerate() {motion(mapping.axes[i],amount);}
+        for (i,amount) in strengths.clone() {motion(mapping.axes[i],amount);}
         for button in BUTTONS {
             let trigger=match button {Button::Paddle1=>Some(0),Button::Paddle2=>Some(1),_=>None};
             if self.state.is_held(Source::Controller(button as u8)) || trigger.is_some_and(|i|self.state.is_held(Source::Trigger(i))) {motion(self.binding(button),1.);}
         }
-        for (i,amount) in strengths.into_iter().enumerate() {
+        for (i,amount) in strengths {
             let source=Source::Stick(i as u8);
             let down=amount > if self.state.is_held(source) {0.30} else {0.45};
             if down && self.state.mark_down(source) {self.apply_binding(source,mapping.axes[i],mapping.axis_turbo[i],false);}
             else if !down {let repeated=self.repeater.release(source,&mut self.state.ledger);self.emit(repeated,false);let released=self.state.release(source);self.emit(released,false);}
         }
-        if mapping.fine && x==0. && y==0. {
+        if mapping.fine && left.is_none() {
             for (i,button) in DPAD.into_iter().enumerate() {
                 if self.binding(button)==Binding::None && self.state.is_held(Source::Controller(button as u8)) {
                     match i {0=>pointer.1-=0.25,1=>pointer.1+=0.25,2=>pointer.0-=0.25,_=>pointer.0+=0.25}
@@ -1093,6 +1134,8 @@ pub async fn run() -> Result<(), String> {
     let mut controller: Option<sdl2::controller::GameController> = None;
     let mut pump = sdl.event_pump()?;
     front.state.controls = controls::Controls::new(control_store);
+    front.state.controls.dual_stick = session::shortcuts::is_pocketais();
+    front.state.experience.pocketais = front.state.controls.dual_stick;
     front.state.cursor_settings=front.state.controls.cursor_settings;
     println!("leaf-cursor startup global={:?}",front.state.cursor_settings);
     front.state.experience.title=front.progress.lock().unwrap().title.clone();
@@ -1215,6 +1258,7 @@ pub async fn run() -> Result<(), String> {
                                 if raw!=Button::Guide && pad.button(raw) { front.state.mark_down(Source::Controller(normalize_button(raw, swap) as u8)); }
                             }
                             front.state.stick = (pad.axis(Axis::LeftX), pad.axis(Axis::LeftY));
+                            front.state.right_stick = (pad.axis(Axis::RightX), pad.axis(Axis::RightY));
                             front.state.require_neutral();
                             controller = Some(pad);
                         }
@@ -1330,6 +1374,7 @@ pub async fn run() -> Result<(), String> {
                     if pad.axis(axis) > 8000 { physical.push(Source::Trigger(index)); }
                 }
                 front.state.stick = (pad.axis(Axis::LeftX), pad.axis(Axis::LeftY));
+                front.state.right_stick = (pad.axis(Axis::RightX), pad.axis(Axis::RightY));
             }
             for scan in pump.keyboard_state().pressed_scancodes() {
                 if let Some(key) = Keycode::from_scancode(scan) { physical.push(Source::Keyboard(key.into_i32())); }

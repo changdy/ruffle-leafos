@@ -1,6 +1,6 @@
 # 按键映射与全局光标格式
 
-当前写入 **v5**，兼容读取 v1—v4。本文统一维护字段、身份、存储及旧版兼容；操作方法见[项目 README](../../README.md#按键映射)。实现见 [controls.rs](../../player/sdl2test-rocknix/src/controls.rs)、[cursor.rs](../../player/sdl2test-rocknix/src/cursor.rs)与 [turbo.rs](../../player/sdl2test-rocknix/src/turbo.rs)。
+普通方案写入 **v5**，配置右摇杆的方案写入 **v6**，兼容读取 v1—v5。本文统一维护字段、身份、存储及旧版兼容；操作方法见[项目 README](../../README.md#按键映射)。实现见 [controls.rs](../../player/sdl2test-rocknix/src/controls.rs)、[cursor.rs](../../player/sdl2test-rocknix/src/cursor.rs)与 [turbo.rs](../../player/sdl2test-rocknix/src/turbo.rs)。
 
 ## 映射记录
 
@@ -10,7 +10,7 @@ v5 恰好 **46 个字段**：
 
 | 字段 | 数量 | 取值与含义 |
 | --- | ---: | --- |
-| `version` | 1 | 当前写入 `5` |
+| `version` | 1 | `5` 或 `6` |
 | `name` | 1 | 最多32个 Unicode 字符，不可全为空白，不含控制字符或 `=` |
 | `identity` | 1 | 逻辑游戏路径的 UTF-8 字节十六进制编码；字段最多4096个字符，只接受 ASCII 十六进制，非游戏记录可为空 |
 | `base` | 1 | `0`—`14`；0—12保留旧基底，13/14为当前两组默认键位；不据此判断方案是否为空 |
@@ -19,9 +19,11 @@ v5 恰好 **46 个字段**：
 | `stick` | 1 | `directions`、`steering`、`mouse`、`none`、`custom`；v3起运行时以显式 `axis.*` 为准 |
 | `fine` | 1 | 严格为 `true` 或 `false`，表示十字键鼠标精调 |
 | `bind.0`—`bind.13` | 14 | A、B、X、Y、L1、R1、L2、R2、Start、Select、十字上、下、左、右 |
-| `axis.0`—`axis.4` | 5 | 摇杆上、下、左、右、按下 |
+| `axis.0`—`axis.4` | 5 | 左摇杆上、下、左、右、按下 |
 | `turbo.0`—`turbo.13` | 14 | 对应实体键的连发频率 |
 | `axis-turbo.0`—`axis-turbo.4` | 5 | 对应摇杆动作的连发频率 |
+
+v6 保留 v5 的全部字段，再增加 **10 个字段**，合计 **56 个**。`axis.5`—`axis.9` 分别对应右摇杆上、下、左、右、按下，`axis-turbo.5`—`axis-turbo.9` 对应这五个动作的连发。读 v1—v5 时补为未绑定和无连发。右摇杆五个动作均未绑定的方案保存为 v5。
 
 `bind.*` 与 `axis.*` 接受相同动作：`none`、`left-click`、`right-click`、`slow`、`fast`、`wheel-up`、`wheel-down`、`drag-lock`、`center`、`pointer-0`—`pointer-3`（鼠标上、下、左、右），或1—4个不同的 SDL 稳定键码十进制整数，组合以逗号分隔。按记录顺序按下、反序释放，共享动作使用引用计数；例如 `1073742049,9` 为 Shift+Tab。Menu 不在可绑定字段中。
 
@@ -35,9 +37,9 @@ v5 恰好 **46 个字段**：
 
 身份生成先将路径反斜杠转为 `/`；找到 `/roms/flash/` 前缀时忽略该前缀大小写和其前挂载位置，规范为 `flash/`，保留后面的子目录及文件名；未找到时使用原路径。将结果的 UTF-8 字节编码为十六进制，再对该编码字符串的 ASCII 字节计算 FNV-1a 64位索引。装载时仍比较完整 `identity`，有效主文件身份冲突时禁止覆盖；索引相同不能当作身份相同。游戏改名或移动不会自动迁移按键，SharedObject 内容身份另行维护。
 
-缺少文件时，方案1/2使用内置两组默认键位，方案3—10的19个绑定均为 `none`，`stick=none`、`fine=false`、全部连发 `0`，其余为 `base=13`、`mode=hybrid`、`speed=normal`。启动不批量生成十份文件。19个绑定全为 `none` 且 `fine=false` 才是全空，速度和基底等元数据不影响判定；空方案允许读取、保存、应用与记忆选择。
+缺少文件时，方案1/2使用内置两组默认键位，方案3—10的24个绑定均为 `none`，`stick=none`、`fine=false`、全部连发 `0`，其余为 `base=13`、`mode=hybrid`、`speed=normal`。启动不批量生成十份文件。24个绑定全为 `none` 且 `fine=false` 才是全空，速度和基底等元数据不影响判定；空方案允许读取、保存、应用与记忆选择。
 
-已有槽位主文件或备份优先。仅在方案1主文件和备份都不存在、旧 `games/<索引>.rmap` 存在时兼容读取旧此游戏映射；旧全局按键、模板及 ROM 旁 `.cfg` 不自动叠加。只读取不改写旧文件，主动保存才写v5。
+已有槽位主文件或备份优先。仅在方案1主文件和备份都不存在、旧 `games/<索引>.rmap` 存在时兼容读取旧此游戏映射；旧全局按键、模板及 ROM 旁 `.cfg` 不自动叠加。只读取不改写旧文件，主动保存时根据右摇杆配置写 v5 或 v6。
 
 ## 旧版兼容
 
@@ -51,7 +53,7 @@ v5 恰好 **46 个字段**：
 
 v1/v2按 `stick` 派生摇杆四方向：`mouse` 对应 `pointer-0`—`pointer-3`，`directions` 复制 `bind.10`—`bind.13`，`steering` 仅复制左右，`none` 均未绑定；摇杆按下始终未绑定。v1—v4的19个连发值统一补0。当前读端对所有受支持版本均允许全空映射。
 
-v2/v3旧光标字段接受下节相同样式、颜色和尺寸，`arrow` 为 `ring-dot` 读取别名。主动保存不再写旧光标字段，原文按备份规则保留。旧播放器可能不识别v5、ring-dot或空方案，回滚需保留旧安装和升级前配置；不自动反向转换。
+v2/v3旧光标字段接受下节相同样式、颜色和尺寸，`arrow` 为 `ring-dot` 读取别名。主动保存不再写旧光标字段，原文按备份规则保留。旧播放器可能不识别新版格式、ring-dot 或空方案，回滚需保留旧安装和升级前配置；不自动反向转换。
 
 ## 全局光标
 
