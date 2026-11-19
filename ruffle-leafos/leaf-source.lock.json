@@ -138,7 +138,7 @@
     "sdl2test-rocknix/src/idle_pool.rs": "07b9278495ec187b9d0648a3246c47d9ad49adcc5984af2699f3ddc552f56b53",
     "sdl2test-rocknix/src/keyboard_test.rs": "426d938e90d2e293ac5234ad528cf408e6ede4e3666996c2ba98940e8f48d7da",
     "sdl2test-rocknix/src/keycodes.rs": "10c3367cb9c9431b86c42b590163b41593a0d514e41d289ede86451a198a9705",
-    "sdl2test-rocknix/src/leaf.rs": "848fa8e697305c9e4b0a3b9be123c1293613f4221464f51db038a0922f535ad0",
+    "sdl2test-rocknix/src/leaf.rs": "79ce4694bc56cbbeb40afec146dff86a67ade6c63161bcf68d7ead11cb7d6668",
     "sdl2test-rocknix/src/main.rs": "fe34049602a53db76eb0fed8eb76174b34eff19ecacde1299e64a8ef6e9b697c",
     "sdl2test-rocknix/src/navigator.rs": "45230cf0e924a6cb0c2e0acaf53b8a040f3f04309c2d3cc8c7b7d48566f0c00d",
     "sdl2test-rocknix/src/pause_menu.rs": "724809c919fc14e2b77fb7c4067d71dd7f44328ddebe5d875d7a3abcda7fbe74",

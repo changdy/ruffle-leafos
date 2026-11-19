@@ -84,6 +84,7 @@ def package_ruffle(binding, out, stage):
             'THIRD_PARTY.md': 'docs/THIRD_PARTY.md',
             'licenses/RUFFLE-LICENSE.md': 'player/LICENSE.md',
             'licenses/JAWAKA-LICENSE.txt': 'vendor/jawaka/LICENSE',
+            'licenses/Source Han Sans OFL.txt': 'aisos/licenses/Source Han Sans OFL.txt',
             'licenses/CATASTROPHE-LICENSE.txt': 'vendor/catastrophe/LICENSE',
             'provenance/sample-games.json': 'games/samples/manifest.json',
         }.items():

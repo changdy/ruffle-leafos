@@ -1218,7 +1218,7 @@ pub async fn run() -> Result<(), String> {
             if !front.cursor_visible {return Err("Moved pointer did not reappear".into());}
             front.self_test_neutral_axes()?;
             let mut mapping=front.snapshot();mapping.stick=Stick::Custom;
-            mapping.axes=[Binding::Key(119),Binding::Key(115),Binding::Pointer(2),Binding::Pointer(3),Binding::RightClick];
+            mapping.axes[..5].copy_from_slice(&[Binding::Key(119),Binding::Key(115),Binding::Pointer(2),Binding::Pointer(3),Binding::RightClick]);
             front.state.controls.active=Some(mapping.clone());front.apply_mapping(mapping);axis_start=front.cursor;script_phase+=1;
         } else if opt.self_test_slots && script_phase==ui_phases+3 && idle_start.is_some_and(|at:Instant|at.elapsed()>=Duration::from_millis(4700)) {
             for (axis,value) in [(Axis::LeftY,-32767),(Axis::LeftX,20000)] {events.push_event(Event::ControllerAxisMotion{timestamp:0,which:0,axis,value})?;}
