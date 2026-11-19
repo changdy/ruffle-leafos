@@ -67,6 +67,22 @@ python scripts/package_aisos.py ../work/ruffle-leafos-0.8.6.zip ../work/PySDL2-0
 
 AisOS 输出 ZIP 的顶层目录对应游戏卡根目录。设备端应用入口和播放器需要执行权限，ZIP 已记录 Unix 模式，ext4 卡解压时须保留权限。当前 Pocket1 的发布工作流只生成 Leaf 包。
 
+### AisOS / RGBox 内屏调色
+
+从工程目录运行，复用上一节的两个校验输入。独立 ZIP 包含内屏调色入口、服务安装脚本、PySDL2 和附 SIL OFL 的思源黑体。
+
+```powershell
+python scripts/package_aisos.py ../work/ruffle-leafos-0.8.6.zip ../work/PySDL2-0.9.17-py3-none-any.whl ../outputs/rgbox-screen-color.zip --screen-color
+```
+
+将 ZIP 解压到外置游戏卡根目录并保留 `applyCenter/.screen-color/`。首次安装或升级后，在 AisOS 的 root 终端运行：
+
+```sh
+sh /storage/roms/applyCenter/.screen-color/install.sh
+```
+
+脚本在内部存储部署并启动 `rgbox-screen-color.service`，同时注册开机启动。用 `systemctl is-active rgbox-screen-color.service` 核对服务状态，然后从 RGBox 应用菜单启动 Screen Color。
+
 ### Pocket1 / Leaf 安装包
 
 ```powershell

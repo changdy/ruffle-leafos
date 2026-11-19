@@ -18,9 +18,17 @@
 | 游戏中 | **按下右摇杆（R3）打开或收起暂停菜单**。默认用左摇杆移动光标，按下左摇杆（L3）点击。 |
 | 暂停菜单 | 十字键选择，A 确认，B 返回。在“按键设置”一行按左右切换方案。Bloxorz 用方案 2 的十字键滚动方块。选“保存并退出”回到游戏列表。 |
 
-配置、原生进度、ZIP 缓存和最近两次会话日志在卡上 `gamedata/ruffle-flash/`。升级前退出应用并备份此目录。更新按键后，从 RGBox 重新打开 Ruffle Flash 即可生效。此预览使用 GLES。以下章节介绍 Pocket1 / Leaf。[AisOS 实机验证](docs/progress.md#aisos-实机验证)
+配置、原生进度、ZIP 缓存和最近两次会话日志在卡上 `gamedata/ruffle-flash/`。升级前退出应用并备份此目录。更新按键后，从 RGBox 重新打开 Ruffle Flash 即可生效。此预览使用 GLES。[AisOS 实机验证](docs/progress.md#aisos-实机验证)
+
+### AisOS 内屏调色
+
+安装独立的 `rgbox-screen-color.zip` 后，从 **应用 → Screen Color** 打开「屏幕调色」。用十字键左右实时调整暖色强度，可对照白色、灰阶和彩色色块。**A 保存并退出，B 取消，X 预览默认色彩**。要保存默认色彩，按 X 再按 A。
+
+调色作用于内屏输出，回到 RGBox 或进入游戏后继续生效。保存的强度由 AisOS 开机服务恢复。已验证固件为 RK3562 AisOS community `f820f3-20261020`。首次安装要启用开机服务。[安装与打包](docs/build-release.md#aisos--rgbox-内屏调色)
 
 ## 安装与升级
+
+以下章节介绍 Pocket1 / Leaf。
 
 1. 从 [Releases](https://github.com/changdy/ruffle-leafos/releases) 下载 **`ruffle-leafos-<版本>.zip`**，这是可直接安装的包。
 2. 升级时，先从暂停菜单选择“保存并退出”，备份旧的 `Apps/mlp1/RuffleProbe.pak/` 和用户数据。备份位置见[数据路径](docs/implementation.md#数据身份与持久化)。

@@ -8,6 +8,10 @@ RK3562 AisOS 复用发布版播放器。`aisos/Ruffle Flash.app` 启动 `aisos/l
 
 启动脚本仅为内置 `play_joystick` 的 GUID 设置 SDL 映射。面键沿用系统 SDL 顺序，L3（`b11`）保留摇杆点击，R3（`b12`）提供播放器的逻辑 Guide 暂停键。板级 GPIO 表列出左右摇杆点击，未列出此前使用的 `BTN_MODE`。L2/R2 读取模拟轴 2 和 5。列表按手柄分别记录两个摇杆的纵向输入，回中后可再次向同一方向选一项；L1/R1 每次移动八项。
 
+AisOS 的 Screen Color 以 SDL 显示预览，使用系统 libdrm 找到内置 DSI-1 当前的 CRTC，再通过驱动的 Gamma 接口写入 RGB 查找表。暖色档位为 0–20，逐档降低蓝色和少量绿色，0 使用三通道线性表。校色在 Rockchip 显示控制器的输出级完成。RGBox、Wayland 游戏及 UI 共用这段显示链路。Weston 和内核沿用系统版本。[调色程序](../aisos/screen_color.py) · [预览界面](../aisos/screen_color_ui.py)
+
+外卡入口和内部存储的开机服务通过 `/run/rgbox-screen-color/lock` 串行化。按 A 后，内部 `/storage/.config/rgbox-screen-color/level` 经临时文件和原子替换保存。取消会恢复进入应用前的已保存档位。若预览进程异常退出，服务释放锁后按预览标记恢复。服务检测输出模式或系统休眠时间变化后重传已保存的表。[服务安装](../aisos/screen-color-install.sh)
+
 | 路径 | 职责 |
 | --- | --- |
 | [player/sdl2test-rocknix/src/](../player/sdl2test-rocknix/src/) | Pocket1 前端，处理设备输入、菜单、进度、语言与音画 |
