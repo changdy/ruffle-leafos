@@ -13,8 +13,13 @@ from sdl2 import sdlttf as ttf
 
 WIDTH, HEIGHT = 1024, 768
 PAGE = 8
-TEXT = (242, 246, 248)
-MUTED = (175, 194, 205)
+MENU_COLORS = {
+    "BG": (19, 31, 40),
+    "TEXT": (242, 246, 248),
+    "HIGHLIGHT": (39, 96, 103),
+    "HINT": (175, 194, 205),
+    "ACCENT": (30, 58, 68),
+}
 KEYS = {
     sdl.SDLK_UP: "up", sdl.SDLK_DOWN: "down",
     sdl.SDLK_RETURN: "open", sdl.SDLK_ESCAPE: "back", sdl.SDLK_y: "manager",
@@ -78,31 +83,40 @@ def label(renderer, font, value, x, y, color, width):
         sdl.SDL_FreeSurface(surface)
 
 
+def fill(renderer, rect, color):
+    sdl.SDL_SetRenderDrawColor(renderer, *MENU_COLORS[color], 255)
+    sdl.SDL_RenderFillRect(renderer, sdl.SDL_Rect(*rect))
+
+
 def draw(renderer, title_font, font, folder, root, items, index, message):
-    sdl.SDL_SetRenderDrawColor(renderer, 19, 31, 40, 255)
+    text, hint = MENU_COLORS["TEXT"], MENU_COLORS["HINT"]
+    sdl.SDL_SetRenderDrawColor(renderer, *MENU_COLORS["BG"], 255)
     sdl.SDL_RenderClear(renderer)
-    label(renderer, title_font, "Ruffle Flash", 48, 28, TEXT, 700)
+    label(renderer, title_font, "Ruffle Flash", 48, 28, text, 760)
     page = index // PAGE
     label(renderer, font, f"{page+1} / {max(1, (len(items)+PAGE-1)//PAGE)}",
-          850, 44, MUTED, 134)
-    label(renderer, font, str(folder.relative_to(root.parent)), 48, 101, MUTED, 920)
+          850, 44, hint, 134)
+    label(renderer, font, str(folder.relative_to(root.parent)), 48, 99, hint, 920)
+    fill(renderer, (34, 136, 956, 2), "ACCENT")
     for row, path in enumerate(items[page * PAGE:(page + 1) * PAGE]):
         y = 160 + row * 58
         if row + page * PAGE == index:
-            sdl.SDL_SetRenderDrawColor(renderer, 39, 96, 103, 255)
-            rect = sdl.SDL_Rect(34, y, 956, 52)
-            sdl.SDL_RenderFillRect(renderer, rect)
-        label(renderer, font, path.name + ("/" if path.is_dir() else ""), 52, y+8, TEXT, 916)
+            fill(renderer, (34, y, 956, 52), "HIGHLIGHT")
+        label(renderer, font, path.name + ("/" if path.is_dir() else ""), 52, y+8, text, 916)
     if not items:
         label(renderer, font, "此目录没有游戏。请将 SWF 或 ZIP 放入 flash 文件夹。",
-              48, 190, MUTED, 928)
-    sdl.SDL_SetRenderDrawColor(renderer, 30, 58, 68, 255)
-    sdl.SDL_RenderFillRect(renderer, sdl.SDL_Rect(34, 630, 956, 43))
-    label(renderer, font, "Y    Flash 数据管理", 48, 635, TEXT, 928)
+              48, 190, hint, 928)
+    fill(renderer, (34, 630, 956, 43), "ACCENT")
+    label(renderer, font, "Y  Flash 数据管理", 48, 635, text, 300)
+    if message:
+        label(renderer, font, message, 385, 635, (255, 201, 128), 582)
+    else:
+        label(renderer, font, "Home  游戏内菜单", 730, 635, hint, 237)
+    fill(renderer, (34, 685, 956, 62), "ACCENT")
     back = "退出到 RGBox" if folder == root else "返回上一级"
-    label(renderer, font, f"十字键 / 摇杆  选择    L1 / R1  翻页    A  打开    Fn  {back}", 48, 684, MUTED, 928)
-    label(renderer, font, message or "游戏中按 Home 打开暂停菜单", 48, 724,
-          (255, 201, 128) if message else MUTED, 928)
+    label(renderer, font, "十字键 / 摇杆  选择    L1 / R1  翻页", 48, 700, hint, 578)
+    label(renderer, font, "A  打开", 648, 700, text, 135)
+    label(renderer, font, f"Fn  {back}", 806, 700, text, 168)
     sdl.SDL_RenderPresent(renderer)
 
 
@@ -216,6 +230,9 @@ def choose(root, folder, index, message):
 
 def main():
     root = Path(os.environ["RUFFLE_FLASH_DIR"]).resolve(strict=True)
+    theme = {f"RUFFLE_THEME_{key}": "#%02x%02x%02x" % color for key, color in MENU_COLORS.items()}
+    theme["RUFFLE_THEME_SELECTED"] = theme["RUFFLE_THEME_TEXT"]
+    player_env = {**os.environ, **theme}
     folder, index, message = root, 0, ""
     while choice := choose(root, folder, index, message):
         folder, index, game = choice
@@ -224,7 +241,7 @@ def main():
             command.append("--app-settings")
         print("picker launch", game if game is not None else "Flash Data Manager")
         try:
-            result = subprocess.run(command)
+            result = subprocess.run(command, env=player_env)
             message = "" if result.returncode == 0 else f"播放器退出码 {result.returncode}，详见 session.log"
         except OSError as exc:
             print(exc, file=sys.stderr)

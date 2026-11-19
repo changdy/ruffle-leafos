@@ -141,7 +141,7 @@
     "sdl2test-rocknix/src/leaf.rs": "97928ce93f29f180de1b0fad8c162fe4171034ae7e98ec7e32a3d5a636629faa",
     "sdl2test-rocknix/src/main.rs": "fe34049602a53db76eb0fed8eb76174b34eff19ecacde1299e64a8ef6e9b697c",
     "sdl2test-rocknix/src/navigator.rs": "45230cf0e924a6cb0c2e0acaf53b8a040f3f04309c2d3cc8c7b7d48566f0c00d",
-    "sdl2test-rocknix/src/pause_menu.rs": "55aa24586c05a1d17b57a7a630a9e49759f48920f585ada44b2e46d87d497629",
+    "sdl2test-rocknix/src/pause_menu.rs": "9c56a3870c0acb9cba1a16522bf554eff34d3bb079f2da3b75e2ce7318fe7907",
     "sdl2test-rocknix/src/performance.rs": "4597ef86a28775156aa792479b4c8890396cbf429f1ce1f6ea352be3942cc54d",
     "sdl2test-rocknix/src/profiles.rs": "abea2df80a02d5d267fa9ac10354637a76491d7d673207a23cd2c3b227c2b1c5",
     "sdl2test-rocknix/src/resource_cache.rs": "f39cfb680eb16e0fe8d9698ed3a8bd3e06fe22edcc9a515f644f204e943ed2c0",

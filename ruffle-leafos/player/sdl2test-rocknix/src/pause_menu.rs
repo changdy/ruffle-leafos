@@ -37,6 +37,7 @@ pub struct PauseMenu {
     live: Vec<(String, Text)>,
     palette: [[f32;4];6],
     pill_shape: u8,
+    pocketais: bool,
 }
 
 impl PauseMenu {
@@ -115,6 +116,7 @@ impl PauseMenu {
             gl, program, vertices, vao, texts, font, fallback_font, live: Vec::new(),
             palette: Self::palette(),
             pill_shape: std::env::var("RUFFLE_MENU_PILL").ok().and_then(|s|s.parse().ok()).filter(|n|*n<4).unwrap_or(3),
+            pocketais: crate::session::shortcuts::is_pocketais(),
         })
     }
 
@@ -228,7 +230,7 @@ impl PauseMenu {
             self.draw_controls(state);
         } else {
         let pocketais = state.experience.pocketais;
-        self.leaf_background(&state.experience.title,if state.experience.started{t("Flash · 已暂停")}else{"Flash"},t("继续游戏"),FooterNavigation::Adjust,pocketais);
+        self.leaf_background(&state.experience.title,if state.experience.started{t("Flash · 已暂停")}else{"Flash"},t("继续游戏"),FooterNavigation::Adjust);
         let slot=state.controls.game_slot;
         let exit = if pocketais { t("保存并返回游戏列表") } else { t("保存并退出") };
         let rows=[t("继续"),t("按键设置"),t("鼠标设置"),t("保存游戏进度"),t("游戏存档"),t("画面设置"),t("操作说明"),t("关于"),t("语言"),t("截图"),exit];
@@ -239,7 +241,8 @@ impl PauseMenu {
             if !details[i].is_empty(){self.live_label_width(30+i,&details[i],29.,600.,140.+i as f32*41.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
         let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),_=>t("操作方法见「操作说明」")};
-        self.live_label_width(16,hint,20.,23.,606.,910.,false,self.palette[4]);
+        let (left, width) = if pocketais { (45., 870.) } else { (23., 910.) };
+        self.live_label_width(16,hint,20.,left,606.,width,false,self.palette[4]);
         }
         if !state.controls.visible && matches!(state.experience.page,
             crate::session::experience::Page::Home|crate::session::experience::Page::Saves) {
@@ -291,21 +294,22 @@ impl PauseMenu {
     unsafe fn draw_virtual_keyboard(&mut self, keyboard: &crate::session::virtual_keyboard::Editor, pocketais: bool) {
         self.quad((0.,0.,960.,720.),self.palette[0],None);
         self.live_label_width(150,t("输入文字"),35.,30.,18.,900.,false,self.palette[1]);
-        self.rounded((30.,77.,900.,75.),10.,self.palette[2]);
+        self.menu_panel((30.,77.,900.,75.),10.,self.palette[2]);
         self.live_label_width(151,&keyboard.preview(),31.,47.,97.,866.,false,self.palette[3]);
         self.live_label_width(152,t("A 输入 · B 退格 · X 空格 · Select 大小写"),23.,30.,164.,900.,true,self.palette[4]);
         for (i,key) in keyboard.keys().iter().enumerate() {
             let selected=keyboard.row==key.row&&keyboard.col==key.col;
-            self.rounded(key.rect,8.,self.palette[if selected {2}else{5}]);
+            self.menu_panel(key.rect,8.,self.palette[if selected {2}else{5}]);
             self.live_label_width(160+i,&key.label,29.,key.rect.0+5.,key.rect.1+18.,key.rect.2-10.,true,self.palette[if selected {3}else{1}]);
         }
         let footer = if pocketais { t("L1 / R1 移动光标 · L2 符号 · Home 帮助 · Fn 取消") }
             else { t("L1 / R1 移动光标 · L2 符号 · M 帮助") };
         self.live_label_width(153,footer,22.,30.,601.,900.,true,self.palette[4]);
+        if pocketais { self.quad((32.,642.,896.,58.),self.palette[5],None); }
         self.live_label_width(154,t("Y 取消                         Start 确认"),27.,30.,660.,900.,true,self.palette[1]);
         if keyboard.help {
             self.quad((0.,0.,960.,720.),[0.,0.,0.,0.65],None);
-            self.rounded((65.,180.,830.,365.),18.,self.palette[0]);
+            self.menu_panel((65.,180.,830.,365.),18.,self.palette[0]);
             let lines=[t("十字键选择按键，A 输入，B 退格，X 空格。"),
                 t("Select 切换大小写，L2 切换符号。"),t("L1 / R1 移动文字光标；多行框可用 R2 换行。"),
                 t("Start 确认并回到游戏，Y 取消全部修改。"),&menu_hint("按 M 或 A 关闭帮助。", pocketais)];
@@ -328,6 +332,10 @@ impl PauseMenu {
     unsafe fn rounded(&self,rect:(f32,f32,f32,f32),radius:f32,color:[f32;4]) {
         self.rounded_corners(rect,radius,color,[true;4]);
     }
+    unsafe fn menu_panel(&self, rect: (f32,f32,f32,f32), radius: f32, color: [f32;4]) {
+        if self.pocketais { self.quad(rect, color, None); }
+        else { self.rounded(rect, radius, color); }
+    }
     unsafe fn rounded_corners(&self,rect:(f32,f32,f32,f32),radius:f32,color:[f32;4],corners:[bool;4]) {
         let (x,y,w,h)=rect;let r=radius.min(w/2.).min(h/2.);
         let mut data=Vec::<f32>::new();
@@ -341,7 +349,15 @@ impl PauseMenu {
         self.gl.uniform_4_f32(self.color.as_ref(),color[0],color[1],color[2],color[3]);self.gl.uniform_1_i32(self.textured.as_ref(),0);
         self.gl.draw_arrays(glow::TRIANGLES,0,(data.len()/4) as i32);
     }
-    unsafe fn leaf_background(&mut self,title:&str,subtitle:&str,back_label:&str,navigation:FooterNavigation,pocketais:bool) {
+    unsafe fn leaf_background(&mut self,title:&str,subtitle:&str,back_label:&str,navigation:FooterNavigation) {
+        if self.pocketais {
+            self.quad((0.,0.,960.,720.),self.palette[0],None);
+            self.live_label_width(0,title,57.,45.,23.,870.,false,self.palette[1]);
+            self.live_label_width(18,subtitle,30.,45.,91.,870.,false,self.palette[4]);
+            self.quad((32.,127.5,896.,2.),self.palette[5],None);
+            self.pocketais_footer(back_label,navigation);
+            return;
+        }
         self.quad((0.,0.,960.,720.),[0.,0.,0.,0.59],None);
         let mut bg=self.palette[0];bg[3]=200./255.;
         self.rounded((7.,4.,946.,74.),14.,bg);
@@ -351,9 +367,15 @@ impl PauseMenu {
         self.rounded((820.,10.,120.,60.),30.,self.palette[5]);
         self.live_label_width(45,&stamp[11..16],30.,832.,25.,96.,true,self.palette[4]);
         self.live_label_width(18,subtitle,32.,23.,92.,910.,false,self.palette[4]);
-        self.leaf_footer(back_label,navigation,pocketais);
+        self.leaf_footer(back_label,navigation);
     }
     unsafe fn leaf_row(&mut self,cache:usize,text:&str,y:f32,h:f32,selected:bool) {
+        if self.pocketais {
+            if selected { self.quad((32.,y,896.,h),self.palette[2],None); }
+            let size = if h < 45. { 32. } else { 36. };
+            self.live_label_width(cache,text,size,49.,y+(h-size)/2.,863.,false,self.palette[if selected{3}else{1}]);
+            return;
+        }
         if selected{
             let radius=h/2.*[1.,0.25,0.,1.][self.pill_shape as usize];
             let corners=if self.pill_shape==3{[false,true,false,true]}else{[true;4]};
@@ -361,11 +383,27 @@ impl PauseMenu {
         }
         self.live_label_width(cache,text,40.,23.,y+(h-44.)/2.,880.,false,self.palette[if selected{3}else{1}]);
     }
-    unsafe fn leaf_footer(&mut self,back_label:&str,navigation:FooterNavigation,pocketais:bool) {
-        let back_hint = if pocketais { t("Fn 返回") } else { t("B 返回") };
+    unsafe fn pocketais_footer(&mut self, back_label: &str, navigation: FooterNavigation) {
+        self.quad((32.,642.,896.,58.),self.palette[5],None);
+        let movement = match navigation {
+            FooterNavigation::Adjust => format!("↑↓  {}", t("移动  ←→ 调整")),
+            FooterNavigation::Grid => format!("↑↓←→  {}", t("移动焦点")),
+            FooterNavigation::List => format!("↑↓  {}", t("移动")),
+            FooterNavigation::Tabs => format!("←→  {}", t("切换页面")),
+            FooterNavigation::Back => String::new(),
+        };
+        if !movement.is_empty() {
+            self.live_label_width(47,&movement,29.,45.,656.,530.,false,self.palette[4]);
+        }
+        if !matches!(navigation,FooterNavigation::Back|FooterNavigation::Tabs) {
+            self.live_label_width(50,&format!("A  {}",t("确定")),29.,607.,656.,125.,false,self.palette[1]);
+        }
+        self.live_label_width(132,&format!("Fn  {back_label}"),29.,756.,656.,158.,false,self.palette[1]);
+    }
+    unsafe fn leaf_footer(&mut self,back_label:&str,navigation:FooterNavigation) {
         if matches!(navigation,FooterNavigation::Back) {
             self.rounded((620.,642.,320.,58.),29.,self.palette[5]);
-            self.live_label_width(132,back_hint,30.,644.,653.,272.,true,self.palette[4]);
+            self.live_label_width(132,t("B 返回"),30.,644.,653.,272.,true,self.palette[4]);
             return;
         }
         let (arrows,hint,key_width,label_x)=match navigation {
@@ -381,12 +419,12 @@ impl PauseMenu {
         self.live_label_width(46,arrows,35.,30.,651.,key_width-5.,true,self.palette[3]);
         self.live_label_width(47,hint,28.,label_x,655.,326.-label_x,false,self.palette[4]);
         if matches!(navigation,FooterNavigation::Tabs) {
-            self.live_label_width(132,back_hint,30.,644.,653.,272.,true,self.palette[4]);
+            self.live_label_width(132,t("B 返回"),30.,644.,653.,272.,true,self.palette[4]);
             return;
         }
         self.rounded_corners((630.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
         self.rounded_corners((802.,650.,48.,44.),22.,self.palette[2],[false,true,false,true]);
-        self.live_label_width(48,if pocketais { "Fn" } else { "B" },if pocketais { 26. } else { 36. },636.,650.,36.,true,self.palette[3]);
+        self.live_label_width(48,"B",36.,636.,650.,36.,true,self.palette[3]);
         self.live_label_width(49,back_label,28.,678.,655.,122.,false,self.palette[4]);
         self.live_label_width(50,"A",36.,808.,650.,36.,true,self.palette[3]);
         self.live_label_width(51,t("确定"),28.,854.,655.,76.,false,self.palette[4]);
@@ -398,7 +436,7 @@ impl PauseMenu {
         if u.page==Page::Shortcuts {self.draw_shortcuts(u.shortcut_tab, state.controls.dual_stick);return;}
         if matches!(u.page,Page::Screenshot|Page::CoverConfirm) {
             let confirm=u.page==Page::CoverConfirm;
-            self.leaf_background(&u.heading(),t("仅保存 Flash 游戏画面"),t("返回"),FooterNavigation::List,u.pocketais);
+            self.leaf_background(&u.heading(),t("仅保存 Flash 游戏画面"),t("返回"),FooterNavigation::List);
             if confirm {
                 self.live_label_width(19,t("已有封面，是否用当前截图替换？"),32.,23.,158.,910.,false,self.palette[1]);
                 self.live_label_width(20,&u.cover_path,23.,23.,222.,910.,false,self.palette[4]);
@@ -421,9 +459,10 @@ impl PauseMenu {
         };
         let navigation=if u.page==Page::Settings{FooterNavigation::Adjust}else{FooterNavigation::List};
         let subtitle = if u.pocketais && u.page == Page::Settings { t("OpenGL ES · 调整后自动保存") } else { subtitle };
-        self.leaf_background(&u.heading(),subtitle,t("返回"),navigation,u.pocketais);
+        self.leaf_background(&u.heading(),subtitle,t("返回"),navigation);
         if u.page==Page::ManagerGames {
             let start=u.manager_visible_start();
+            let (left, text_width) = if u.pocketais { (49., 870.) } else { (23., 880.) };
             if u.games.is_empty(){
                 self.live_label_width(19,t("暂无可管理的游戏数据"),32.,40.,205.,870.,false,self.palette[1]);
                 self.live_label_width(20,t("产生存档或保存按键选择后，游戏会显示在这里。"),24.,40.,260.,870.,false,self.palette[4]);
@@ -434,13 +473,13 @@ impl PauseMenu {
                 self.leaf_row(1+visible,"",y,55.,i==u.selected);
                 if let Some(game)=u.games.get(i){
                     let color=self.palette[if i==u.selected{3}else{1}];
-                    let width=if game.unavailable{710.}else{880.};
-                    self.live_label_width(80+visible*2,&game.title,36.,23.,y+6.,width,false,color);
+                    let width=if game.unavailable{710.}else{text_width};
+                    self.live_label_width(80+visible*2,&game.title,36.,left,y+6.,width,false,color);
                     if game.unavailable {
                         let title_width=self.live.get(80+visible*2).map(|(_,t)|t.width as f32).unwrap_or(width).min(width);
-                        self.live_label_width(81+visible*2,t("（已失效）"),22.,23.+title_width+12.,y+15.,145.,false,color);
+                        self.live_label_width(81+visible*2,t("（已失效）"),22.,left+title_width+12.,y+15.,145.,false,color);
                     }
-                }else{self.live_label_width(80+visible*2,t("返回"),36.,23.,y+6.,880.,false,self.palette[if i==u.selected{3}else{1}]);}
+                }else{self.live_label_width(80+visible*2,t("返回"),36.,left,y+6.,text_width,false,self.palette[if i==u.selected{3}else{1}]);}
             }
             if !u.games.is_empty(){
                 self.live_label_width(54,&crate::tr!("第 {} / {} 页 · L1 / R1 翻页", "Page {} / {} · L1 / R1 to page",start/7+1,(u.games.len()+7)/7),23.,23.,580.,880.,false,self.palette[4]);
@@ -498,10 +537,10 @@ impl PauseMenu {
         } else {
             (t("Ruffle Flash · LeafOS 版"), crate::tr!("{} 开发预览 · 迷你龙 Pocket 1 / LeafOS", "{} Development preview · Miniloong Pocket 1 / LeafOS", env!("CARGO_PKG_VERSION")))
         };
-        self.leaf_background(title, &subtitle, t("返回"), FooterNavigation::Back, pocketais);
+        self.leaf_background(title, &subtitle, t("返回"), FooterNavigation::Back);
         for (i,(title,line1,line2)) in BACKGROUND.iter().enumerate() {
             let y=150.+i as f32*130.;let mut card=self.palette[5];card[3]=0.35;
-            self.rounded((23.,y,910.,115.),12.,card);
+            self.menu_panel((23.,y,910.,115.),12.,card);
             self.live_label_width(80+i*3,t(title),30.,38.,y+9.,880.,false,self.palette[1]);
             self.live_label_width(81+i*3,t(line1),25.,38.,y+49.,880.,false,self.palette[1]);
             let line2 = if pocketais && i == 0 { "Ruffle Flash 基于 Ruffle，适配 Pocket AIS / AisOS。" } else { line2 };
@@ -513,14 +552,14 @@ impl PauseMenu {
 
     unsafe fn draw_shortcuts(&mut self,tab:usize,pocketais:bool) {
         use crate::session::experience::{SHORTCUT_TABS,SHORTCUTS,SHORTCUT_NOTES};
-        self.leaf_background(t("操作说明"),t("先看想做什么，再按右侧提示操作"),t("返回"),FooterNavigation::Tabs,pocketais);
+        self.leaf_background(t("操作说明"),t("先看想做什么，再按右侧提示操作"),t("返回"),FooterNavigation::Tabs);
         for (i,label) in SHORTCUT_TABS.iter().enumerate() {
             let x=23.+i as f32*307.;self.leaf_tile((x,140.,296.,44.),tab==i);
             self.live_label_width(65+i,t(label),28.,x+12.,145.,272.,true,self.palette[if tab==i{3}else{1}]);
         }
         for (i,(action,keys,note)) in SHORTCUTS[tab].iter().enumerate() {
             let y=199.+i as f32*75.;let mut card=self.palette[5];card[3]=0.35;
-            self.rounded((23.,y,910.,69.),10.,card);
+            self.menu_panel((23.,y,910.,69.),10.,card);
             self.live_label_width(80+i*3,t(action),28.,38.,y+3.,410.,false,self.palette[1]);
             let keys = if pocketais && tab == 1 && i == 4 { "Home + R1 / L1" } else { keys };
             let note = match (pocketais, tab, i) {
@@ -596,7 +635,7 @@ impl PauseMenu {
         };
         let title=if controls.page==Page::Edit {crate::tr!("按键设置 · 方案 {}", "Controls · Profile {}",controls.game_slot+1)}else{controls.title().into()};
         let navigation=match controls.page {Page::Edit|Page::Picker=>FooterNavigation::Grid,Page::Cursor=>FooterNavigation::Adjust,Page::Confirm=>FooterNavigation::List};
-        self.leaf_background(&title,&subtitle,if controls.page==Page::Confirm {t("继续编辑")}else{t("返回")},navigation,state.experience.pocketais);
+        self.leaf_background(&title,&subtitle,if controls.page==Page::Confirm {t("继续编辑")}else{t("返回")},navigation);
         if controls.page == crate::session::controls::Page::Cursor {
             self.live_label(12,t("预览"),21.,715.,98.,self.palette[4]);
             self.draw_cursor(controls.cursor_draft,(850.,111.));
@@ -645,7 +684,7 @@ impl PauseMenu {
             for (i,label) in [t("保存"),t("返回")].iter().enumerate() {
                 let selected=controls.row==items+i;
                 let x=if i==0 {45.}else{650.};
-                self.rounded((x,543.,265.,52.),26.,self.palette[if selected{2}else{5}]);
+                self.menu_panel((x,543.,265.,52.),26.,self.palette[if selected{2}else{5}]);
                 self.live_label_width(135+i,label,31.,x+15.,550.,235.,true,self.palette[if selected{3}else{1}]);
             }
             self.live_label_width(55,&controls.status,21.,45.,604.,870.,false,self.palette[1]);
@@ -660,9 +699,14 @@ impl PauseMenu {
     }
 
     unsafe fn leaf_tile(&self,rect:(f32,f32,f32,f32),selected:bool) {
+        let color = self.palette[if selected{2}else{5}];
+        if self.pocketais {
+            self.quad(rect,color,None);
+            return;
+        }
         let radius=if selected{rect.3/2.*[1.,0.25,0.,1.][self.pill_shape as usize]}else{10.};
         let corners=if selected&&self.pill_shape==3{[false,true,false,true]}else{[true;4]};
-        self.rounded_corners(rect,radius,self.palette[if selected{2}else{5}],corners);
+        self.rounded_corners(rect,radius,color,corners);
     }
 
     /// Read a clean game frame before any frontend overlay is drawn. Preserve
