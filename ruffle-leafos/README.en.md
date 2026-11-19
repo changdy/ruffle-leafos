@@ -12,6 +12,8 @@ On the RK3562 AisOS handheld, extract **`ruffle-aisos-0.8.6.zip`** to the extern
 
 Add your SWF and ZIP games to `flash/` and reopen the list. Bloxorz and a zipped display test are included.
 
+From left to right, the four small front buttons are **Back (Fn), Home, Select and Start**. AisOS uses a quick double press of the leftmost button to quit an application. To save your game as you leave, choose **Save and exit** in the Ruffle pause menu.
+
 | Screen | Handheld controls |
 | --- | --- |
 | Game list | Move up or down with the D-pad or either stick. L1 and R1 move a page back or forward. Press A or Start to open, B to go back. At the root, B returns to RGBox. |
