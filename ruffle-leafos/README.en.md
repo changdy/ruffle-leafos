@@ -10,9 +10,15 @@ Play local Flash games with the buttons and stick on your **Miniloong Pocket 1 /
 
 On the RK3562 AisOS handheld, extract **`ruffle-aisos-0.8.6.zip`** to the external game card. Keep `applyCenter/`, its hidden `.ruffle-flash/` subdirectory, and `flash/` together. The card mounts at `/storage/roms`. From the RGBox home screen, open **Apps → Ruffle Flash**.
 
-Use the D-pad to choose a file, **A** to open it, and **B** to go back. At the top of the list, B returns to RGBox. Add your SWF and ZIP games to `flash/` and reopen the list. Bloxorz and a zipped display test are included. In Bloxorz, move the pointer with the left stick and press the stick to click. Use profile 2 for D-pad movement in a level.
+Add your SWF and ZIP games to `flash/` and reopen the list. Bloxorz and a zipped display test are included.
 
-Tap **Guide** to pause. On the controls row, use left or right to change profiles. Choose **Save and exit** to return to the list. Settings, native saves, the ZIP cache, and the two latest session logs live in `gamedata/ruffle-flash/` on the card. Exit and back up this directory before upgrading. The AisOS preview uses GLES. The remaining sections describe Pocket1 / Leaf.
+| Screen | Handheld controls |
+| --- | --- |
+| Game list | Move up or down with the D-pad or either stick. L1 and R1 move a page back or forward. Press A or Start to open, B to go back. At the root, B returns to RGBox. |
+| In game | **Press the right stick (R3) to pause or resume.** By default, move the pointer with the left stick and press it (L3) to click. |
+| Pause menu | Use the D-pad to navigate, A to confirm and B to go back. On the controls row, press left or right to change profiles. Use profile 2 for D-pad movement in Bloxorz. Choose **Save and exit** to return to the game list. |
+
+Settings, native saves, the ZIP cache, and the two latest session logs live in `gamedata/ruffle-flash/` on the card. Exit and back up this directory before upgrading. Reopen Ruffle Flash from RGBox to activate updated controls. The AisOS preview uses GLES. The remaining sections describe Pocket1 / Leaf.
 
 ## Installing and upgrading
 

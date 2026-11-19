@@ -22,10 +22,25 @@ KEYS = {
 BUTTONS = {
     sdl.SDL_CONTROLLER_BUTTON_DPAD_UP: "up",
     sdl.SDL_CONTROLLER_BUTTON_DPAD_DOWN: "down",
+    sdl.SDL_CONTROLLER_BUTTON_LEFTSHOULDER: "page_up",
+    sdl.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: "page_down",
     sdl.SDL_CONTROLLER_BUTTON_A: "open",
     sdl.SDL_CONTROLLER_BUTTON_START: "open",
     sdl.SDL_CONTROLLER_BUTTON_B: "back",
 }
+
+
+def stick_action(event, directions):
+    if event.axis not in (sdl.SDL_CONTROLLER_AXIS_LEFTY, sdl.SDL_CONTROLLER_AXIS_RIGHTY):
+        return None
+    if abs(event.value) <= 8000:
+        directions.pop(event.axis, None)
+    elif abs(event.value) >= 16000:
+        action = "down" if event.value > 0 else "up"
+        if directions.get(event.axis) != action:
+            directions[event.axis] = action
+            return action
+    return None
 
 
 def error():
@@ -81,7 +96,8 @@ def draw(renderer, title_font, font, folder, root, items, index, message):
               48, 190, MUTED, 928)
     if message:
         label(renderer, font, message, 48, 636, (255, 201, 128), 928)
-    label(renderer, font, "方向键  选择       A  打开       B  返回", 48, 698, MUTED, 928)
+    label(renderer, font, "十字键 / 摇杆  选择     L1 / R1  翻页     A  打开     B  返回", 48, 684, MUTED, 928)
+    label(renderer, font, "游戏中：按下右摇杆 (R3) 打开暂停菜单", 48, 724, MUTED, 928)
     sdl.SDL_RenderPresent(renderer)
 
 
@@ -113,6 +129,7 @@ def choose(root, folder, index, message):
             fonts.append(font)
 
         pads = {}
+        stick_directions = {}
         def close_pads():
             for pad in pads.values():
                 sdl.SDL_GameControllerClose(pad)
@@ -137,8 +154,10 @@ def choose(root, folder, index, message):
                         sdl.SDL_GameControllerClose(pad)
                     else:
                         pads[instance] = pad
+                        stick_directions[instance] = {}
             elif event.type == sdl.SDL_CONTROLLERDEVICEREMOVED:
                 pad = pads.pop(event.cdevice.which, None)
+                stick_directions.pop(event.cdevice.which, None)
                 if pad:
                     sdl.SDL_GameControllerClose(pad)
             elif event.type == sdl.SDL_WINDOWEVENT:
@@ -151,6 +170,10 @@ def choose(root, folder, index, message):
                 action = KEYS.get(event.key.keysym.sym)
             elif event.type == sdl.SDL_CONTROLLERBUTTONDOWN:
                 action = BUTTONS.get(event.cbutton.button)
+            elif event.type == sdl.SDL_CONTROLLERAXISMOTION:
+                directions = stick_directions.get(event.caxis.which)
+                if directions is not None:
+                    action = stick_action(event.caxis, directions)
             if not action:
                 continue
             dirty, message = True, ""
@@ -158,6 +181,10 @@ def choose(root, folder, index, message):
                 index -= 1
             elif action == "down":
                 index += 1
+            elif action == "page_up":
+                index -= PAGE
+            elif action == "page_down":
+                index += PAGE
             elif action == "back":
                 if folder == root:
                     return None
