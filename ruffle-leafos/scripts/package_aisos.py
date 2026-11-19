@@ -71,8 +71,10 @@ def package_ruffle(binding, out, stage):
         name = game['install_path']
         member(out, 'flash/' + name, (sample_dir / name).read_bytes())
     probe = BytesIO()
+    demo = (sample_dir / 'Leaf-GPU-Probe.swf').read_bytes()
+    member(out, APP + 'manager.swf', demo)
     with ZipFile(probe, 'w') as game:
-        member(game, 'Leaf-GPU-Probe.swf', (sample_dir / 'Leaf-GPU-Probe.swf').read_bytes())
+        member(game, 'Leaf-GPU-Probe.swf', demo)
     member(out, 'flash/Leaf-GPU-Probe.zip', probe.getvalue())
 
     notices = BytesIO()

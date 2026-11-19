@@ -17,7 +17,7 @@ TEXT = (242, 246, 248)
 MUTED = (175, 194, 205)
 KEYS = {
     sdl.SDLK_UP: "up", sdl.SDLK_DOWN: "down",
-    sdl.SDLK_RETURN: "open", sdl.SDLK_ESCAPE: "back",
+    sdl.SDLK_RETURN: "open", sdl.SDLK_ESCAPE: "back", sdl.SDLK_y: "manager",
 }
 BUTTONS = {
     sdl.SDL_CONTROLLER_BUTTON_DPAD_UP: "up",
@@ -27,6 +27,8 @@ BUTTONS = {
     sdl.SDL_CONTROLLER_BUTTON_A: "open",
     sdl.SDL_CONTROLLER_BUTTON_START: "open",
     sdl.SDL_CONTROLLER_BUTTON_B: "back",
+    sdl.SDL_CONTROLLER_BUTTON_MISC1: "back",
+    sdl.SDL_CONTROLLER_BUTTON_Y: "manager",
 }
 
 
@@ -94,10 +96,13 @@ def draw(renderer, title_font, font, folder, root, items, index, message):
     if not items:
         label(renderer, font, "此目录没有游戏。请将 SWF 或 ZIP 放入 flash 文件夹。",
               48, 190, MUTED, 928)
-    if message:
-        label(renderer, font, message, 48, 636, (255, 201, 128), 928)
-    label(renderer, font, "十字键 / 摇杆  选择     L1 / R1  翻页     A  打开     B  返回", 48, 684, MUTED, 928)
-    label(renderer, font, "游戏中按 Home 打开暂停菜单", 48, 724, MUTED, 928)
+    sdl.SDL_SetRenderDrawColor(renderer, 30, 58, 68, 255)
+    sdl.SDL_RenderFillRect(renderer, sdl.SDL_Rect(34, 630, 956, 43))
+    label(renderer, font, "Y    Flash 数据管理", 48, 635, TEXT, 928)
+    back = "退出到 RGBox" if folder == root else "返回上一级"
+    label(renderer, font, f"十字键 / 摇杆  选择    L1 / R1  翻页    A  打开    Fn  {back}", 48, 684, MUTED, 928)
+    label(renderer, font, message or "游戏中按 Home 打开暂停菜单", 48, 724,
+          (255, 201, 128) if message else MUTED, 928)
     sdl.SDL_RenderPresent(renderer)
 
 
@@ -185,6 +190,8 @@ def choose(root, folder, index, message):
                 index -= PAGE
             elif action == "page_down":
                 index += PAGE
+            elif action == "manager":
+                return folder, index, None
             elif action == "back":
                 if folder == root:
                     return None
@@ -204,19 +211,21 @@ def choose(root, folder, index, message):
                     else:
                         folder, index = selected, 0
                 else:
-                    return selected, index
+                    return folder, index, selected
 
 
 def main():
     root = Path(os.environ["RUFFLE_FLASH_DIR"]).resolve(strict=True)
     folder, index, message = root, 0, ""
     while choice := choose(root, folder, index, message):
-        game, index = choice
-        folder = game.parent
-        print("picker launch", game)
+        folder, index, game = choice
+        command = [APP / "ruffle", game or APP / "manager.swf", "--fullscreen", "--renderer", "opengl-es"]
+        if game is None:
+            command.append("--app-settings")
+        print("picker launch", game if game is not None else "Flash Data Manager")
         try:
-            result = subprocess.run([APP / "ruffle", game, "--fullscreen", "--renderer", "opengl-es"])
-            message = "" if result.returncode == 0 else f"游戏退出码 {result.returncode}，详见 session.log"
+            result = subprocess.run(command)
+            message = "" if result.returncode == 0 else f"播放器退出码 {result.returncode}，详见 session.log"
         except OSError as exc:
             print(exc, file=sys.stderr)
             message = "无法启动播放器，详见 session.log"

@@ -318,6 +318,9 @@ impl Ui {
     }
     pub fn manager_visible_start(&self)->usize {self.selected/MANAGER_VISIBLE_ROWS*MANAGER_VISIBLE_ROWS}
     pub fn open(&mut self,page:Page){self.page=page;self.selected=0;self.message.clear();if page==Page::Shortcuts{self.shortcut_tab=0;}if page==Page::Language{self.selected=usize::from(self.language==super::i18n::Language::English);}}
+    fn return_to_launcher(&self) -> &'static str {
+        if self.pocketais { t("返回游戏列表") } else { t("返回 Leaf") }
+    }
     pub fn heading(&self)->String{match self.page{
         Page::Screenshot=>t("截图").into(),Page::CoverConfirm=>t("覆盖封面？").into(),
         Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::ManagerGames|Page::ManagerGame=>t("游戏数据").into(),Page::ManagerBulk=>t("批量清理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("操作说明").into()
@@ -327,11 +330,15 @@ impl Ui {
         Page::Screenshot=>vec![t("截图作为封面").into(),t("保存普通照片").into(),t("返回").into()],
         Page::CoverConfirm=>vec![t("取消").into(),t("覆盖封面").into()],
         Page::Language=>super::i18n::Language::ALL.iter().map(|language| format!("{}{}",language.label(),if *language==self.language{"  ✓"}else{""})).chain(std::iter::once(t("返回").into())).collect(),
-        Page::Home=>vec![], Page::Saves=>(0..SAVE_SLOTS).map(|i|crate::tr!("存档 {}{}    {}", "Slot {}{}    {}",i+1,if self.started&&i==self.active {t(" · 当前")}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{t("返回").into()}else{t("返回 Leaf").into()})).collect(),
-        Page::Settings=>self.settings.rows(),
+        Page::Home=>vec![], Page::Saves=>(0..SAVE_SLOTS).map(|i|crate::tr!("存档 {}{}    {}", "Slot {}{}    {}",i+1,if self.started&&i==self.active {t(" · 当前")}else{""},self.slots[i].detail())).chain(std::iter::once(if self.started{t("返回").into()}else{self.return_to_launcher().into()})).collect(),
+        Page::Settings=>{
+            let mut rows = self.settings.rows();
+            if self.pocketais { rows.remove(3); }
+            rows
+        },
         Page::Renderer=>vec![format!("OpenGL ES                         {}",if self.actual_renderer==super::graphics::Backend::OpenGlEs{t("使用中")}else{""}),
             crate::tr!("Vulkan（实验）                   {}", "Vulkan (experimental)           {}",if self.actual_renderer==super::graphics::Backend::Vulkan{t("使用中")}else if self.renderer_failed{t("上次启动失败")}else{""}),t("返回").into()],
-        Page::Manager=>vec![t("游戏数据").into(),t("批量清理").into(),t("语言").into(),t("返回 Leaf").into()],
+        Page::Manager=>vec![t("游戏数据").into(),t("批量清理").into(),t("语言").into(),self.return_to_launcher().into()],
         Page::ManagerGames=>self.games.iter().map(|g|g.title.clone()).chain(std::iter::once(t("返回").into())).collect(),
         Page::ManagerGame=>vec![t("清空此游戏的全部存档").into(),t("重置此游戏的按键配置").into(),t("返回游戏列表").into()],
         Page::ManagerBulk=>vec![t("清空所有游戏存档").into(),t("重置所有按键配置").into(),t("返回").into()],
@@ -383,7 +390,15 @@ impl Ui {
                     else if !self.started{return Command::Choose(self.selected);}
                     else if self.selected==self.active {self.open(Page::Home);}
                     else {self.pending=10+self.selected;self.open(Page::Confirm);}},
-                Page::Settings=>{if self.selected==5{self.open(Page::Home);}else if self.selected==3{self.open(Page::Renderer);}else{if self.selected==4 {self.settings=Settings{renderer:self.settings.renderer,..Settings::default()}}else{self.settings.change(self.selected,1)}return Command::Settings;}},
+                Page::Settings=>{
+                    if self.selected == count - 1 { self.open(Page::Home); }
+                    else if self.selected == 3 && !self.pocketais { self.open(Page::Renderer); }
+                    else {
+                        if self.selected >= 3 { self.settings=Settings{renderer:self.settings.renderer,..Settings::default()}; }
+                        else { self.settings.change(self.selected,1); }
+                        return Command::Settings;
+                    }
+                },
                 Page::Renderer=>{match self.selected {
                     0|1=>{let choice=super::graphics::Backend::from_byte(self.selected as u8).unwrap();
                         if choice==self.actual_renderer{self.message=crate::tr!("当前已使用 {}", "Already using {}",choice.label());}
@@ -667,5 +682,21 @@ mod tests {
         u.selected=3;let original=u.settings;
         for nav in [Nav::Left,Nav::Right] {assert!(matches!(u.nav(nav),Command::None));}
         assert_eq!(u.settings,original);assert_eq!(u.page,Page::Settings);
+    }
+
+    #[test]
+    fn pocketais_settings_skip_renderer_and_reset_display_options() {
+        use super::super::controls::Nav;
+        let mut ui = Ui { pocketais: true, started: true, ..Ui::default() };
+        ui.settings.scale = 2;
+        ui.settings.fps = false;
+        ui.open(Page::Settings);
+        assert_eq!(ui.rows().len(), 5);
+        ui.selected = 3;
+        assert!(matches!(ui.nav(Nav::A), Command::Settings));
+        assert_eq!(ui.settings, Settings::default());
+        ui.nav(Nav::Down);
+        ui.nav(Nav::A);
+        assert_eq!(ui.page, Page::Home);
     }
 }

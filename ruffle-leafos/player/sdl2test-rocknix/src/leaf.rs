@@ -657,6 +657,22 @@ impl Frontend {
         }
     }
 
+    fn pocketais_back(&mut self) {
+        if self.state.virtual_keyboard.is_some() {
+            self.keyboard_nav(KeyboardInput::Cancel);
+        } else if self.state.experience.page != ExperiencePage::Home {
+            self.experience_nav(Nav::B);
+        } else if self.state.controls.visible {
+            self.controls_nav(Nav::B);
+        } else if self.state.paused {
+            let result = self.state.resume();
+            self.menu_result(result);
+        } else if self.state.experience.started {
+            self.open_menu();
+            self.state.selected = session::MENU_ROWS - 1;
+        }
+    }
+
     fn binding(&self, button: Button) -> Binding {
         if let Some(mapping) = &self.state.controls.active {
             match button {
@@ -732,6 +748,10 @@ impl Frontend {
             self.toggle_menu();
             return;
         }
+        if button == Button::Misc1 && self.state.experience.pocketais {
+            self.pocketais_back();
+            return;
+        }
         if !self.state.mark_down(source) { return; }
         if self.state.virtual_keyboard.is_some() {
             let input=match button {
@@ -749,14 +769,16 @@ impl Frontend {
             if self.state.experience.page!=ExperiencePage::Home {
                 let nav=match button{
                     Button::DPadUp=>Some(Nav::Up),Button::DPadDown=>Some(Nav::Down),Button::DPadLeft=>Some(Nav::Left),Button::DPadRight=>Some(Nav::Right),
-                    Button::A|Button::Start=>Some(Nav::A),Button::B|Button::Back=>Some(Nav::B),Button::Y=>Some(Nav::Y),
+                    Button::A|Button::Start=>Some(Nav::A),Button::B=>Some(Nav::B),Button::Y=>Some(Nav::Y),
+                    Button::Back if !self.state.experience.pocketais=>Some(Nav::B),
                     Button::LeftShoulder=>Some(Nav::Prev),Button::RightShoulder=>Some(Nav::Next),_=>None};
                 if let Some(nav)=nav{self.experience_nav(nav);}return;
             }
             if self.state.controls.visible {
                 let nav = match button {
                     Button::DPadUp => Some(Nav::Up), Button::DPadDown => Some(Nav::Down), Button::DPadLeft => Some(Nav::Left), Button::DPadRight => Some(Nav::Right),
-                    Button::A | Button::Start => Some(Nav::A), Button::B | Button::Back => Some(Nav::B), Button::X => Some(Nav::X), Button::Y => Some(Nav::Y),
+                    Button::A | Button::Start => Some(Nav::A), Button::B => Some(Nav::B), Button::X => Some(Nav::X), Button::Y => Some(Nav::Y),
+                    Button::Back if !self.state.experience.pocketais => Some(Nav::B),
                     Button::LeftShoulder => Some(Nav::Prev), Button::RightShoulder => Some(Nav::Next), _ => None,
                 };
                 if let Some(nav) = nav { self.controls_nav(nav); }
@@ -769,7 +791,8 @@ impl Frontend {
                 Button::DPadRight => {let result=self.state.preview(1);self.menu_result(result);},
                 Button::X => self.state.toggle_cfg_preview(),
                 Button::A | Button::Start => { let result = self.state.accept(); self.menu_result(result); }
-                Button::B | Button::Back => { let result = self.state.resume(); self.menu_result(result); }
+                Button::B => { let result = self.state.resume(); self.menu_result(result); }
+                Button::Back if !self.state.experience.pocketais => { let result = self.state.resume(); self.menu_result(result); }
                 _ => {}
             }
             self.redraw = true;
@@ -1482,6 +1505,19 @@ pub async fn run() -> Result<(), String> {
                     performance.collect += crate::performance::Performance::elapsed(collect_at);
                     drop(p);
                     if front.state.experience.settings.fps || front.state.drag_locked || front.cursor_visible || front.state.toast.is_some() || front.state.system_level.is_some() { menu.draw(size.0, size.1, &front.state, if front.cursor_visible {Some(front.cursor)} else {None}); }
+                }
+                if !opt.self_test_slots && !opt.self_test_experience && !opt.self_test_keyboard && front.state.paused {
+                    if let Some(dir) = &opt.capture_dir {
+                        let label = if front.state.controls.visible {
+                            let controls = &front.state.controls;
+                            format!("menu-controls-{:?}-{:02}.bmp", controls.page, controls.row)
+                        } else {
+                            let ui = &front.state.experience;
+                            let selected = if ui.page == ExperiencePage::Home { front.state.selected } else { ui.selected };
+                            format!("menu-{:?}-{selected:02}.bmp", ui.page)
+                        };
+                        if snapshots.insert(label.clone()) { menu.capture(&dir.join(label), size.0, size.1)?; }
+                    }
                 }
                 if opt.self_test_slots {
                     if let Some(dir)=&opt.capture_dir {

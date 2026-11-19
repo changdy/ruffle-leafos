@@ -4,9 +4,9 @@ Ruffle Flash 面向 **Miniloong Pocket 1 / leafOS**。共享核心、SWF 和官�
 
 ## 源码目录
 
-Pocket AIS 的 `aisos/Ruffle Flash.app` 启动 `aisos/launcher.py`，后者用系统 SDL2、SDL2_ttf 和随包的 PySDL2 绘制 Ruffle 自己的游戏列表。已核对的 RGBox 与 EmulationStation 系统清单没有 Flash 分类。包通过 `applyCenter/Ruffle Flash.app` 注册应用，列表枚举外置卡 `flash/` 下的 SWF、ZIP 和子目录。选择游戏后，启动器释放窗口和手柄，将路径作为独立参数交给播放器，等待播放器退出后重开原目录。存档、配置与 ZIP 缓存在卡上 `gamedata/ruffle-flash/`，程序和字体在 `applyCenter/.ruffle-flash/`。[应用入口](../aisos/Ruffle%20Flash.app) · [游戏列表](../aisos/launcher.py)
+Pocket AIS 的 `aisos/Ruffle Flash.app` 启动 `aisos/launcher.py`，后者用系统 SDL2、SDL2_ttf 和随包的 PySDL2 绘制 Ruffle 自己的游戏列表。已核对的 RGBox 与 EmulationStation 系统清单没有 Flash 分类。包通过 `applyCenter/Ruffle Flash.app` 注册应用，列表枚举外置卡 `flash/` 下的 SWF、ZIP 和子目录。选择游戏后，启动器释放窗口和手柄，将路径作为独立参数交给播放器，等待播放器退出后重开原目录。从列表按 Y 时，启动器用随包的 manager.swf 和 --app-settings 进入 Flash 数据管理，返回后恢复所在目录和选项。存档、配置与 ZIP 缓存在卡上 `gamedata/ruffle-flash/`，程序和字体在 `applyCenter/.ruffle-flash/`。[应用入口](../aisos/Ruffle%20Flash.app) · [游戏列表](../aisos/launcher.py)
 
-启动脚本为内置 `play_joystick` 的 GUID 设置 SDL 映射并启用 Pocket AIS 输入。左右摇杆点击分别映射为 `leftstick:b11` 和 `rightstick:b12`，L2/R2 读取模拟轴 2 和 5。Home（`KEY_HOME=102`）经 evdev 进入 Menu 状态机，按键释放时区分短按和组合键。Home 加肩键调用 `/usr/bin/brightness`，其余组合沿用菜单快捷键。右摇杆方向和 R3 独立应用每游戏方案及连发配置。切换上下文后，两根摇杆各自回中后才接受对应输入。列表分别记录两根摇杆的纵向输入，L1/R1 每次移动八项。[快捷键](../player/sdl2test-rocknix/src/shortcuts.rs) · [映射格式](formats/controls-format-v5.md)
+启动脚本为内置 `play_joystick` 的 GUID 设置 SDL 映射并启用 Pocket AIS 输入。左右摇杆点击分别映射为 `leftstick:b11` 和 `rightstick:b12`，L2/R2 读取模拟轴 2 和 5。Home（`KEY_HOME=102`）经 evdev 进入 Menu 状态机，按键释放时区分短按和组合键。Home 加肩键调用 `/usr/bin/brightness`，其余组合沿用菜单快捷键。右摇杆方向和 R3 独立应用每游戏方案及连发配置。切换上下文后，两根摇杆各自回中后才接受对应输入。列表分别记录两根摇杆的纵向输入，L1/R1 每次移动八项。实体 Fn（KEY_FN=464）映射为 SDL Misc1（b13），用于目录和菜单返回。游戏进行中按 Fn 只打开暂停菜单并选中「保存并返回游戏列表」，仍需 A 确认。Select 保留为游戏键和软键盘大小写切换。Pocket AIS 画面设置省略渲染接口切换。[快捷键](../player/sdl2test-rocknix/src/shortcuts.rs) · [映射格式](formats/controls-format-v5.md)
 
 AisOS 的 Screen Color 以 SDL 显示预览，使用系统 libdrm 找到内置 DSI-1 当前的 CRTC，再通过驱动的 Gamma 接口写入 RGB 查找表。暖色档位为 0–20，逐档降低蓝色和少量绿色，0 使用三通道线性表。校色在 Rockchip 显示控制器的输出级完成。RGBox、Wayland 游戏及 UI 共用这段显示链路。Weston 和内核沿用系统版本。[调色程序](../aisos/screen_color.py) · [预览界面](../aisos/screen_color_ui.py)
 

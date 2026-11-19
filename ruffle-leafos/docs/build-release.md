@@ -70,7 +70,7 @@ $version = (Get-Content pak/pak.json -Raw | ConvertFrom-Json).pak_version
 python scripts/package_aisos.py ../work/PySDL2-0.9.17-py3-none-any.whl "../outputs/ruffle-pocketais-$version.zip"
 ```
 
-脚本校验播放器的源码及构建记录、AArch64 PIE、glibc 版本和 PySDL2 SHA-256。安装包使用固件自带的 SDL2、SDL2_ttf 和 ALSA。ZIP 顶层对应游戏卡根目录，含 `applyCenter/` 应用和 `flash/` 样例目录。ZIP 带有入口和播放器的 Unix 执行权限，ext4 卡解压时须保留。[打包脚本](../scripts/package_aisos.py) · [安装与操作](../README.md#aisos-应用菜单)
+脚本校验播放器的源码及构建记录、AArch64 PIE、glibc 版本和 PySDL2 SHA-256。安装包使用固件自带的 SDL2、SDL2_ttf 和 ALSA。ZIP 顶层对应游戏卡根目录，含 `applyCenter/` 应用、`.ruffle-flash/manager.swf` 数据管理入口资源和 `flash/` 样例目录。ZIP 带有入口和播放器的 Unix 执行权限，ext4 卡解压时须保留。[打包脚本](../scripts/package_aisos.py) · [安装与操作](../README.md#aisos-应用菜单)
 
 ### AisOS / RGBox 内屏调色
 

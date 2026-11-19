@@ -16,11 +16,13 @@ The four small front buttons are **Back (Fn), Home, Select and Start** from left
 
 | Screen | Handheld controls |
 | --- | --- |
-| Game list | Move with the D-pad or either stick. L1 and R1 move a page up or down. Press A or Start to open and B to go up a folder. At the root, B returns to RGBox. |
-| In game | **Tap Home** to pause or resume. By default, move the pointer with the left stick and press it (L3) to click. |
+| Game list | Move with the D-pad or either stick. L1 and R1 change pages. A or Start opens a game. **Fn** goes up one folder or returns to RGBox from the root. Press **Y** for Flash Data Manager. |
+| In game | **Tap Home** to pause or resume. **Fn** opens the pause menu with **Save and return to games** selected. Press **A** to confirm. Move the pointer with the left stick and press it (L3) to click by default. |
 | Shortcuts | **Home + A / B** selects the previous or next control profile. **Home + X** swaps the D-pad and left-stick directions. **Home + D-pad Down** toggles mouse drag lock. **Home + L1 / R1** lowers or raises screen brightness. The volume buttons still adjust volume. |
-| Pause menu | Use the D-pad to navigate, A to confirm and B to go back. The menu includes controls, progress, the on-screen keyboard and photos. Choose **Save and exit** to return to the game list. |
+| Pause menu | Use the D-pad to navigate, A to confirm and **Fn** to go back. **Fn** resumes the game from the main pause menu. B also goes back. On the keyboard, B backspaces and **Fn** cancels. |
 | Right stick | In **Home → Controls**, assign each direction and the click (R3) to a keyboard or mouse action. These inputs start unbound, support turbo for eligible actions, and are saved per game and profile. |
+
+**Flash Data Manager** can clear saves or reset bindings for one game or for all games. Confirmation defaults to Cancel. Confirming moves data to `gamedata/ruffle-flash/shared_objects/cleared-data/` on the card. Use **Fn** to return to the game list.
 
 Settings, native saves, the ZIP cache, and the two latest session logs live in `gamedata/ruffle-flash/` on the card. Photos are stored in `Pictures/Ruffle Flash/`. Exit and back up game data before upgrading. Pocket AIS uses GLES and offers standard photos in the screenshot menu. The remaining sections describe Pocket1 / Leaf.
 
