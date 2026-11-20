@@ -69,7 +69,7 @@ jobs:
           python scripts/package_aisos.py ../work/PySDL2-0.9.17-py3-none-any.whl $package
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $sha = (Get-FileHash -Algorithm SHA256 $package).Hash.ToLowerInvariant()
-          Set-Content -Encoding ascii -NoNewline ../outputs/pocketais/SHA256SUMS.txt "$sha  $(Split-Path -Leaf $package)`n"
+          Set-Content -LiteralPath ../outputs/pocketais/SHA256SUMS.txt -Value "$sha  $(Split-Path -Leaf $package)`n" -Encoding ascii -NoNewline
           "version=$version" >> $env:GITHUB_OUTPUT
       - name: Upload the installation ZIP
         id: upload
