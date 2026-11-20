@@ -180,6 +180,7 @@ pub enum MenuResult {
     OpenAbout,
     OpenLanguage,
     OpenScreenshot,
+    TakePhoto,
     SaveProgress,
 }
 
@@ -358,6 +359,7 @@ impl Session {
             6 => MenuResult::OpenShortcuts,
             7 => MenuResult::OpenAbout,
             8 => MenuResult::OpenLanguage,
+            9 if self.experience.pocketais => MenuResult::TakePhoto,
             9 => MenuResult::OpenScreenshot,
             _ => MenuResult::Quit,
         }
@@ -620,6 +622,17 @@ mod tests {
         s.menu_move(1);assert_eq!(s.accept(),MenuResult::Quit);
         assert_eq!(MouseSpeed::Slow.next(-1), MouseSpeed::Slow);
         assert_eq!(MouseSpeed::Fast.next(1), MouseSpeed::Fast);
+    }
+
+    #[test]
+    fn pocketais_screenshot_saves_directly_from_pause() {
+        let mut session = Session::new(InputMode::Hybrid);
+        session.experience.pocketais = true;
+        session.open_menu();
+        session.menu_move(-2);
+        assert_eq!(session.accept(), MenuResult::TakePhoto);
+        assert!(session.paused);
+        assert_eq!(session.experience.page, experience::Page::Home);
     }
 
     #[test]

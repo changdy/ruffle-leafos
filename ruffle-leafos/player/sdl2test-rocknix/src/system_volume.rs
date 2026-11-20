@@ -1,4 +1,4 @@
-//! Observe Leaf's real volume/brightness without applying hardware keys twice.
+//! Observe system volume and brightness after the firmware handles the keys.
 use std::time::Duration;
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
@@ -32,6 +32,14 @@ fn parse_level(text:&str,kind:Kind)->Option<Level> {
         else if key.trim()==kind.field() {if level.is_some(){return None;}let n=value.parse::<u8>().ok()?;if n>100{return None;}level=Some(n);}
     }
     if response_kind!=Some("\"platform-levels\""){return None;}level.map(|percent|Level{kind,percent})
+}
+
+fn parse_sink_volume(text: &str) -> Option<Level> {
+    let channels = text.lines().next()?.trim().strip_prefix("Volume:")?;
+    let percent = channels.split_whitespace().filter_map(|word| {
+        word.strip_suffix('%')?.parse::<u32>().ok()
+    }).max()?.min(100) as u8;
+    Some(Level { kind: Kind::Volume, percent })
 }
 
 #[derive(Default)]
@@ -71,11 +79,15 @@ impl Monitor {
     pub fn new()->Self {
         #[cfg(all(target_os="linux",not(test)))]
         {
+            let pocketais = super::shortcuts::is_pocketais();
             let (sender,requests)=std::sync::mpsc::sync_channel(1);let (results,receiver)=std::sync::mpsc::channel();
             let stop=std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));let stopped=stop.clone();
             let worker=std::thread::spawn(move||while !stopped.load(std::sync::atomic::Ordering::Relaxed) {
                 match requests.recv_timeout(Duration::from_millis(25)) {
-                    Ok(kind)=>{if let Some(level)=read_level(kind){if results.send(level).is_err(){break;}}},
+                    Ok(kind)=>{
+                        let level = if pocketais { read_pocketais_volume() } else { read_leaf_level(kind) };
+                        if let Some(level)=level {if results.send(level).is_err(){break;}}
+                    },
                     Err(std::sync::mpsc::RecvTimeoutError::Disconnected)=>break,
                     _=>{},
                 }
@@ -102,7 +114,7 @@ impl Drop for Monitor {
     fn drop(&mut self){self.stop.store(true,std::sync::atomic::Ordering::Relaxed);if let Some(worker)=self.worker.take(){let _=worker.join();}}
 }
 #[cfg(all(target_os="linux",not(test)))]
-fn read_level(kind:Kind)->Option<Level> {
+fn read_leaf_level(kind:Kind)->Option<Level> {
     use std::{io::{Read,Write},os::unix::net::UnixStream};
     let mut socket=UnixStream::connect("/tmp/jawaka-runtime/jawakad.sock").ok()?;
     socket.set_read_timeout(Some(Duration::from_millis(200))).ok()?;
@@ -115,10 +127,31 @@ fn read_level(kind:Kind)->Option<Level> {
     parse_level(std::str::from_utf8(&bytes).ok()?,kind)
 }
 
+#[cfg(all(target_os="linux",not(test)))]
+fn read_pocketais_volume() -> Option<Level> {
+    // AisOS exposes PipeWire's PulseAudio server on the system runtime socket.
+    // Query off the render thread and bound the wait if the service is restarting.
+    let runtime = std::env::var_os("XDG_RUNTIME_DIR").unwrap_or_else(|| "/var/run/0-runtime-dir".into());
+    let mut server = std::ffi::OsString::from("--server=unix:");
+    server.push(std::path::PathBuf::from(runtime).join("pulse/native"));
+    let output = std::process::Command::new("/usr/bin/timeout")
+        .args(["-k", "1", "1", "/usr/bin/pactl"])
+        .arg(server).args(["get-sink-volume", "@DEFAULT_SINK@"]).env("LC_ALL", "C").output().ok()?;
+    if !output.status.success() { return None; }
+    parse_sink_volume(std::str::from_utf8(&output.stdout).ok()?)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     fn at(n:u64)->Duration {Duration::from_millis(n)}
+    #[test]
+    fn aisos_volume_reads_loudest_channel_and_clamps_amplification() {
+        assert_eq!(parse_sink_volume("Volume: front-left: 32768 /  50% / -18.06 dB, front-right: 36045 / 55% / -15.58 dB\n  balance 0.05"), Some(Level { kind: Kind::Volume, percent: 55 }));
+        assert_eq!(parse_sink_volume("Volume: mono: 0 / 0% / -inf dB"), Some(Level { kind: Kind::Volume, percent: 0 }));
+        assert_eq!(parse_sink_volume("Volume: mono: 78643 / 120% / 4.75 dB"), Some(Level { kind: Kind::Volume, percent: 100 }));
+        assert_eq!(parse_sink_volume("Connection failed"), None);
+    }
     #[test]
     fn only_real_valid_levels_are_displayed() {
         let response=r#"{"type":"platform-levels","brightness_percent":35,"volume_percent":5,"hdmi_revert_seconds":0}"#;

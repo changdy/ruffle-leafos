@@ -326,7 +326,6 @@ impl Ui {
         Page::Home=>self.title.clone(),Page::Language=>t("语言").into(),Page::Saves=>t("选择游戏存档").into(),Page::Settings=>t("画面设置").into(),Page::Renderer=>t("渲染接口").into(),Page::Manager=>t("Flash 数据管理").into(),Page::ManagerGames|Page::ManagerGame=>t("游戏数据").into(),Page::ManagerBulk=>t("批量清理").into(),Page::Confirm=>t("确认操作").into(),Page::About=>t("Ruffle Flash · LeafOS 版").into(),Page::Shortcuts=>t("操作说明").into()
     }}
     pub fn rows(&self)->Vec<String>{match self.page{
-        Page::Screenshot if self.pocketais => vec![t("保存普通照片").into(), t("返回").into()],
         Page::Screenshot=>vec![t("截图作为封面").into(),t("保存普通照片").into(),t("返回").into()],
         Page::CoverConfirm=>vec![t("取消").into(),t("覆盖封面").into()],
         Page::Language=>super::i18n::Language::ALL.iter().map(|language| format!("{}{}",language.label(),if *language==self.language{"  ✓"}else{""})).chain(std::iter::once(t("返回").into())).collect(),
@@ -378,10 +377,6 @@ impl Ui {
                 self.pending=20+self.selected;self.open(Page::Confirm);
             },
             Nav::A=>match self.page{
-                Page::Screenshot if self.pocketais => {
-                    if self.selected == 0 { return Command::ScreenshotPhoto; }
-                    self.open(Page::Home);
-                },
                 Page::Screenshot=>match self.selected {0=>return Command::ScreenshotCover(false),1=>return Command::ScreenshotPhoto,_=>self.open(Page::Home)},
                 Page::CoverConfirm=>{if self.selected==1{return Command::ScreenshotCover(true);}self.open(Page::Screenshot);},
                 Page::Language=>{if let Some(language)=super::i18n::Language::ALL.get(self.selected){return Command::Language(*language);}self.open(if self.app{Page::Manager}else{Page::Home});if self.app{self.selected=2;}},

@@ -85,11 +85,23 @@ impl Device {
             }
             None
         });
+        // Pocket AIS exposes the chassis volume buttons on adc-keys, not the pad.
+        let volume = if matches!(pad, Pad::PocketAis) {
+            std::fs::read_dir("/sys/class/input").into_iter().flatten().filter_map(Result::ok).find_map(|entry| {
+                let name = entry.file_name();
+                let name = name.to_str()?.strip_prefix("event")?;
+                if name.is_empty() || !name.bytes().all(|b| b.is_ascii_digit()) { return None; }
+                let path = entry.path();
+                if !std::fs::canonicalize(&path).ok()?.to_string_lossy().contains("/devices/platform/adc-keys/") { return None; }
+                if std::fs::read_to_string(path.join("device/name")).ok()?.trim() != "adc-keys" { return None; }
+                std::fs::File::open(format!("/dev/input/event{name}")).ok()
+            })
+        } else { None };
         println!("leaf-shortcuts physical_menu_observer={} access=read-only-state-thread host_view={}",physical.is_some(),physical.as_ref().is_some_and(|(_,host)|*host));
         let (sender,receiver)=std::sync::mpsc::channel();
         let stop=std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let available=physical.is_some();let stopped=stop.clone();
-        let worker=physical.map(|(file,_)|std::thread::spawn(move||observe(file,pad,sender,stopped)));
+        let worker=physical.map(|(file,_)|std::thread::spawn(move||observe(file,volume,pad,sender,stopped)));
         Self {receiver,stop,worker,available}
     }
     pub fn available(&self) -> bool {self.available}
@@ -108,7 +120,7 @@ impl Drop for Device {
     fn drop(&mut self) {self.stop.store(true,std::sync::atomic::Ordering::Relaxed);if let Some(worker)=self.worker.take(){let _=worker.join();}}
 }
 #[cfg(all(target_os="linux",not(test)))]
-fn observe(file:std::fs::File,pad:Pad,sender:std::sync::mpsc::Sender<(Snapshot,Duration)>,stop:std::sync::Arc<std::sync::atomic::AtomicBool>) {
+fn observe(file:std::fs::File,volume:Option<std::fs::File>,pad:Pad,sender:std::sync::mpsc::Sender<(Snapshot,Duration)>,stop:std::sync::Arc<std::sync::atomic::AtomicBool>) {
     use std::os::fd::AsRawFd;
     let fd = file.as_raw_fd();
     let mut keys = [0u8; 96];
@@ -124,6 +136,12 @@ fn observe(file:std::fs::File,pad:Pad,sender:std::sync::mpsc::Sender<(Snapshot,D
     };
     let down = |keys: &[u8; 96], code: usize| keys[code / 8] & (1 << (code % 8)) != 0;
     if unsafe { libc::ioctl(fd, 0x80604518u64, &mut keys) } < 0 || !read_axes(&mut axes) { return; }
+    let read_volume = || {
+        let Some(device) = &volume else { return (false, false); };
+        let mut keys = [0u8; 96];
+        if unsafe { libc::ioctl(device.as_raw_fd(), 0x80604518u64, &mut keys) } < 0 { return (false, false); }
+        (down(&keys, 115), down(&keys, 114))
+    };
     let snapshot = |keys: &[u8; 96], axes: &[[i32; 6]; 4]| {
         let pressed = |code| down(keys, code);
         let stick_axes = if matches!(pad, Pad::Leaf) { &axes[..2] } else { &axes[..] };
@@ -139,8 +157,12 @@ fn observe(file:std::fs::File,pad:Pad,sender:std::sync::mpsc::Sender<(Snapshot,D
                 pressed(311), pressed(310),
             ),
         };
+        let (volume_up, volume_down) = match pad {
+            Pad::Leaf => (pressed(115), pressed(114)),
+            Pad::PocketAis => read_volume(),
+        };
         Snapshot { menu: pressed(menu_key), a: pressed(305), b: pressed(304), button_x: pressed(x_key),
-            x, y, other, volume_up: pressed(115), volume_down: pressed(114), brightness_up, brightness_down }
+            x, y, other, volume_up, volume_down, brightness_up, brightness_down }
     };
     let mut previous=snapshot(&keys,&axes);
     if sender.send((previous,Duration::ZERO)).is_err(){return;}

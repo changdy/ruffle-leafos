@@ -251,8 +251,10 @@ impl Frontend {
         })();
         match result {
             Ok(path)=>{
-                self.state.experience.open(ExperiencePage::Screenshot);
-                self.state.experience.message=path.display().to_string();
+                if !self.state.experience.pocketais {
+                    self.state.experience.open(ExperiencePage::Screenshot);
+                    self.state.experience.message=path.display().to_string();
+                }
                 self.toast(if matches!(request,Screenshot::Cover(..)){t("封面已保存，请在 Leaf 刷新游戏列表").into()}else{t("照片已保存").into()});
             },
             Err(error)=>{println!("leaf-screenshot failed={error}");self.state.experience.message=crate::tr!("截图失败：{error}","Screenshot failed: {error}");self.toast(self.state.experience.message.clone());},
@@ -485,7 +487,7 @@ impl Frontend {
     fn poll_chords(&mut self) {
         for (snapshot,at) in self.menu_device.drain() {
         self.menu_held=snapshot.menu;
-        self.system_volume.observe(snapshot.volume_up,snapshot.volume_down,snapshot.menu,self.started.elapsed());
+        self.system_volume.observe(snapshot.volume_up,snapshot.volume_down,snapshot.menu && !self.state.experience.pocketais,self.started.elapsed());
         for command in self.chords.update_at(snapshot,at) {
             use session::shortcuts::Command;
             if matches!(command, Command::BrightnessUp | Command::BrightnessDown) {
@@ -637,6 +639,7 @@ impl Frontend {
             MenuResult::OpenAbout => {self.state.experience.open(ExperiencePage::About);},
             MenuResult::OpenLanguage => {self.state.experience.open(ExperiencePage::Language);},
             MenuResult::OpenScreenshot => {self.cover=None;self.state.experience.open(ExperiencePage::Screenshot);},
+            MenuResult::TakePhoto => self.screenshot=Some(Screenshot::Photo),
             MenuResult::None => {}
         }
         self.redraw = true;
@@ -1265,7 +1268,10 @@ pub async fn run() -> Result<(), String> {
         }
         front.poll_chords();
         if let Some(level)=front.system_volume.poll(front.started.elapsed()) {
-            if front.state.system_level.as_ref().is_none_or(|(old,_)|*old!=level) {println!("leaf-{} system_percent={} source=leaf",level.kind.name(),level.percent);}
+            if front.state.system_level.as_ref().is_none_or(|(old,_)|*old!=level) {
+                let source = if front.state.experience.pocketais { "aisos" } else { "leaf" };
+                println!("leaf-{} system_percent={} source={source}",level.kind.name(),level.percent);
+            }
             front.state.system_level=Some((level,Instant::now()));front.redraw=true;
         }
         if front.state.system_level.as_ref().is_some_and(|(_,at)|at.elapsed()>=Duration::from_millis(1500)) {front.state.system_level=None;front.redraw=true;}

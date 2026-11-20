@@ -240,7 +240,7 @@ impl PauseMenu {
             self.leaf_row(i+1,line,137.+i as f32*41.,39.,i==state.selected);
             if !details[i].is_empty(){self.live_label_width(30+i,&details[i],29.,600.,140.+i as f32*41.,315.,false,self.palette[if i==state.selected{3}else{4}]);}
         }
-        let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),_=>t("操作方法见「操作说明」")};
+        let hint=match state.selected {1=>t("左右切换方案 · A 进入编辑"),6=>t("查看游戏组合键、菜单操作与按键编辑方法"),7=>t("认识 Ruffle Flash，查看项目主页与开源致谢"),9 if pocketais=>t("A 保存当前游戏画面"),_=>t("操作方法见「操作说明」")};
         let (left, width) = if pocketais { (45., 870.) } else { (23., 910.) };
         self.live_label_width(16,hint,20.,left,606.,width,false,self.palette[4]);
         }
@@ -444,7 +444,7 @@ impl PauseMenu {
             for (i,row) in u.rows().iter().enumerate(){self.leaf_row(i+1,row,if confirm{320.+i as f32*75.}else{155.+i as f32*65.},55.,i==u.selected);}
             if !confirm {
                 self.live_label_width(19,t("不含菜单、播放器光标、帧率与系统提示。"),24.,23.,402.,910.,false,self.palette[4]);
-                self.live_label_width(20,t(if u.pocketais { "照片存入游戏卡 Pictures/Ruffle Flash。" } else { "普通照片优先存入副卡 Pictures/Ruffle Flash。" }),24.,23.,450.,910.,false,self.palette[4]);
+                self.live_label_width(20,t("普通照片优先存入副卡 Pictures/Ruffle Flash。"),24.,23.,450.,910.,false,self.palette[4]);
             }
             if !u.message.is_empty(){self.live_label_width(23,&u.message,22.,23.,580.,910.,false,self.palette[1]);}
             return;
