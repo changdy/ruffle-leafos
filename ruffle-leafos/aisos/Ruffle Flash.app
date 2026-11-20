@@ -15,8 +15,8 @@ fi
 export WAYLAND_DISPLAY SDL_VIDEODRIVER=wayland PYSDL2_DLL_PATH=/usr/lib
 export SDL_RENDER_DRIVER=opengles2
 
-# Home is read from the built-in evdev pad by the player. Keep R3 mappable.
-export SDL_GAMECONTROLLERCONFIG='19000f6a706c61795f6a6f7973746900,play_joystick,a:b1,b:b0,x:b3,y:b2,back:b8,rightstick:b12,misc1:b13,start:b9,leftstick:b11,leftshoulder:b4,rightshoulder:b5,dpup:b14,dpdown:b15,dpleft:b16,dpright:b17,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,platform:Linux,'
+# Match the printed face labels (top X, left Y). Home is observed through evdev.
+export SDL_GAMECONTROLLERCONFIG='19000f6a706c61795f6a6f7973746900,play_joystick,a:b1,b:b0,x:b2,y:b3,back:b8,rightstick:b12,misc1:b13,start:b9,leftstick:b11,leftshoulder:b4,rightshoulder:b5,dpup:b14,dpdown:b15,dpleft:b16,dpright:b17,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,platform:Linux,'
 export RUFFLE_POCKET_AIS=1 RUFFLE_SWAP_AB=0 RUFFLE_SYSTEM_LANGUAGE=zh
 export RUFFLE_FLASH_DIR="$roms/flash" RUFFLE_MENU_FONT="$app/MiSans-Normal.ttf"
 export RUFFLE_FONT_FILE="$RUFFLE_MENU_FONT" SDCARD_PATH="$roms"

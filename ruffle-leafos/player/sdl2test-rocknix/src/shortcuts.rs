@@ -127,7 +127,7 @@ fn observe(file:std::fs::File,volume:Option<std::fs::File>,pad:Pad,sender:std::s
     let mut axes = [[0i32; 6]; 4];
     let (menu_key, x_key, axes_codes) = match pad {
         Pad::Leaf => (316, 307, [0, 1, 16, 17].as_slice()),
-        Pad::PocketAis => (102, 308, [0, 1, 3, 4].as_slice()),
+        Pad::PocketAis => (102, 307, [0, 1, 3, 4].as_slice()),
     };
     let read_axes = |axes: &mut [[i32; 6]; 4]| {
         axes.iter_mut().zip(axes_codes).all(|(axis, code)| {

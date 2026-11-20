@@ -14,6 +14,8 @@ The tested RGBox firmware has no Flash category. Put SWF and game ZIP files in `
 
 The four small front buttons are **Back (Fn), Home, Select and Start** from left to right. The second button, **Home**, is the in-game Menu button.
 
+Face buttons follow the printed labels, with **X on top and Y on the left**.
+
 | Screen | Handheld controls |
 | --- | --- |
 | Game list | Move with the D-pad or either stick. L1 and R1 change pages. A or Start opens a game. **Fn** goes up one folder or returns to RGBox from the root. Press **Y** for Flash Data Manager. |

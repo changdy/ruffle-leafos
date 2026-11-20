@@ -10,6 +10,8 @@ Pocket AIS 的 `aisos/Ruffle Flash.app` 启动 `aisos/launcher.py`，后者用�
 
 Pocket AIS 的游戏列表在启动播放器时传入同一套配色。暂停、按键、画面、软键盘和数据管理使用深蓝背景、青色矩形焦点，以及同样的底栏规则。LeafOS 菜单继续从系统主题读取配色和焦点形状。[界面绘制](../player/sdl2test-rocknix/src/pause_menu.rs)
 
+Pocket AIS 按机身印字映射 X 和 Y。顶部 X 为 `BTN_NORTH=307`（SDL `b2`），左侧 Y 为 `BTN_WEST=308`（SDL `b3`）。Home + X 的 evdev 检测使用同一键码，已有游戏方案按其中的 X/Y 项生效。[应用入口](../aisos/Ruffle%20Flash.app) · [快捷键](../player/sdl2test-rocknix/src/shortcuts.rs)
+
 Pocket AIS 在暂停菜单直接请求保存普通 PNG。截图沿用游戏画面读取路径，保存结果通过原菜单的提示显示。机身音量键从独立的 `adc-keys` 设备读取。AisOS 负责调整音量，播放器异步查询默认音频输出并显示实际百分比，松开后约 1.5 秒消失。[系统数值](../player/sdl2test-rocknix/src/system_volume.rs)
 
 AisOS 的 Screen Color 以 SDL 显示预览，使用系统 libdrm 找到内置 DSI-1 当前的 CRTC，再通过驱动的 Gamma 接口写入 RGB 查找表。暖色档位为 0–20，逐档降低蓝色和少量绿色，0 使用三通道线性表。校色在 Rockchip 显示控制器的输出级完成。RGBox、Wayland 游戏及 UI 共用这段显示链路。Weston 和内核沿用系统版本。[调色程序](../aisos/screen_color.py) · [预览界面](../aisos/screen_color_ui.py)

@@ -148,7 +148,7 @@
     "sdl2test-rocknix/src/screenshot.rs": "db8b3c4b31b0f88f0f0e6d920ef45e01035d36f19e4b6b1bc456b574bae4ed53",
     "sdl2test-rocknix/src/screenshot_png.rs": "52e12911edf4321941027e3ed9556e6dddbeb0aeff551cdd04c5ab689dc164f5",
     "sdl2test-rocknix/src/session.rs": "dfc582289490049b8996c1e441bca1c708829cab76a03c122dabe1ea18a42582",
-    "sdl2test-rocknix/src/shortcuts.rs": "b3d3636e0d40630b616c452b64d15b01e1b8a6227aae2c8f3b7e26d2733bc2be",
+    "sdl2test-rocknix/src/shortcuts.rs": "a1e02cfa1b50f622ed4056e13e701b377eeea65bb9ac0f8cb8b453d5180db1a0",
     "sdl2test-rocknix/src/system_volume.rs": "1c9f8187d040abd0ed63627ee715c7d62925c9c7d0125e29ebb293d6ccd03c66",
     "sdl2test-rocknix/src/trace.rs": "93a71382e64fbb7bdd9d17fd09ca1107bdb957612a85b51ceaa2c5f5fffc0bc1",
     "sdl2test-rocknix/src/translations.rs": "5d0fc23d4293230b52b312b9971548540b813c583deacc9c8c4f5984eaf1a1cc",
