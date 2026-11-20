@@ -1,4 +1,4 @@
-name: Build Pocket AIS ZIP
+name: Build and release Pocket AIS ZIP
 
 on:
   push:
@@ -17,6 +17,9 @@ jobs:
     if: github.ref == 'refs/heads/pocketais'
     runs-on: windows-2022
     timeout-minutes: 120
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
     defaults:
       run:
         working-directory: ruffle-leafos
@@ -56,18 +59,84 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m unittest discover -s scripts -p test_build_inputs.py -v
       - name: Build and checksum the Pocket AIS ZIP
+        id: package
         run: |
           python -m pip download --no-deps --only-binary=:all: PySDL2==0.9.17 -d ../work
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $version = (Get-Content pak/pak.json -Raw | ConvertFrom-Json).pak_version
+          if ($version -cnotmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') { throw 'Invalid package version' }
           $package = "../outputs/pocketais/ruffle-pocketais-$version.zip"
           python scripts/package_aisos.py ../work/PySDL2-0.9.17-py3-none-any.whl $package
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $sha = (Get-FileHash -Algorithm SHA256 $package).Hash.ToLowerInvariant()
-          "$sha  $(Split-Path -Leaf $package)" | Set-Content -Encoding ascii ../outputs/pocketais/SHA256SUMS.txt
+          Set-Content -Encoding ascii -NoNewline ../outputs/pocketais/SHA256SUMS.txt "$sha  $(Split-Path -Leaf $package)`n"
+          "version=$version" >> $env:GITHUB_OUTPUT
       - name: Upload the installation ZIP
-        uses: actions/upload-artifact@v4
+        id: upload
+        uses: actions/upload-artifact@v7
         with:
           name: ruffle-pocketais-${{ github.sha }}
           path: outputs/pocketais/
           if-no-files-found: error
+          overwrite: true
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download the verified build output
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.package.outputs.artifact-id }}
+          path: package
+          merge-multiple: true
+      - name: Publish the Pocket AIS preview
+        working-directory: package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="pocketais-v${VERSION}-build.${GITHUB_RUN_NUMBER}"
+          archive="ruffle-pocketais-${VERSION}.zip"
+          sha256sum --check --strict SHA256SUMS.txt
+          test -f "$archive"
+
+          existing=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq ".[] | select(.tag_name == \"$tag\")")
+          if [[ -n "$existing" ]] && [[ $(jq -r '.draft' <<< "$existing") == false ]]; then
+            test "$(gh api "repos/$GH_REPO/commits/$tag" --jq '.sha')" = "$GITHUB_SHA"
+            jq -e --arg archive "$archive" '.prerelease and ([.assets[].name] | contains([$archive, "SHA256SUMS.txt"]))' <<< "$existing" >/dev/null
+            jq -r '.html_url' <<< "$existing"
+            exit 0
+          fi
+
+          ref=$(git ls-remote "${GITHUB_SERVER_URL}/${GH_REPO}.git" "refs/tags/${tag}" "refs/tags/${tag}^{}")
+          if [[ -n "$ref" ]]; then
+            test "$(gh api "repos/$GH_REPO/commits/$tag" --jq '.sha')" = "$GITHUB_SHA"
+          fi
+
+          cat > release-notes.md << EOF
+          适用于 **Pocket AIS（RK3562 / AisOS）**。
+
+          下载 **$archive**，解压到外置游戏卡根目录，再从 **RGBox → 应用 → Ruffle Flash** 打开。
+          保留 \`applyCenter/\`、隐藏目录 \`applyCenter/.ruffle-flash/\` 和 \`flash/\`。
+
+          [安装与操作](${GITHUB_SERVER_URL}/${GH_REPO}/blob/${tag}/ruffle-leafos/README.md#aisos-应用菜单) · [构建记录](${GITHUB_SERVER_URL}/${GH_REPO}/actions/runs/${GITHUB_RUN_ID}) · [源码提交](${GITHUB_SERVER_URL}/${GH_REPO}/commit/${GITHUB_SHA})
+          EOF
+
+          if [[ -z "$existing" ]]; then
+            gh release create "$tag" "$archive" SHA256SUMS.txt --target "$GITHUB_SHA" \
+              --title "Ruffle Flash $VERSION · Pocket AIS (build $GITHUB_RUN_NUMBER)" \
+              --notes-file release-notes.md --draft --prerelease --latest=false
+          else
+            test "$(jq -r '.target_commitish' <<< "$existing")" = "$GITHUB_SHA"
+            gh release upload "$tag" "$archive" SHA256SUMS.txt --clobber
+          fi
+          gh release edit "$tag" --draft=false --prerelease --latest=false --notes-file release-notes.md
+          test "$(gh api "repos/$GH_REPO/commits/$tag" --jq '.sha')" = "$GITHUB_SHA"
+          gh release view "$tag" --json url,assets,isDraft,isPrerelease | jq -er --arg archive "$archive" '
+            select((.isDraft | not) and .isPrerelease and ([.assets[].name] | contains([$archive, "SHA256SUMS.txt"]))) | .url'

@@ -8,7 +8,7 @@ Play local Flash games with the buttons and stick on your **Miniloong Pocket 1 /
 
 ## AisOS Apps menu
 
-On Pocket AIS (RK3562 / AisOS), extract **`ruffle-pocketais-<version>.zip`** to the external game card. Keep `applyCenter/`, its hidden `.ruffle-flash/` subdirectory, and `flash/` together. The card mounts at `/storage/roms`. In RGBox, open **Apps → Ruffle Flash**. [GitHub Actions builds](https://github.com/changdy/ruffle-leafos/actions/workflows/pocketais.yml?query=branch%3Apocketais)
+On Pocket AIS (RK3562 / AisOS), extract **`ruffle-pocketais-<version>.zip`** to the external game card. Keep `applyCenter/`, its hidden `.ruffle-flash/` subdirectory, and `flash/` together. The card mounts at `/storage/roms`. In RGBox, open **Apps → Ruffle Flash**. [Download a Pocket AIS preview](https://github.com/changdy/ruffle-leafos/releases?q=pocketais)
 
 The tested RGBox firmware has no Flash category. Put SWF and game ZIP files in `flash/` on the card and browse them inside Ruffle Flash. The package includes Bloxorz and a display test.
 

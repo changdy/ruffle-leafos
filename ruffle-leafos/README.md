@@ -8,7 +8,7 @@
 
 ## AisOS 应用菜单
 
-在 Pocket AIS（RK3562 / AisOS）上，将 **`ruffle-pocketais-<版本>.zip`** 解压到外置游戏卡根目录，保留 `applyCenter/`、其隐藏子目录 `.ruffle-flash/` 和 `flash/`。卡在系统中挂载为 `/storage/roms`。从 RGBox 进入 **应用 → Ruffle Flash**。[GitHub Actions 打包产物](https://github.com/changdy/ruffle-leafos/actions/workflows/pocketais.yml?query=branch%3Apocketais)
+在 Pocket AIS（RK3562 / AisOS）上，将 **`ruffle-pocketais-<版本>.zip`** 解压到外置游戏卡根目录，保留 `applyCenter/`、其隐藏子目录 `.ruffle-flash/` 和 `flash/`。卡在系统中挂载为 `/storage/roms`。从 RGBox 进入 **应用 → Ruffle Flash**。[下载 Pocket AIS 预览版](https://github.com/changdy/ruffle-leafos/releases?q=pocketais)
 
 实测固件的 RGBox 游戏库没有 Flash 分类。将 SWF 或游戏 ZIP 放进卡上的 `flash/`，在 Ruffle Flash 内浏览子目录、选择游戏。安装包附 Bloxorz 和显示测试。
 

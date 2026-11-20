@@ -57,7 +57,9 @@ python scripts/build_player.py build --offline --isolated-config
 
 ### Pocket AIS / RGBox 安装包
 
-`pocketais` 分支的 [Build Pocket AIS ZIP](https://github.com/changdy/ruffle-leafos/actions/workflows/pocketais.yml) 在 push 时从该提交的源码重编 AArch64 播放器。构建通过后，在运行记录的 Artifacts 中下载 `ruffle-pocketais-<提交 SHA>`，其中有安装 ZIP 和 `SHA256SUMS.txt`。GitHub 的手动触发要求工作流已存在于默认分支。Pocket1 的发布工作流独立运行。
+推送到 `pocketais` 后，[Build and release Pocket AIS ZIP](https://github.com/changdy/ruffle-leafos/actions/workflows/pocketais.yml) 会重编 AArch64 播放器并运行主机测试。构建通过后，发布 job 会重新校验 ZIP 的 SHA-256，并以 `pocketais-v<版本>-build.<运行编号>` 为标签自动发布预览版。标签绑定构建提交。连续推送可以在 `pak_version` 相同的情况下各自发布。重跑同一次工作流时，已公开的 Release 会原样保留，未发布的草稿可以补传。写权限仅授予发布 job。
+
+从 [GitHub Releases](https://github.com/changdy/ruffle-leafos/releases?q=pocketais) 的 Pocket AIS 预览版直接下载 `ruffle-pocketais-<版本>.zip` 和 `SHA256SUMS.txt`。同一 ZIP 仍保存在运行记录的 Artifacts 中。GitHub 的手动触发要求工作流存在于默认分支。Pocket1 的 `v<版本>` 发布工作流独立运行。
 
 在 Windows 工程目录用同一套锁定工具链构建。已准备 Node.js、Python、JDK 17 和 7-Zip 后运行以下命令。
 

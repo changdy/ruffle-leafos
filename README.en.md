@@ -6,7 +6,7 @@
 
 A Ruffle-based Flash player for **Miniloong Pocket 1 / leafOS**.
 
-The **Pocket AIS (RK3562 / AisOS)** package opens the game list from RGBox Apps → Ruffle Flash. [AisOS installation and controls](ruffle-leafos/README.en.md#aisos-apps-menu)
+The **Pocket AIS (RK3562 / AisOS)** package opens the game list from RGBox Apps → Ruffle Flash. [Download a Pocket AIS preview](https://github.com/changdy/ruffle-leafos/releases?q=pocketais) · [AisOS installation and controls](ruffle-leafos/README.en.md#aisos-apps-menu)
 
 [简体中文](README.md) · **English**
 
